@@ -1,91 +1,80 @@
 # 🚀 FletPlus
 
-**FletPlus** es una librería de componentes avanzados y utilidades para [Flet](https://flet.dev), diseñada para construir aplicaciones modernas, responsivas y escalables 100% en Python.
-
-> 🎯 Ideal para CRMs, dashboards administrativos, herramientas internas o cualquier interfaz rica en datos.
-
----
-
-## ✨ Características principales
-
-- ✅ `SmartTable` — Tabla dinámica con paginación y ordenamiento.
-- ✅ `SidebarAdmin` — Menú lateral adaptable para paneles.
-- ✅ `ResponsiveGrid` — Distribución de elementos adaptable a diferentes tamaños de pantalla.
-- ✅ `ThemeManager` — Control centralizado de tema claro/oscuro y colores principales.
-- 🛠️ Listo para integrarse con tus proyectos Flet actuales.
-
----
-
-## 🧱 Estructura del proyecto
-
-````yaml
-fletplus/ ├── components/ │ ├── smart_table.py │ ├── sidebar_admin.py │ └── responsive_grid.py ├── themes/ │ └── theme_manager.py ├── utils/ │ └── responsive_manager.py ├── core.py
-````
-
+**FletPlus** es una librería de componentes visuales y utilidades para acelerar el desarrollo de interfaces modernas en Python usando [Flet](https://flet.dev).  
+Proporciona un conjunto de controles personalizables como tablas inteligentes, grillas responsivas, barras laterales, gestores de tema y estructura modular de apps.
 
 ---
 
 ## 📦 Instalación
 
-> 🔧 Requisitos: Python 3.8+ y `flet`
+```bash
+pip install fletplus
+```
+- **Requiere Python 3.9+ y flet>=0.27.0**
+
+## 🧩 Componentes incluidos
+
+| Componente      | Descripción                                       |
+|----------------|---------------------------------------------------|
+| `SmartTable`   | Tabla con paginación y ordenamiento integrados   |
+| `SidebarAdmin` | Menú lateral dinámico con ítems y selección       |
+| `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
+| `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
+| `FletPlusApp`  | Estructura base para apps con navegación y tema  |
+
+# 🧪 Ejemplo rápido
+
+```python
+import flet as ft
+from fletplus.components.smart_table import SmartTable
+
+def main(page: ft.Page):
+    rows = [
+        ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Text("Alice"))]),
+        ft.DataRow(cells=[ft.DataCell(ft.Text("2")), ft.DataCell(ft.Text("Bob"))]),
+    ]
+    table = SmartTable(["ID", "Nombre"], rows)
+    page.add(table.build())
+
+ft.app(target=main)
+```
+# 🔧 Estructura del proyecto
+
+fletplus/
+├── components/
+│   ├── smart_table.py
+│   ├── sidebar_admin.py
+│   └── responsive_grid.py
+├── themes/
+│   └── theme_manager.py
+├── core.py  ← Clase FletPlusApp
+
+# 📋 Tests
+
+Todos los componentes están cubiertos por tests unitarios (ver carpeta tests/).
 
 ```bash
-pip install flet
-````
-Y luego clona este repositorio o instálalo como paquete
+pytest --cov=fletplus
+```
 
-## 🚀 Uso rápido
+# 🛠️ Contribuir
 
-````python
-from fletplus.core import FletPlusApp
-import flet as ft
+Las contribuciones son bienvenidas:
 
-def home():
-    return ft.Text("Inicio")
+1. **Haz un fork**
 
-def usuarios():
-    return ft.Text("Gestión de usuarios")
+2. **Crea tu rama**: git checkout -b feature/nueva-funcionalidad
 
-routes = {
-    "Inicio": home,
-    "Usuarios": usuarios,
-}
+3. **Abre un PR** explicando el cambio
 
-sidebar_items = [
-    {"title": "Inicio", "icon": ft.icons.HOME},
-    {"title": "Usuarios", "icon": ft.icons.PEOPLE},
-]
+# 📄 Licencia
 
-FletPlusApp.start(routes=routes, sidebar_items=sidebar_items, title="Mi CRM")
+MIT License
 
-````
-## 📂 Ejemplos
+Copyright (c) 2025 Adolfo González
 
-Explora la carpeta examples/ para ver una demo completa con tabla, sidebar y temas.
+# 💬 Contacto
 
-## 🛠️ En desarrollo
+Desarrollado por Adolfo González Hernández. 
 
- -  **CrudGenerator** para construir formularios automáticos
-
- - **Soporte** de plugins
-
- - **Guardado** de preferencias del usuario
-
- - **Internacionalización** (i18n)
-
-## 🤝 Contribuciones
-
-¿Quieres ayudar a mejorar FletPlus? ¡Eres bienvenido!
-
-- Clona el repo.
-
-- Crea tus propios componentes.
-
-- Haz pull requests.
-
-## 📝 Licencia
-
-MIT © 2025 Adolfo González
-
-
-
+**email**: adolfogonzal@gmail.com

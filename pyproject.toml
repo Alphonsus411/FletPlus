@@ -1,3 +1,23 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "fletplus"
+version = "0.1.0"
+description = "Componentes visuales avanzados para Flet en Python"
+authors = [
+  { name="Adolfo González", email="adolfogonzal@gmail.com" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+  "flet>=0.27.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/Alphonsus411/fletplus"
+Repository = "https://github.com/Alphonsus411/fletplus"
+Documentation = "https://github.com/Alphonsus411/fletplus#readme"
