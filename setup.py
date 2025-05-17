@@ -8,7 +8,7 @@ setup(
     description="Componentes avanzados y utilidades para apps Flet en Python",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/tu_usuario/fletplus",  # Cambia esto si lo subes a GitHub
+    url="https://github.com/Alphonsus411/fletplus",  # Cambia esto si lo subes a GitHub
     project_urls={
         "Bug Tracker": "https://github.com/Alphonsus411/fletplus/issues",
     },
