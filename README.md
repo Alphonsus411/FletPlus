@@ -68,6 +68,32 @@ Todos los componentes están cubiertos por tests unitarios (ver carpeta tests/).
 pytest --cov=fletplus
 ```
 
+# 🌐 Construcción PWA
+
+Para generar los archivos necesarios de una PWA se incluye el módulo
+`fletplus.web.pwa`. Un flujo típico de build sería:
+
+```python
+from fletplus.web.pwa import generate_manifest, generate_service_worker
+
+generate_manifest(
+    name="Mi App",
+    icons=[{"src": "icon.png", "sizes": "192x192", "type": "image/png"}],
+    start_url="/",
+    output_dir="web",
+)
+generate_service_worker(["/", "/main.css"], output_dir="web")
+```
+
+Durante el inicio de la aplicación se puede registrar con:
+
+```python
+from fletplus.web.pwa import register_pwa
+
+def main(page):
+    register_pwa(page)
+```
+
 # 🛠️ Contribuir
 
 Las contribuciones son bienvenidas:
