@@ -2,6 +2,8 @@ import flet as ft
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.components.sidebar_admin import SidebarAdmin
 from fletplus.desktop.window_manager import WindowManager
+from fletplus.utils.shortcut_manager import ShortcutManager
+from fletplus.components.command_palette import CommandPalette
 
 class FletPlusApp:
     def __init__(
@@ -9,6 +11,7 @@ class FletPlusApp:
         page: ft.Page,
         routes: dict,
         sidebar_items=None,
+        commands: dict | None = None,
         title="FletPlus App",
         theme_config=None,
         use_window_manager: bool = False,
@@ -19,6 +22,7 @@ class FletPlusApp:
         :param sidebar_items: Lista de ítems del sidebar [{title, icon}]
         :param title: Título de la app
         :param theme_config: Diccionario de configuración inicial del tema
+        :param commands: Diccionario {str: Callable} para la paleta de comandos
         """
         self.page = page
         self.routes = routes
@@ -26,6 +30,10 @@ class FletPlusApp:
         self.theme = ThemeManager(page, **(theme_config or {}))
         self.title = title
         self.window_manager = WindowManager(page) if use_window_manager else None
+
+        self.command_palette = CommandPalette(commands or {})
+        self.shortcuts = ShortcutManager(page)
+        self.shortcuts.register("k", lambda: self.command_palette.open(self.page), ctrl=True)
 
         self.content_container = ft.Container(expand=True, bgcolor=ft.colors.BACKGROUND)
         self.sidebar = SidebarAdmin(self.sidebar_items, on_select=self._on_nav)
@@ -73,6 +81,7 @@ class FletPlusApp:
         cls,
         routes,
         sidebar_items=None,
+        commands: dict | None = None,
         title="FletPlus App",
         theme_config=None,
         use_window_manager: bool = False,
@@ -82,6 +91,7 @@ class FletPlusApp:
                 page,
                 routes,
                 sidebar_items,
+                commands,
                 title,
                 theme_config,
                 use_window_manager,
