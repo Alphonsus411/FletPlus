@@ -1,9 +1,18 @@
 import flet as ft
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.components.sidebar_admin import SidebarAdmin
+from fletplus.desktop.window_manager import WindowManager
 
 class FletPlusApp:
-    def __init__(self, page: ft.Page, routes: dict, sidebar_items=None, title="FletPlus App", theme_config=None):
+    def __init__(
+        self,
+        page: ft.Page,
+        routes: dict,
+        sidebar_items=None,
+        title="FletPlus App",
+        theme_config=None,
+        use_window_manager: bool = False,
+    ):
         """
         :param page: Página Flet actual
         :param routes: Diccionario de rutas {str: Callable}
@@ -16,6 +25,7 @@ class FletPlusApp:
         self.sidebar_items = sidebar_items or []
         self.theme = ThemeManager(page, **(theme_config or {}))
         self.title = title
+        self.window_manager = WindowManager(page) if use_window_manager else None
 
         self.content_container = ft.Container(expand=True, bgcolor=ft.colors.BACKGROUND)
         self.sidebar = SidebarAdmin(self.sidebar_items, on_select=self._on_nav)
@@ -46,9 +56,36 @@ class FletPlusApp:
         self.content_container.content = builder()
         self.page.update()
 
+    def open_window(self, name: str, page: ft.Page) -> None:
+        if self.window_manager:
+            self.window_manager.open_window(name, page)
+
+    def close_window(self, name: str) -> None:
+        if self.window_manager:
+            self.window_manager.close_window(name)
+
+    def focus_window(self, name: str) -> None:
+        if self.window_manager:
+            self.window_manager.focus_window(name)
+
     @classmethod
-    def start(cls, routes, sidebar_items=None, title="FletPlus App", theme_config=None):
+    def start(
+        cls,
+        routes,
+        sidebar_items=None,
+        title="FletPlus App",
+        theme_config=None,
+        use_window_manager: bool = False,
+    ):
         def main(page: ft.Page):
-            app = cls(page, routes, sidebar_items, title, theme_config)
+            app = cls(
+                page,
+                routes,
+                sidebar_items,
+                title,
+                theme_config,
+                use_window_manager,
+            )
             app.build()
+
         ft.app(target=main)
