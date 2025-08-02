@@ -21,6 +21,7 @@ pip install fletplus
 | `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
 | `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
 | `FletPlusApp`  | Estructura base para apps con navegación y tema  |
+| `SystemTray`   | Icono de bandeja del sistema con eventos         |
 
 # 🧪 Ejemplo rápido
 
@@ -37,6 +38,16 @@ def main(page: ft.Page):
     page.add(table.build())
 
 ft.app(target=main)
+```
+
+## 🔔 Ejemplo de SystemTray
+
+```python
+from fletplus.desktop.system_tray import SystemTray
+
+tray = SystemTray(icon="icon.png", menu=["Abrir", "Salir"])
+tray.on_click(lambda: print("Clic en el icono"))
+tray.show()
 ```
 # 🔧 Estructura del proyecto
 
