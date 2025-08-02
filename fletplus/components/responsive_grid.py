@@ -1,4 +1,5 @@
 import flet as ft
+from fletplus.utils.responsive_manager import ResponsiveManager
 
 class ResponsiveGrid:
     def __init__(
@@ -48,3 +49,17 @@ class ResponsiveGrid:
             ],
             alignment=ft.MainAxisAlignment.START
         )
+
+    def init_responsive(self, page: ft.Page) -> ft.ResponsiveRow:
+        """Inicializa el grid y lo actualiza cuando cambia el ancho de la página."""
+        layout = self.build(page.width)
+
+        def rebuild(width: int) -> None:
+            updated = self.build(width)
+            layout.controls.clear()
+            layout.controls.extend(updated.controls)
+            page.update()
+
+        callbacks = {bp: rebuild for bp in self.breakpoints}
+        ResponsiveManager(page, callbacks)
+        return layout
