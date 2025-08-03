@@ -9,7 +9,7 @@ Demuestra los botones personalizados de FletPlus y sus estilos temáticos.
 python buttons_demo.py
 ```
 
-![Botones demo](buttons_demo.png)
+![Vista de botones temáticos con diferentes estilos](buttons_demo.png)
 
 ## responsive_container_demo.py
 Presenta el uso de `ResponsiveContainer` para ajustar el diseño según el tamaño de la pantalla.
@@ -18,7 +18,7 @@ Presenta el uso de `ResponsiveContainer` para ajustar el diseño según el tama�
 python responsive_container_demo.py
 ```
 
-![Responsive Container demo](responsive_container_demo.png)
+![Vista de contenedor responsivo con tarjetas reacomodadas](responsive_container_demo.png)
 
 ## typography_demo.py
 Muestra las variantes tipográficas definidas en el tema.
@@ -27,7 +27,7 @@ Muestra las variantes tipográficas definidas en el tema.
 python typography_demo.py
 ```
 
-![Tipografía demo](typography_demo.png)
+![Vista que muestra variantes tipográficas del tema](typography_demo.png)
 
 ## theme_demo.py
 Ejemplo de cambio dinámico entre tema claro y oscuro usando `ThemeManager`.
@@ -36,5 +36,5 @@ Ejemplo de cambio dinámico entre tema claro y oscuro usando `ThemeManager`.
 python theme_demo.py
 ```
 
-![Tema demo](theme_demo.png)
+![Vista del cambio entre tema claro y oscuro](theme_demo.png)
 
