@@ -29,7 +29,8 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     Returns
     -------
     dict[str, object]
-        Palette dictionary for the requested mode. If the mode key is
+        Palette dictionary for the requested mode with nested dictionaries
+        flattened using underscore-separated keys. If the mode key is
         missing in the file, an empty dictionary is returned.
 
     Raises
@@ -44,7 +45,19 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     with open(file_path, "r", encoding="utf-8") as fh:
         data = json.load(fh)
 
-    return data.get(mode, {})
+    palette = data.get(mode, {})
+
+    def _flatten(prefix: str, value: object) -> dict[str, object]:
+        """Flatten nested dictionaries using underscore-separated keys."""
+        if isinstance(value, dict):
+            flattened: dict[str, object] = {}
+            for k, v in value.items():
+                new_prefix = f"{prefix}_{k}" if prefix else k
+                flattened.update(_flatten(new_prefix, v))
+            return flattened
+        return {prefix: value}
+
+    return _flatten("", palette)
 
 
 class ThemeManager:
