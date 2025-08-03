@@ -70,6 +70,9 @@ ft.app(target=main)
 # 🌓 Gestor de temas
 
 `ThemeManager` permite centralizar los tokens de estilo y alternar entre modo claro y oscuro.
+
+## 📁 Cargar tokens/paletas desde JSON o YAML
+
 Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`:
 
 **palette.json**
@@ -87,6 +90,10 @@ light:
 dark:
   primary: "#0D47A1"
 ```
+
+## 🔄 Ejemplo completo con ThemeManager
+
+El siguiente ejemplo muestra cómo cargar la paleta y alternar entre modo claro y oscuro:
 
 ```python
 import flet as ft
@@ -106,8 +113,11 @@ def main(page: ft.Page):
     theme.apply_theme()
 
     # Botón para alternar entre modo claro y oscuro
-    toggle = ft.IconButton(ft.icons.DARK_MODE, on_click=lambda _: theme.toggle_dark_mode())
-    page.add(toggle)
+    toggle = ft.IconButton(
+        ft.icons.DARK_MODE,
+        on_click=lambda _: theme.toggle_dark_mode(),
+    )
+    page.add(ft.Text("Modo actual"), toggle)
 
 
 ft.app(target=main)
