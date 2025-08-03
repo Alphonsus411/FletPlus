@@ -66,8 +66,9 @@ class FletPlusApp:
 
         self.theme.apply_theme()
 
-        # Mostrar primer contenido
-        self._load_route(0)
+        # Mostrar primer contenido si hay rutas
+        if self.routes:
+            self._load_route(0)
 
         self.page.add(
             ft.Row([
@@ -80,6 +81,9 @@ class FletPlusApp:
         self._load_route(index)
 
     def _load_route(self, index):
+        if not 0 <= index < len(self.routes):
+            print(f"Invalid route index: {index}")
+            return
         route_key = list(self.routes.keys())[index]
         builder = self.routes[route_key]
         self.content_container.content = builder()
