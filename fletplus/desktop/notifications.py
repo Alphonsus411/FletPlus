@@ -1,4 +1,4 @@
-import sys
+import sys  # Se utiliza para detectar la plataforma en tiempo de ejecución
 from typing import Callable
 
 
