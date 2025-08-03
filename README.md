@@ -20,6 +20,7 @@ pip install fletplus
 | `SmartTable`   | Tabla con paginación y ordenamiento integrados   |
 | `SidebarAdmin` | Menú lateral dinámico con ítems y selección       |
 | `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
+| `ResponsiveContainer` | Aplica estilos según breakpoints definidos |
 | `LineChart`   | Gráfico de líneas interactivo basado en Canvas   |
 | `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
 | `FletPlusApp`  | Estructura base para apps con navegación y tema  |
@@ -198,6 +199,25 @@ def main(page: ft.Page):
     manager = ResponsiveManager(page)
     manager.register_styles(texto, estilos)
     page.add(texto)
+
+ft.app(target=main)
+```
+
+# 🧱 ResponsiveContainer
+
+`ResponsiveContainer` simplifica la aplicación de estilos responsivos a un control
+sin manejar manualmente las señales de tamaño de la página.
+
+```python
+import flet as ft
+from fletplus.components.responsive_container import ResponsiveContainer
+from fletplus.styles import Style
+from fletplus.utils.responsive_style import ResponsiveStyle
+
+def main(page: ft.Page):
+    estilos = ResponsiveStyle(width={0: Style(padding=10), 600: Style(padding=30)})
+    contenedor = ResponsiveContainer(ft.Text("Hola"), estilos)
+    page.add(contenedor.build(page))
 
 ft.app(target=main)
 ```
