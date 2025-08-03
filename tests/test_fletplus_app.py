@@ -4,7 +4,8 @@ from fletplus.core import FletPlusApp
 
 
 class DummyPage:
-    def __init__(self):
+    def __init__(self, platform: str = "web"):
+        self.platform = platform
         self.title = ""
         self.controls = []
         self.theme = None
