@@ -1,8 +1,13 @@
 import flet as ft
+import pytest
 
 from fletplus.components.buttons import (
     PrimaryButton,
     SecondaryButton,
+    SuccessButton,
+    WarningButton,
+    DangerButton,
+    InfoButton,
     IconButton,
     OutlinedButton,
     TextButton,
@@ -237,3 +242,80 @@ def test_fab_states_and_shape():
     assert style.bgcolor[ft.ControlState.FOCUSED] == ft.colors.RED_300
     assert style.bgcolor[ft.ControlState.PRESSED] == ft.colors.RED_400
     assert style.icon_size[ft.ControlState.DEFAULT] == 24
+
+
+@pytest.mark.parametrize(
+    "cls,color_key,colors",
+    [
+        (
+            SuccessButton,
+            "success",
+            (
+                ft.colors.GREEN,
+                ft.colors.GREEN_200,
+                ft.colors.GREEN_300,
+                ft.colors.GREEN_400,
+            ),
+        ),
+        (
+            WarningButton,
+            "warning",
+            (
+                ft.colors.AMBER,
+                ft.colors.AMBER_200,
+                ft.colors.AMBER_300,
+                ft.colors.AMBER_400,
+            ),
+        ),
+        (
+            DangerButton,
+            "error",
+            (
+                ft.colors.RED,
+                ft.colors.RED_200,
+                ft.colors.RED_300,
+                ft.colors.RED_400,
+            ),
+        ),
+        (
+            InfoButton,
+            "info",
+            (
+                ft.colors.BLUE,
+                ft.colors.BLUE_200,
+                ft.colors.BLUE_300,
+                ft.colors.BLUE_400,
+            ),
+        ),
+    ],
+)
+def test_status_buttons(cls, color_key, colors):
+    page = DummyPage()
+    base, hover, focus, pressed = colors
+    theme = ThemeManager(
+        page=page,
+        tokens={
+            "colors": {
+                color_key: base,
+                f"{color_key}_hover": hover,
+                f"{color_key}_focus": focus,
+                f"{color_key}_pressed": pressed,
+            },
+            "typography": {"button_size": 15, "icon_size": 25},
+        },
+    )
+    btn = cls(
+        "Aceptar",
+        icon=ft.icons.CHECK,
+        theme=theme,
+        style=Style(bgcolor=ft.colors.BLACK),
+    )
+    container = btn.build()
+    assert container.bgcolor == ft.colors.BLACK
+    style = container.content.style
+    assert style.bgcolor[ft.ControlState.DEFAULT] == base
+    assert style.bgcolor[ft.ControlState.HOVERED] == hover
+    assert style.bgcolor[ft.ControlState.FOCUSED] == focus
+    assert style.bgcolor[ft.ControlState.PRESSED] == pressed
+    assert btn.style.text_style[ft.ControlState.DEFAULT].size == 15
+    assert btn.style.icon_size[ft.ControlState.DEFAULT] == 25
