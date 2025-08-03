@@ -57,3 +57,32 @@ def test_fletplus_app_initialization_and_routing():
     # Simular navegación a la segunda página
     app._on_nav(1)
     assert app.content_container.content.value == "Usuarios"
+
+
+def test_fletplus_app_without_routes():
+    page = DummyPage()
+    app = FletPlusApp(page, {})
+    app.build()
+    assert app.content_container.content is None
+
+
+def test_fletplus_app_invalid_route_index():
+    def home_view():
+        return ft.Text("Inicio")
+
+    routes = {"Inicio": home_view}
+
+    page = DummyPage()
+    app = FletPlusApp(page, routes)
+    app.build()
+
+    # Guardar contenido actual
+    original_content = app.content_container.content
+
+    # Índice fuera de rango positivo
+    app._on_nav(5)
+    assert app.content_container.content == original_content
+
+    # Índice negativo
+    app._on_nav(-1)
+    assert app.content_container.content == original_content
