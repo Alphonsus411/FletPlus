@@ -2,6 +2,8 @@ import flet as ft
 import flet.canvas as cv
 from typing import List, Tuple, Optional
 
+from fletplus.styles import Style
+
 
 class LineChart:
     """Gráfico de líneas interactivo basado en ``ft.Canvas``.
@@ -19,11 +21,23 @@ class LineChart:
         x_range: Optional[Tuple[float, float]] = None,
         y_range: Optional[Tuple[float, float]] = None,
         axis_color: str = ft.colors.BLACK,
+        style: Style | None = None,
     ) -> None:
+        """Inicializa el gráfico de líneas.
+
+        :param data: Lista de pares ``(x, y)``.
+        :param width: Ancho del lienzo.
+        :param height: Alto del lienzo.
+        :param x_range: Rango manual para el eje X.
+        :param y_range: Rango manual para el eje Y.
+        :param axis_color: Color de los ejes.
+        :param style: Estilo opcional aplicado al contenedor principal.
+        """
         self.data = data
         self.width = width
         self.height = height
         self.axis_color = axis_color
+        self.style = style
 
         self.x_min = x_range[0] if x_range else min(x for x, _ in data)
         self.x_max = x_range[1] if x_range else max(x for x, _ in data)
@@ -43,7 +57,8 @@ class LineChart:
             on_scroll=self._on_wheel,
             on_hover=self._on_hover,
         )
-        return ft.Stack([detector, ft.Container(self.tooltip, padding=5)])
+        stack = ft.Stack([detector, ft.Container(self.tooltip, padding=5)])
+        return self.style.apply(stack) if self.style else stack
 
     # ------------------------------------------------------------------
     def _on_wheel(self, e) -> None:
