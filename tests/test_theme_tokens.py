@@ -79,3 +79,29 @@ def test_default_color_tokens():
             expected = getattr(ft.colors, f"{base}_{shade}")
             assert manager.get_token(token) == expected
 
+
+def test_semantic_color_token_access_and_update():
+    """Semantic color tokens are retrievable and mutable."""
+
+    page = DummyPage()
+    manager = ThemeManager(page=page)
+
+    defaults = {
+        "info_100": ft.colors.BLUE_100,
+        "success_200": ft.colors.GREEN_200,
+        "warning_500": ft.colors.AMBER_500,
+        "error_900": ft.colors.RED_900,
+    }
+    updates = {
+        "info_100": "#001122",
+        "success_200": "#334455",
+        "warning_500": "#667788",
+        "error_900": "#99aabb",
+    }
+
+    for name, expected in defaults.items():
+        token = f"colors.{name}"
+        assert manager.get_token(token) == expected
+        manager.set_token(token, updates[name])
+        assert manager.get_token(token) == updates[name]
+
