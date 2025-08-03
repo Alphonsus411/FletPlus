@@ -75,7 +75,9 @@ ft.app(target=main)
 
 Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`.
 Además de `primary`, FletPlus reconoce grupos semánticos como `info`,
-`success`, `warning` y `error` con tonos `_100` ... `_900`.
+`success`, `warning` y `error` con tonos `_100` ... `_900` que luego se
+pueden consultar o modificar dinámicamente mediante `get_token` y
+`set_token`.
 
 **palette.json**
 ```json

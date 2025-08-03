@@ -31,8 +31,9 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     dict[str, object]
         Palette dictionary for the requested mode. Nested color groups
         such as ``{"info": {"100": "#BBDEFB"}}`` are flattened into
-        ``{"info_100": "#BBDEFB"}``. If the mode key is missing in the
-        file, an empty dictionary is returned.
+        ``{"info_100": "#BBDEFB"}``. This works for any semantic group
+        (``info``, ``success``, ``warning`` or ``error``). If the mode key
+        is missing in the file, an empty dictionary is returned.
 
     Raises
     ------
@@ -88,19 +89,20 @@ class ThemeManager:
 
         # Default token structure
         shade_range = range(100, 1000, 100)
+        base_colors = {
+            "secondary": "PURPLE",
+            "tertiary": "TEAL",
+            "info": "BLUE",
+            "success": "GREEN",
+            "warning": "AMBER",
+            "error": "RED",
+        }
+
         color_defaults = {
             "primary": primary_color,
-            **{f"info_{n}": getattr(ft.colors, f"BLUE_{n}") for n in shade_range},
-            **{f"secondary_{n}": getattr(ft.colors, f"PURPLE_{n}") for n in shade_range},
-            **{f"tertiary_{n}": getattr(ft.colors, f"TEAL_{n}") for n in shade_range},
             **{
                 f"{token}_{n}": getattr(ft.colors, f"{base}_{n}")
-                for token, base in {
-                    "info": "BLUE",
-                    "success": "GREEN",
-                    "warning": "AMBER",
-                    "error": "RED",
-                }.items()
+                for token, base in base_colors.items()
                 for n in shade_range
             },
         }
@@ -189,7 +191,8 @@ class ThemeManager:
         name:
             Name of the token using ``"group.token"`` notation, e.g.
             ``"colors.primary"`` or ``"radii.default"``. Token names may
-            contain underscores or numbers such as ``"colors.warning_500"``.
+            contain underscores or numbers such as ``"colors.warning_500"``
+            or ``"colors.success_200"``.
         value:
             New value for the token.
         """
@@ -205,7 +208,8 @@ class ThemeManager:
         ----------
         name:
             Token identifier in ``"group.token"`` format. Token names may
-            include underscores or numbers, e.g. ``"colors.info_100"``.
+            include underscores or numbers, e.g. ``"colors.info_100"`` or
+            ``"colors.error_900"``.
 
         Returns
         -------
