@@ -140,6 +140,26 @@ def main(page: ft.Page):
 ft.app(target=main)
 ```
 
+## 🎨 Estilos responsivos
+
+Para aplicar diferentes estilos según el tamaño u orientación de la página se
+puede combinar :class:`ResponsiveManager` con :class:`ResponsiveStyle`.
+
+```python
+import flet as ft
+from fletplus.styles import Style
+from fletplus.utils import ResponsiveManager, ResponsiveStyle
+
+def main(page: ft.Page):
+    texto = ft.Text("Hola")
+    estilos = ResponsiveStyle(width={0: Style(text_style=ft.TextStyle(size=10)), 600: Style(text_style=ft.TextStyle(size=20))})
+    manager = ResponsiveManager(page)
+    manager.register_styles(texto, estilos)
+    page.add(texto)
+
+ft.app(target=main)
+```
+
 # 🧪 Ejemplo rápido
 
 ```python
