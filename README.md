@@ -93,14 +93,17 @@ dark:
   primary: "#0D47A1"
 ```
 
-**palette_extended.json**
+### Grupos de colores semánticos
+
+Además de la clave `primary`, se pueden definir grupos de estado con distintos tonos.
+Los grupos admitidos son `info`, `success`, `warning` y `error`, cada uno con
+tonos `100` a `900`:
+
 ```json
 {
   "light": {
-    "primary": "#2196F3",
     "info": {
       "100": "#BBDEFB",
-      "200": "#90CAF9",
       "500": "#2196F3",
       "900": "#0D47A1"
     },
@@ -122,11 +125,11 @@ dark:
   }
 }
 ```
+
 `load_palette_from_file` aplanará automáticamente estas secciones en claves
-como `info_100` o `warning_500`.
-En el directorio `examples` se incluye el archivo
-[`palette_extended.json`](examples/palette_extended.json) con una definición
-completa de estos grupos.
+como `info_100` o `warning_500`. Revisa el archivo
+[`palette_extended.json`](examples/palette_extended.json) para una paleta
+completa con todos los tonos.
 
 ## 🔄 Ejemplo completo con ThemeManager
 
