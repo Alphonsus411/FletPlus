@@ -319,3 +319,39 @@ def test_status_buttons(cls, color_key, colors):
     assert style.bgcolor[ft.ControlState.PRESSED] == pressed
     assert btn.style.text_style[ft.ControlState.DEFAULT].size == 15
     assert btn.style.icon_size[ft.ControlState.DEFAULT] == 25
+
+
+@pytest.mark.parametrize(
+    "cls,color_key,color",
+    [
+        (SuccessButton, "success", ft.colors.GREEN),
+        (WarningButton, "warning", ft.colors.AMBER),
+        (DangerButton, "error", ft.colors.RED),
+        (InfoButton, "info", ft.colors.BLUE),
+    ],
+)
+def test_status_buttons_icon_end(cls, color_key, color):
+    page = DummyPage()
+    theme = ThemeManager(
+        page=page,
+        tokens={
+            "colors": {color_key: color},
+            "typography": {"button_size": 10, "icon_size": 20},
+        },
+    )
+    btn = cls(
+        "Acción",
+        icon=ft.icons.CHECK,
+        icon_position="end",
+        theme=theme,
+        style=Style(bgcolor=ft.colors.WHITE),
+    )
+    container = btn.build()
+    assert container.bgcolor == ft.colors.WHITE
+    row = container.content.content
+    assert isinstance(row.controls[0], ft.Text)
+    assert isinstance(row.controls[1], ft.Icon)
+    assert row.controls[0].size == 10
+    assert row.controls[1].size == 20
+    style = container.content.style
+    assert style.bgcolor[ft.ControlState.DEFAULT] == color
