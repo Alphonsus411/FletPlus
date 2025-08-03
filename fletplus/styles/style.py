@@ -27,21 +27,30 @@ class Style:
     border_color, border_top, border_right, border_bottom, border_left,
     border_style
         Color y estilo del borde. ``border_style`` acepta ``"solid"``,
-        ``"dashed"`` o ``"dotted"``.
+        ``"dashed"`` o ``"dotted"`` y se traduce a
+        :class:`ft.BorderSideStyle` cuando está disponible.
     background_image
         Ruta o URL de una imagen de fondo.
 
-    Ejemplo
-    -------
-    >>> import flet as ft
-    >>> from fletplus.styles import Style
-    >>> style = Style(width=100, height=50, bgcolor=ft.colors.BLUE,
-    ...              border_top=ft.colors.RED, border_style="dashed",
-    ...              margin_left=10, padding_top=5,
-    ...              background_image="https://example.com/bg.png")
-    >>> container = style.apply(ft.Text("hola"))
-    >>> container.width, container.height
-    (100, 50)
+    Ejemplos
+    --------
+    Aplicar un borde punteado y márgenes individuales::
+
+        >>> import flet as ft
+        >>> from fletplus.styles import Style
+        >>> style = Style(width=100, height=50, bgcolor=ft.colors.BLUE,
+        ...              border_top=ft.colors.RED, border_style="dashed",
+        ...              margin_left=10, padding_top=5)
+        >>> container = style.apply(ft.Text("hola"))
+        >>> container.width, container.height
+        (100, 50)
+
+    Usar una imagen de fondo que cubra todo el contenedor::
+
+        >>> img_style = Style(background_image="https://example.com/bg.png")
+        >>> img_container = img_style.apply(ft.Text("hola"))
+        >>> img_container.image_src
+        'https://example.com/bg.png'
     """
 
     margin: Optional[Any] = None
@@ -153,7 +162,12 @@ class Style:
                     self.border_style is not None
                     and "style" in side_fields
                 ):
-                    kwargs["style"] = self.border_style
+                    style_map = {
+                        "solid": getattr(ft.BorderSideStyle, "SOLID", "solid"),
+                        "dashed": getattr(ft.BorderSideStyle, "DASHED", "dashed"),
+                        "dotted": getattr(ft.BorderSideStyle, "DOTTED", "dotted"),
+                    }
+                    kwargs["style"] = style_map.get(self.border_style, self.border_style)
                 return ft.border.BorderSide(**kwargs)
 
             container_kwargs["border"] = ft.border.only(
