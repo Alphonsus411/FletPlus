@@ -286,6 +286,10 @@ comportamientos (ver carpeta tests/).
 pytest --cov=fletplus
 ```
 
+# 📱 Modo móvil
+
+> **Nota**: Para compilar y ejecutar en Android o iOS, es necesario tener configurado el entorno de Flet para cada plataforma. Consulta la [documentación oficial de instalación](https://flet.dev/docs/install/) y los [requisitos de despliegue móvil](https://flet.dev/docs/guides/mobile/) antes de generar tu app.
+
 # 🌐 Construcción PWA
 
 Para generar los archivos necesarios de una PWA se incluye el módulo
