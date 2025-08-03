@@ -25,6 +25,7 @@ def generate_service_worker(static_files: Iterable[str], output_dir: Path) -> Pa
     :return: Ruta al ``service_worker.js`` creado.
     """
     output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     sw_path = output_dir / "service_worker.js"
 
     files = list(static_files)
@@ -56,6 +57,7 @@ def generate_manifest(name: str, icons: List[Dict], start_url: str, output_dir: 
     :return: Ruta al ``manifest.json`` creado.
     """
     output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = output_dir / "manifest.json"
     manifest = {
         "name": name,
