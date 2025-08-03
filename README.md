@@ -73,7 +73,9 @@ ft.app(target=main)
 
 ## 📁 Cargar tokens/paletas desde JSON o YAML
 
-Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`:
+Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`.
+Además de `primary`, FletPlus reconoce grupos semánticos como `info`,
+`success`, `warning` y `error` con tonos `_100` ... `_900`.
 
 **palette.json**
 ```json
@@ -90,6 +92,41 @@ light:
 dark:
   primary: "#0D47A1"
 ```
+
+**palette_extended.json**
+```json
+{
+  "light": {
+    "primary": "#2196F3",
+    "info": {
+      "100": "#BBDEFB",
+      "200": "#90CAF9",
+      "500": "#2196F3",
+      "900": "#0D47A1"
+    },
+    "success": {
+      "100": "#C8E6C9",
+      "500": "#4CAF50",
+      "900": "#1B5E20"
+    },
+    "warning": {
+      "100": "#FFECB3",
+      "500": "#FFC107",
+      "900": "#FF6F00"
+    },
+    "error": {
+      "100": "#FFCDD2",
+      "500": "#F44336",
+      "900": "#B71C1C"
+    }
+  }
+}
+```
+`load_palette_from_file` aplanará automáticamente estas secciones en claves
+como `info_100` o `warning_500`.
+En el directorio `examples` se incluye el archivo
+[`palette_extended.json`](examples/palette_extended.json) con una definición
+completa de estos grupos.
 
 ## 🔄 Ejemplo completo con ThemeManager
 

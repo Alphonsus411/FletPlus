@@ -49,6 +49,9 @@ def test_get_and_set_tokens_updates_theme():
     assert page.theme.radii["default"] == 12
     assert manager.get_token("radii.default") == 12
 
+    manager.set_token("colors.info_100", "#BBDEFB")
+    assert manager.get_token("colors.info_100") == "#BBDEFB"
+
 
 def test_default_color_tokens():
     """Default semantic color tokens are retrievable via get_token."""
@@ -62,6 +65,7 @@ def test_default_color_tokens():
         "success": "GREEN",
         "warning": "AMBER",
         "error": "RED",
+        "info": "BLUE",
     }
 
     for prefix, base in color_map.items():
