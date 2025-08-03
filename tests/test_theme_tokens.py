@@ -59,6 +59,7 @@ def test_default_color_tokens():
     color_map = {
         "secondary": "PURPLE",
         "tertiary": "TEAL",
+        "info": "BLUE",
         "success": "GREEN",
         "warning": "AMBER",
         "error": "RED",

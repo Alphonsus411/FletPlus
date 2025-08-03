@@ -80,9 +80,16 @@ class ThemeManager:
             "primary": primary_color,
             **{f"secondary_{n}": getattr(ft.colors, f"PURPLE_{n}") for n in shade_range},
             **{f"tertiary_{n}": getattr(ft.colors, f"TEAL_{n}") for n in shade_range},
-            **{f"success_{n}": getattr(ft.colors, f"GREEN_{n}") for n in shade_range},
-            **{f"warning_{n}": getattr(ft.colors, f"AMBER_{n}") for n in shade_range},
-            **{f"error_{n}": getattr(ft.colors, f"RED_{n}") for n in shade_range},
+            **{
+                f"{token}_{n}": getattr(ft.colors, f"{base}_{n}")
+                for token, base in {
+                    "info": "BLUE",
+                    "success": "GREEN",
+                    "warning": "AMBER",
+                    "error": "RED",
+                }.items()
+                for n in shade_range
+            },
         }
         self.tokens: dict[str, dict[str, object]] = {
             "colors": color_defaults,
