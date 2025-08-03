@@ -4,7 +4,7 @@ from fletplus.components.sidebar_admin import SidebarAdmin
 from fletplus.desktop.window_manager import WindowManager
 from fletplus.utils.shortcut_manager import ShortcutManager
 from fletplus.components.command_palette import CommandPalette
-from fletplus.utils.device import is_mobile, is_web
+from fletplus.utils.device import is_mobile, is_web, is_desktop
 
 class FletPlusApp:
     def __init__(
@@ -30,9 +30,15 @@ class FletPlusApp:
         self.sidebar_items = sidebar_items or []
 
         # Detectar plataforma para usos posteriores
-        self.platform = (
-            "mobile" if is_mobile(page) else "web" if is_web(page) else "desktop"
-        )
+        if is_mobile(page):
+            self.platform = "mobile"
+        elif is_web(page):
+            self.platform = "web"
+        elif is_desktop(page):
+            self.platform = "desktop"
+        else:
+            # En caso de plataforma desconocida, usar el valor original
+            self.platform = getattr(page, "platform", "unknown")
 
         config = (theme_config or {}).copy()
         tokens = config.get("tokens", {}).copy()
