@@ -52,6 +52,10 @@ def test_get_and_set_tokens_updates_theme():
     manager.set_token("colors.info_100", "#BBDEFB")
     assert manager.get_token("colors.info_100") == "#BBDEFB"
 
+    # set_token should also handle semantic color tokens with underscores
+    manager.set_token("colors.warning_500", ft.colors.RED_500)
+    assert manager.get_token("colors.warning_500") == ft.colors.RED_500
+
 
 def test_default_color_tokens():
     """Default semantic color tokens are retrievable via get_token."""
@@ -62,6 +66,7 @@ def test_default_color_tokens():
     color_map = {
         "secondary": "PURPLE",
         "tertiary": "TEAL",
+        "info": "BLUE",
         "success": "GREEN",
         "warning": "AMBER",
         "error": "RED",
