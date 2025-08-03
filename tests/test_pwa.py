@@ -1,4 +1,5 @@
 import json
+import pytest
 from fletplus.web.pwa import generate_service_worker, generate_manifest, register_pwa
 
 
@@ -31,3 +32,20 @@ def test_register_pwa_adds_scripts():
     register_pwa(page)
     assert any("manifest" in h for h in page.head)
     assert any("serviceWorker" in s for s in page.scripts)
+
+
+def test_register_pwa_escapes_urls():
+    page = DummyPage()
+    manifest = "manifest.json?name=app&mode=test"
+    sw = "sw.js?name=app&mode=test"
+    register_pwa(page, manifest, sw)
+    assert any("manifest.json?name=app&amp;mode=test" in h for h in page.head)
+    assert any("sw.js?name=app&mode=test" in s for s in page.scripts)
+
+
+def test_register_pwa_rejects_invalid_urls():
+    page = DummyPage()
+    with pytest.raises(ValueError):
+        register_pwa(page, "<bad>", "service_worker.js")
+    with pytest.raises(ValueError):
+        register_pwa(page, "manifest.json", "bad'sw.js")
