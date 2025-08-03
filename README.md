@@ -10,6 +10,7 @@ Proporciona un conjunto de controles personalizables como tablas inteligentes, g
 ```bash
 pip install fletplus
 ```
+- Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
 - **Requiere Python 3.9+ y flet>=0.27.0**
 
 ## 🧩 Componentes incluidos
@@ -23,6 +24,65 @@ pip install fletplus
 | `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
 | `FletPlusApp`  | Estructura base para apps con navegación y tema  |
 | `SystemTray`   | Icono de bandeja del sistema con eventos         |
+| `PrimaryButton` / `SecondaryButton` / `IconButton` | Conjunto de botones tematizados y personalizables |
+| `ResponsiveVisibility` | Oculta o muestra controles según tamaño u orientación |
+
+# 🎨 Sistema de estilos
+
+El dataclass `Style` permite envolver cualquier control de Flet dentro de un
+`Container` aplicando márgenes, padding, colores y bordes de forma declarativa.
+
+```python
+import flet as ft
+from fletplus.styles import Style
+
+def main(page: ft.Page):
+    estilo = Style(padding=20, bgcolor=ft.colors.AMBER_100, border_radius=10)
+    saludo = estilo.apply(ft.Text("Hola estilo"))
+    page.add(saludo)
+
+ft.app(target=main)
+```
+
+# 🖱️ Botones personalizados
+
+Incluye tres variantes listas para usar: `PrimaryButton`, `SecondaryButton` e
+`IconButton`, que aprovechan los tokens definidos en `ThemeManager` y aceptan
+`Style` para ajustes adicionales.
+
+```python
+import flet as ft
+from fletplus.components.buttons import PrimaryButton, SecondaryButton, IconButton
+from fletplus.themes.theme_manager import ThemeManager
+
+def main(page: ft.Page):
+    theme = ThemeManager(page, tokens={"typography": {"button_size": 16}})
+    theme.apply_theme()
+    page.add(
+        PrimaryButton("Guardar", icon=ft.icons.SAVE, theme=theme),
+        SecondaryButton("Cancelar", theme=theme),
+        IconButton(ft.icons.DELETE, label="Eliminar", theme=theme),
+    )
+
+ft.app(target=main)
+```
+
+# 📱 Diseño responsivo por dispositivo
+
+Con `ResponsiveVisibility` se puede mostrar u ocultar un control según el
+ancho, alto u orientación de la página, facilitando interfaces adaptables.
+
+```python
+import flet as ft
+from fletplus.utils.responsive_visibility import ResponsiveVisibility
+
+def main(page: ft.Page):
+    txt = ft.Text("Solo en pantallas anchas")
+    ResponsiveVisibility(page, txt, width_breakpoints={0: False, 800: True})
+    page.add(txt)
+
+ft.app(target=main)
+```
 
 # 🧪 Ejemplo rápido
 
