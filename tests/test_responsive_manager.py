@@ -1,12 +1,15 @@
 import flet as ft
+from fletplus.styles import Style
 from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.components.responsive_grid import ResponsiveGrid
 
 
 class DummyPage:
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int, platform: str = "windows"):
         self.width = width
         self.height = height
+        self.platform = platform
         self.on_resize = None
 
     def resize(self, width: int | None = None, height: int | None = None):
@@ -87,3 +90,70 @@ def test_responsive_manager_orientation_callbacks():
     page.resize(width=900, height=600)  # cambia a landscape
 
     assert calls == ["portrait", "landscape"]
+
+
+def test_responsive_style_by_width():
+    page = DummyPage(500, 800)
+    text = ft.Text("hola")
+    styles = ResponsiveStyle(
+        width={
+            0: Style(text_style=ft.TextStyle(size=10)),
+            600: Style(text_style=ft.TextStyle(size=20)),
+        }
+    )
+
+    manager = ResponsiveManager(page)
+    manager.register_styles(text, styles)
+
+    assert text.style.size == 10
+
+    page.resize(650)
+    assert text.style.size == 20
+
+
+def test_responsive_style_by_height():
+    page = DummyPage(500, 400)
+    text = ft.Text("hola")
+    styles = ResponsiveStyle(
+        height={
+            0: Style(text_style=ft.TextStyle(size=10)),
+            600: Style(text_style=ft.TextStyle(size=20)),
+        }
+    )
+
+    manager = ResponsiveManager(page)
+    manager.register_styles(text, styles)
+
+    assert text.style.size == 10
+
+    page.resize(height=650)
+    assert text.style.size == 20
+
+
+def test_responsive_style_by_orientation_and_device():
+    page = DummyPage(500, 800, platform="android")
+    text = ft.Text("hola")
+    styles = ResponsiveStyle(
+        orientation={
+            "landscape": Style(text_style=ft.TextStyle(size=20)),
+        },
+        device={
+            "desktop": Style(text_style=ft.TextStyle(size=30)),
+            "mobile": Style(text_style=ft.TextStyle(size=40)),
+        },
+    )
+
+    manager = ResponsiveManager(page)
+    manager.register_styles(text, styles)
+
+    # Inicialmente aplica estilo del dispositivo móvil
+    assert text.style.size == 40
+
+    # Cambia a landscape, debe usar estilo de orientación
+    page.resize(width=900, height=600)
+    assert text.style.size == 20
+
+    # Cambia de plataforma a escritorio y fuerza actualización
+    page.platform = "windows"
+    page.resize(900)  # disparar resize
+    assert text.style.size == 20

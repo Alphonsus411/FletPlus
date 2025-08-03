@@ -6,6 +6,7 @@ import flet as ft
 from typing import Callable, Dict
 
 from fletplus.styles import Style
+from .responsive_style import ResponsiveStyle
 
 
 class ResponsiveManager:
@@ -31,33 +32,38 @@ class ResponsiveManager:
         self._current_height_bp: int | None = None
         self._current_orientation: str | None = None
 
-        # Registro de estilos por control: {control: {bp: Style}}
-        self._styles: Dict[ft.Control, Dict[int, Style]] = {}
+        # Registro de estilos por control
+        self._styles: Dict[ft.Control, ResponsiveStyle] = {}
 
         self.page.on_resize = self._handle_resize
         self._handle_resize()
 
     # ------------------------------------------------------------------
-    def register_styles(self, control: ft.Control, styles: Dict[int, Style]) -> None:
+    def register_styles(
+        self,
+        control: ft.Control,
+        styles: Dict[int, Style] | ResponsiveStyle,
+    ) -> None:
         """Registra ``styles`` para ``control``.
 
-        ``styles`` es un diccionario donde la clave es el breakpoint de ancho y
-        el valor es una instancia de :class:`Style` que se aplica cuando el ancho
-        actual pertenece a dicho breakpoint.
+        ``styles`` puede ser un diccionario ``{breakpoint: Style}`` (por
+        compatibilidad retroactiva) o una instancia de
+        :class:`ResponsiveStyle`.
         """
 
-        self._styles[control] = styles
+        if isinstance(styles, ResponsiveStyle):
+            self._styles[control] = styles
+        else:
+            self._styles[control] = ResponsiveStyle(width=styles)
         self._apply_style(control)
 
     # ------------------------------------------------------------------
     def _apply_style(self, control: ft.Control) -> None:
-        styles = self._styles.get(control)
-        if not styles:
+        rstyle = self._styles.get(control)
+        if not rstyle:
             return
 
-        width = self.page.width or 0
-        bp = max((bp for bp in styles if width >= bp), default=None)
-        style = styles.get(bp)
+        style = rstyle.get_style(self.page)
         if style:
             style.apply(control)
 
