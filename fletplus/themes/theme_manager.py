@@ -75,8 +75,17 @@ class ThemeManager:
         self.dark_mode = False
 
         # Default token structure
+        shade_range = range(100, 1000, 100)
+        color_defaults = {
+            "primary": primary_color,
+            **{f"secondary_{n}": getattr(ft.colors, f"PURPLE_{n}") for n in shade_range},
+            **{f"tertiary_{n}": getattr(ft.colors, f"TEAL_{n}") for n in shade_range},
+            **{f"success_{n}": getattr(ft.colors, f"GREEN_{n}") for n in shade_range},
+            **{f"warning_{n}": getattr(ft.colors, f"AMBER_{n}") for n in shade_range},
+            **{f"error_{n}": getattr(ft.colors, f"RED_{n}") for n in shade_range},
+        }
         self.tokens: dict[str, dict[str, object]] = {
-            "colors": {"primary": primary_color},
+            "colors": color_defaults,
             "typography": {},
             "radii": {},
             "spacing": {"default": 8},
