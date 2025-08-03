@@ -3,9 +3,10 @@
 """Utilities to manage visual theme tokens for a Flet page.
 
 This module exposes :class:`ThemeManager`, a helper that keeps a dictionary
-of design tokens (colors, typography and radii) and applies them to a
-``ft.Page`` instance. Tokens can be queried or updated at runtime using
-``get_token`` and ``set_token`` which immediately refresh the page theme.
+of design tokens (colors, typography, radii, spacing, borders and shadows)
+and applies them to a ``ft.Page`` instance. Tokens can be queried or updated
+at runtime using ``get_token`` and ``set_token`` which immediately refresh
+the page theme.
 """
 
 from __future__ import annotations
@@ -22,9 +23,10 @@ class ThemeManager:
         ``ft.Page`` instance whose theme will be managed.
     tokens:
         Optional dictionary of initial tokens grouped by ``"colors"``,
-        ``"typography"`` and ``"radii"``. Each group contains key/value
-        pairs representing individual design tokens. Missing groups or
-        tokens are filled with sensible defaults.
+        ``"typography"``, ``"radii"``, ``"spacing"``, ``"borders`` and
+        ``"shadows"``. Each group contains key/value pairs representing
+        individual design tokens. Missing groups or tokens are filled with
+        sensible defaults.
     primary_color:
         Backwards compatible argument used when ``tokens`` does not specify
         ``"colors.primary"``. Defaults to ``ft.colors.BLUE``.
@@ -44,6 +46,9 @@ class ThemeManager:
             "colors": {"primary": primary_color},
             "typography": {},
             "radii": {},
+            "spacing": {"default": 8},
+            "borders": {"default": 1},
+            "shadows": {"default": "none"},
         }
 
         if tokens:
@@ -57,6 +62,9 @@ class ThemeManager:
         colors = self.tokens.get("colors", {})
         typography = self.tokens.get("typography", {})
         radii = self.tokens.get("radii", {})
+        spacing = self.tokens.get("spacing", {})
+        borders = self.tokens.get("borders", {})
+        shadows = self.tokens.get("shadows", {})
 
         self.page.theme = ft.Theme(
             color_scheme_seed=colors.get("primary"),
@@ -65,6 +73,9 @@ class ThemeManager:
         # Store additional tokens that are not directly supported by
         # ``ft.Theme`` as custom attributes.
         self.page.theme.radii = radii
+        self.page.theme.spacing = spacing
+        self.page.theme.borders = borders
+        self.page.theme.shadows = shadows
         self.page.theme_mode = (
             ft.ThemeMode.DARK if self.dark_mode else ft.ThemeMode.LIGHT
         )
