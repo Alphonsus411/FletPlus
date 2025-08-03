@@ -10,7 +10,7 @@ from fletplus.styles import Style
 
 try:  # soporte opcional para detección de dispositivo
     from fletplus.utils import device
-except Exception:  # pragma: no cover - el módulo puede no existir
+except ImportError:  # pragma: no cover - el módulo puede no existir
     device = None  # type: ignore
 
 
