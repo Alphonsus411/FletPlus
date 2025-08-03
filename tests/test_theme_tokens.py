@@ -49,6 +49,10 @@ def test_get_and_set_tokens_updates_theme():
     assert page.theme.radii["default"] == 12
     assert manager.get_token("radii.default") == 12
 
+    # set_token should also handle semantic color tokens with underscores
+    manager.set_token("colors.warning_500", ft.colors.RED_500)
+    assert manager.get_token("colors.warning_500") == ft.colors.RED_500
+
 
 def test_default_color_tokens():
     """Default semantic color tokens are retrievable via get_token."""

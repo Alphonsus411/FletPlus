@@ -138,6 +138,36 @@ class ThemeManager:
         self.apply_theme()
 
     # ------------------------------------------------------------------
+    @staticmethod
+    def _split_name(name: str) -> tuple[str, str]:
+        """Split a ``group.token`` string into its components.
+
+        This helper only separates on the first dot, allowing tokens to
+        contain underscores, numbers or any other characters (e.g.
+        ``"colors.warning_500"``).
+
+        Parameters
+        ----------
+        name:
+            Token identifier in ``"group.token"`` format.
+
+        Returns
+        -------
+        tuple[str, str]
+            The ``(group, token)`` pair.
+
+        Raises
+        ------
+        ValueError
+            If ``name`` does not contain a dot separator.
+        """
+
+        group, sep, token = name.partition(".")
+        if not sep:
+            raise ValueError("Token name must be in 'group.token' format")
+        return group, token
+
+    # ------------------------------------------------------------------
     def set_token(self, name: str, value: object) -> None:
         """Set a token value and update the theme.
 
@@ -145,12 +175,12 @@ class ThemeManager:
         ----------
         name:
             Name of the token using ``"group.token"`` notation, e.g.
-            ``"colors.primary"`` or ``"radii.default"``.
+            ``"colors.primary"`` or ``"radii.default"``. Token names may
+            contain underscores or numbers such as ``"colors.warning_500"``.
         value:
             New value for the token.
         """
-
-        group, token = name.split(".", 1)
+        group, token = self._split_name(name)
         self.tokens.setdefault(group, {})[token] = value
         self.apply_theme()
 
@@ -161,14 +191,14 @@ class ThemeManager:
         Parameters
         ----------
         name:
-            Token identifier in ``"group.token"`` format.
+            Token identifier in ``"group.token"`` format. Token names may
+            include underscores or numbers, e.g. ``"colors.info_100"``.
 
         Returns
         -------
         The token value if present, otherwise ``None``.
         """
-
-        group, token = name.split(".", 1)
+        group, token = self._split_name(name)
         return self.tokens.get(group, {}).get(token)
 
     # ------------------------------------------------------------------
