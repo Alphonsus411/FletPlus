@@ -1,5 +1,7 @@
+import json
 import flet as ft
-from fletplus.themes.theme_manager import ThemeManager
+import pytest
+from fletplus.themes.theme_manager import ThemeManager, load_palette_from_file
 
 class DummyPage:
     def __init__(self):
@@ -61,3 +63,15 @@ def test_spacing_border_shadow_tokens():
     theme.set_token("shadows.default", "small")
     assert theme.get_token("shadows.default") == "small"
     assert page.theme.shadows["default"] == "small"
+
+
+def test_load_palette_from_file_mode_validation(tmp_path):
+    palette = {"light": {"primary": "#fff"}, "dark": {"primary": "#000"}}
+    file_path = tmp_path / "palette.json"
+    file_path.write_text(json.dumps(palette))
+
+    assert load_palette_from_file(str(file_path), "light") == palette["light"]
+    assert load_palette_from_file(str(file_path), "dark") == palette["dark"]
+
+    with pytest.raises(ValueError):
+        load_palette_from_file(str(file_path), "midnight")

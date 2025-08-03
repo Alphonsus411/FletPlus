@@ -11,7 +11,40 @@ the page theme.
 
 from __future__ import annotations
 
+import json
 import flet as ft
+
+
+def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, object]:
+    """Load a color palette from a JSON file.
+
+    Parameters
+    ----------
+    file_path:
+        Path to the JSON file containing palette definitions under "light"
+        and/or "dark" keys.
+    mode:
+        Palette mode to load. Must be ``"light"`` or ``"dark"``.
+
+    Returns
+    -------
+    dict[str, object]
+        Palette dictionary for the requested mode. If the mode key is
+        missing in the file, an empty dictionary is returned.
+
+    Raises
+    ------
+    ValueError
+        If ``mode`` is not ``"light"`` or ``"dark"``.
+    """
+
+    if mode not in {"light", "dark"}:
+        raise ValueError("mode must be 'light' or 'dark'")
+
+    with open(file_path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    return data.get(mode, {})
 
 
 class ThemeManager:
