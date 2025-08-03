@@ -21,3 +21,15 @@ def test_file_drop_zone_filters_by_extension_and_size(tmp_path):
 
     assert result == [str(valid)]
     assert received == [str(valid)]
+
+
+def test_file_drop_zone_ignores_missing_paths(tmp_path):
+    valid = tmp_path / "ok.txt"
+    valid.write_text("data")
+    missing = tmp_path / "missing.txt"
+
+    zone = FileDropZone(allowed_extensions=[".txt"], max_size=1024)
+
+    result = zone.drop([str(valid), str(missing)])
+
+    assert result == [str(valid)]

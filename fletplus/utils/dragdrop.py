@@ -29,10 +29,20 @@ class FileDropZone:
     def _filter_files(self, file_paths: Iterable[str]) -> List[str]:
         valid: List[str] = []
         for path in file_paths:
-            suffix = Path(path).suffix.lower()
+            p = Path(path)
+            if not p.is_file():
+                continue
+
+            suffix = p.suffix.lower()
             if self.allowed_extensions and suffix not in self.allowed_extensions:
                 continue
-            if self.max_size is not None and os.path.getsize(path) > self.max_size:
-                continue
-            valid.append(str(path))
+
+            if self.max_size is not None:
+                try:
+                    if os.path.getsize(p) > self.max_size:
+                        continue
+                except OSError:
+                    continue
+
+            valid.append(str(p))
         return valid
