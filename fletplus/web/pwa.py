@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import re
+from html import escape
 from typing import Iterable, List, Dict
 
 import flet as ft
@@ -75,8 +77,18 @@ def register_pwa(
     Añade la etiqueta ``link`` del manifest y registra el Service Worker a
     través de un pequeño script.
     """
-    page.add_head_html(f'<link rel="manifest" href="{manifest_url}">')
+    _safe_url = re.compile(r'^[^\s<>"\']+$')
+
+    if not _safe_url.match(manifest_url):
+        raise ValueError("Invalid manifest URL")
+    if not _safe_url.match(service_worker_url):
+        raise ValueError("Invalid service worker URL")
+
+    page.add_head_html(
+        f'<link rel="manifest" href="{escape(manifest_url, quote=True)}">'
+    )
     page.add_script(
-        "if ('serviceWorker' in navigator) {" \
-        + "navigator.serviceWorker.register('" + service_worker_url + "');}"
+        "if ('serviceWorker' in navigator) {"
+        + f"navigator.serviceWorker.register({json.dumps(service_worker_url)});"
+        + "}"
     )
