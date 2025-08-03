@@ -29,8 +29,10 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     Returns
     -------
     dict[str, object]
-        Palette dictionary for the requested mode. If the mode key is
-        missing in the file, an empty dictionary is returned.
+        Palette dictionary for the requested mode. Nested color groups
+        such as ``{"info": {"100": "#BBDEFB"}}`` are flattened into
+        ``{"info_100": "#BBDEFB"}``. If the mode key is missing in the
+        file, an empty dictionary is returned.
 
     Raises
     ------
@@ -44,7 +46,17 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     with open(file_path, "r", encoding="utf-8") as fh:
         data = json.load(fh)
 
-    return data.get(mode, {})
+    palette = data.get(mode, {})
+
+    flat_palette: dict[str, object] = {}
+    for name, value in palette.items():
+        if isinstance(value, dict):
+            for shade, shade_value in value.items():
+                flat_palette[f"{name}_{shade}"] = shade_value
+        else:
+            flat_palette[name] = value
+
+    return flat_palette
 
 
 class ThemeManager:
@@ -78,6 +90,7 @@ class ThemeManager:
         shade_range = range(100, 1000, 100)
         color_defaults = {
             "primary": primary_color,
+            **{f"info_{n}": getattr(ft.colors, f"BLUE_{n}") for n in shade_range},
             **{f"secondary_{n}": getattr(ft.colors, f"PURPLE_{n}") for n in shade_range},
             **{f"tertiary_{n}": getattr(ft.colors, f"TEAL_{n}") for n in shade_range},
             **{
