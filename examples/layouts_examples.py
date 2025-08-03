@@ -3,6 +3,12 @@
 import flet as ft
 from fletplus.components.layouts import ResponsiveContainer, FlexRow, FlexColumn
 from fletplus.styles import Style
+from fletplus.themes.theme_manager import ThemeManager
+from fletplus.utils.responsive_typography import (
+    ResponsiveTypography,
+    responsive_text,
+    responsive_spacing,
+)
 
 
 def desktop_demo(page: ft.Page) -> None:
@@ -46,6 +52,22 @@ def mobile_demo(page: ft.Page) -> None:
         },
     )
     page.add(container.init_responsive(page))
+
+
+def typography_demo(page: ft.Page) -> None:
+    """Ejemplo de tipografía y espaciado responsivo."""
+
+    page.title = "Responsive typography"
+    theme = ThemeManager(page)
+    typography = ResponsiveTypography(page, theme)
+
+    txt = ft.Text("Texto adaptable", style=ft.TextStyle(size=responsive_text(page)))
+    typography.register_text(txt)
+
+    box = ft.Container(bgcolor=ft.colors.AMBER, padding=responsive_spacing(page))
+    typography.register_spacing_control(box)
+
+    page.add(txt, box)
 
 
 # Para ejecutar:
