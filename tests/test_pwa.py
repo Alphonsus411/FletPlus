@@ -1,4 +1,5 @@
 import json
+import shutil
 import pytest
 from fletplus.web.pwa import generate_service_worker, generate_manifest, register_pwa
 
@@ -16,12 +17,23 @@ class DummyPage:
 
 
 def test_generate_service_worker_and_manifest(tmp_path):
-    sw = generate_service_worker(["/", "/main.css"], tmp_path)
+    output_dir = tmp_path / "pwa"
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    assert not output_dir.exists()
+
+    sw = generate_service_worker(["/", "/main.css"], output_dir)
     assert sw.exists()
+    assert output_dir.exists()
     assert "CACHE_NAME" in sw.read_text()
 
+    shutil.rmtree(output_dir)
+    assert not output_dir.exists()
+
     icons = [{"src": "icon.png", "sizes": "192x192", "type": "image/png"}]
-    manifest = generate_manifest("App", icons, "/", tmp_path)
+    manifest = generate_manifest("App", icons, "/", output_dir)
+    assert output_dir.exists()
     data = json.loads(manifest.read_text())
     assert data["name"] == "App"
     assert data["start_url"] == "/"
