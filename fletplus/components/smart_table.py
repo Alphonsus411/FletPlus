@@ -1,14 +1,33 @@
 import flet as ft
+from typing import Callable, Optional
+
+
+try:
+    from collections.abc import Generator, Iterable
+except ImportError:  # pragma: no cover - Python <3.10
+    from typing import Generator, Iterable
 
 class SmartTable:
-    def __init__(self, columns, rows, sortable=True, page_size=10):
+    def __init__(
+        self,
+        columns,
+        rows=None,
+        sortable: bool = True,
+        page_size: int = 10,
+        virtualized: bool = False,
+        data_provider: Optional[Callable[[int, int], Iterable]] = None,
+        total_rows: Optional[int] = None,
+    ):
         self.columns = columns
-        self.rows = rows
-        self.sortable = sortable
+        self.rows = rows or []
+        self.virtualized = virtualized
+        self.data_provider = data_provider
+        self.sortable = sortable and not virtualized
         self.page_size = page_size
         self.current_page = 0
         self.sorted_column = None
         self.sort_ascending = True
+        self.total_rows = total_rows if virtualized else len(self.rows)
 
     def build(self):
         return ft.Column([
@@ -16,10 +35,11 @@ class SmartTable:
                 columns=[
                     ft.DataColumn(
                         label=ft.Text(col),
-                        on_sort=self._on_sort(index) if self.sortable else None
-                    ) for index, col in enumerate(self.columns)
+                        on_sort=self._on_sort(index) if self.sortable else None,
+                    )
+                    for index, col in enumerate(self.columns)
                 ],
-                rows=self._get_page_rows()
+                rows=self._get_page_rows(),
             ),
             ft.Row([
                 ft.ElevatedButton("Anterior", on_click=self._previous_page),
@@ -51,10 +71,15 @@ class SmartTable:
     def _get_page_rows(self):
         start = self.current_page * self.page_size
         end = start + self.page_size
+        if self.virtualized and self.data_provider:
+            data = self.data_provider(start, end)
+            if isinstance(data, Generator) or isinstance(data, Iterable):
+                return list(data)
+            return data
         return self.rows[start:end]
 
     def _next_page(self, e):
-        if (self.current_page + 1) * self.page_size < len(self.rows):
+        if (self.current_page + 1) * self.page_size < self.total_rows:
             self.current_page += 1
             try:
                 e.control.page.update()
