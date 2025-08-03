@@ -29,7 +29,8 @@ class SmartTable:
         :param page_size: Cantidad de filas por página.
         :param virtualized: Si utiliza proveedor de datos bajo demanda.
         :param data_provider: Función que devuelve filas para un rango.
-        :param total_rows: Total de filas disponibles al virtualizar.
+        :param total_rows: Total de filas disponibles al virtualizar. Si es ``None`` y
+            la tabla está virtualizada, se asumirá ``0``.
         :param style: Estilo opcional a aplicar al contenedor de la tabla.
         """
         self.columns = columns
@@ -41,7 +42,12 @@ class SmartTable:
         self.current_page = 0
         self.sorted_column = None
         self.sort_ascending = True
-        self.total_rows = total_rows if virtualized else len(self.rows)
+
+        if self.virtualized:
+            self.total_rows = total_rows if total_rows is not None else 0
+        else:
+            self.total_rows = len(self.rows)
+
         self.style = style
 
     def build(self):
@@ -96,6 +102,9 @@ class SmartTable:
         return self.rows[start:end]
 
     def _next_page(self, e):
+        if self.total_rows == 0:
+            return
+
         if (self.current_page + 1) * self.page_size < self.total_rows:
             self.current_page += 1
             try:
