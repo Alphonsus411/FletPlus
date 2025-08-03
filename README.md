@@ -67,6 +67,52 @@ def main(page: ft.Page):
 ft.app(target=main)
 ```
 
+# 🌓 Gestor de temas
+
+`ThemeManager` permite centralizar los tokens de estilo y alternar entre modo claro y oscuro.
+Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`:
+
+**palette.json**
+```json
+{
+  "light": {"primary": "#2196F3"},
+  "dark": {"primary": "#0D47A1"}
+}
+```
+
+**palette.yaml**
+```yaml
+light:
+  primary: "#2196F3"
+dark:
+  primary: "#0D47A1"
+```
+
+```python
+import flet as ft
+from fletplus.themes.theme_manager import ThemeManager, load_palette_from_file
+import yaml
+
+
+def main(page: ft.Page):
+    # Cargar tokens de colores desde JSON
+    colors = load_palette_from_file("palette.json", mode="light")
+
+    # Si prefieres YAML:
+    # with open("palette.yaml", "r", encoding="utf-8") as fh:
+    #     colors = yaml.safe_load(fh)["light"]
+
+    theme = ThemeManager(page, tokens={"colors": colors})
+    theme.apply_theme()
+
+    # Botón para alternar entre modo claro y oscuro
+    toggle = ft.IconButton(ft.icons.DARK_MODE, on_click=lambda _: theme.toggle_dark_mode())
+    page.add(toggle)
+
+
+ft.app(target=main)
+```
+
 # 📱 Diseño responsivo por dispositivo
 
 Con `ResponsiveVisibility` se puede mostrar u ocultar un control según el
