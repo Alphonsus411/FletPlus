@@ -145,7 +145,58 @@ class SecondaryButton(ft.ElevatedButton):
         return self._style.apply(self) if self._style else self
 
 
-class SuccessButton(ft.ElevatedButton):
+class _StatusButton(ft.ElevatedButton):
+    """Botón genérico con color configurable mediante tokens."""
+
+    def __init__(
+        self,
+        color_key: str,
+        label: str,
+        icon: str | None = None,
+        *,
+        icon_position: str = "start",
+        theme: ThemeManager | None = None,
+        style: Style | None = None,
+        **kwargs,
+    ) -> None:
+        self._style = style
+        text_style, icon_size_style, bgcolor = _get_button_tokens(theme, color_key)
+        button_style = ft.ButtonStyle(
+            text_style=text_style,
+            icon_size=icon_size_style,
+            bgcolor=bgcolor or None,
+        )
+
+        content = None
+        text_param = label
+        icon_param = icon
+        if icon is not None and icon_position == "end":
+            text_param = None
+            icon_param = None
+            text_size = text_style.size if text_style else None
+            icon_size = (
+                icon_size_style[ft.ControlState.DEFAULT]
+                if icon_size_style
+                else None
+            )
+            content = ft.Row(
+                [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
+                spacing=5,
+                alignment=ft.MainAxisAlignment.CENTER,
+            )
+        super().__init__(
+            text=text_param,
+            icon=icon_param,
+            content=content,
+            style=button_style,
+            **kwargs,
+        )
+
+    def build(self):
+        return self._style.apply(self) if self._style else self
+
+
+class SuccessButton(_StatusButton):
     """Botón de éxito basado en tokens de ``ThemeManager``."""
 
     def __init__(
@@ -158,44 +209,18 @@ class SuccessButton(ft.ElevatedButton):
         style: Style | None = None,
         **kwargs,
     ) -> None:
-        self._style = style
-        text_style, icon_size_style, bgcolor = _get_button_tokens(theme, "success")
-        button_style = ft.ButtonStyle(
-            text_style=text_style,
-            icon_size=icon_size_style,
-            bgcolor=bgcolor or None,
-        )
-
-        content = None
-        text_param = label
-        icon_param = icon
-        if icon is not None and icon_position == "end":
-            text_param = None
-            icon_param = None
-            text_size = text_style.size if text_style else None
-            icon_size = (
-                icon_size_style[ft.ControlState.DEFAULT]
-                if icon_size_style
-                else None
-            )
-            content = ft.Row(
-                [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
-                spacing=5,
-                alignment=ft.MainAxisAlignment.CENTER,
-            )
         super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
+            "success",
+            label,
+            icon,
+            icon_position=icon_position,
+            theme=theme,
+            style=style,
             **kwargs,
         )
 
-    def build(self):
-        return self._style.apply(self) if self._style else self
 
-
-class WarningButton(ft.ElevatedButton):
+class WarningButton(_StatusButton):
     """Botón de advertencia basado en tokens de ``ThemeManager``."""
 
     def __init__(
@@ -208,44 +233,18 @@ class WarningButton(ft.ElevatedButton):
         style: Style | None = None,
         **kwargs,
     ) -> None:
-        self._style = style
-        text_style, icon_size_style, bgcolor = _get_button_tokens(theme, "warning")
-        button_style = ft.ButtonStyle(
-            text_style=text_style,
-            icon_size=icon_size_style,
-            bgcolor=bgcolor or None,
-        )
-
-        content = None
-        text_param = label
-        icon_param = icon
-        if icon is not None and icon_position == "end":
-            text_param = None
-            icon_param = None
-            text_size = text_style.size if text_style else None
-            icon_size = (
-                icon_size_style[ft.ControlState.DEFAULT]
-                if icon_size_style
-                else None
-            )
-            content = ft.Row(
-                [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
-                spacing=5,
-                alignment=ft.MainAxisAlignment.CENTER,
-            )
         super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
+            "warning",
+            label,
+            icon,
+            icon_position=icon_position,
+            theme=theme,
+            style=style,
             **kwargs,
         )
 
-    def build(self):
-        return self._style.apply(self) if self._style else self
 
-
-class DangerButton(ft.ElevatedButton):
+class DangerButton(_StatusButton):
     """Botón de peligro basado en tokens de ``ThemeManager``."""
 
     def __init__(
@@ -258,44 +257,18 @@ class DangerButton(ft.ElevatedButton):
         style: Style | None = None,
         **kwargs,
     ) -> None:
-        self._style = style
-        text_style, icon_size_style, bgcolor = _get_button_tokens(theme, "error")
-        button_style = ft.ButtonStyle(
-            text_style=text_style,
-            icon_size=icon_size_style,
-            bgcolor=bgcolor or None,
-        )
-
-        content = None
-        text_param = label
-        icon_param = icon
-        if icon is not None and icon_position == "end":
-            text_param = None
-            icon_param = None
-            text_size = text_style.size if text_style else None
-            icon_size = (
-                icon_size_style[ft.ControlState.DEFAULT]
-                if icon_size_style
-                else None
-            )
-            content = ft.Row(
-                [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
-                spacing=5,
-                alignment=ft.MainAxisAlignment.CENTER,
-            )
         super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
+            "error",
+            label,
+            icon,
+            icon_position=icon_position,
+            theme=theme,
+            style=style,
             **kwargs,
         )
 
-    def build(self):
-        return self._style.apply(self) if self._style else self
 
-
-class InfoButton(ft.ElevatedButton):
+class InfoButton(_StatusButton):
     """Botón informativo basado en tokens de ``ThemeManager``."""
 
     def __init__(
@@ -308,41 +281,15 @@ class InfoButton(ft.ElevatedButton):
         style: Style | None = None,
         **kwargs,
     ) -> None:
-        self._style = style
-        text_style, icon_size_style, bgcolor = _get_button_tokens(theme, "info")
-        button_style = ft.ButtonStyle(
-            text_style=text_style,
-            icon_size=icon_size_style,
-            bgcolor=bgcolor or None,
-        )
-
-        content = None
-        text_param = label
-        icon_param = icon
-        if icon is not None and icon_position == "end":
-            text_param = None
-            icon_param = None
-            text_size = text_style.size if text_style else None
-            icon_size = (
-                icon_size_style[ft.ControlState.DEFAULT]
-                if icon_size_style
-                else None
-            )
-            content = ft.Row(
-                [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
-                spacing=5,
-                alignment=ft.MainAxisAlignment.CENTER,
-            )
         super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
+            "info",
+            label,
+            icon,
+            icon_position=icon_position,
+            theme=theme,
+            style=style,
             **kwargs,
         )
-
-    def build(self):
-        return self._style.apply(self) if self._style else self
 
 
 class IconButton(ft.IconButton):
