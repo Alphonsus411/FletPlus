@@ -49,3 +49,24 @@ def test_get_and_set_tokens_updates_theme():
     assert page.theme.radii["default"] == 12
     assert manager.get_token("radii.default") == 12
 
+
+def test_default_color_tokens():
+    """Default semantic color tokens are retrievable via get_token."""
+
+    page = DummyPage()
+    manager = ThemeManager(page=page)
+
+    color_map = {
+        "secondary": "PURPLE",
+        "tertiary": "TEAL",
+        "success": "GREEN",
+        "warning": "AMBER",
+        "error": "RED",
+    }
+
+    for prefix, base in color_map.items():
+        for shade in range(100, 1000, 100):
+            token = f"colors.{prefix}_{shade}"
+            expected = getattr(ft.colors, f"{base}_{shade}")
+            assert manager.get_token(token) == expected
+
