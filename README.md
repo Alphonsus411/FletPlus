@@ -19,6 +19,7 @@ pip install fletplus
 | `SmartTable`   | Tabla con paginación y ordenamiento integrados   |
 | `SidebarAdmin` | Menú lateral dinámico con ítems y selección       |
 | `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
+| `LineChart`   | Gráfico de líneas interactivo basado en Canvas   |
 | `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
 | `FletPlusApp`  | Estructura base para apps con navegación y tema  |
 | `SystemTray`   | Icono de bandeja del sistema con eventos         |
@@ -36,6 +37,20 @@ def main(page: ft.Page):
     ]
     table = SmartTable(["ID", "Nombre"], rows)
     page.add(table.build())
+
+ft.app(target=main)
+```
+
+## 📈 Ejemplo de LineChart
+
+```python
+import flet as ft
+from fletplus.components.charts import LineChart
+
+def main(page: ft.Page):
+    datos = [(0, 0), (1, 3), (2, 1), (3, 4)]
+    grafico = LineChart(datos)
+    page.add(grafico.build())
 
 ft.app(target=main)
 ```
