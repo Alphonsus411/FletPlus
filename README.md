@@ -29,13 +29,14 @@ pip install fletplus
 ```python
 import flet as ft
 from fletplus.components.smart_table import SmartTable
+from fletplus.styles import Style
 
 def main(page: ft.Page):
     rows = [
         ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Text("Alice"))]),
         ft.DataRow(cells=[ft.DataCell(ft.Text("2")), ft.DataCell(ft.Text("Bob"))]),
     ]
-    table = SmartTable(["ID", "Nombre"], rows)
+    table = SmartTable(["ID", "Nombre"], rows, style=Style(bgcolor=ft.colors.AMBER_50))
     page.add(table.build())
 
 ft.app(target=main)
@@ -46,10 +47,11 @@ ft.app(target=main)
 ```python
 import flet as ft
 from fletplus.components.charts import LineChart
+from fletplus.styles import Style
 
 def main(page: ft.Page):
     datos = [(0, 0), (1, 3), (2, 1), (3, 4)]
-    grafico = LineChart(datos)
+    grafico = LineChart(datos, style=Style(padding=10))
     page.add(grafico.build())
 
 ft.app(target=main)
@@ -77,7 +79,10 @@ fletplus/
 
 # 📋 Tests
 
-Todos los componentes están cubiertos por tests unitarios (ver carpeta tests/).
+Todos los componentes aceptan un argumento opcional `style` de tipo
+[`Style`](./fletplus/styles/style.py) para envolver la estructura principal con
+propiedades de margen, color de fondo y más. Los tests cubren estos
+comportamientos (ver carpeta tests/).
 
 ```bash
 pytest --cov=fletplus

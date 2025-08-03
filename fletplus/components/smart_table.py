@@ -1,6 +1,8 @@
 import flet as ft
 from typing import Callable, Optional
 
+from fletplus.styles import Style
+
 
 try:
     from collections.abc import Generator, Iterable
@@ -17,7 +19,19 @@ class SmartTable:
         virtualized: bool = False,
         data_provider: Optional[Callable[[int, int], Iterable]] = None,
         total_rows: Optional[int] = None,
+        style: Style | None = None,
     ):
+        """Inicializa una tabla inteligente.
+
+        :param columns: Encabezados de la tabla.
+        :param rows: Filas iniciales.
+        :param sortable: Si permite ordenar columnas (deshabilitado en modo virtualizado).
+        :param page_size: Cantidad de filas por página.
+        :param virtualized: Si utiliza proveedor de datos bajo demanda.
+        :param data_provider: Función que devuelve filas para un rango.
+        :param total_rows: Total de filas disponibles al virtualizar.
+        :param style: Estilo opcional a aplicar al contenedor de la tabla.
+        """
         self.columns = columns
         self.rows = rows or []
         self.virtualized = virtualized
@@ -28,9 +42,10 @@ class SmartTable:
         self.sorted_column = None
         self.sort_ascending = True
         self.total_rows = total_rows if virtualized else len(self.rows)
+        self.style = style
 
     def build(self):
-        return ft.Column([
+        column = ft.Column([
             ft.DataTable(
                 columns=[
                     ft.DataColumn(
@@ -46,6 +61,8 @@ class SmartTable:
                 ft.ElevatedButton("Siguiente", on_click=self._next_page),
             ])
         ])
+
+        return self.style.apply(column) if self.style else column
 
     def _on_sort(self, col_index):
         def handler(e):

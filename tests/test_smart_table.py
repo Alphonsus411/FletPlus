@@ -1,5 +1,6 @@
 import flet as ft
 from fletplus.components.smart_table import SmartTable
+from fletplus.styles import Style
 
 class DummyPage:
     def update(self): pass
@@ -46,3 +47,12 @@ def test_smart_table_full_behavior():
 
     table._previous_page(DummyEvent(0))
     assert table.current_page == 0
+
+
+def test_smart_table_style_applied():
+    style = Style(bgcolor=ft.colors.YELLOW)
+    table = SmartTable(["ID"], [], style=style)
+    built = table.build()
+    assert isinstance(built, ft.Container)
+    assert built.bgcolor == ft.colors.YELLOW
+    assert isinstance(built.content, ft.Column)
