@@ -55,7 +55,9 @@ class ResponsiveContainer:
                 "image_fit",
             ]
             for attr in container_attrs:
-                setattr(target, attr, getattr(styled, attr, getattr(target, attr, None)))
+                value = getattr(styled, attr, None)
+                if value is not None:
+                    setattr(target, attr, value)
 
         apply_style()
 
