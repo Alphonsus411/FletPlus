@@ -85,7 +85,7 @@ class FletPlusApp:
 
     def _load_route(self, index):
         if not 0 <= index < len(self.routes):
-            print(f"Invalid route index: {index}")
+            logger.error("Invalid route index: %s", index)
             return
         route_key = list(self.routes.keys())[index]
         builder = self.routes[route_key]
