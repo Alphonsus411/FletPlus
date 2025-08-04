@@ -77,13 +77,14 @@ def register_pwa(
     """Registra ``manifest.json`` y ``service_worker.js`` en una página Flet.
 
     Añade la etiqueta ``link`` del manifest y registra el Service Worker a
-    través de un pequeño script.
+    través de un pequeño script. Los parámetros ``manifest_url`` y
+    ``service_worker_url`` deben ser rutas relativas del mismo origen.
     """
     def _validate_url(url: str, name: str) -> None:
         parsed = urlparse(url)
+        if parsed.netloc:
+            raise ValueError(f"{name.capitalize()} URL must be same origin")
         if parsed.scheme not in ("", "http", "https"):
-            raise ValueError(f"Invalid {name} URL")
-        if parsed.scheme == "" and parsed.netloc:
             raise ValueError(f"Invalid {name} URL")
         if any(c in url for c in ' <>"\''):
             raise ValueError(f"Invalid {name} URL")
