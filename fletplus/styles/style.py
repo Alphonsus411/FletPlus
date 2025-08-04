@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from typing import Any, Optional
 
 import flet as ft
@@ -104,8 +105,8 @@ class Style:
             if hasattr(control, "style"):
                 try:
                     control.style = self.text_style
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logging.exception("Error applying text style: %s", exc)
 
         container_kwargs: dict[str, Any] = {}
 
