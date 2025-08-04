@@ -61,3 +61,11 @@ def test_register_pwa_rejects_invalid_urls():
         register_pwa(page, "<bad>", "service_worker.js")
     with pytest.raises(ValueError):
         register_pwa(page, "manifest.json", "bad'sw.js")
+
+
+def test_register_pwa_rejects_disallowed_schemes():
+    page = DummyPage()
+    with pytest.raises(ValueError):
+        register_pwa(page, "javascript:alert(1)", "service_worker.js")
+    with pytest.raises(ValueError):
+        register_pwa(page, "manifest.json", "ftp://example.com/sw.js")
