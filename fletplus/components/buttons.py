@@ -106,9 +106,9 @@ class SecondaryButton(ft.ElevatedButton):
             theme, "secondary"
         )
         if not bgcolor and theme is None:
-            bgcolor = {ft.ControlState.DEFAULT: ft.colors.BLUE_GREY_100}
+            bgcolor = {ft.ControlState.DEFAULT: ft.Colors.BLUE_GREY_100}
         elif not bgcolor:
-            bgcolor = {ft.ControlState.DEFAULT: theme.get_token("colors.secondary") or ft.colors.BLUE_GREY_100}
+            bgcolor = {ft.ControlState.DEFAULT: theme.get_token("colors.secondary") or ft.Colors.BLUE_GREY_100}
 
         button_style = ft.ButtonStyle(
             text_style=text_style,

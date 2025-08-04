@@ -15,10 +15,10 @@ def main(page: ft.Page):
         page=page,
         tokens={
             "colors": {
-                "primary": ft.colors.BLUE,
-                "primary_hover": ft.colors.BLUE_200,
-                "primary_focus": ft.colors.BLUE_300,
-                "primary_pressed": ft.colors.BLUE_400,
+                "primary": ft.Colors.BLUE,
+                "primary_hover": ft.Colors.BLUE_200,
+                "primary_focus": ft.Colors.BLUE_300,
+                "primary_pressed": ft.Colors.BLUE_400,
             },
             "typography": {"button_size": 16, "icon_size": 20},
         },

@@ -4,17 +4,17 @@ from fletplus.styles import Style
 
 
 def test_apply_returns_container_with_styles():
-    text_style = ft.TextStyle(color=ft.colors.WHITE)
-    shadow = ft.BoxShadow(blur_radius=5, color=ft.colors.BLACK)
-    gradient = ft.LinearGradient(colors=[ft.colors.RED, ft.colors.BLUE])
+    text_style = ft.TextStyle(color=ft.Colors.WHITE)
+    shadow = ft.BoxShadow(blur_radius=5, color=ft.Colors.BLACK)
+    gradient = ft.LinearGradient(colors=[ft.Colors.RED, ft.Colors.BLUE])
     transform = {"scale": ft.transform.Scale(0.5)}
     transition = ft.Animation(500, "easeInOut")
     style = Style(
         margin=5,
         padding=10,
-        bgcolor=ft.colors.RED,
+        bgcolor=ft.Colors.RED,
         border_radius=4,
-        border_color=ft.colors.BLUE,
+        border_color=ft.Colors.BLUE,
         text_style=text_style,
         width=100,
         height=200,
@@ -36,9 +36,9 @@ def test_apply_returns_container_with_styles():
     assert container.content is control
     assert container.margin == 5
     assert container.padding == 10
-    assert container.bgcolor == ft.colors.RED
+    assert container.bgcolor == ft.Colors.RED
     assert container.border_radius == 4
-    assert container.border.top.color == ft.colors.BLUE
+    assert container.border.top.color == ft.Colors.BLUE
     assert control.style == text_style
     assert container.width == 100
     assert container.height == 200

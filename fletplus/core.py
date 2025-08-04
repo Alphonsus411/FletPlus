@@ -56,7 +56,7 @@ class FletPlusApp:
         self.shortcuts = ShortcutManager(page)
         self.shortcuts.register("k", lambda: self.command_palette.open(self.page), ctrl=True)
 
-        self.content_container = ft.Container(expand=True, bgcolor=ft.colors.BACKGROUND)
+        self.content_container = ft.Container(expand=True, bgcolor=ft.Colors.SURFACE)
         self.sidebar = SidebarAdmin(self.sidebar_items, on_select=self._on_nav)
 
     def build(self):

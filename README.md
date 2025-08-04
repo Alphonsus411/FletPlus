@@ -38,7 +38,7 @@ import flet as ft
 from fletplus.styles import Style
 
 def main(page: ft.Page):
-    estilo = Style(padding=20, bgcolor=ft.colors.AMBER_100, border_radius=10)
+    estilo = Style(padding=20, bgcolor=ft.Colors.AMBER_100, border_radius=10)
     saludo = estilo.apply(ft.Text("Hola estilo"))
     page.add(saludo)
 
@@ -234,7 +234,7 @@ def main(page: ft.Page):
         ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Text("Alice"))]),
         ft.DataRow(cells=[ft.DataCell(ft.Text("2")), ft.DataCell(ft.Text("Bob"))]),
     ]
-    table = SmartTable(["ID", "Nombre"], rows, style=Style(bgcolor=ft.colors.AMBER_50))
+    table = SmartTable(["ID", "Nombre"], rows, style=Style(bgcolor=ft.Colors.AMBER_50))
     page.add(table.build())
 
 ft.app(target=main)

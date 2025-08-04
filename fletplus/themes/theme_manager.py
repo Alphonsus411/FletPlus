@@ -75,14 +75,14 @@ class ThemeManager:
         sensible defaults.
     primary_color:
         Backwards compatible argument used when ``tokens`` does not specify
-        ``"colors.primary"``. Defaults to ``ft.colors.BLUE``.
+        ``"colors.primary"``. Defaults to ``ft.Colors.BLUE``.
     """
 
     def __init__(
         self,
         page: ft.Page,
         tokens: dict | None = None,
-        primary_color: str = ft.colors.BLUE,
+        primary_color: str = ft.Colors.BLUE,
     ) -> None:
         self.page = page
         self.dark_mode = False
@@ -101,7 +101,7 @@ class ThemeManager:
         color_defaults = {
             "primary": primary_color,
             **{
-                f"{token}_{n}": getattr(ft.colors, f"{base}_{n}")
+                f"{token}_{n}": getattr(ft.Colors, f"{base}_{n}")
                 for token, base in base_colors.items()
                 for n in shade_range
             },
