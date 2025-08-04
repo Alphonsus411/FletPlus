@@ -12,6 +12,7 @@ the page theme.
 from __future__ import annotations
 
 import json
+import logging
 import flet as ft
 
 
@@ -32,8 +33,10 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
         Palette dictionary for the requested mode. Nested color groups
         such as ``{"info": {"100": "#BBDEFB"}}`` are flattened into
         ``{"info_100": "#BBDEFB"}``. This works for any semantic group
-        (``info``, ``success``, ``warning`` or ``error``). If the mode key
-        is missing in the file, an empty dictionary is returned.
+        (``info``, ``success``, ``warning`` or ``error``).
+        If the mode key is missing, the file cannot be opened or contains
+        invalid JSON, the error is logged and an empty dictionary is
+        returned.
 
     Raises
     ------
@@ -44,8 +47,15 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     if mode not in {"light", "dark"}:
         raise ValueError("mode must be 'light' or 'dark'")
 
-    with open(file_path, "r", encoding="utf-8") as fh:
-        data = json.load(fh)
+    try:
+        with open(file_path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        logging.error("Palette file '%s' not found", file_path)
+        return {}
+    except json.JSONDecodeError as exc:
+        logging.error("Invalid JSON in palette file '%s': %s", file_path, exc)
+        return {}
 
     palette = data.get(mode, {})
 
