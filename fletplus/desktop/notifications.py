@@ -2,6 +2,8 @@ import logging
 import sys  # Se utiliza para detectar la plataforma en tiempo de ejecución
 from typing import Callable
 
+logger = logging.getLogger(__name__)
+
 
 def _notify_windows(title: str, body: str) -> None:
     """Muestra una notificación en Windows."""
@@ -41,5 +43,5 @@ def show_notification(title: str, body: str) -> None:
     try:
         notifier(title, body)
     except (OSError, NotImplementedError) as err:
-        logging.error("Error al mostrar la notificación: %s", err)
+        logger.error("Error al mostrar la notificación: %s", err)
         _notify_in_page(title, body)

@@ -1,3 +1,4 @@
+import logging
 import flet as ft
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.components.sidebar_admin import SidebarAdmin
@@ -5,6 +6,8 @@ from fletplus.desktop.window_manager import WindowManager
 from fletplus.utils.shortcut_manager import ShortcutManager
 from fletplus.components.command_palette import CommandPalette
 from fletplus.utils.device import is_mobile, is_web, is_desktop
+
+logger = logging.getLogger(__name__)
 
 class FletPlusApp:
     def __init__(

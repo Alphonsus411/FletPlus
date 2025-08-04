@@ -15,6 +15,8 @@ import json
 import logging
 import flet as ft
 
+logger = logging.getLogger(__name__)
+
 
 def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, object]:
     """Load a color palette from a JSON file.
@@ -51,10 +53,10 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
         with open(file_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except FileNotFoundError:
-        logging.error("Palette file '%s' not found", file_path)
+        logger.error("Palette file '%s' not found", file_path)
         return {}
     except json.JSONDecodeError as exc:
-        logging.error("Invalid JSON in palette file '%s': %s", file_path, exc)
+        logger.error("Invalid JSON in palette file '%s': %s", file_path, exc)
         return {}
 
     palette = data.get(mode, {})

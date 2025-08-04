@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import logging
 from typing import Any, Optional
 
+logger = logging.getLogger(__name__)
+
 import flet as ft
 
 
@@ -106,7 +108,7 @@ class Style:
                 try:
                     control.style = self.text_style
                 except Exception as exc:
-                    logging.exception("Error applying text style: %s", exc)
+                    logger.exception("Error applying text style: %s", exc)
 
         container_kwargs: dict[str, Any] = {}
 
