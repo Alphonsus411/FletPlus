@@ -114,6 +114,10 @@ class FletPlusApp:
         theme_config=None,
         use_window_manager: bool = False,
     ):
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
         def main(page: ft.Page):
             app = cls(
                 page,
