@@ -34,7 +34,7 @@ class FileDropZone:
             p = Path(path)
             try:
                 resolved = p.resolve(strict=True)
-            except FileNotFoundError:
+            except (FileNotFoundError, OSError):
                 continue
 
             # reject symlinks in the path
