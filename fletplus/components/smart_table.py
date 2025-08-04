@@ -79,7 +79,7 @@ class SmartTable:
                 self.sort_ascending = True
 
             self.rows.sort(
-                key=lambda x: x.cells[col_index].content.value,
+                key=lambda x: getattr(x.cells[col_index].content, "value", ""),
                 reverse=not self.sort_ascending
             )
 

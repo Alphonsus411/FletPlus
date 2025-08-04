@@ -56,3 +56,22 @@ def test_smart_table_style_applied():
     assert isinstance(built, ft.Container)
     assert built.bgcolor == ft.colors.YELLOW
     assert isinstance(built.content, ft.Column)
+
+
+def test_smart_table_sort_with_non_text_controls():
+    rows = [
+        ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Icon(ft.icons.STAR))]),
+        ft.DataRow(cells=[ft.DataCell(ft.Text("2")), ft.DataCell(ft.TextField(value="a"))]),
+        ft.DataRow(cells=[ft.DataCell(ft.Text("3")), ft.DataCell(ft.Text("b"))]),
+    ]
+
+    table = SmartTable(["ID", "Mixed"], rows)
+    sort_handler = table._on_sort(1)
+
+    # No debe lanzar excepción al ordenar
+    sort_handler(DummyEvent(1))
+
+    # La fila con Icon (sin atributo value) debe quedar primero
+    assert isinstance(table.rows[0].cells[1].content, ft.Icon)
+    assert table.rows[1].cells[1].content.value == "a"
+    assert table.rows[2].cells[1].content.value == "b"
