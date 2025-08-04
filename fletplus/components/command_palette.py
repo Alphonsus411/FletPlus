@@ -1,3 +1,5 @@
+import logging
+
 import flet as ft
 from typing import Callable, Dict, List, Tuple
 
@@ -42,10 +44,14 @@ class CommandPalette:
             self.list_view.update()
 
     def _execute(self, cb: Callable):
-        self.dialog.open = False
-        if self.dialog.page:
-            self.dialog.update()
-        cb()
+        try:
+            cb()
+        except Exception:
+            logging.exception("Error al ejecutar el comando")
+        finally:
+            self.dialog.open = False
+            if self.dialog.page:
+                self.dialog.update()
 
     def open(self, page: ft.Page):
         self._refresh()
