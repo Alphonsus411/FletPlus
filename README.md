@@ -28,6 +28,24 @@ pip install fletplus
 | `PrimaryButton` / `SecondaryButton` / `IconButton` | Conjunto de botones tematizados y personalizables |
 | `ResponsiveVisibility` | Oculta o muestra controles según tamaño u orientación |
 
+# 📝 Configuración de logging
+
+`FletPlusApp.start` inicializa automáticamente un registro básico a nivel `INFO`.
+Si deseas un formato o nivel distinto, define `logging.basicConfig` antes de
+arrancar la aplicación:
+
+```python
+import logging
+from fletplus.core import FletPlusApp
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+FletPlusApp.start(routes)
+```
+
 # 🎨 Sistema de estilos
 
 El dataclass `Style` permite envolver cualquier control de Flet dentro de un
