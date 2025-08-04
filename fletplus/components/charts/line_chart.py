@@ -68,6 +68,7 @@ class LineChart:
             self.scale *= 1.1
         elif delta > 0:
             self.scale /= 1.1
+        self.scale = max(0.1, min(self.scale, 10))
         self._update_canvas()
 
     # ------------------------------------------------------------------
@@ -89,8 +90,14 @@ class LineChart:
 
     # ------------------------------------------------------------------
     def _screen_points(self) -> List[Tuple[float, float]]:
-        span_x = (self.x_max - self.x_min) * self.scale
-        span_y = (self.y_max - self.y_min) * self.scale
+        span_x = self.x_max - self.x_min
+        span_y = self.y_max - self.y_min
+        if span_x == 0:
+            span_x = 1
+        if span_y == 0:
+            span_y = 1
+        span_x *= self.scale
+        span_y *= self.scale
         return [
             (
                 (x - self.x_min) / span_x * self.width,
