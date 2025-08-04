@@ -75,3 +75,9 @@ def test_load_palette_from_file_mode_validation(tmp_path):
 
     with pytest.raises(ValueError):
         load_palette_from_file(str(file_path), "midnight")
+
+
+def test_load_palette_from_missing_file(caplog):
+    with caplog.at_level("ERROR"):
+        assert load_palette_from_file("/no/such/file.json") == {}
+    assert "not found" in caplog.text
