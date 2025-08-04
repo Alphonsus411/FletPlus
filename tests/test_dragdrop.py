@@ -33,3 +33,21 @@ def test_file_drop_zone_ignores_missing_paths(tmp_path):
     result = zone.drop([str(valid), str(missing)])
 
     assert result == [str(valid)]
+
+
+def test_file_drop_zone_rejects_traversal_and_symlinks(tmp_path):
+    base = tmp_path / "base"
+    base.mkdir()
+    inside = base / "inside.txt"
+    inside.write_text("ok")
+    outside = tmp_path / "outside.txt"
+    outside.write_text("no")
+    link = base / "link.txt"
+    link.symlink_to(outside)
+
+    zone = FileDropZone(allowed_extensions=[".txt"], base_directory=str(base))
+
+    traversal = base / ".." / outside.name
+    result = zone.drop([str(inside), str(traversal), str(link)])
+
+    assert result == [str(inside.resolve())]
