@@ -28,20 +28,20 @@ pip install fletplus
 | `PrimaryButton` / `SecondaryButton` / `IconButton` | Conjunto de botones tematizados y personalizables |
 | `ResponsiveVisibility` | Oculta o muestra controles según tamaño u orientación |
 
-# 📝 Configuración de logging
+# 📝 Logging
 
-`FletPlusApp.start` inicializa automáticamente un registro básico a nivel `INFO`.
-Si deseas un formato o nivel distinto, define `logging.basicConfig` antes de
-arrancar la aplicación:
+FletPlus utiliza el módulo estándar `logging` para registrar mensajes de la
+biblioteca. De forma predeterminada, `FletPlusApp.start` configura un registro
+básico a nivel `INFO`.
+
+Para cambiar el nivel de salida en tu aplicación, ajusta `logging` antes de
+iniciar FletPlus:
 
 ```python
 import logging
 from fletplus.core import FletPlusApp
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+logging.basicConfig(level=logging.DEBUG)
 
 FletPlusApp.start(routes)
 ```
