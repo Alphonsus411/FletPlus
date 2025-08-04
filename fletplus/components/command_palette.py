@@ -38,9 +38,13 @@ class CommandPalette:
             )
             for name, cb in self.filtered
         ]
+        if self.list_view.page:
+            self.list_view.update()
 
     def _execute(self, cb: Callable):
         self.dialog.open = False
+        if self.dialog.page:
+            self.dialog.update()
         cb()
 
     def open(self, page: ft.Page):
