@@ -87,6 +87,8 @@ class LineChart:
         data_pt = self.data[index]
         self.tooltip.value = f"{data_pt[0]}, {data_pt[1]}"
         self.tooltip.visible = True
+        if self.tooltip.page:
+            self.tooltip.update()
 
     # ------------------------------------------------------------------
     def _screen_points(self) -> List[Tuple[float, float]]:
