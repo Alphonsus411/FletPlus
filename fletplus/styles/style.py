@@ -39,8 +39,8 @@ class Style:
 
         >>> import flet as ft
         >>> from fletplus.styles import Style
-        >>> style = Style(width=100, height=50, bgcolor=ft.colors.BLUE,
-        ...              border_top=ft.colors.RED, border_style="dashed",
+        >>> style = Style(width=100, height=50, bgcolor=ft.Colors.BLUE,
+        ...              border_top=ft.Colors.RED, border_style="dashed",
         ...              margin_left=10, padding_top=5)
         >>> container = style.apply(ft.Text("hola"))
         >>> container.width, container.height

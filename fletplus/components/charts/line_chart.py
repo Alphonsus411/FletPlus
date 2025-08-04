@@ -20,7 +20,7 @@ class LineChart:
         height: int = 300,
         x_range: Optional[Tuple[float, float]] = None,
         y_range: Optional[Tuple[float, float]] = None,
-        axis_color: str = ft.colors.BLACK,
+        axis_color: str = ft.Colors.BLACK,
         style: Style | None = None,
     ) -> None:
         """Inicializa el gráfico de líneas.
@@ -45,7 +45,7 @@ class LineChart:
         self.y_max = y_range[1] if y_range else max(y for _, y in data)
 
         self.scale: float = 1.0
-        self.tooltip = ft.Text(visible=False, bgcolor=ft.colors.WHITE)
+        self.tooltip = ft.Text(visible=False, bgcolor=ft.Colors.WHITE)
         self.canvas = cv.Canvas(width=self.width, height=self.height)
 
         self._update_canvas()
@@ -112,7 +112,7 @@ class LineChart:
         shapes = []
 
         paint_axis = ft.Paint(stroke_width=1, color=self.axis_color)
-        paint_line = ft.Paint(stroke_width=2, color=ft.colors.BLUE)
+        paint_line = ft.Paint(stroke_width=2, color=ft.Colors.BLUE)
 
         shapes.append(cv.Line(0, self.height, self.width, self.height, paint=paint_axis))
         shapes.append(cv.Line(0, 0, 0, self.height, paint=paint_axis))

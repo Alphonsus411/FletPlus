@@ -64,7 +64,7 @@ def typography_demo(page: ft.Page) -> None:
     txt = ft.Text("Texto adaptable", style=ft.TextStyle(size=responsive_text(page)))
     typography.register_text(txt)
 
-    box = ft.Container(bgcolor=ft.colors.AMBER, padding=responsive_spacing(page))
+    box = ft.Container(bgcolor=ft.Colors.AMBER, padding=responsive_spacing(page))
     typography.register_spacing_control(box)
 
     page.add(txt, box)

@@ -42,7 +42,7 @@ class SidebarAdmin:
 
         container = ft.Container(
             width=self.width,
-            bgcolor=ft.colors.SURFACE_VARIANT,
+            bgcolor=ft.Colors.SURFACE,
             padding=10,
             content=ft.Column([
                 ft.Text(self.header, size=20, weight="bold"),

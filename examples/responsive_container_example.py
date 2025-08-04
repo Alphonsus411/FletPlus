@@ -11,8 +11,8 @@ def main(page: ft.Page) -> None:
 
     estilos = ResponsiveStyle(
         width={
-            0: Style(padding=10, bgcolor=ft.colors.BLUE_100),
-            600: Style(padding=30, bgcolor=ft.colors.GREEN_100),
+            0: Style(padding=10, bgcolor=ft.Colors.BLUE_100),
+            600: Style(padding=30, bgcolor=ft.Colors.GREEN_100),
         },
         base=Style(border_radius=10),
     )

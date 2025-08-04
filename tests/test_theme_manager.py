@@ -16,11 +16,11 @@ def test_theme_manager_initialization_and_toggle():
     page = DummyPage()
     theme = ThemeManager(
         page=page,
-        primary_color=ft.colors.RED
+        primary_color=ft.Colors.RED
     )
 
     theme.apply_theme()
-    assert page.theme.color_scheme_seed == ft.colors.RED
+    assert page.theme.color_scheme_seed == ft.Colors.RED
     assert page.theme_mode == ft.ThemeMode.LIGHT
     assert page.updated
 
@@ -30,8 +30,8 @@ def test_theme_manager_initialization_and_toggle():
     assert page.updated
 
     page.updated = False
-    theme.set_primary_color(ft.colors.GREEN)
-    assert page.theme.color_scheme_seed == ft.colors.GREEN
+    theme.set_primary_color(ft.Colors.GREEN)
+    assert page.theme.color_scheme_seed == ft.Colors.GREEN
     assert page.updated
 
 

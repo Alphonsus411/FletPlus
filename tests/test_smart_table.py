@@ -50,11 +50,11 @@ def test_smart_table_full_behavior():
 
 
 def test_smart_table_style_applied():
-    style = Style(bgcolor=ft.colors.YELLOW)
+    style = Style(bgcolor=ft.Colors.YELLOW)
     table = SmartTable(["ID"], [], style=style)
     built = table.build()
     assert isinstance(built, ft.Container)
-    assert built.bgcolor == ft.colors.YELLOW
+    assert built.bgcolor == ft.Colors.YELLOW
     assert isinstance(built.content, ft.Column)
 
 
