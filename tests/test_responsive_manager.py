@@ -157,3 +157,19 @@ def test_responsive_style_by_orientation_and_device():
     page.platform = "windows"
     page.resize(900)  # disparar resize
     assert text.style.size == 20
+
+
+def test_responsive_manager_preserves_existing_resize_handler():
+    page = DummyPage(500, 800)
+    calls: list[str] = []
+
+    def previous_handler(event):
+        calls.append("previous")
+
+    page.on_resize = previous_handler
+
+    ResponsiveManager(page, {0: lambda _w: calls.append("manager")})
+
+    page.resize(600)
+
+    assert calls == ["manager", "previous"]

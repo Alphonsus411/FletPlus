@@ -35,7 +35,14 @@ class ResponsiveManager:
         # Registro de estilos por control
         self._styles: Dict[ft.Control, ResponsiveStyle] = {}
 
-        self.page.on_resize = self._handle_resize
+        previous_handler = getattr(self.page, "on_resize", None)
+
+        def _combined_resize(event: ft.ControlEvent | None = None) -> None:
+            self._handle_resize(event)
+            if callable(previous_handler):
+                previous_handler(event)
+
+        self.page.on_resize = _combined_resize
         self._handle_resize()
 
     # ------------------------------------------------------------------
