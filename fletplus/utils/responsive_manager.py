@@ -3,10 +3,35 @@
 from __future__ import annotations
 
 import flet as ft
-from typing import Callable, Dict
+from typing import Any, Callable, Dict
 
 from fletplus.styles import Style
 from fletplus.utils.responsive_style import ResponsiveStyle
+
+
+_STYLE_ATTRS = [
+    "margin",
+    "padding",
+    "bgcolor",
+    "border_radius",
+    "border",
+    "width",
+    "height",
+    "min_width",
+    "max_width",
+    "min_height",
+    "max_height",
+    "shadow",
+    "gradient",
+    "alignment",
+    "opacity",
+    "image_src",
+    "image_fit",
+    "animate",
+    "scale",
+    "rotate",
+    "offset",
+]
 
 
 class ResponsiveManager:
@@ -34,6 +59,7 @@ class ResponsiveManager:
 
         # Registro de estilos por control
         self._styles: Dict[ft.Control, ResponsiveStyle] = {}
+        self._style_state: Dict[ft.Control, Dict[str, Any]] = {}
 
         previous_handler = getattr(self.page, "on_resize", None)
 
@@ -59,9 +85,13 @@ class ResponsiveManager:
         """
 
         if isinstance(styles, ResponsiveStyle):
-            self._styles[control] = styles
+            rstyle = styles
         else:
-            self._styles[control] = ResponsiveStyle(width=styles)
+            rstyle = ResponsiveStyle(width=styles)
+        self._styles[control] = rstyle
+        self._style_state[control] = {
+            "base": self._capture_base_attributes(control),
+        }
         self._apply_style(control)
 
     # ------------------------------------------------------------------
@@ -70,9 +100,41 @@ class ResponsiveManager:
         if not rstyle:
             return
 
+        state = self._style_state.setdefault(
+            control, {"base": self._capture_base_attributes(control)}
+        )
+
+        for attr, value in state["base"].items():
+            self._safe_setattr(control, attr, value)
+
         style = rstyle.get_style(self.page)
-        if style:
-            style.apply(control)
+        if not style:
+            return
+
+        styled_container = style.apply(control)
+
+        for attr in _STYLE_ATTRS:
+            if not hasattr(control, attr):
+                continue
+            value = getattr(styled_container, attr, None)
+            if value is not None:
+                self._safe_setattr(control, attr, value)
+
+    # ------------------------------------------------------------------
+    def _capture_base_attributes(self, control: ft.Control) -> Dict[str, Any]:
+        base: Dict[str, Any] = {}
+        for attr in _STYLE_ATTRS:
+            if hasattr(control, attr):
+                base[attr] = getattr(control, attr)
+        return base
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _safe_setattr(control: ft.Control, attr: str, value: Any) -> None:
+        try:
+            setattr(control, attr, value)
+        except AttributeError:
+            pass
 
     # ------------------------------------------------------------------
     def _handle_resize(self, e: ft.ControlEvent | None = None) -> None:
