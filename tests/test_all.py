@@ -1,14 +1,86 @@
-# tests/test_all.py
+"""Ejecutor agregado para lanzar varias pruebas unitarias a la vez.
 
-from tests.test_smart_table import test_smart_table_full_behavior
-from tests.test_sidebar_admin import test_sidebar_admin_build_and_selection
-from tests.test_responsive_grid import test_responsive_grid_builds_correctly
-from tests.test_theme_manager import test_theme_manager_initialization_and_toggle
-from tests.test_fletplus_app import test_fletplus_app_initialization_and_routing
+La importación ``from tests...`` funciona correctamente cuando ``pytest``
+descubre el paquete porque añade la raíz del proyecto al ``sys.path``.
+Sin embargo, ejecutar el módulo directamente con ``python tests/test_all.py``
+fallaba con ``ModuleNotFoundError`` al no resolverse el paquete ``tests``.
 
-def test_all_components():
-    test_smart_table_full_behavior()
-    test_sidebar_admin_build_and_selection()
-    test_responsive_grid_builds_correctly()
-    test_theme_manager_initialization_and_toggle()
-    test_fletplus_app_initialization_and_routing()
+Para mantener la compatibilidad con ambos escenarios utilizamos
+``importlib`` y, en caso de no estar empacado, añadimos la raíz del
+repositorio al ``sys.path`` antes de cargar los módulos necesarios.
+"""
+
+from __future__ import annotations
+
+from importlib import import_module
+from pathlib import Path
+import sys
+from typing import Protocol, cast
+
+
+class _SmartTableModule(Protocol):
+    def test_smart_table_full_behavior(self) -> None: ...
+
+
+class _SidebarAdminModule(Protocol):
+    def test_sidebar_admin_build_and_selection(self) -> None: ...
+
+
+class _ResponsiveGridModule(Protocol):
+    def test_responsive_grid_builds_correctly(self) -> None: ...
+
+
+class _ThemeManagerModule(Protocol):
+    def test_theme_manager_initialization_and_toggle(self) -> None: ...
+
+
+class _FletPlusAppModule(Protocol):
+    def test_fletplus_app_initialization_and_routing(self) -> None: ...
+
+
+def _module_prefix() -> str:
+    """Devuelve el prefijo apropiado para importar submódulos de pruebas."""
+
+    if __package__:
+        return f"{__package__}."
+
+    project_root = Path(__file__).resolve().parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    return "tests."
+
+
+def _load_tests() -> tuple[
+    _SmartTableModule,
+    _SidebarAdminModule,
+    _ResponsiveGridModule,
+    _ThemeManagerModule,
+    _FletPlusAppModule,
+]:
+    prefix = _module_prefix()
+    return (
+        cast(_SmartTableModule, import_module(f"{prefix}test_smart_table")),
+        cast(_SidebarAdminModule, import_module(f"{prefix}test_sidebar_admin")),
+        cast(
+            _ResponsiveGridModule, import_module(f"{prefix}test_responsive_grid")
+        ),
+        cast(_ThemeManagerModule, import_module(f"{prefix}test_theme_manager")),
+        cast(_FletPlusAppModule, import_module(f"{prefix}test_fletplus_app")),
+    )
+
+
+(
+    test_smart_table_module,
+    test_sidebar_admin_module,
+    test_responsive_grid_module,
+    test_theme_manager_module,
+    test_fletplus_app_module,
+) = _load_tests()
+
+
+def test_all_components() -> None:
+    test_smart_table_module.test_smart_table_full_behavior()
+    test_sidebar_admin_module.test_sidebar_admin_build_and_selection()
+    test_responsive_grid_module.test_responsive_grid_builds_correctly()
+    test_theme_manager_module.test_theme_manager_initialization_and_toggle()
+    test_fletplus_app_module.test_fletplus_app_initialization_and_routing()
