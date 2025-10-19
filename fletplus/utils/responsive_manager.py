@@ -6,7 +6,7 @@ import flet as ft
 from typing import Callable, Dict
 
 from fletplus.styles import Style
-from .responsive_style import ResponsiveStyle
+from fletplus.utils.responsive_style import ResponsiveStyle
 
 
 class ResponsiveManager:

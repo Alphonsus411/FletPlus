@@ -30,34 +30,47 @@ class ResponsiveContainer:
             else ft.Container(content=self.content)
         )
 
+        container_attrs = [
+            "padding",
+            "margin",
+            "bgcolor",
+            "border_radius",
+            "width",
+            "height",
+            "min_width",
+            "max_width",
+            "min_height",
+            "max_height",
+            "shadow",
+            "gradient",
+            "alignment",
+            "opacity",
+            "border",
+            "image_src",
+            "image_fit",
+        ]
+        initial_values = {attr: getattr(target, attr, None) for attr in container_attrs}
+
         def apply_style() -> None:
+            for attr, value in initial_values.items():
+                setattr(target, attr, value)
+
             style = self.styles.get_style(page)
             if not style:
                 return
+
             styled = style.apply(self.content)
-            container_attrs = [
-                "padding",
-                "margin",
-                "bgcolor",
-                "border_radius",
-                "width",
-                "height",
-                "min_width",
-                "max_width",
-                "min_height",
-                "max_height",
-                "shadow",
-                "gradient",
-                "alignment",
-                "opacity",
-                "border",
-                "image_src",
-                "image_fit",
-            ]
             for attr in container_attrs:
                 value = getattr(styled, attr, None)
                 if value is not None:
                     setattr(target, attr, value)
+
+        def run_width_callback(width: int) -> None:
+            active_bp = max((bp for bp in self.breakpoints if width >= bp), default=None)
+            if active_bp is not None:
+                callback = self.breakpoints.get(active_bp)
+                if callback:
+                    callback(width)
 
         apply_style()
 
@@ -71,14 +84,24 @@ class ResponsiveContainer:
             def make_cb(bp: int) -> Callable[[int], None]:
                 def cb(width: int) -> None:
                     apply_style()
-                    if bp in self.breakpoints:
-                        self.breakpoints[bp](width)
+                    run_width_callback(width)
                 return cb
 
             callbacks[bp] = make_cb(bp)
 
-        height_callbacks = {bp: lambda _h: apply_style() for bp in height_bps}
-        orientation_callbacks = {o: lambda _o: apply_style() for o in orientation_keys}
+        def _height_callback(_height: int) -> None:
+            apply_style()
+            run_width_callback(page.width or 0)
+
+        height_callbacks = {bp: _height_callback for bp in height_bps}
+
+        def _orientation_callback(_orientation_value: str) -> None:
+            apply_style()
+            run_width_callback(page.width or 0)
+
+        orientation_callbacks = {
+            key: _orientation_callback for key in orientation_keys
+        }
 
         ResponsiveManager(
             page,

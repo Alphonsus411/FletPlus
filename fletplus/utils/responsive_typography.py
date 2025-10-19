@@ -6,7 +6,7 @@ from typing import Dict
 
 import flet as ft
 
-from .responsive_manager import ResponsiveManager
+from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.themes.theme_manager import ThemeManager
 
 # Registro global por página para reutilizar la instancia
