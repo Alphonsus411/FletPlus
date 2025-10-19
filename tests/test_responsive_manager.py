@@ -159,6 +159,35 @@ def test_responsive_style_by_orientation_and_device():
     assert text.style.size == 20
 
 
+def test_responsive_style_updates_container_properties():
+    page = DummyPage(500, 800)
+    box = ft.Container(bgcolor="base", padding=ft.padding.all(5), width=120)
+    styles = ResponsiveStyle(
+        width={
+            0: Style(bgcolor="red", padding=10, width=200),
+            600: Style(bgcolor="blue"),
+        }
+    )
+
+    manager = ResponsiveManager(page)
+    manager.register_styles(box, styles)
+
+    assert box.bgcolor == "red"
+    assert box.padding == 10
+    assert box.width == 200
+
+    page.resize(650)
+    assert box.bgcolor == "blue"
+    assert isinstance(box.padding, ft.padding.Padding)
+    assert box.padding.left == 5
+    assert box.width == 120
+
+    page.resize(400)
+    assert box.bgcolor == "red"
+    assert box.padding == 10
+    assert box.width == 200
+
+
 def test_responsive_manager_preserves_existing_resize_handler():
     page = DummyPage(500, 800)
     calls: list[str] = []
