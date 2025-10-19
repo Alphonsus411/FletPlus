@@ -1,4 +1,4 @@
-from .buttons import (
+from fletplus.components.buttons import (
     PrimaryButton,
     SecondaryButton,
     SuccessButton,

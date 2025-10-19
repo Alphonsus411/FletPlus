@@ -1,7 +1,7 @@
 import flet as ft
 from typing import Dict
 
-from .responsive_manager import ResponsiveManager
+from fletplus.utils.responsive_manager import ResponsiveManager
 
 
 class ResponsiveVisibility:

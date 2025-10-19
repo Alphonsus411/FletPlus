@@ -8,6 +8,7 @@ class ShortcutManager:
     def __init__(self, page: ft.Page):
         self.page = page
         self._shortcuts: Dict[Tuple[str, bool, bool, bool], Callable] = {}
+        self._previous_handler = getattr(page, "on_keyboard_event", None)
         self.page.on_keyboard_event = self._handle_event
 
     def register(
@@ -34,5 +35,9 @@ class ShortcutManager:
         key = (e.key or "").lower()
         combo = (key, e.ctrl, e.shift, e.alt)
         callback = self._shortcuts.get(combo)
-        if callback:
-            callback()
+        try:
+            if callback:
+                callback()
+        finally:
+            if callable(self._previous_handler):
+                self._previous_handler(e)

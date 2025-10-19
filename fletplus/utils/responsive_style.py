@@ -9,7 +9,7 @@ import flet as ft
 from fletplus.styles import Style
 
 try:  # soporte opcional para detección de dispositivo
-    from . import device as _device_module
+    _device_module = __import__("fletplus.utils.device", fromlist=["device"])
 except ImportError:  # pragma: no cover - ejecutando como script
     _device_module = None  # type: ignore
 
