@@ -7,7 +7,14 @@ se distribuye la librería y mejora la experiencia para los usuarios finales.
 """
 
 from fletplus.core import FletPlusApp
-from fletplus.themes import ThemeManager, load_palette_from_file
+from fletplus.themes import (
+    ThemeManager,
+    load_palette_from_file,
+    list_palettes,
+    get_palette_tokens,
+    has_palette,
+    get_palette_definition,
+)
 from fletplus.components import (
     PrimaryButton,
     SecondaryButton,
@@ -53,6 +60,10 @@ __all__ = [
     "FletPlusApp",
     "ThemeManager",
     "load_palette_from_file",
+    "list_palettes",
+    "get_palette_tokens",
+    "has_palette",
+    "get_palette_definition",
     "PrimaryButton",
     "SecondaryButton",
     "SuccessButton",

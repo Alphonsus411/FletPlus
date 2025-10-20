@@ -3,6 +3,7 @@
 import flet as ft
 from fletplus.styles import Style
 
+
 class SidebarAdmin:
     def __init__(
         self,
@@ -11,55 +12,92 @@ class SidebarAdmin:
         header="Menú",
         width=250,
         style: Style | None = None,
+        *,
+        active_color: str | None = None,
+        inactive_color: str | None = None,
     ):
-        """Crea una barra lateral de administración.
+        """Crea una barra lateral de administración mejorada."""
 
-        :param menu_items: Lista de dicts con {"title": str, "icon": ft.IconName}
-        :param on_select: Función callback cuando se selecciona un ítem
-        :param header: Título de la barra lateral
-        :param width: Anchura del sidebar
-        :param style: Estilo opcional a aplicar sobre el contenedor principal
-        """
         self.menu_items = menu_items
         self.on_select = on_select
         self.header = header
         self.width = width
         self.selected_index = 0
-        self.tiles = []  # Para actualizar visualmente los seleccionados
+        self.tiles: list[ft.Container] = []
+        self._tile_entries: list[tuple[ft.Container, ft.Icon, ft.Text]] = []
         self.style = style
+        self.active_color = active_color or ft.Colors.PRIMARY
+        self.inactive_color = inactive_color or ft.Colors.with_opacity(0.72, ft.Colors.ON_SURFACE)
+        self._selected_bg = ft.Colors.with_opacity(0.12, self.active_color)
+        self._base_bg = ft.Colors.with_opacity(0.04, self.active_color)
 
     def build(self):
         self.tiles = []
+        self._tile_entries = []
 
+        nav_controls: list[ft.Control] = []
         for i, item in enumerate(self.menu_items):
-            tile = ft.ListTile(
-                title=ft.Text(item["title"]),
-                leading=ft.Icon(item.get("icon", ft.icons.CIRCLE)),
-                selected=(i == self.selected_index),
-                on_click=lambda e, idx=i: self._select_item(idx, e),
+            icon = ft.Icon(item.get("icon", ft.icons.CIRCLE), size=20)
+            text = ft.Text(item.get("title", ""), weight=ft.FontWeight.W_500)
+            row = ft.Row(
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[icon, text],
             )
-            self.tiles.append(tile)
+            container = ft.Container(
+                data=i,
+                content=row,
+                border_radius=ft.border_radius.all(18),
+                padding=ft.Padding(14, 10, 14, 10),
+                on_click=lambda e, idx=i: self._select_item(idx, e),
+                ink=True,
+            )
+            container.selected = (i == self.selected_index)
+            self.tiles.append(container)
+            self._tile_entries.append((container, icon, text))
+            self._apply_tile_state(i, container, icon, text)
+            nav_controls.append(container)
 
-        container = ft.Container(
+        content = ft.Container(
             width=self.width,
-            bgcolor=ft.Colors.SURFACE,
-            padding=10,
-            content=ft.Column([
-                ft.Text(self.header, size=20, weight="bold"),
-                ft.Divider(),
-                ft.Column(self.tiles, expand=True),
-            ])
+            bgcolor=ft.Colors.with_opacity(0.02, self.active_color),
+            border_radius=ft.border_radius.all(24),
+            padding=ft.Padding(6, 16, 6, 16),
+            content=ft.Column(
+                controls=[
+                    ft.Text(self.header, size=20, weight=ft.FontWeight.W_700),
+                    ft.Divider(opacity=0.3),
+                    ft.Column(nav_controls, expand=True, tight=True, spacing=6),
+                ],
+                spacing=12,
+                expand=True,
+            ),
         )
 
-        return self.style.apply(container) if self.style else container
+        return self.style.apply(content) if self.style else content
+
+    def select(self, index: int) -> None:
+        if not 0 <= index < len(self.menu_items):
+            return
+        self.selected_index = index
+        for i, (tile, icon, text) in enumerate(self._tile_entries):
+            self._apply_tile_state(i, tile, icon, text)
+            if tile.page:
+                tile.update()
+
+    def _apply_tile_state(self, index: int, tile: ft.Container, icon: ft.Icon, text: ft.Text) -> None:
+        is_selected = index == self.selected_index
+        tile.selected = is_selected
+        tile.bgcolor = self._selected_bg if is_selected else self._base_bg
+        icon.color = self.active_color if is_selected else self.inactive_color
+        text.color = self.active_color if is_selected else self.inactive_color
+        text.weight = ft.FontWeight.W_600 if is_selected else ft.FontWeight.W_500
 
     def _select_item(self, index, e):
-        self.selected_index = index
-
-        for i, tile in enumerate(self.tiles):
-            tile.selected = (i == index)
-
+        if self.selected_index == index:
+            return
+        self.select(index)
         if self.on_select:
             self.on_select(index)
-
-        e.control.page.update()
+        if e and e.control and e.control.page:
+            e.control.page.update()
