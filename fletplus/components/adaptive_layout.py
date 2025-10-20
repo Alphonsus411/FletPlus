@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Sequence
+from typing import TYPE_CHECKING, Callable, Sequence
 
 import flet as ft
 
@@ -16,6 +16,10 @@ from fletplus.utils.device_profiles import (
 )
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.themes.theme_manager import ThemeManager
+
+
+if TYPE_CHECKING:
+    from fletplus.components.accessibility_panel import AccessibilityPanel
 
 
 @dataclass
@@ -54,6 +58,7 @@ class AdaptiveNavigationLayout:
         header: ft.Control | None = None,
         theme: ThemeManager | None = None,
         accessibility: AccessibilityPreferences | None = None,
+        accessibility_panel: "AccessibilityPanel" | None = None,
         device_profiles: Sequence[DeviceProfile] | None = None,
     ) -> None:
         if not destinations:
@@ -64,6 +69,9 @@ class AdaptiveNavigationLayout:
         self.header = header
         self.theme = theme
         self.accessibility = accessibility or AccessibilityPreferences()
+        self.accessibility_panel = accessibility_panel
+        if self.accessibility_panel and self.accessibility_panel.preferences is not self.accessibility:
+            self.accessibility_panel.preferences = self.accessibility
         self.device_profiles = tuple(device_profiles or DEFAULT_DEVICE_PROFILES)
 
         self._page: ft.Page | None = None
@@ -102,6 +110,7 @@ class AdaptiveNavigationLayout:
 
         self._content_container = ft.Container(expand=True)
         self._manager: ResponsiveManager | None = None
+        self._accessibility_panel_control: ft.Control | None = None
 
     # Propiedades públicas ----------------------------------------------
     @property
@@ -192,13 +201,21 @@ class AdaptiveNavigationLayout:
         self._update_content()
         body_controls: list[ft.Control] = []
 
+        if self.accessibility_panel:
+            if self._page and (self._accessibility_panel_control is None):
+                self._accessibility_panel_control = self.accessibility_panel.build(self._page)
+            if self._accessibility_panel_control is not None:
+                self._accessibility_panel_control.visible = self.accessibility.show_accessibility_panel
+                if self.accessibility.show_accessibility_panel:
+                    body_controls.append(self._accessibility_panel_control)
+
         if device == "mobile":
             self._nav_bar.visible = True
             self._nav_rail.visible = False
             body_controls.append(self._content_container)
             if self.accessibility.enable_captions:
                 body_controls.append(self._caption_container)
-            layout = ft.Column(controls=body_controls, expand=True, spacing=0)
+            layout = ft.Column(controls=body_controls, expand=True, spacing=12)
             controls = [self._skip_button]
             if self.header:
                 controls.append(self.header)
@@ -208,7 +225,10 @@ class AdaptiveNavigationLayout:
             self._nav_bar.visible = False
             self._nav_rail.visible = True
             self._nav_rail.extended = device == "desktop"
-            content_stack = [self._content_container]
+            content_stack = []
+            if body_controls:
+                content_stack.extend(body_controls)
+            content_stack.append(self._content_container)
             if self.accessibility.enable_captions:
                 content_stack.append(self._caption_container)
             layout = ft.Row(
@@ -216,7 +236,11 @@ class AdaptiveNavigationLayout:
                 spacing=0,
                 controls=[
                     ft.Container(self._nav_rail, width=120 if device == "desktop" else 80),
-                    ft.Column(controls=content_stack, expand=True, spacing=0),
+                    ft.Column(
+                        controls=content_stack,
+                        expand=True,
+                        spacing=12 if body_controls else 0,
+                    ),
                 ],
             )
             controls = [self._skip_button]
@@ -239,3 +263,9 @@ class AdaptiveNavigationLayout:
         focus = getattr(self._page, "set_focus", None)
         if callable(focus) and self._content_container.content is not None:
             focus(self._content_container.content)
+
+    @property
+    def accessibility_panel_control(self) -> ft.Control | None:
+        """Devuelve el panel de accesibilidad asociado, si existe."""
+
+        return self._accessibility_panel_control
