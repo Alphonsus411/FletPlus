@@ -1,14 +1,21 @@
+import importlib
 import logging
 from pathlib import Path
 import sys
 
-if __package__:
-    from .test_fletplus_app import DummyPage
-else:  # pragma: no cover - solo ejecutado cuando se lanza como script
-    project_root = Path(__file__).resolve().parent.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-    from tests.test_fletplus_app import DummyPage
+
+def _ensure_tests_importable() -> None:
+    """Garantiza que ``tests`` sea importable aunque se ejecute el archivo directamente."""
+
+    if __package__ in (None, ""):
+        project_root = Path(__file__).resolve().parent.parent
+        project_root_str = str(project_root)
+        if project_root_str not in sys.path:
+            sys.path.insert(0, project_root_str)
+
+
+_ensure_tests_importable()
+DummyPage = importlib.import_module("tests.test_fletplus_app").DummyPage
 
 import flet as ft
 
