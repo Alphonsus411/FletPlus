@@ -1,3 +1,5 @@
+from typing import Optional
+
 import flet as ft
 from fletplus.styles import Style
 from fletplus.utils.responsive_manager import ResponsiveManager
@@ -33,11 +35,12 @@ class ResponsiveGrid:
                 1200: 4
             }
 
-    def build(self, page_width: int) -> ft.Control:
+    def build(self, page_width: Optional[int]) -> ft.Control:
+        width = page_width or 0
         # Determinar cuántas columnas usar según el ancho de página
         columns = 1
         for bp, cols in sorted(self.breakpoints.items()):
-            if page_width >= bp:
+            if width >= bp:
                 columns = cols
 
         col_span = max(1, int(12 / columns))  # Sistema de 12 columnas

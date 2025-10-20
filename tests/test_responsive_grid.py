@@ -27,3 +27,12 @@ def test_responsive_grid_builds_correctly():
     for container in layout.controls:
         assert isinstance(container, ft.Container)
         assert container.col == 3
+
+
+def test_responsive_grid_handles_none_width():
+    grid = ResponsiveGrid(children=[ft.Text("Elemento")])
+
+    layout = grid.build(page_width=None)
+
+    assert isinstance(layout, ft.ResponsiveRow)
+    assert all(isinstance(control, ft.Container) for control in layout.controls)
