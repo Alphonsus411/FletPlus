@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-import sys  # Se utiliza para detectar la plataforma en tiempo de ejecución
+import sys
 from typing import Callable
 
 logger = logging.getLogger(__name__)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional
@@ -14,7 +16,10 @@ class FileDropZone:
         base_directory: Optional[str] = None,
     ) -> None:
         self.allowed_extensions = (
-            [ext.lower() if ext.startswith(".") else f".{ext.lower()}" for ext in allowed_extensions]
+            [
+                ext.lower() if ext.startswith(".") else f".{ext.lower()}"
+                for ext in allowed_extensions
+            ]
             if allowed_extensions
             else None
         )
