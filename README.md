@@ -22,6 +22,7 @@ pip install fletplus
 | `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
 | `ResponsiveContainer` | Aplica estilos según breakpoints definidos |
 | `AdaptiveNavigationLayout` | Shell con navegación que cambia entre barra inferior, riel o columna según la plataforma |
+| `UniversalAdaptiveScaffold` | Estructura integral con navegación adaptable, panel secundario y controles de accesibilidad integrados |
 | `LineChart`   | Gráfico de líneas interactivo basado en Canvas   |
 | `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
 | `FletPlusApp`  | Estructura base para apps con navegación y tema  |
@@ -218,6 +219,48 @@ ft.app(target=main)
 - Los **perfiles de dispositivo** expuestos en `fletplus.utils` indican el
   número recomendado de columnas y permiten reaccionar a cambios de tamaño sin
   reescribir breakpoints manualmente.
+
+## 🌐 UniversalAdaptiveScaffold: UI universal y accesible
+
+`UniversalAdaptiveScaffold` combina navegación adaptable, paneles secundarios
+y controles de accesibilidad pensados para lector de pantalla y personas con
+baja audición. En móviles muestra una barra inferior accesible; en tabletas un
+`NavigationRail` compacto y en escritorio habilita un riel expandido junto a un
+panel lateral con información o herramientas.
+
+```python
+import flet as ft
+from fletplus.components import (
+    AdaptiveNavigationItem,
+    UniversalAdaptiveScaffold,
+    AccessibilityPanel,
+)
+from fletplus.utils.accessibility import AccessibilityPreferences
+
+
+def main(page: ft.Page):
+    prefs = AccessibilityPreferences(enable_captions=True, text_scale=1.1)
+    items = [
+        AdaptiveNavigationItem("home", "Inicio", ft.Icons.HOME_OUTLINED),
+        AdaptiveNavigationItem("reports", "Reportes", ft.Icons.INSIGHTS_OUTLINED),
+        AdaptiveNavigationItem("settings", "Ajustes", ft.Icons.SETTINGS_OUTLINED),
+    ]
+
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=items,
+        accessibility=prefs,
+        accessibility_panel=AccessibilityPanel(preferences=prefs),
+        page_title="Panel adaptable",
+        header_controls=[ft.Text("Estado del sistema", size=14)],
+        content_builder=lambda item, _: ft.Text(f"Vista: {item.label}"),
+        secondary_panel_builder=lambda item: ft.Text(f"Panel lateral de {item.label}"),
+    )
+
+    page.add(scaffold.build(page))
+
+
+ft.app(target=main)
+```
 
 ```python
 import flet as ft
