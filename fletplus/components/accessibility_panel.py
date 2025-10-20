@@ -55,6 +55,7 @@ class AccessibilityPanel:
         self._options_host: ft.Container | None = None
         self._text_scale_display = ft.Text("1.0×", weight=ft.FontWeight.W_600)
         self._text_scale_slider: ft.Slider | None = None
+        self._caption_mode_dropdown: ft.Dropdown | None = None
         self._toggles: list[_ToggleSpec] = [
             _ToggleSpec(
                 "Alto contraste",
@@ -115,6 +116,15 @@ class AccessibilityPanel:
 
     def toggle_captions(self, enabled: bool) -> None:
         self._handle_toggle("enable_captions", enabled)
+
+    def set_caption_mode(self, mode: str) -> None:
+        value = mode if mode in {"inline", "overlay"} else "inline"
+        if self.preferences.caption_mode == value:
+            return
+        self.preferences.caption_mode = value
+        if self._caption_mode_dropdown is not None:
+            self._caption_mode_dropdown.value = value
+        self._apply_preferences()
 
     # ------------------------------------------------------------------
     @property
@@ -199,6 +209,33 @@ class AccessibilityPanel:
                     content=toggle,
                 )
             )
+
+        caption_mode = ft.Dropdown(
+            value=self.preferences.caption_mode,
+            options=[
+                ft.dropdown.Option("inline", "Debajo del contenido"),
+                ft.dropdown.Option("overlay", "Superpuestos sobre la vista"),
+            ],
+            label="Ubicación de subtítulos",
+            tooltip="Elige dónde aparecerán los mensajes accesibles",
+        )
+
+        caption_mode.on_change = lambda e: self.set_caption_mode(
+            str(
+                getattr(e.control, "value", None)
+                if e.control is not None
+                else e.data or "inline"
+            )
+        )
+        self._caption_mode_dropdown = caption_mode
+
+        toggle_cards.append(
+            self._build_card(
+                title="Modo de subtítulos",
+                description="Decide si los subtítulos se muestran integrados o como superposición.",
+                content=caption_mode,
+            )
+        )
 
         self._cards = [slider_card, *toggle_cards]
         self._options_host = ft.Container()

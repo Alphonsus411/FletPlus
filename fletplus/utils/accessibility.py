@@ -17,6 +17,7 @@ class AccessibilityPreferences:
     high_contrast: bool = False
     reduce_motion: bool = False
     enable_captions: bool = False
+    caption_mode: str = "inline"
     tooltip_wait_ms: int = 400
     caption_duration_ms: int = 4000
     locale: str | None = None
@@ -89,6 +90,9 @@ class AccessibilityPreferences:
             typography = theme.tokens.setdefault("typography", {})
             typography["text_scale"] = self.text_scale
             typography["high_contrast"] = self.high_contrast
+            accessibility = theme.tokens.setdefault("accessibility", {})
+            accessibility["caption_mode"] = self.caption_mode
+            accessibility["captions_enabled"] = self.enable_captions
             theme.apply_theme()
 
         page.update()
