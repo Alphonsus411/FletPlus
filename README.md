@@ -212,9 +212,38 @@ ft.app(target=main)
 - **`AccessibilityPreferences`** facilita activar alto contraste, escalado de
   texto, reducción de transiciones y mostrar captions textuales pensados para
   personas con limitaciones visuales o auditivas.
+- **`AccessibilityPanel`** ofrece un panel interactivo de controles (escala de
+  texto, alto contraste, animaciones y subtítulos) que se redistribuye según el
+  ancho disponible y puede incorporarse en páginas web, escritorios o móviles.
 - Los **perfiles de dispositivo** expuestos en `fletplus.utils` indican el
   número recomendado de columnas y permiten reaccionar a cambios de tamaño sin
   reescribir breakpoints manualmente.
+
+```python
+import flet as ft
+from fletplus.components import AccessibilityPanel, AdaptiveDestination, AdaptiveNavigationLayout
+from fletplus.utils.accessibility import AccessibilityPreferences
+
+
+def main(page: ft.Page):
+    prefs = AccessibilityPreferences(enable_captions=True, text_scale=1.1)
+    panel = AccessibilityPanel(preferences=prefs)
+
+    layout = AdaptiveNavigationLayout(
+        [
+            AdaptiveDestination("Inicio", ft.Icons.HOME_OUTLINED),
+            AdaptiveDestination("Reportes", ft.Icons.INSERT_CHART_OUTLINED),
+        ],
+        lambda index, device: ft.Text(f"Vista {index} en {device}"),
+        accessibility=prefs,
+        accessibility_panel=panel,
+    )
+
+    page.add(layout.build(page))
+
+
+ft.app(target=main)
+```
 
 ## 🎨 Estilos responsivos
 
