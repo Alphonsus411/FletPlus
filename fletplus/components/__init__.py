@@ -22,6 +22,10 @@ from fletplus.components.buttons import (
     FloatingActionButton,
 )
 from fletplus.components.command_palette import CommandPalette
+from fletplus.components.adaptive_layout import (
+    AdaptiveDestination,
+    AdaptiveNavigationLayout,
+)
 from fletplus.components.responsive_container import ResponsiveContainer
 from fletplus.components.responsive_grid import ResponsiveGrid
 from fletplus.components.sidebar_admin import SidebarAdmin
@@ -40,6 +44,8 @@ __all__ = [
     "TextButton",
     "FloatingActionButton",
     "CommandPalette",
+    "AdaptiveDestination",
+    "AdaptiveNavigationLayout",
     "ResponsiveContainer",
     "ResponsiveGrid",
     "SidebarAdmin",
