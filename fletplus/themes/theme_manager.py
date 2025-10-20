@@ -13,7 +13,14 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Mapping
 import flet as ft
+
+from fletplus.themes.palettes import (
+    get_palette_definition,
+    has_palette,
+    list_palettes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -95,9 +102,14 @@ class ThemeManager:
         page: ft.Page,
         tokens: dict | None = None,
         primary_color: str = ft.Colors.BLUE,
+        *,
+        palette: str | Mapping[str, Mapping[str, object]] | None = None,
+        palette_mode: str | None = None,
     ) -> None:
         self.page = page
         self.dark_mode = False
+        if palette_mode in {"dark", "light"}:
+            self.dark_mode = palette_mode == "dark"
 
         # Default token structure
         shade_range = range(100, 1000, 100)
@@ -125,11 +137,26 @@ class ThemeManager:
             "spacing": {"default": 8},
             "borders": {"default": 1},
             "shadows": {"default": "none"},
+            "gradients": {},
         }
+
+        self._palette_definition: dict[str, Mapping[str, object]] | None = None
+        self._palette_name: str | None = None
+
+        if palette is not None:
+            try:
+                self.apply_palette(palette, mode=palette_mode, refresh=False)
+            except Exception as exc:  # pragma: no cover - errores logueados
+                logger.error("Failed to apply palette '%s': %s", palette, exc)
 
         if tokens:
             for group, values in tokens.items():
-                self.tokens.setdefault(group, {}).update(values)
+                if isinstance(values, Mapping):
+                    self.tokens.setdefault(group, {}).update(values)
+
+        # Aplicar la variante inicial de la paleta tras fusionar tokens
+        if self._palette_definition is not None:
+            self._apply_current_palette_variant()
 
     # ------------------------------------------------------------------
     def apply_theme(self) -> None:
@@ -155,6 +182,14 @@ class ThemeManager:
         self.page.theme_mode = (
             ft.ThemeMode.DARK if self.dark_mode else ft.ThemeMode.LIGHT
         )
+
+        background = colors.get("background")
+        if background:
+            self.page.bgcolor = background
+        surface = colors.get("surface")
+        if surface:
+            setattr(self.page, "surface_tint_color", surface)
+
         self.page.update()
 
     # ------------------------------------------------------------------
@@ -162,7 +197,49 @@ class ThemeManager:
         """Toggle between light and dark modes."""
 
         self.dark_mode = not self.dark_mode
+        self._apply_current_palette_variant()
         self.apply_theme()
+
+    # ------------------------------------------------------------------
+    def apply_palette(
+        self,
+        palette: str | Mapping[str, Mapping[str, object]],
+        *,
+        mode: str | None = None,
+        refresh: bool = True,
+    ) -> None:
+        """Carga una paleta predefinida o personalizada y actualiza los tokens."""
+
+        palette_definition: dict[str, Mapping[str, object]] | None
+
+        if isinstance(palette, str):
+            if not has_palette(palette):
+                raise ValueError(f"Palette '{palette}' is not registered")
+            definition = get_palette_definition(palette) or {}
+            palette_definition = {
+                key: value
+                for key, value in definition.items()
+                if isinstance(value, Mapping)
+            }
+            self._palette_name = palette
+        elif isinstance(palette, Mapping):
+            palette_definition = {
+                key: value
+                for key, value in palette.items()
+                if isinstance(value, Mapping)
+            }
+            self._palette_name = None
+        else:
+            raise TypeError("palette must be a name or a mapping of tokens")
+
+        if mode in {"light", "dark"}:
+            self.dark_mode = mode == "dark"
+
+        self._palette_definition = palette_definition
+        self._apply_current_palette_variant()
+
+        if refresh:
+            self.apply_theme()
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -235,4 +312,78 @@ class ThemeManager:
         """Backwards compatible helper to set the primary color."""
 
         self.set_token("colors.primary", color)
+
+    # ------------------------------------------------------------------
+    def get_color(self, token: str, default: object | None = None) -> object | None:
+        """Recupera un color almacenado en ``tokens.colors``."""
+
+        return self.tokens.get("colors", {}).get(token, default)
+
+    # ------------------------------------------------------------------
+    def get_gradient(self, token: str) -> object | None:
+        """Devuelve un gradiente preparado para usarse en contenedores."""
+
+        return self.tokens.get("gradients", {}).get(token)
+
+    # ------------------------------------------------------------------
+    def list_available_palettes(self) -> list[tuple[str, str]]:
+        """Lista las paletas disponibles junto a su descripción."""
+
+        return list(list_palettes())
+
+    # ------------------------------------------------------------------
+    def _apply_current_palette_variant(self) -> None:
+        if not self._palette_definition:
+            return
+
+        mode = "dark" if self.dark_mode else "light"
+        variant = self._palette_definition.get(mode)
+        if not isinstance(variant, Mapping):
+            # Intentar modo alternativo si no existe la variante
+            fallback = "light" if mode == "dark" else "dark"
+            variant = self._palette_definition.get(fallback)
+            if not isinstance(variant, Mapping):
+                return
+
+        self._merge_palette_tokens(variant)
+
+    # ------------------------------------------------------------------
+    def _merge_palette_tokens(self, palette_tokens: Mapping[str, object]) -> None:
+        for group, values in palette_tokens.items():
+            if group == "description":
+                continue
+            if group == "gradients" and isinstance(values, Mapping):
+                gradients = self.tokens.setdefault("gradients", {})
+                for name, definition in values.items():
+                    gradients[name] = self._build_gradient(definition)
+                continue
+
+            if isinstance(values, Mapping):
+                target = self.tokens.setdefault(group, {})
+                target.update(values)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _build_gradient(definition: object) -> object:
+        if isinstance(definition, ft.Gradient):
+            return definition
+        if not isinstance(definition, Mapping):
+            return definition
+
+        colors = list(definition.get("colors", []))
+        begin = ThemeManager._as_alignment(definition.get("begin"))
+        end = ThemeManager._as_alignment(definition.get("end"))
+        return ft.LinearGradient(colors=colors, begin=begin, end=end)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _as_alignment(value: object) -> ft.Alignment:
+        if isinstance(value, ft.Alignment):
+            return value
+        if isinstance(value, (tuple, list)) and len(value) == 2:
+            try:
+                return ft.alignment.Alignment(float(value[0]), float(value[1]))
+            except (TypeError, ValueError):
+                pass
+        return ft.alignment.center
 
