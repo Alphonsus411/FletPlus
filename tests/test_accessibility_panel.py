@@ -53,10 +53,14 @@ def test_accessibility_panel_updates_preferences(monkeypatch: pytest.MonkeyPatch
     panel.set_text_scale(1.4)
     panel.toggle_high_contrast(True)
     panel.toggle_captions(True)
+    panel.set_caption_mode("overlay")
 
     assert prefs.text_scale == pytest.approx(1.4)
     assert prefs.high_contrast is True
     assert prefs.enable_captions is True
+    assert prefs.caption_mode == "overlay"
+    assert panel._caption_mode_dropdown is not None
+    assert panel._caption_mode_dropdown.value == "overlay"
     assert calls[-1] == (pytest.approx(1.4), True, True)
 
 

@@ -1,5 +1,7 @@
 import flet as ft
 
+import flet as ft
+
 from fletplus.utils.accessibility import AccessibilityPreferences
 
 
@@ -44,3 +46,24 @@ def test_accessibility_preferences_default_focus_colors():
     assert page.theme.focus_color == ft.Colors.BLUE_300
     assert page.theme.highlight_color == ft.Colors.BLUE_100
     assert page.theme.text_theme.body_medium.size == 14
+
+
+def test_accessibility_preferences_store_tokens_on_theme_manager():
+    page = DummyPage()
+
+    class DummyThemeManager:
+        def __init__(self) -> None:
+            self.tokens: dict[str, dict[str, object]] = {}
+            self.applied = 0
+
+        def apply_theme(self) -> None:
+            self.applied += 1
+
+    manager = DummyThemeManager()
+    prefs = AccessibilityPreferences(enable_captions=True, caption_mode="overlay")
+
+    prefs.apply(page, manager)  # type: ignore[arg-type]
+
+    assert manager.tokens["accessibility"]["caption_mode"] == "overlay"
+    assert manager.tokens["accessibility"]["captions_enabled"] is True
+    assert manager.applied == 1

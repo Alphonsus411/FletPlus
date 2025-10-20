@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Callable, Sequence
 
 import flet as ft
 
+from fletplus.components.caption_overlay import CaptionOverlay
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.device_profiles import (
     DeviceProfile,
@@ -60,6 +61,10 @@ class AdaptiveNavigationLayout:
         accessibility: AccessibilityPreferences | None = None,
         accessibility_panel: "AccessibilityPanel" | None = None,
         device_profiles: Sequence[DeviceProfile] | None = None,
+        floating_action_button: ft.Control | None = None,
+        drawer: ft.Control | None = None,
+        secondary_panel_builder: Callable[[str], ft.Control] | None = None,
+        caption_overlay: CaptionOverlay | None = None,
     ) -> None:
         if not destinations:
             raise ValueError("AdaptiveNavigationLayout requiere al menos un destino")
@@ -73,6 +78,10 @@ class AdaptiveNavigationLayout:
         if self.accessibility_panel and self.accessibility_panel.preferences is not self.accessibility:
             self.accessibility_panel.preferences = self.accessibility
         self.device_profiles = tuple(device_profiles or DEFAULT_DEVICE_PROFILES)
+        self.floating_action_button = floating_action_button
+        self.drawer = drawer
+        self.secondary_panel_builder = secondary_panel_builder
+        self.caption_overlay = caption_overlay
 
         self._page: ft.Page | None = None
         self._current_device: str = "mobile"
@@ -111,6 +120,19 @@ class AdaptiveNavigationLayout:
         self._content_container = ft.Container(expand=True)
         self._manager: ResponsiveManager | None = None
         self._accessibility_panel_control: ft.Control | None = None
+        self._caption_overlay_control: ft.Control | None = None
+        self._fab_host = ft.Container(
+            alignment=ft.alignment.bottom_right,
+            padding=ft.Padding(0, 0, 16, 16),
+            visible=self.floating_action_button is not None,
+            content=self.floating_action_button,
+        )
+        self._drawer_button = ft.IconButton(
+            icon=ft.Icons.MENU,
+            tooltip="Abrir navegación",
+            on_click=self._open_drawer,
+            visible=self.drawer is not None,
+        )
 
     # Propiedades públicas ----------------------------------------------
     @property
@@ -130,6 +152,10 @@ class AdaptiveNavigationLayout:
         return self._caption_container
 
     @property
+    def caption_overlay_control(self) -> ft.Control | None:
+        return self._caption_overlay_control
+
+    @property
     def current_device(self) -> str:
         return self._current_device
 
@@ -143,10 +169,21 @@ class AdaptiveNavigationLayout:
 
         self._page = page
         self.accessibility.apply(page, self.theme)
+        if self.drawer is not None:
+            setattr(page, "drawer", self.drawer)
+        if self.caption_overlay is not None:
+            self._caption_overlay_control = self.caption_overlay.build(page)
+            self.caption_overlay.set_enabled(
+                self.accessibility.enable_captions
+                and self.accessibility.caption_mode == "overlay"
+            )
         self._current_device = get_device_profile(page.width or 0, self.device_profiles).name
         self._update_content()
 
-        callbacks = {profile.min_width: self._on_width_change for profile in iter_device_profiles(self.device_profiles)}
+        callbacks = {
+            profile.min_width: self._on_width_change
+            for profile in iter_device_profiles(self.device_profiles)
+        }
         self._manager = ResponsiveManager(
             page,
             breakpoints=callbacks,
@@ -183,7 +220,16 @@ class AdaptiveNavigationLayout:
     def _update_content(self) -> None:
         control = self.content_builder(self._selected_index, self._current_device)
         self._content_container.content = control
-        self._caption_text.value = self._caption_message()
+        message = self._caption_message()
+        inline_mode = self.accessibility.caption_mode == "inline"
+        self._caption_container.visible = self.accessibility.enable_captions and inline_mode
+        self._caption_text.value = message if inline_mode else ""
+        if (
+            self.caption_overlay is not None
+            and self.accessibility.enable_captions
+            and self.accessibility.caption_mode == "overlay"
+        ):
+            self.caption_overlay.announce(message)
 
     def _caption_message(self) -> str:
         if not self.accessibility.enable_captions:
@@ -194,11 +240,15 @@ class AdaptiveNavigationLayout:
     def _announce_destination(self) -> None:
         if not self.accessibility.enable_captions:
             return
-        self._caption_text.value = self._caption_message()
+        if self.accessibility.caption_mode == "inline":
+            self._caption_text.value = self._caption_message()
+        elif self.caption_overlay is not None:
+            self.caption_overlay.announce(self._caption_message())
 
     def _apply_device_layout(self, device: str) -> None:
         self._current_device = device
         self._update_content()
+
         body_controls: list[ft.Control] = []
 
         if self.accessibility_panel:
@@ -209,51 +259,113 @@ class AdaptiveNavigationLayout:
                 if self.accessibility.show_accessibility_panel:
                     body_controls.append(self._accessibility_panel_control)
 
+        inline_captions = (
+            self.accessibility.enable_captions
+            and self.accessibility.caption_mode == "inline"
+        )
+        overlay_captions = (
+            self.accessibility.enable_captions
+            and self.accessibility.caption_mode == "overlay"
+            and self._caption_overlay_control is not None
+        )
+
+        if self.caption_overlay is not None:
+            self.caption_overlay.set_enabled(overlay_captions)
+
+        secondary_panel: ft.Control | None = None
+        if self.secondary_panel_builder and device != "mobile":
+            secondary_panel = self.secondary_panel_builder(device)
+            if secondary_panel is not None:
+                secondary_panel = ft.Container(secondary_panel, expand=True)
+
+        controls: list[ft.Control]
+
         if device == "mobile":
             self._nav_bar.visible = True
             self._nav_rail.visible = False
             body_controls.append(self._content_container)
-            if self.accessibility.enable_captions:
+            if inline_captions:
                 body_controls.append(self._caption_container)
             layout = ft.Column(controls=body_controls, expand=True, spacing=12)
+            main_area = self._wrap_with_stack(layout, overlay_captions)
             controls = [self._skip_button]
-            if self.header:
-                controls.append(self.header)
-            controls.append(layout)
+
+            header_block: ft.Control | None = None
+            if self.drawer is not None:
+                self._drawer_button.visible = True
+                header_controls = [self._drawer_button]
+                if self.header is not None:
+                    header_controls.append(ft.Container(content=self.header, expand=True))
+                header_block = ft.Row(
+                    controls=header_controls,
+                    spacing=12,
+                    alignment=ft.MainAxisAlignment.START,
+                )
+            elif self.header is not None:
+                header_block = self.header
+            else:
+                self._drawer_button.visible = False
+            if header_block is not None:
+                controls.append(header_block)
+
+            controls.append(main_area)
             controls.append(self._nav_bar)
         else:
             self._nav_bar.visible = False
             self._nav_rail.visible = True
             self._nav_rail.extended = device == "desktop"
-            content_stack = []
+            content_stack: list[ft.Control] = []
             if body_controls:
                 content_stack.extend(body_controls)
             content_stack.append(self._content_container)
-            if self.accessibility.enable_captions:
+            if inline_captions:
                 content_stack.append(self._caption_container)
+            column_content = ft.Column(
+                controls=content_stack,
+                expand=True,
+                spacing=12 if body_controls else 0,
+            )
+            main_column = self._wrap_with_stack(column_content, overlay_captions)
+            row_controls: list[ft.Control] = [
+                ft.Container(self._nav_rail, width=120 if device == "desktop" else 80),
+                main_column,
+            ]
+            if secondary_panel is not None:
+                row_controls.append(secondary_panel)
+
             layout = ft.Row(
                 expand=True,
                 spacing=0,
-                controls=[
-                    ft.Container(self._nav_rail, width=120 if device == "desktop" else 80),
-                    ft.Column(
-                        controls=content_stack,
-                        expand=True,
-                        spacing=12 if body_controls else 0,
-                    ),
-                ],
+                controls=row_controls,
             )
             controls = [self._skip_button]
-            if self.header:
+            if self.header is not None:
                 controls.append(self.header)
             controls.append(layout)
+            self._drawer_button.visible = False
 
         self._root.controls = controls
         if self._page:
             self._page.update()
 
+    def _wrap_with_stack(self, control: ft.Control, overlay_active: bool) -> ft.Control:
+        needs_fab = self.floating_action_button is not None
+        needs_overlay = overlay_active and self._caption_overlay_control is not None
+        if not needs_fab and not needs_overlay:
+            return control
+
+        layers: list[ft.Control] = [control]
+        if needs_overlay and self._caption_overlay_control is not None:
+            layers.append(self._caption_overlay_control)
+        if needs_fab:
+            self._fab_host.content = self.floating_action_button
+            self._fab_host.visible = True
+            layers.append(self._fab_host)
+        else:
+            self._fab_host.visible = False
+        return ft.Stack(controls=layers, expand=True)
+
     def _on_width_change(self, width: int) -> None:
-        # Actualiza escala tipográfica si el ancho cambia significativamente
         if self._page and hasattr(self._page, "window_width"):
             setattr(self._page, "window_width", width)
 
@@ -269,3 +381,10 @@ class AdaptiveNavigationLayout:
         """Devuelve el panel de accesibilidad asociado, si existe."""
 
         return self._accessibility_panel_control
+
+    def _open_drawer(self, _event: ft.ControlEvent) -> None:
+        if not self._page or self.drawer is None:
+            return
+        open_drawer = getattr(self._page, "open_drawer", None)
+        if callable(open_drawer):
+            open_drawer()
