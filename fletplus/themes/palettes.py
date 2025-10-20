@@ -268,6 +268,108 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "botanical": {
+        "description": "Verdes orgánicos con acentos tierra para proyectos wellness.",
+        "light": {
+            "colors": {
+                "primary": "#2F855A",
+                "on_primary": "#FFFFFF",
+                "background": "#F3FAF4",
+                "on_background": "#1B4332",
+                "surface": "#FFFFFF",
+                "on_surface": "#1B4332",
+                "surface_variant": "#D8F3DC",
+                "on_surface_variant": "#2D6A4F",
+                "outline": "#74C69D",
+                "accent": "#FFB703",
+                "muted": "#52796F",
+                "gradient_app_header_start": "#2F855A",
+                "gradient_app_header_end": "#74C69D",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#1B4332", "#2F855A", "#74C69D"],
+                    "begin": (0.0, -1.0),
+                    "end": (0.4, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#95D5B2",
+                "on_primary": "#003322",
+                "background": "#0B1E16",
+                "on_background": "#D8F3DC",
+                "surface": "#123524",
+                "on_surface": "#D8F3DC",
+                "surface_variant": "#1E5234",
+                "on_surface_variant": "#B7E4C7",
+                "outline": "#52B788",
+                "accent": "#F4A259",
+                "muted": "#6C8E81",
+                "gradient_app_header_start": "#0B1E16",
+                "gradient_app_header_end": "#2D6A4F",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B1E16", "#1E5234", "#2D6A4F"],
+                    "begin": (0.0, -1.0),
+                    "end": (0.5, 1.0),
+                }
+            },
+        },
+    },
+    "cyberwave": {
+        "description": "Neones futuristas pensados para dashboards nocturnos.",
+        "light": {
+            "colors": {
+                "primary": "#7C3AED",
+                "on_primary": "#FFFFFF",
+                "background": "#F5F3FF",
+                "on_background": "#1E1B4B",
+                "surface": "#FFFFFF",
+                "on_surface": "#1E1B4B",
+                "surface_variant": "#DDD6FE",
+                "on_surface_variant": "#4C1D95",
+                "outline": "#A855F7",
+                "accent": "#22D3EE",
+                "muted": "#6B7280",
+                "gradient_app_header_start": "#7C3AED",
+                "gradient_app_header_end": "#22D3EE",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#4C1D95", "#7C3AED", "#22D3EE"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#C4B5FD",
+                "on_primary": "#1E1B4B",
+                "background": "#09021C",
+                "on_background": "#E0E7FF",
+                "surface": "#120A2A",
+                "on_surface": "#E0E7FF",
+                "surface_variant": "#1E1B4B",
+                "on_surface_variant": "#C4B5FD",
+                "outline": "#8B5CF6",
+                "accent": "#67E8F9",
+                "muted": "#94A3B8",
+                "gradient_app_header_start": "#120A2A",
+                "gradient_app_header_end": "#3B82F6",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#120A2A", "#4338CA", "#3B82F6"],
+                    "begin": (-0.2, -1.0),
+                    "end": (0.7, 1.0),
+                }
+            },
+        },
+    },
 }
 
 
