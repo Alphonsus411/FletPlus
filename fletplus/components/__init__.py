@@ -9,6 +9,7 @@ solo conoce ``fletplus.components``. Al exponer explícitamente los componentes
 desde aquí garantizamos importaciones absolutas estables.
 """
 
+from fletplus.components.adaptive_app_header import AdaptiveAppHeader, MetadataBadge
 from fletplus.components.buttons import (
     PrimaryButton,
     SecondaryButton,
@@ -39,6 +40,8 @@ from fletplus.components.universal_scaffold import (
 )
 
 __all__ = [
+    "AdaptiveAppHeader",
+    "MetadataBadge",
     "PrimaryButton",
     "SecondaryButton",
     "SuccessButton",
