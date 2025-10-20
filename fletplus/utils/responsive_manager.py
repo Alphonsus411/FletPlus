@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import flet as ft
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Sequence
 
 from fletplus.styles import Style
 from fletplus.utils.responsive_style import ResponsiveStyle
+from fletplus.utils.device_profiles import (
+    DeviceProfile,
+    DEFAULT_DEVICE_PROFILES,
+    get_device_profile,
+)
 
 
 _STYLE_ATTRS = [
@@ -47,15 +52,22 @@ class ResponsiveManager:
         breakpoints: Dict[int, Callable[[int], None]] | None = None,
         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,
         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,
+        device_callbacks: Dict[str, Callable[[str], None]] | None = None,
+        device_profiles: Sequence[DeviceProfile] | None = None,
     ):
         self.page = page
         self.breakpoints = breakpoints or {}
         self.height_breakpoints = height_breakpoints or {}
         self.orientation_callbacks = orientation_callbacks or {}
+        self.device_callbacks = device_callbacks or {}
+        self.device_profiles: Sequence[DeviceProfile] = (
+            tuple(device_profiles) if device_profiles else DEFAULT_DEVICE_PROFILES
+        )
 
         self._current_width_bp: int | None = None
         self._current_height_bp: int | None = None
         self._current_orientation: str | None = None
+        self._current_device: str | None = None
 
         # Registro de estilos por control
         self._styles: Dict[ft.Control, ResponsiveStyle] = {}
@@ -164,6 +176,15 @@ class ResponsiveManager:
             callback = self.orientation_callbacks.get(orientation)
             if callback:
                 callback(orientation)
+
+        # Tipo de dispositivo (según ancho)
+        if self.device_callbacks and self.device_profiles:
+            profile = get_device_profile(width, self.device_profiles)
+            if profile.name != self._current_device:
+                self._current_device = profile.name
+                callback = self.device_callbacks.get(profile.name)
+                if callback:
+                    callback(profile.name)
 
         # Aplicar estilos
         for control in list(self._styles):

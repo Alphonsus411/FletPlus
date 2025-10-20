@@ -21,6 +21,7 @@ pip install fletplus
 | `SidebarAdmin` | Menú lateral dinámico con ítems y selección       |
 | `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
 | `ResponsiveContainer` | Aplica estilos según breakpoints definidos |
+| `AdaptiveNavigationLayout` | Shell con navegación que cambia entre barra inferior, riel o columna según la plataforma |
 | `LineChart`   | Gráfico de líneas interactivo basado en Canvas   |
 | `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
 | `FletPlusApp`  | Estructura base para apps con navegación y tema  |
@@ -200,6 +201,20 @@ def main(page: ft.Page):
 
 ft.app(target=main)
 ```
+
+# ♿ Interfaz adaptable y accesible
+
+- **`AdaptiveNavigationLayout`** alterna automáticamente entre barra de
+  navegación inferior, riel lateral extendido o compactado y columnas
+  adaptadas según el breakpoint detectado (`mobile`, `tablet` o `desktop`).
+  El *callback* `content_builder` recibe el nombre del dispositivo activo para
+  ajustar cada vista.
+- **`AccessibilityPreferences`** facilita activar alto contraste, escalado de
+  texto, reducción de transiciones y mostrar captions textuales pensados para
+  personas con limitaciones visuales o auditivas.
+- Los **perfiles de dispositivo** expuestos en `fletplus.utils` indican el
+  número recomendado de columnas y permiten reaccionar a cambios de tamaño sin
+  reescribir breakpoints manualmente.
 
 ## 🎨 Estilos responsivos
 

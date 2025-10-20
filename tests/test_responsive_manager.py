@@ -92,6 +92,24 @@ def test_responsive_manager_orientation_callbacks():
     assert calls == ["portrait", "landscape"]
 
 
+def test_responsive_manager_device_callbacks():
+    page = DummyPage(480, 800)
+    calls: list[tuple[str, str]] = []
+
+    ResponsiveManager(
+        page,
+        device_callbacks={
+            "mobile": lambda name: calls.append(("initial", name)),
+            "desktop": lambda name: calls.append(("switch", name)),
+        },
+    )
+
+    assert calls[0] == ("initial", "mobile")
+
+    page.resize(width=1200)
+    assert ("switch", "desktop") in calls
+
+
 def test_responsive_style_by_width():
     page = DummyPage(500, 800)
     text = ft.Text("hola")
