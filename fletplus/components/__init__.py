@@ -33,6 +33,10 @@ from fletplus.components.responsive_grid import ResponsiveGrid
 from fletplus.components.sidebar_admin import SidebarAdmin
 from fletplus.components.smart_table import SmartTable
 from fletplus.components.charts import LineChart
+from fletplus.components.universal_scaffold import (
+    AdaptiveNavigationItem,
+    UniversalAdaptiveScaffold,
+)
 
 __all__ = [
     "PrimaryButton",
@@ -49,6 +53,8 @@ __all__ = [
     "AccessibilityPanel",
     "AdaptiveDestination",
     "AdaptiveNavigationLayout",
+    "AdaptiveNavigationItem",
+    "UniversalAdaptiveScaffold",
     "CaptionOverlay",
     "ResponsiveContainer",
     "ResponsiveGrid",
