@@ -92,6 +92,18 @@ ft.app(target=main)
 
 `ThemeManager` permite centralizar los tokens de estilo y alternar entre modo claro y oscuro.
 
+### Nuevas paletas predefinidas
+
+Además de las variantes originales ahora dispones de **cinco** paletas listas para aplicar:
+
+* `aurora`
+* `sunset`
+* `lagoon`
+* `midnight` – tonos profundos azul marino con acentos cian para dashboards nocturnos
+* `sakura` – gradientes pastel inspirados en cerezos para interfaces creativas
+
+Todas ellas incluyen tokens de gradiente `gradients.app_header` compatibles con el encabezado adaptable del layout.
+
 ## 📁 Cargar tokens/paletas desde JSON o YAML
 
 Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`.
@@ -153,6 +165,42 @@ tonos `100` a `900`:
 como `info_100` o `warning_500`. Revisa el archivo
 [`palette_extended.json`](examples/palette_extended.json) para una paleta
 completa con todos los tonos.
+
+## 📐 Grid adaptable por dispositivo
+
+El nuevo `ResponsiveGridItem` permite definir *span* personalizados tanto por
+breakpoint como por tipo de dispositivo (móvil, tablet, escritorio). También
+puedes asignar estilos responsivos a cada item mediante `ResponsiveStyle`.
+
+```python
+import flet as ft
+from fletplus.components import ResponsiveGrid, ResponsiveGridItem
+from fletplus.styles import Style
+from fletplus.utils.responsive_style import ResponsiveStyle
+
+grid = ResponsiveGrid(
+    items=[
+        ResponsiveGridItem(
+            ft.Text("Destacado"),
+            span_devices={"mobile": 12, "tablet": 6, "desktop": 4},
+            responsive_style=ResponsiveStyle(
+                width={800: Style(padding=ft.Padding(24, 24, 24, 24))}
+            ),
+        ),
+        ResponsiveGridItem(ft.Text("Complemento"), span_breakpoints={0: 12, 900: 4}),
+    ],
+    run_spacing=24,
+)
+```
+
+## 🧭 Encabezados más expresivos
+
+`AdaptiveNavigationLayout` detecta automáticamente los gradientes definidos en
+`ThemeManager` y envuelve el encabezado dentro de un contenedor estilizado con
+sombras suaves, bordes redondeados y soporte para botones de menú cuando se usa
+en móviles. Puedes aportar tu propio `Style` o `ResponsiveStyle` a través del
+parámetro `header_style`, o especificar tokens de color alternativos mediante
+`header_background_token`.
 
 ## 🔄 Ejemplo completo con ThemeManager
 

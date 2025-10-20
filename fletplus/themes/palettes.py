@@ -166,6 +166,108 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "midnight": {
+        "description": "Contraste elegante con acentos cian para apps nocturnas.",
+        "light": {
+            "colors": {
+                "primary": "#1E3A8A",
+                "on_primary": "#FFFFFF",
+                "background": "#F8FAFC",
+                "on_background": "#0F172A",
+                "surface": "#FFFFFF",
+                "on_surface": "#111827",
+                "surface_variant": "#E2E8F0",
+                "on_surface_variant": "#1E293B",
+                "outline": "#475569",
+                "accent": "#06B6D4",
+                "muted": "#64748B",
+                "gradient_app_header_start": "#1E3A8A",
+                "gradient_app_header_end": "#0F172A",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#1E3A8A", "#1D4ED8", "#0F172A"],
+                    "begin": (-0.5, -1.0),
+                    "end": (0.5, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#93C5FD",
+                "on_primary": "#0B1120",
+                "background": "#020617",
+                "on_background": "#E2E8F0",
+                "surface": "#0F172A",
+                "on_surface": "#E2E8F0",
+                "surface_variant": "#1E293B",
+                "on_surface_variant": "#CBD5F5",
+                "outline": "#2563EB",
+                "accent": "#38BDF8",
+                "muted": "#64748B",
+                "gradient_app_header_start": "#0B1120",
+                "gradient_app_header_end": "#1D4ED8",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B1120", "#1E3A8A", "#1D4ED8"],
+                    "begin": (-0.3, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
+    "sakura": {
+        "description": "Tonos pastel inspirados en cerezos para apps creativas.",
+        "light": {
+            "colors": {
+                "primary": "#E91E63",
+                "on_primary": "#FFFFFF",
+                "background": "#FFF5F7",
+                "on_background": "#4A001F",
+                "surface": "#FFFFFF",
+                "on_surface": "#4A001F",
+                "surface_variant": "#FFD1DC",
+                "on_surface_variant": "#7F1D40",
+                "outline": "#F48FB1",
+                "accent": "#F06292",
+                "muted": "#B56576",
+                "gradient_app_header_start": "#F48FB1",
+                "gradient_app_header_end": "#FBCFE8",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#F48FB1", "#F06292", "#FBCFE8"],
+                    "begin": (0.0, -1.0),
+                    "end": (1.0, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#FBCFE8",
+                "on_primary": "#460018",
+                "background": "#2D0A1A",
+                "on_background": "#FFD7E8",
+                "surface": "#3A0F23",
+                "on_surface": "#FFD7E8",
+                "surface_variant": "#571533",
+                "on_surface_variant": "#FF9EC4",
+                "outline": "#F48FB1",
+                "accent": "#FF6F9F",
+                "muted": "#C77A96",
+                "gradient_app_header_start": "#460018",
+                "gradient_app_header_end": "#F06292",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#460018", "#7F1D40", "#F06292"],
+                    "begin": (0.0, -1.0),
+                    "end": (1.0, 1.0),
+                }
+            },
+        },
+    },
 }
 
 

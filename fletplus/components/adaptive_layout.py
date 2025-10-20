@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Callable, Sequence
 import flet as ft
 
 from fletplus.components.caption_overlay import CaptionOverlay
+from fletplus.styles import Style
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.device_profiles import (
     DeviceProfile,
@@ -16,6 +17,7 @@ from fletplus.utils.device_profiles import (
     get_device_profile,
 )
 from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.themes.theme_manager import ThemeManager
 
 
@@ -65,6 +67,12 @@ class AdaptiveNavigationLayout:
         drawer: ft.Control | None = None,
         secondary_panel_builder: Callable[[str], ft.Control] | None = None,
         caption_overlay: CaptionOverlay | None = None,
+        header_style: Style | ResponsiveStyle | dict[int, Style] | None = None,
+        header_background_token: str | None = "app_header",
+        header_gradient_tokens: tuple[str, str] | None = (
+            "gradient_app_header_start",
+            "gradient_app_header_end",
+        ),
     ) -> None:
         if not destinations:
             raise ValueError("AdaptiveNavigationLayout requiere al menos un destino")
@@ -82,6 +90,9 @@ class AdaptiveNavigationLayout:
         self.drawer = drawer
         self.secondary_panel_builder = secondary_panel_builder
         self.caption_overlay = caption_overlay
+        self.header_style = header_style
+        self.header_background_token = header_background_token
+        self.header_gradient_tokens = header_gradient_tokens
 
         self._page: ft.Page | None = None
         self._current_device: str = "mobile"
@@ -133,6 +144,8 @@ class AdaptiveNavigationLayout:
             on_click=self._open_drawer,
             visible=self.drawer is not None,
         )
+        self._header_container: ft.Container | None = None
+        self._header_responsive_style: ResponsiveStyle | None = None
 
     # Propiedades públicas ----------------------------------------------
     @property
@@ -190,6 +203,7 @@ class AdaptiveNavigationLayout:
             device_callbacks={profile.name: self._apply_device_layout for profile in self.device_profiles},
             device_profiles=self.device_profiles,
         )
+        self._configure_header_styling()
         # Asegurar disposición inicial
         self._apply_device_layout(self._current_device)
         return self._root
@@ -198,6 +212,129 @@ class AdaptiveNavigationLayout:
         """Permite cambiar de pestaña programáticamente."""
 
         self._on_navigation_index(index)
+
+    # ------------------------------------------------------------------
+    def _configure_header_styling(self) -> None:
+        if self.header is None or self._manager is None:
+            return
+        container = self._ensure_header_container()
+        style: ResponsiveStyle | None = None
+        if isinstance(self.header_style, ResponsiveStyle):
+            style = self.header_style
+        elif isinstance(self.header_style, dict):
+            style = ResponsiveStyle(width=self.header_style)
+        if style is not None:
+            self._header_responsive_style = style
+            self._manager.register_styles(container, style)
+
+    # ------------------------------------------------------------------
+    def _ensure_header_container(self) -> ft.Container:
+        if self.header is None:
+            raise ValueError("No header configured")
+
+        if self._header_container is None:
+            if isinstance(self.header_style, Style):
+                applied = self.header_style.apply(self.header)
+                if isinstance(applied, ft.Container):
+                    container = applied
+                else:  # pragma: no cover - Style devuelve control no contenedor
+                    container = ft.Container(content=applied)
+            else:
+                container = ft.Container(content=self.header)
+
+            if not isinstance(container, ft.Container):
+                container = ft.Container(content=self.header)
+
+            container.expand = True
+            if container.padding is None:
+                container.padding = ft.Padding(20, 16, 20, 18)
+            if container.border_radius is None:
+                container.border_radius = ft.border_radius.all(28)
+            if container.alignment is None:
+                container.alignment = ft.alignment.center_left
+            if container.shadow is None:
+                container.shadow = ft.BoxShadow(
+                    spread_radius=0,
+                    blur_radius=18,
+                    color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+                )
+            self._header_container = container
+        else:
+            self._header_container.content = self.header
+
+        self._apply_header_theme(self._header_container)
+        return self._header_container
+
+    # ------------------------------------------------------------------
+    def _apply_header_theme(self, container: ft.Container) -> None:
+        if not self.theme:
+            return
+
+        if self.header_background_token:
+            gradient = self.theme.get_gradient(self.header_background_token)
+            if gradient:
+                container.gradient = gradient
+                container.bgcolor = None
+            else:
+                color = self.theme.get_color(self.header_background_token)
+                if color:
+                    container.gradient = None
+                    container.bgcolor = color
+
+        if container.gradient is None and self.header_gradient_tokens:
+            start = self.theme.get_color(self.header_gradient_tokens[0])
+            end = None
+            if len(self.header_gradient_tokens) > 1:
+                end = self.theme.get_color(self.header_gradient_tokens[1])
+            if start and end:
+                container.gradient = ft.LinearGradient(
+                    colors=[start, end],
+                    begin=ft.alignment.center_left,
+                    end=ft.alignment.center_right,
+                )
+                container.bgcolor = None
+
+        if container.gradient is None and container.bgcolor is None:
+            fallback = self.theme.get_color("primary") or ft.Colors.BLUE_GREY_500
+            container.bgcolor = fallback
+
+        shadows = self.theme.tokens.get("shadows", {}) if hasattr(self.theme, "tokens") else {}
+        if container.shadow is None:
+            header_shadow = (
+                shadows.get("header")
+                or shadows.get("surface")
+                or shadows.get("card")
+                or shadows.get("default")
+            )
+            if header_shadow is not None:
+                container.shadow = header_shadow
+
+    # ------------------------------------------------------------------
+    def _build_header_block(self, device: str, with_drawer: bool) -> ft.Control | None:
+        if self.header is None:
+            self._drawer_button.visible = with_drawer and self.drawer is not None
+            if with_drawer and self.drawer is not None:
+                return ft.Row(
+                    controls=[self._drawer_button],
+                    spacing=12,
+                    alignment=ft.MainAxisAlignment.START,
+                )
+            return None
+
+        container = self._ensure_header_container()
+        self._apply_header_theme(container)
+
+        if with_drawer and self.drawer is not None:
+            self._drawer_button.visible = True
+            container.expand = True
+            return ft.Row(
+                controls=[self._drawer_button, container],
+                spacing=12,
+                alignment=ft.MainAxisAlignment.START,
+            )
+
+        self._drawer_button.visible = False
+        return container
 
     # Internos -----------------------------------------------------------
     def _handle_nav_event(self, event: ft.ControlEvent) -> None:
@@ -290,21 +427,7 @@ class AdaptiveNavigationLayout:
             main_area = self._wrap_with_stack(layout, overlay_captions)
             controls = [self._skip_button]
 
-            header_block: ft.Control | None = None
-            if self.drawer is not None:
-                self._drawer_button.visible = True
-                header_controls = [self._drawer_button]
-                if self.header is not None:
-                    header_controls.append(ft.Container(content=self.header, expand=True))
-                header_block = ft.Row(
-                    controls=header_controls,
-                    spacing=12,
-                    alignment=ft.MainAxisAlignment.START,
-                )
-            elif self.header is not None:
-                header_block = self.header
-            else:
-                self._drawer_button.visible = False
+            header_block = self._build_header_block(device, with_drawer=self.drawer is not None)
             if header_block is not None:
                 controls.append(header_block)
 
@@ -339,8 +462,9 @@ class AdaptiveNavigationLayout:
                 controls=row_controls,
             )
             controls = [self._skip_button]
-            if self.header is not None:
-                controls.append(self.header)
+            header_block = self._build_header_block(device, with_drawer=False)
+            if header_block is not None:
+                controls.append(header_block)
             controls.append(layout)
             self._drawer_button.visible = False
 
