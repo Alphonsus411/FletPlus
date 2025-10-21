@@ -523,6 +523,108 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "citrus": {
+        "description": "Acentos vibrantes cítricos con verdes refrescantes para apps dinámicas.",
+        "light": {
+            "colors": {
+                "primary": "#FFB300",
+                "on_primary": "#1A1300",
+                "background": "#FFF9E6",
+                "on_background": "#2F2000",
+                "surface": "#FFFFFF",
+                "on_surface": "#3A2800",
+                "surface_variant": "#FFE0A3",
+                "on_surface_variant": "#7A5200",
+                "outline": "#CC9A33",
+                "accent": "#00A86B",
+                "muted": "#B08938",
+                "gradient_app_header_start": "#FFB300",
+                "gradient_app_header_end": "#00A86B",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#FFB300", "#FFC94A", "#00A86B"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#FFD369",
+                "on_primary": "#332100",
+                "background": "#221600",
+                "on_background": "#FFE0A3",
+                "surface": "#2E1F00",
+                "on_surface": "#FFE0A3",
+                "surface_variant": "#4A3200",
+                "on_surface_variant": "#FFD27A",
+                "outline": "#CC9A33",
+                "accent": "#1ABC82",
+                "muted": "#C09B4A",
+                "gradient_app_header_start": "#221600",
+                "gradient_app_header_end": "#1ABC82",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#221600", "#664200", "#1ABC82"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.7, 1.0),
+                }
+            },
+        },
+    },
+    "fjord": {
+        "description": "Azules nórdicos con acentos aqua pensados para dashboards profesionales.",
+        "light": {
+            "colors": {
+                "primary": "#0B7285",
+                "on_primary": "#FFFFFF",
+                "background": "#F1FAFF",
+                "on_background": "#0B3551",
+                "surface": "#FFFFFF",
+                "on_surface": "#0B3551",
+                "surface_variant": "#CFE9F5",
+                "on_surface_variant": "#145374",
+                "outline": "#5DAEC8",
+                "accent": "#2EC4B6",
+                "muted": "#5B7C99",
+                "gradient_app_header_start": "#0B7285",
+                "gradient_app_header_end": "#2EC4B6",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B3551", "#0B7285", "#2EC4B6"],
+                    "begin": (-0.3, -1.0),
+                    "end": (0.7, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#5FD4E6",
+                "on_primary": "#022430",
+                "background": "#041C25",
+                "on_background": "#C2F2FF",
+                "surface": "#0B2C3A",
+                "on_surface": "#C2F2FF",
+                "surface_variant": "#12445C",
+                "on_surface_variant": "#87D8E8",
+                "outline": "#2EC4B6",
+                "accent": "#68F9C1",
+                "muted": "#79A3B8",
+                "gradient_app_header_start": "#041C25",
+                "gradient_app_header_end": "#2EC4B6",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#041C25", "#0B7285", "#2EC4B6"],
+                    "begin": (-0.2, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
 }
 
 

@@ -107,6 +107,8 @@ class ThemeManager:
         palette: str | Mapping[str, Mapping[str, object]] | None = None,
         palette_mode: str | None = None,
         device_tokens: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        orientation_tokens: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        breakpoint_tokens: Mapping[int, Mapping[str, Mapping[str, object]]] | None = None,
     ) -> None:
         self.page = page
         self.dark_mode = False
@@ -145,7 +147,12 @@ class ThemeManager:
         self._palette_definition: dict[str, Mapping[str, object]] | None = None
         self._palette_name: str | None = None
         self._device_tokens: dict[str, dict[str, dict[str, object]]] = {}
+        self._orientation_tokens: dict[str, dict[str, dict[str, object]]] = {}
+        self._breakpoint_tokens: dict[int, dict[str, dict[str, object]]] = {}
         self._active_device: str | None = None
+        self._active_orientation: str | None = None
+        self._active_width: int | None = None
+        self._active_breakpoint: int | None = None
         self._effective_tokens: dict[str, dict[str, object]] = deepcopy(self.tokens)
 
         if palette is not None:
@@ -163,20 +170,47 @@ class ThemeManager:
             for device, overrides in device_tokens.items():
                 self.set_device_tokens(device, overrides, refresh=False)
 
+        if orientation_tokens:
+            for orientation, overrides in orientation_tokens.items():
+                self.set_orientation_tokens(orientation, overrides, refresh=False)
+
+        if breakpoint_tokens:
+            for breakpoint, overrides in breakpoint_tokens.items():
+                self.set_breakpoint_tokens(breakpoint, overrides, refresh=False)
+
         # Aplicar la variante inicial de la paleta tras fusionar tokens
         if self._palette_definition is not None:
             self._apply_current_palette_variant()
 
-        self._refresh_effective_tokens(self._active_device)
+        self._refresh_effective_tokens(
+            self._active_device, self._active_orientation, self._active_width
+        )
 
     # ------------------------------------------------------------------
-    def apply_theme(self, device: str | None = None) -> None:
+    def apply_theme(
+        self,
+        *,
+        device: str | None = None,
+        orientation: str | None = None,
+        width: int | float | None = None,
+    ) -> None:
         """Apply current tokens to the page theme."""
 
         if device is not None:
             self._active_device = device.lower()
 
-        self._refresh_effective_tokens(self._active_device)
+        if orientation is not None:
+            self._active_orientation = orientation.lower()
+
+        if width is not None:
+            try:
+                self._active_width = int(width)
+            except (TypeError, ValueError):
+                self._active_width = None
+
+        self._refresh_effective_tokens(
+            self._active_device, self._active_orientation, self._active_width
+        )
 
         colors = self._effective_tokens.get("colors", {})
         typography = self._effective_tokens.get("typography", {})
@@ -290,11 +324,93 @@ class ThemeManager:
         self.apply_theme(device=self._active_device)
 
     # ------------------------------------------------------------------
+    def set_orientation_tokens(
+        self,
+        orientation: str,
+        tokens: Mapping[str, Mapping[str, object]],
+        *,
+        refresh: bool = True,
+    ) -> None:
+        """Registra tokens específicos para una orientación."""
+
+        normalized = orientation.lower().strip()
+        overrides: dict[str, dict[str, object]] = {}
+        for group, values in tokens.items():
+            if isinstance(values, Mapping):
+                overrides[group] = {key: value for key, value in values.items()}
+        if not overrides:
+            return
+
+        self._orientation_tokens[normalized] = overrides
+        if refresh:
+            self.apply_theme(orientation=self._active_orientation or normalized)
+
+    # ------------------------------------------------------------------
+    def clear_orientation_tokens(self, orientation: str | None = None) -> None:
+        """Elimina los tokens registrados para una orientación."""
+
+        if orientation is None:
+            self._orientation_tokens.clear()
+        else:
+            self._orientation_tokens.pop(orientation.lower().strip(), None)
+        self.apply_theme(orientation=self._active_orientation)
+
+    # ------------------------------------------------------------------
+    def set_breakpoint_tokens(
+        self,
+        breakpoint: int | float,
+        tokens: Mapping[str, Mapping[str, object]],
+        *,
+        refresh: bool = True,
+    ) -> None:
+        """Registra tokens para un breakpoint mínimo de ancho."""
+
+        try:
+            bp_value = int(breakpoint)
+        except (TypeError, ValueError):
+            raise ValueError("breakpoint must be an integer value") from None
+
+        overrides: dict[str, dict[str, object]] = {}
+        for group, values in tokens.items():
+            if isinstance(values, Mapping):
+                overrides[group] = {key: value for key, value in values.items()}
+        if not overrides:
+            return
+
+        self._breakpoint_tokens[bp_value] = overrides
+        if refresh:
+            self.apply_theme(width=self._active_width or bp_value)
+
+    # ------------------------------------------------------------------
+    def clear_breakpoint_tokens(self, breakpoint: int | None = None) -> None:
+        """Elimina overrides registrados para breakpoints de ancho."""
+
+        if breakpoint is None:
+            self._breakpoint_tokens.clear()
+        else:
+            self._breakpoint_tokens.pop(int(breakpoint), None)
+        self.apply_theme(width=self._active_width)
+
+    # ------------------------------------------------------------------
     @property
     def active_device(self) -> str | None:
         """Devuelve el dispositivo actualmente activo."""
 
         return self._active_device
+
+    # ------------------------------------------------------------------
+    @property
+    def active_orientation(self) -> str | None:
+        """Devuelve la orientación aplicada actualmente."""
+
+        return self._active_orientation
+
+    # ------------------------------------------------------------------
+    @property
+    def active_breakpoint(self) -> int | None:
+        """Breakpoint de ancho actualmente aplicado."""
+
+        return self._active_breakpoint
 
     # ------------------------------------------------------------------
     @property
@@ -408,7 +524,9 @@ class ThemeManager:
                 return
 
         self._merge_palette_tokens(variant)
-        self._refresh_effective_tokens(self._active_device)
+        self._refresh_effective_tokens(
+            self._active_device, self._active_orientation, self._active_width
+        )
 
     # ------------------------------------------------------------------
     def _merge_palette_tokens(self, palette_tokens: Mapping[str, object]) -> None:
@@ -425,15 +543,34 @@ class ThemeManager:
                 target = self.tokens.setdefault(group, {})
                 target.update(values)
 
-        self._refresh_effective_tokens(self._active_device)
+        self._refresh_effective_tokens(
+            self._active_device, self._active_orientation, self._active_width
+        )
 
     # ------------------------------------------------------------------
-    def _refresh_effective_tokens(self, device: str | None) -> None:
+    def _refresh_effective_tokens(
+        self,
+        device: str | None,
+        orientation: str | None,
+        width: int | None,
+    ) -> None:
         base = {group: dict(values) for group, values in self.tokens.items()}
-        overrides = self._resolve_device_overrides(device)
-        for group, values in overrides.items():
+
+        device_overrides = self._resolve_device_overrides(device)
+        for group, values in device_overrides.items():
             target = base.setdefault(group, {})
             target.update(values)
+
+        orientation_overrides = self._resolve_orientation_overrides(orientation)
+        for group, values in orientation_overrides.items():
+            target = base.setdefault(group, {})
+            target.update(values)
+
+        breakpoint_overrides = self._resolve_breakpoint_overrides(width)
+        for group, values in breakpoint_overrides.items():
+            target = base.setdefault(group, {})
+            target.update(values)
+
         self._effective_tokens = base
 
     # ------------------------------------------------------------------
@@ -443,6 +580,38 @@ class ThemeManager:
         if not device:
             return {}
         overrides = self._device_tokens.get(device.lower())
+        if not overrides:
+            return {}
+        return {group: dict(values) for group, values in overrides.items()}
+
+    # ------------------------------------------------------------------
+    def _resolve_orientation_overrides(
+        self, orientation: str | None
+    ) -> dict[str, dict[str, object]]:
+        if not orientation:
+            return {}
+        overrides = self._orientation_tokens.get(orientation.lower())
+        if not overrides:
+            return {}
+        return {group: dict(values) for group, values in overrides.items()}
+
+    # ------------------------------------------------------------------
+    def _resolve_breakpoint_overrides(
+        self, width: int | None
+    ) -> dict[str, dict[str, object]]:
+        if width is None or not self._breakpoint_tokens:
+            self._active_breakpoint = None
+            return {}
+
+        active_bp: int | None = None
+        for bp in sorted(self._breakpoint_tokens):
+            if width >= bp:
+                active_bp = bp
+        self._active_breakpoint = active_bp
+        if active_bp is None:
+            return {}
+
+        overrides = self._breakpoint_tokens.get(active_bp)
         if not overrides:
             return {}
         return {group: dict(values) for group, values in overrides.items()}
