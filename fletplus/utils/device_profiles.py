@@ -48,6 +48,17 @@ DEFAULT_DEVICE_PROFILES: tuple[DeviceProfile, ...] = (
 )
 
 
+EXTENDED_DEVICE_PROFILES: tuple[DeviceProfile, ...] = DEFAULT_DEVICE_PROFILES + (
+    DeviceProfile(
+        name="large_desktop",
+        min_width=1440,
+        max_width=None,
+        columns=16,
+        description="Monitores ultraanchos, proyectores o estaciones profesionales",
+    ),
+)
+
+
 def get_device_profile(
     width: int,
     profiles: Sequence[DeviceProfile] | None = None,

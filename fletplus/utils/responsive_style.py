@@ -25,6 +25,18 @@ def _is_mobile(page: ft.Page) -> bool:
     return getattr(page, "platform", None) in {"android", "ios"}
 
 
+def _is_tablet(page: ft.Page) -> bool:
+    """Determina si la ventana actual corresponde a una tableta."""
+
+    if _device_module and hasattr(_device_module, "is_tablet"):
+        try:
+            return bool(_device_module.is_tablet(page))
+        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
+            pass
+    width = page.width or 0
+    return 600 <= width < 1024 and getattr(page, "platform", None) not in {"windows", "macos", "linux"}
+
+
 def _is_web(page: ft.Page) -> bool:
     """Detecta si la página corre en un entorno web."""
 
@@ -45,6 +57,18 @@ def _is_desktop(page: ft.Page) -> bool:
         except Exception:  # pragma: no cover - defensivo
             pass
     return getattr(page, "platform", None) in {"windows", "macos", "linux"}
+
+
+def _is_large_desktop(page: ft.Page) -> bool:
+    """Detecta estaciones de trabajo o monitores ultraanchos."""
+
+    if _device_module and hasattr(_device_module, "is_large_desktop"):
+        try:
+            return bool(_device_module.is_large_desktop(page))
+        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
+            pass
+    width = page.width or 0
+    return width >= 1440 and _is_desktop(page)
 
 
 class ResponsiveStyle:
@@ -108,8 +132,14 @@ class ResponsiveStyle:
         if self.device:
             if _is_mobile(page) and "mobile" in self.device:
                 style = self._merge(style, self.device["mobile"])
+            elif _is_tablet(page) and "tablet" in self.device:
+                style = self._merge(style, self.device["tablet"])
             elif _is_web(page) and "web" in self.device:
                 style = self._merge(style, self.device["web"])
+            elif _is_large_desktop(page) and "large_desktop" in self.device:
+                if "desktop" in self.device:
+                    style = self._merge(style, self.device["desktop"])
+                style = self._merge(style, self.device["large_desktop"])
             elif _is_desktop(page) and "desktop" in self.device:
                 style = self._merge(style, self.device["desktop"])
 

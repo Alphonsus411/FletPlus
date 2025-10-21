@@ -11,6 +11,12 @@ from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
+from fletplus.utils.device_profiles import (
+    DeviceProfile,
+    EXTENDED_DEVICE_PROFILES,
+    get_device_profile,
+    iter_device_profiles,
+)
 
 
 DeviceName = str
@@ -72,7 +78,7 @@ class ResponsiveGridItem:
         Diccionario ``{ancho_minimo: span}`` para ajustar la distribución en
         función del tamaño de pantalla.
     span_devices:
-        Diccionario ``{"mobile"|"tablet"|"desktop": span}`` que permite
+        Diccionario ``{"mobile"|"tablet"|"desktop"|"large_desktop": span}`` que permite
         personalizar aún más cada dispositivo.
     style:
         Estilo opcional aplicado al contenedor del item.
@@ -88,8 +94,10 @@ class ResponsiveGridItem:
     style: Style | None = None
     responsive_style: ResponsiveStyle | Dict[int, Style] | None = None
 
-    def resolve_span(self, width: int, columns: int) -> int:
-        device = _device_from_width(width)
+    def resolve_span(
+        self, width: int, columns: int, device: DeviceName | None = None
+    ) -> int:
+        device = device or _device_from_width(width)
         if self.span_devices and device in self.span_devices:
             return self._sanitize_span(self.span_devices[device])
 
@@ -139,6 +147,14 @@ class ResponsiveGrid:
         section_shadow: ft.BoxShadow | Sequence[ft.BoxShadow] | None = None,
         section_max_content_width: int | None = None,
         theme: ThemeManager | None = None,
+        device_profiles: Sequence[DeviceProfile] | None = None,
+        device_columns: Dict[str, int] | None = None,
+        adaptive_spacing: bool = False,
+        spacing_scale: Dict[str, float] | None = None,
+        section_background_image: str | None = None,
+        section_background_image_fit: ft.ImageFit | None = None,
+        section_overlay_color: str | None = None,
+        header_layout: str = "auto",
     ) -> None:
         """Grid responsiva basada en breakpoints.
 
@@ -148,11 +164,26 @@ class ResponsiveGrid:
         """
 
         self.spacing = spacing
+        self._base_spacing = spacing
         self.style = style
         self.run_spacing = run_spacing
+        self._base_run_spacing = run_spacing
         self.alignment = alignment or ft.MainAxisAlignment.START
         self.section_gap = section_gap
         self.theme = theme
+        self.adaptive_spacing = adaptive_spacing
+        default_scale = {"mobile": 0.75, "tablet": 0.9, "desktop": 1.0, "large_desktop": 1.2}
+        if spacing_scale:
+            default_scale.update(spacing_scale)
+        self.spacing_scale = default_scale
+
+        self.device_profiles: tuple[DeviceProfile, ...] = tuple(
+            device_profiles or EXTENDED_DEVICE_PROFILES
+        )
+        base_columns = {"mobile": 1, "tablet": 2, "desktop": 3, "large_desktop": 4}
+        if device_columns:
+            base_columns.update(device_columns)
+        self.device_columns = base_columns
 
         self.section_title = header_title
         self.section_subtitle = header_subtitle
@@ -163,6 +194,13 @@ class ResponsiveGrid:
         self.section_border_radius = section_border_radius
         self.section_shadow = section_shadow
         self.section_max_content_width = section_max_content_width
+        self.section_background_image = section_background_image
+        self.section_background_image_fit = section_background_image_fit
+        self.section_overlay_color = section_overlay_color
+        layout_value = (header_layout or "auto").strip().lower()
+        if layout_value not in {"auto", "centered", "split"}:
+            layout_value = "auto"
+        self.header_layout = layout_value
         self._section_actions_row = ft.Row(
             controls=list(header_actions or []), spacing=12, wrap=True
         )
@@ -201,6 +239,12 @@ class ResponsiveGrid:
                     base_padding.right * 1.3,
                     base_padding.bottom * 1.3,
                 ),
+                "large_desktop": ft.Padding(
+                    base_padding.left * 1.5,
+                    base_padding.top * 1.5,
+                    base_padding.right * 1.5,
+                    base_padding.bottom * 1.5,
+                ),
             }
         else:
             self._section_padding_config = {}
@@ -219,6 +263,8 @@ class ResponsiveGrid:
                 section_border_radius,
                 section_shadow,
                 section_max_content_width,
+                section_background_image,
+                section_overlay_color,
                 bool(self._section_padding_config),
             ]
         )
@@ -229,8 +275,16 @@ class ResponsiveGrid:
 
         if columns is not None:
             self.breakpoints = {0: columns}
+        elif breakpoints is not None:
+            self.breakpoints = dict(breakpoints)
         else:
-            self.breakpoints = breakpoints or {0: 1, 600: 2, 900: 3, 1200: 4}
+            computed: Dict[int, int] = {}
+            for profile in iter_device_profiles(self.device_profiles):
+                span = self.device_columns.get(profile.name)
+                if span is None:
+                    span = max(1, round(profile.columns / 4))
+                computed[profile.min_width] = max(1, min(6, int(span)))
+            self.breakpoints = computed or {0: 1, 600: 2, 900: 3, 1200: 4}
 
         self._manager: ResponsiveManager | None = None
         self._row: ft.ResponsiveRow | None = None
@@ -248,12 +302,63 @@ class ResponsiveGrid:
         return max(1, columns)
 
     # ------------------------------------------------------------------
+    def _resolve_device_name(self, width: int) -> DeviceName:
+        if self.device_profiles:
+            profile = get_device_profile(width, self.device_profiles)
+            return profile.name
+        return _device_from_width(width)
+
+    # ------------------------------------------------------------------
+    def _scale_padding(self, value: object, scale: float) -> object:
+        if isinstance(value, ft.Padding):
+            return ft.Padding(
+                value.left * scale,
+                value.top * scale,
+                value.right * scale,
+                value.bottom * scale,
+            )
+        if isinstance(value, (int, float)):
+            return int(round(float(value) * scale))
+        return value
+
+    # ------------------------------------------------------------------
+    def _resolve_spacing_values(self, width: int) -> tuple[object, int | float | None]:
+        base_item = self._base_spacing
+        base_run: object | None = self._base_run_spacing
+        if base_run is None and self.adaptive_spacing:
+            base_run = self._base_spacing
+        if not self.adaptive_spacing:
+            return base_item, base_run
+
+        device = self._resolve_device_name(width)
+        scale = self.spacing_scale.get(device, 1.0)
+        item_spacing = self._scale_padding(base_item, scale)
+        run_spacing = None if base_run is None else self._scale_padding(base_run, scale)
+        if isinstance(run_spacing, ft.Padding):
+            # ``run_spacing`` solo admite valores numéricos
+            run_spacing = run_spacing.left
+        return item_spacing, run_spacing
+
+    # ------------------------------------------------------------------
+    def _apply_spacing_to_row(self, row: ft.ResponsiveRow, width: int) -> None:
+        item_padding, run_spacing = self._resolve_spacing_values(width)
+        for control in row.controls:
+            if isinstance(control, ft.Container):
+                control.padding = item_padding
+        if run_spacing is not None:
+            try:
+                row.run_spacing = int(run_spacing)
+            except (TypeError, ValueError):
+                row.run_spacing = run_spacing
+
+    # ------------------------------------------------------------------
     def _build_item_container(
         self,
         item: ResponsiveGridItem,
         width: int,
         columns: int,
     ) -> ft.Container:
+        device = self._resolve_device_name(width)
         content: ft.Control = item.control
         if item.style:
             styled = item.style.apply(content)
@@ -262,8 +367,8 @@ class ResponsiveGrid:
 
         container = ft.Container(
             content=content,
-            col=item.resolve_span(width, columns),
-            padding=self.spacing,
+            col=item.resolve_span(width, columns, device),
+            padding=self._resolve_spacing_values(width)[0],
         )
 
         style: ResponsiveStyle | None = None
@@ -280,11 +385,13 @@ class ResponsiveGrid:
     # ------------------------------------------------------------------
     def _build_row(self, width: int) -> ft.ResponsiveRow:
         columns = self._resolve_columns(width)
-        return ft.ResponsiveRow(
+        row = ft.ResponsiveRow(
             controls=[self._build_item_container(item, width, columns) for item in self._items],
             alignment=self.alignment,
             run_spacing=self.run_spacing,
         )
+        self._apply_spacing_to_row(row, width)
+        return row
 
     # ------------------------------------------------------------------
     def build(self, page_width: Optional[int]) -> ft.Control:
@@ -337,17 +444,20 @@ class ResponsiveGrid:
             )
             content = wrapper
 
-        container = ft.Container(content=content)
+        container = ft.Container(content=content, clip_behavior=ft.ClipBehavior.ANTI_ALIAS)
         self._section_container = container
         return container
 
     # ------------------------------------------------------------------
     def _resolve_section_padding(self, device: DeviceName) -> ft.Padding:
-        padding = (
-            self._section_padding_config.get(device)
-            or self._section_padding_config.get("mobile")
-            or ft.Padding(20, 20, 20, 20)
-        )
+        padding: ft.Padding | None = None
+        for key in [device, "desktop", "tablet", "mobile"]:
+            stored = self._section_padding_config.get(key)
+            if stored is not None:
+                padding = stored
+                break
+        if padding is None:
+            padding = ft.Padding(20, 20, 20, 20)
         return _clone_padding(padding) or ft.Padding(20, 20, 20, 20)
 
     # ------------------------------------------------------------------
@@ -390,7 +500,7 @@ class ResponsiveGrid:
         if not self._section_container:
             return
 
-        device = _device_from_width(width)
+        device = self._resolve_device_name(width)
         padding = self._resolve_section_padding(device)
         self._section_container.padding = padding
 
@@ -401,6 +511,16 @@ class ResponsiveGrid:
         else:
             self._section_container.gradient = None
             self._section_container.bgcolor = self._resolve_section_background()
+
+        if self.section_background_image:
+            self._section_container.image_src = self.section_background_image
+            self._section_container.image_fit = (
+                self.section_background_image_fit or ft.ImageFit.COVER
+            )
+            if self.section_overlay_color:
+                self._section_container.bgcolor = self.section_overlay_color
+        else:
+            self._section_container.image_src = None
 
         if isinstance(self.section_border_radius, ft.BorderRadius):
             self._section_container.border_radius = self.section_border_radius
@@ -449,10 +569,11 @@ class ResponsiveGrid:
 
         self._section_header_container.visible = True
 
-        device = _device_from_width(width)
+        device = self._resolve_device_name(width)
 
-        title_size = {"mobile": 20, "tablet": 22, "desktop": 24}
-        subtitle_size = {"mobile": 15, "tablet": 16, "desktop": 18}
+        title_size = {"mobile": 20, "tablet": 22, "desktop": 24, "large_desktop": 28}
+        subtitle_size = {"mobile": 15, "tablet": 16, "desktop": 18, "large_desktop": 20}
+        description_size = {"mobile": 14, "tablet": 15, "desktop": 15, "large_desktop": 16}
 
         title_control = None
         if self.section_title:
@@ -474,7 +595,7 @@ class ResponsiveGrid:
         if self.section_description:
             description_control = ft.Text(
                 self.section_description,
-                size=14 if device == "mobile" else 15,
+                size=description_size.get(device, 15),
                 color=(
                     self.theme.get_color("on_surface_variant")
                     if self.theme
@@ -509,12 +630,17 @@ class ResponsiveGrid:
             )
 
         if self._section_metadata_row.controls:
-            self._section_metadata_row.alignment = (
-                ft.MainAxisAlignment.CENTER if device == "mobile" else ft.MainAxisAlignment.START
+            meta_alignment = (
+                ft.MainAxisAlignment.CENTER
+                if device == "mobile" or self.header_layout == "centered"
+                else ft.MainAxisAlignment.START
             )
+            self._section_metadata_row.alignment = meta_alignment
             metadata_control: ft.Control | None = self._section_metadata_row
         else:
             metadata_control = None
+
+        layout_mode = self.header_layout
 
         if device == "mobile":
             mobile_controls: list[ft.Control] = []
@@ -544,46 +670,87 @@ class ResponsiveGrid:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
         else:
-            column_controls: list[ft.Control] = [text_column]
-            if metadata_control:
-                column_controls.append(metadata_control)
-            text_stack = ft.Column(controls=column_controls, spacing=6, tight=True)
-
-            left_controls: list[ft.Control] = []
-            if icon_wrapper:
-                left_controls.append(icon_wrapper)
-            left_controls.append(text_stack)
-
-            left_block = ft.Row(
-                controls=left_controls,
-                spacing=12,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                wrap=False,
-            )
-
-            if device == "tablet":
-                self._section_actions_row.wrap = True
-                self._section_actions_row.alignment = ft.MainAxisAlignment.END
-                layout_controls = [left_block]
+            if layout_mode == "centered":
+                centered_controls: list[ft.Control] = []
+                if icon_wrapper:
+                    centered_controls.append(
+                        ft.Row([icon_wrapper], alignment=ft.MainAxisAlignment.CENTER)
+                    )
+                stacked_controls: list[ft.Control] = [text_column]
+                if metadata_control:
+                    stacked_controls.append(metadata_control)
+                centered_controls.append(
+                    ft.Column(
+                        controls=stacked_controls,
+                        spacing=6,
+                        tight=True,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                )
                 if self._section_actions_row.controls:
-                    layout_controls.append(self._section_actions_row)
+                    self._section_actions_row.wrap = True
+                    self._section_actions_row.alignment = ft.MainAxisAlignment.CENTER
+                    centered_controls.append(self._section_actions_row)
+
                 header_layout = ft.Column(
-                    controls=layout_controls,
+                    controls=centered_controls,
                     spacing=12,
                     tight=True,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             else:
-                self._section_actions_row.wrap = False
-                self._section_actions_row.alignment = ft.MainAxisAlignment.END
-                row_controls: list[ft.Control] = [left_block]
-                if self._section_actions_row.controls:
-                    row_controls.append(ft.Container(expand=1))
-                    row_controls.append(self._section_actions_row)
-                header_layout = ft.Row(
-                    controls=row_controls,
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                column_controls: list[ft.Control] = [text_column]
+                if metadata_control:
+                    column_controls.append(metadata_control)
+                text_stack = ft.Column(controls=column_controls, spacing=6, tight=True)
+
+                left_controls: list[ft.Control] = []
+                if icon_wrapper:
+                    left_controls.append(icon_wrapper)
+                left_controls.append(text_stack)
+
+                left_block = ft.Row(
+                    controls=left_controls,
+                    spacing=16 if device == "large_desktop" else 12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    wrap=False,
+                    expand=True,
                 )
+
+                if layout_mode == "split":
+                    self._section_actions_row.wrap = False
+                    self._section_actions_row.alignment = ft.MainAxisAlignment.END
+                    row_controls: list[ft.Control] = [left_block]
+                    if self._section_actions_row.controls:
+                        row_controls.append(self._section_actions_row)
+                    header_layout = ft.Row(
+                        controls=row_controls,
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                elif device == "tablet":
+                    self._section_actions_row.wrap = True
+                    self._section_actions_row.alignment = ft.MainAxisAlignment.END
+                    layout_controls = [left_block]
+                    if self._section_actions_row.controls:
+                        layout_controls.append(self._section_actions_row)
+                    header_layout = ft.Column(
+                        controls=layout_controls,
+                        spacing=12,
+                        tight=True,
+                    )
+                else:
+                    self._section_actions_row.wrap = False
+                    self._section_actions_row.alignment = ft.MainAxisAlignment.END
+                    row_controls = [left_block]
+                    if self._section_actions_row.controls:
+                        row_controls.append(ft.Container(expand=1))
+                        row_controls.append(self._section_actions_row)
+                    header_layout = ft.Row(
+                        controls=row_controls,
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
 
         self._section_header_container.content = header_layout
 
@@ -604,6 +771,7 @@ class ResponsiveGrid:
             self._row.controls.extend(new_row.controls)
             self._row.alignment = new_row.alignment
             self._row.run_spacing = new_row.run_spacing
+            self._apply_spacing_to_row(self._row, width)
             self._register_item_styles(page, self._row.controls)
             self._update_section_layout(width)
             page.update()

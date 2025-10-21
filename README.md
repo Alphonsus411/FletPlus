@@ -94,13 +94,14 @@ ft.app(target=main)
 
 ### Nuevas paletas predefinidas
 
-Además de las variantes originales ahora dispones de **cinco** paletas listas para aplicar:
+Además de las variantes originales ahora dispones de **seis** paletas listas para aplicar:
 
 * `aurora`
 * `sunset`
 * `lagoon`
 * `midnight` – tonos profundos azul marino con acentos cian para dashboards nocturnos
 * `sakura` – gradientes pastel inspirados en cerezos para interfaces creativas
+* `selva` – verdes botánicos con acentos lima ideales para proyectos sostenibles
 
 Todas ellas incluyen tokens de gradiente `gradients.app_header` compatibles con el encabezado adaptable del layout.
 
@@ -193,6 +194,21 @@ grid = ResponsiveGrid(
 )
 ```
 
+Nuevas capacidades del grid responsivo:
+
+- **Perfiles ampliados**: puedes pasar `device_profiles` personalizados o usar los
+  predeterminados que ahora incluyen `large_desktop`, ideal para monitores
+  ultraanchos. El parámetro `device_columns` te permite mapear cuántas columnas
+  debe renderizar cada perfil sin reescribir breakpoints manuales.
+- **Espaciado inteligente**: activa `adaptive_spacing=True` para que el padding
+  entre tarjetas y el `run_spacing` crezcan gradualmente en tabletas, escritorios
+  y grandes pantallas, manteniendo densidades legibles.
+- **Cabeceras configurables**: define `header_layout="centered"` o
+  `header_layout="split"` para cambiar la distribución de título, metadatos y
+  acciones. También puedes aportar una imagen o degradado mediante
+  `section_background_image`, `section_overlay_color` y
+  `section_gradient_token` para crear secciones tipo "hero" en la web.
+
 ## 🧭 Encabezados más expresivos
 
 `AdaptiveNavigationLayout` detecta automáticamente los gradientes definidos en
@@ -275,6 +291,19 @@ y controles de accesibilidad pensados para lector de pantalla y personas con
 baja audición. En móviles muestra una barra inferior accesible; en tabletas un
 `NavigationRail` compacto y en escritorio habilita un riel expandido junto a un
 panel lateral con información o herramientas.
+
+Novedades recientes del scaffold universal:
+
+- **Modo `large_desktop`**: al detectar resoluciones ultraanchas se activa un
+  tercer panel lateral que puede mostrar simultáneamente el panel de
+  accesibilidad (auto habilitable) y el secundario de contenido.
+- **Cabecera tematizada**: la barra superior lee automáticamente el token
+  `gradients.app_header` del `ThemeManager` (o el que indiques mediante
+  `app_bar_gradient_token`) y ajusta padding según el dispositivo, aportando una
+  estética consistente en web y escritorio.
+- **Control de anchura**: usa `desktop_max_content_width` para fijar el ancho
+  máximo del contenido central y `large_desktop_panel_width` para definir cuánto
+  ocupa el panel auxiliar en monitores grandes.
 
 ```python
 import flet as ft
