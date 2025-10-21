@@ -250,3 +250,90 @@ def test_responsive_grid_orientation_controls(page_factory):
     assert grid._section_inner_container.width == 1280
     assert grid._section_container.gradient is landscape_gradient
     assert grid._section_container.bgcolor is None
+
+
+def test_responsive_grid_section_margin_and_header_adaptations(page_factory):
+    page = page_factory(width=1024, height=768)
+    theme = ThemeManager(page=page)
+    theme.set_token("colors.primary", "#2563EB")
+    theme.set_token("colors.accent", "#22D3EE")
+    desktop_gradient = ft.LinearGradient(
+        colors=["#111827", "#2563EB"],
+        begin=ft.Alignment(-1.0, 0.0),
+        end=ft.Alignment(1.0, 0.0),
+    )
+    grid = ResponsiveGrid(
+        header_title="Tablero",
+        items=[ResponsiveGridItem(ft.Text("Panel"))],
+        header_actions=[ft.IconButton(icon=ft.Icons.FILTER_ALT)],
+        section_margin={
+            "mobile": ft.Margin(12, 16, 12, 16),
+            "tablet": ft.Margin(16, 20, 16, 20),
+            "desktop": ft.Margin(24, 32, 24, 32),
+        },
+        section_margin_by_orientation={"portrait": 6},
+        header_gradient_by_device={"desktop": desktop_gradient},
+        header_gradient_tokens_by_device={"tablet": ("primary", "accent")},
+        header_background_by_orientation={"portrait": "#FFEEDD"},
+        header_background_by_device={"mobile": "#123456"},
+        header_actions_alignment_by_device={"desktop": "center"},
+        header_actions_alignment_by_orientation={"portrait": "start"},
+        theme=theme,
+    )
+
+    layout = grid.init_responsive(page)
+    assert layout is not None
+
+    grid._update_section_layout(page.width)
+    assert isinstance(grid._section_container.margin, ft.Margin)
+    assert grid._section_container.margin.left == pytest.approx(24)
+
+    header_container = grid._section_header_container
+    assert header_container is not None
+    assert header_container.gradient is desktop_gradient
+    assert header_container.bgcolor is None
+    assert grid._section_actions_row.alignment == ft.MainAxisAlignment.CENTER
+
+    # Cambiar a tablet en orientación vertical
+    page.width = 820
+    page.height = 1180
+    grid._manager.orientation_callbacks["portrait"]("portrait")
+    grid._update_section_layout(page.width)
+
+    margin = grid._section_container.margin
+    assert isinstance(margin, ft.Margin)
+    assert margin.left == pytest.approx(6)
+
+    tablet_gradient = grid._section_header_container.gradient
+    assert isinstance(tablet_gradient, ft.LinearGradient)
+    assert tablet_gradient is not desktop_gradient
+    assert len(getattr(tablet_gradient, "colors", [])) >= 2
+    assert grid._section_actions_row.alignment == ft.MainAxisAlignment.START
+
+    # Mantener orientación vertical pero pasar a móvil
+    page.width = 480
+    page.height = 900
+    grid._update_section_layout(page.width)
+
+    margin = grid._section_container.margin
+    assert isinstance(margin, ft.Margin)
+    assert margin.left == pytest.approx(6)
+
+    header_container = grid._section_header_container
+    assert header_container.gradient is None
+    assert header_container.bgcolor == "#FFEEDD"
+    assert grid._section_actions_row.alignment == ft.MainAxisAlignment.START
+
+    # Cambiar a móvil en orientación horizontal para usar fondo específico del dispositivo
+    page.height = 320
+    grid._manager.orientation_callbacks["landscape"]("landscape")
+    grid._update_section_layout(page.width)
+
+    margin = grid._section_container.margin
+    assert isinstance(margin, ft.Margin)
+    assert margin.left == pytest.approx(12)
+
+    header_container = grid._section_header_container
+    assert header_container.gradient is None
+    assert header_container.bgcolor == "#123456"
+    assert grid._section_actions_row.alignment == ft.MainAxisAlignment.CENTER

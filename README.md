@@ -94,7 +94,8 @@ ft.app(target=main)
 
 ### Nuevas paletas predefinidas
 
-Además de las variantes originales ahora dispones de **siete** paletas listas para aplicar:
+Además de las variantes originales ahora dispones de un catálogo ampliado con
+paletas listas para aplicar en cualquier dispositivo:
 
 * `aurora`
 * `sunset`
@@ -103,6 +104,13 @@ Además de las variantes originales ahora dispones de **siete** paletas listas p
 * `sakura` – gradientes pastel inspirados en cerezos para interfaces creativas
 * `selva` – verdes botánicos con acentos lima ideales para proyectos sostenibles
 * `marina` – combinación de azules oceánicos con turquesas pensada para interfaces de analítica y streaming de datos
+* `terracotta` – tierra quemada con acentos turquesa para sitios editoriales cálidos
+* `cyberwave` – neones futuristas para paneles nocturnos
+* `zenith` – azules corporativos con destellos dorados
+* `oasis` – desértica con turquesas refrescantes
+* `lumen` – estética minimalista iluminada con ámbar
+* `solstice` – transición cálida del amanecer equilibrada con azules vibrantes
+* `noir` – monocromo elegante con acentos eléctricos para experiencias premium
 
 Todas ellas incluyen tokens de gradiente `gradients.app_header` compatibles con el encabezado adaptable del layout.
 
@@ -217,6 +225,17 @@ Nuevas capacidades del grid responsivo:
   `section_max_content_width_by_device` puedes fijar espacios y anchos máximos
   específicos para móvil, tablet, escritorio y monitores ultraanchos sin crear
   contenedores manuales.
+- **Márgenes contextuales**: controla el aire alrededor de cada sección con
+  `section_margin` y `section_margin_by_orientation`, ideal para interfaces
+  móviles en las que necesitas reducir bordes en modo retrato y ampliarlos en
+  pantallas de escritorio.
+- **Cabeceras dinámicas**: personaliza el fondo de la cabecera mediante
+  `header_background_by_device`, `header_background_by_orientation` y los nuevos
+  mapas de degradado `header_gradient_by_device`,
+  `header_gradient_tokens_by_device` y `header_gradient_tokens_by_orientation`.
+- **Acciones adaptadas al contexto**: ajusta la alineación de botones y filtros
+  del encabezado con `header_actions_alignment`, así como mapas por dispositivo
+  u orientación para mejorar la ergonomía en smartphones y escritorios.
 
 ## 🧭 Encabezados más expresivos
 
