@@ -93,6 +93,12 @@ class AdaptiveAppHeader:
         corner_radius: float | ft.BorderRadius | None = 24,
         shadow: ft.BoxShadow | Sequence[ft.BoxShadow] | None = None,
         max_content_width: float | int | None = 1280,
+        layout_by_orientation: Mapping[str, str] | None = None,
+        hero_max_height_by_device: Mapping[str, float | int | None] | None = None,
+        hero_aspect_ratio: float | int | None = None,
+        hero_position: str = "auto",
+        hero_position_by_orientation: Mapping[str, str] | None = None,
+        hero_position_by_device: Mapping[str, str] | None = None,
     ) -> None:
         self.title = title
         self.subtitle = subtitle
@@ -107,6 +113,11 @@ class AdaptiveAppHeader:
         self.corner_radius = corner_radius
         self.shadow = shadow
         self.max_content_width = max_content_width
+        self.hero_aspect_ratio = (
+            float(hero_aspect_ratio)
+            if isinstance(hero_aspect_ratio, (int, float)) and hero_aspect_ratio > 0
+            else None
+        )
 
         self._padding_config: Dict[DeviceName, ft.Padding | None]
         if isinstance(padding, dict):
@@ -129,6 +140,66 @@ class AdaptiveAppHeader:
 
         self._page: ft.Page | None = None
         self._manager: ResponsiveManager | None = None
+        self._current_orientation: str = "landscape"
+        self._hero_container: ft.Container | None = None
+
+        orientation_layouts: Dict[str, str] = {}
+        if layout_by_orientation:
+            for key, value in layout_by_orientation.items():
+                orientation = str(key).strip().lower()
+                if orientation not in {"portrait", "landscape"}:
+                    continue
+                if not isinstance(value, str):
+                    continue
+                normalized = value.strip().lower()
+                if normalized not in {"auto", "stacked", "inline", "split"}:
+                    continue
+                orientation_layouts[orientation] = normalized
+        self.layout_by_orientation = orientation_layouts
+
+        normalized_heights: Dict[str, float] = {}
+        if hero_max_height_by_device:
+            for key, value in hero_max_height_by_device.items():
+                if value is None:
+                    continue
+                try:
+                    height = float(value)
+                except (TypeError, ValueError):
+                    continue
+                if height <= 0:
+                    continue
+                normalized_heights[str(key).strip().lower()] = height
+        self.hero_max_height_by_device = normalized_heights
+
+        def _normalize_position(value: object) -> str | None:
+            if not isinstance(value, str):
+                return None
+            normalized_value = value.strip().lower()
+            if normalized_value not in {"auto", "inline", "bottom"}:
+                return None
+            return normalized_value
+
+        self.hero_position = _normalize_position(hero_position) or "auto"
+        orientation_positions: Dict[str, str] = {}
+        if hero_position_by_orientation:
+            for key, value in hero_position_by_orientation.items():
+                orientation = str(key).strip().lower()
+                if orientation not in {"portrait", "landscape"}:
+                    continue
+                normalized_value = _normalize_position(value)
+                if normalized_value is None:
+                    continue
+                orientation_positions[orientation] = normalized_value
+        self.hero_position_by_orientation = orientation_positions
+
+        device_positions: Dict[str, str] = {}
+        if hero_position_by_device:
+            for key, value in hero_position_by_device.items():
+                normalized_value = _normalize_position(value)
+                if normalized_value is None:
+                    continue
+                device_positions[str(key).strip().lower()] = normalized_value
+        self.hero_position_by_device = device_positions
 
         self._container = ft.Container()
         self._background = ft.Container()
@@ -182,11 +253,23 @@ class AdaptiveAppHeader:
     # ------------------------------------------------------------------
     def build(self, page: ft.Page) -> ft.Control:
         self._page = page
+        if page.width and page.height:
+            self._current_orientation = (
+                "landscape" if page.width >= page.height else "portrait"
+            )
         self._apply_theme()
         self._update_layout(page.width or 0)
 
         breakpoints = {0: self._update_layout, 640: self._update_layout, 960: self._update_layout}
-        self._manager = ResponsiveManager(page, breakpoints)
+        orientation_callbacks = {
+            "portrait": self._handle_orientation_change,
+            "landscape": self._handle_orientation_change,
+        }
+        self._manager = ResponsiveManager(
+            page,
+            breakpoints,
+            orientation_callbacks=orientation_callbacks,
+        )
 
         return self._container
 
@@ -253,6 +336,8 @@ class AdaptiveAppHeader:
     # ------------------------------------------------------------------
     def _update_layout(self, width: int) -> None:
         device = _device_from_width(width)
+        self._current_orientation = self._detect_orientation()
+        layout_device = self._resolve_layout_device(device)
 
         padding = self._resolve_padding(device)
         self._background.padding = padding
@@ -309,8 +394,10 @@ class AdaptiveAppHeader:
             ft.MainAxisAlignment.CENTER if device == "mobile" else ft.MainAxisAlignment.END
         )
 
+        header_layout: ft.Control | None = None
+
         if actions_present:
-            if device == "desktop":
+            if layout_device == "desktop":
                 header_layout = ft.Row(
                     controls=[
                         ft.Column(controls=controls, spacing=12, tight=True),
@@ -320,12 +407,15 @@ class AdaptiveAppHeader:
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 )
-                self._content_column.controls.clear()
-                self._content_column.controls.append(header_layout)
-            elif device == "tablet":
+            elif layout_device == "tablet":
                 header_layout = ft.Row(
                     controls=[
-                        ft.Column(controls=controls, spacing=12, tight=True, expand=True),
+                        ft.Column(
+                            controls=controls,
+                            spacing=12,
+                            tight=True,
+                            expand=True,
+                        ),
                         ft.Container(width=16),
                         self._actions_row,
                     ],
@@ -333,23 +423,19 @@ class AdaptiveAppHeader:
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     wrap=True,
                 )
-                self._content_column.controls.clear()
-                self._content_column.controls.append(header_layout)
             else:
-                self._content_column.controls.clear()
-                self._content_column.controls.append(
-                    ft.Column(
-                        controls=controls + [self._actions_row],
-                        spacing=12,
-                        tight=True,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
+                header_layout = ft.Column(
+                    controls=controls + [self._actions_row],
+                    spacing=12,
+                    tight=True,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
         else:
-            self._content_column.controls.clear()
-            self._content_column.controls.append(
-                ft.Column(controls=controls, spacing=12, tight=True)
-            )
+            header_layout = ft.Column(controls=controls, spacing=12, tight=True)
+
+        self._content_column.controls.clear()
+        hero_position_mode = self._resolve_hero_position(device)
+        hero_container: ft.Container | None = None
 
         if self._hero_host:
             hero_container = ft.Container(content=self._hero_host.content)
@@ -357,8 +443,93 @@ class AdaptiveAppHeader:
             hero_container.padding = ft.Padding(0, 12, 0, 0)
             if device == "mobile":
                 hero_container.padding = ft.Padding(0, 16, 0, 0)
-            self._content_column.controls.append(hero_container)
+            if self.hero_aspect_ratio:
+                hero_container.aspect_ratio = self.hero_aspect_ratio
+            max_height = self._resolve_hero_max_height(device)
+            if max_height is not None:
+                hero_container.max_height = max_height
+            self._hero_container = hero_container
+
+        if hero_container and hero_position_mode == "inline" and layout_device != "mobile":
+            spacing = 24 if layout_device == "desktop" else 16
+            hero_container.expand = False
+            if hero_container.width is None:
+                hero_container.width = 340 if layout_device == "desktop" else 280
+            hero_container.padding = ft.Padding(0, 0, 0, 0)
+            inline_controls: list[ft.Control] = []
+            if header_layout is not None:
+                inline_controls.append(
+                    ft.Container(content=header_layout, expand=True)
+                )
+            inline_controls.append(hero_container)
+            inline_row = ft.Row(
+                controls=inline_controls,
+                spacing=spacing,
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                wrap=False,
+            )
+            self._content_column.controls.append(inline_row)
+        else:
+            if header_layout is not None:
+                self._content_column.controls.append(header_layout)
+            if hero_container:
+                self._content_column.controls.append(hero_container)
 
         if self._page is not None:
             self._page.update()
+
+    # ------------------------------------------------------------------
+    def _detect_orientation(self) -> str:
+        if not self._page:
+            return self._current_orientation
+        width = self._page.width or 0
+        height = self._page.height or 0
+        return "landscape" if width >= height else "portrait"
+
+    # ------------------------------------------------------------------
+    def _resolve_layout_device(self, device: DeviceName) -> DeviceName:
+        orientation = self._current_orientation
+        override = self.layout_by_orientation.get(orientation)
+        if override == "stacked":
+            return "mobile"
+        if override == "inline":
+            return "tablet"
+        if override == "split":
+            return "desktop"
+        return device
+
+    # ------------------------------------------------------------------
+    def _resolve_hero_max_height(self, device: DeviceName) -> float | None:
+        if not self.hero_max_height_by_device:
+            return None
+        for key in (device, "desktop", "tablet", "mobile"):
+            if key in self.hero_max_height_by_device:
+                return self.hero_max_height_by_device[key]
+        return None
+
+    # ------------------------------------------------------------------
+    def _resolve_hero_position(self, device: DeviceName) -> str:
+        orientation = self._current_orientation
+        position = self.hero_position
+        orientation_override = self.hero_position_by_orientation.get(orientation)
+        if orientation_override:
+            position = orientation_override
+        device_override = self.hero_position_by_device.get(device)
+        if device_override:
+            position = device_override
+        if position == "auto":
+            if device in {"desktop", "tablet"} and orientation == "landscape":
+                return "inline"
+            return "bottom"
+        return position
+
+    # ------------------------------------------------------------------
+    def _handle_orientation_change(self, orientation: str) -> None:
+        normalized = orientation.lower()
+        if normalized not in {"portrait", "landscape"}:
+            return
+        self._current_orientation = normalized
+        if self._page is not None:
+            self._update_layout(self._page.width or 0)
 
