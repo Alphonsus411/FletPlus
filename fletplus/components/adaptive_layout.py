@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Sequence
+from typing import TYPE_CHECKING, Callable, Mapping, Sequence
 
 import flet as ft
 
@@ -73,6 +73,10 @@ class AdaptiveNavigationLayout:
             "gradient_app_header_start",
             "gradient_app_header_end",
         ),
+        device_theme_tokens: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
+        header_backgrounds: Mapping[str, str] | None = None,
+        header_gradient_tokens_by_device: Mapping[str, Sequence[str] | tuple[str, str]]
+        | None = None,
     ) -> None:
         if not destinations:
             raise ValueError("AdaptiveNavigationLayout requiere al menos un destino")
@@ -93,6 +97,17 @@ class AdaptiveNavigationLayout:
         self.header_style = header_style
         self.header_background_token = header_background_token
         self.header_gradient_tokens = header_gradient_tokens
+        self.header_backgrounds = {
+            str(key).lower(): value
+            for key, value in (header_backgrounds or {}).items()
+            if isinstance(value, str)
+        }
+        gradient_map: dict[str, tuple[str, str]] = {}
+        if header_gradient_tokens_by_device:
+            for key, value in header_gradient_tokens_by_device.items():
+                if isinstance(value, (list, tuple)) and len(value) >= 2:
+                    gradient_map[str(key).lower()] = (str(value[0]), str(value[1]))
+        self.header_gradient_tokens_by_device = gradient_map
 
         self._page: ft.Page | None = None
         self._current_device: str = "mobile"
@@ -146,6 +161,14 @@ class AdaptiveNavigationLayout:
         )
         self._header_container: ft.Container | None = None
         self._header_responsive_style: ResponsiveStyle | None = None
+
+        if self.theme and device_theme_tokens:
+            for device, tokens_map in device_theme_tokens.items():
+                try:
+                    self.theme.set_device_tokens(device, tokens_map, refresh=False)
+                except Exception:  # pragma: no cover - errores defensivos
+                    continue
+            self.theme.apply_theme()
 
     # Propiedades públicas ----------------------------------------------
     @property
@@ -262,15 +285,31 @@ class AdaptiveNavigationLayout:
         else:
             self._header_container.content = self.header
 
-        self._apply_header_theme(self._header_container)
+        self._apply_header_theme(self._header_container, self._current_device)
         return self._header_container
 
     # ------------------------------------------------------------------
-    def _apply_header_theme(self, container: ft.Container) -> None:
+    def _apply_header_theme(self, container: ft.Container, device: str | None = None) -> None:
         if not self.theme:
             return
 
-        if self.header_background_token:
+        device_key = (device or self._current_device or "").lower()
+
+        # Aplicar gradientes específicos por dispositivo primero
+        if self.header_gradient_tokens_by_device:
+            tokens = self.header_gradient_tokens_by_device.get(device_key)
+            if tokens:
+                start = self.theme.get_color(tokens[0])
+                end = self.theme.get_color(tokens[1])
+                if start and end:
+                    container.gradient = ft.LinearGradient(
+                        colors=[start, end],
+                        begin=ft.alignment.center_left,
+                        end=ft.alignment.center_right,
+                    )
+                    container.bgcolor = None
+
+        if container.gradient is None and self.header_background_token:
             gradient = self.theme.get_gradient(self.header_background_token)
             if gradient:
                 container.gradient = gradient
@@ -294,11 +333,17 @@ class AdaptiveNavigationLayout:
                 )
                 container.bgcolor = None
 
+        background_override = self.header_backgrounds.get(device_key)
+        if background_override:
+            container.gradient = None
+            container.bgcolor = background_override
+
         if container.gradient is None and container.bgcolor is None:
             fallback = self.theme.get_color("primary") or ft.Colors.BLUE_GREY_500
             container.bgcolor = fallback
 
-        shadows = self.theme.tokens.get("shadows", {}) if hasattr(self.theme, "tokens") else {}
+        tokens_source = getattr(self.theme, "effective_tokens", getattr(self.theme, "tokens", {}))
+        shadows = tokens_source.get("shadows", {}) if isinstance(tokens_source, dict) else {}
         if container.shadow is None:
             header_shadow = (
                 shadows.get("header")
@@ -322,7 +367,7 @@ class AdaptiveNavigationLayout:
             return None
 
         container = self._ensure_header_container()
-        self._apply_header_theme(container)
+        self._apply_header_theme(container, device)
 
         if with_drawer and self.drawer is not None:
             self._drawer_button.visible = True
@@ -384,6 +429,11 @@ class AdaptiveNavigationLayout:
 
     def _apply_device_layout(self, device: str) -> None:
         self._current_device = device
+        if self.theme:
+            try:
+                self.theme.apply_theme(device=device)
+            except Exception:  # pragma: no cover - manejo defensivo
+                pass
         self._update_content()
 
         body_controls: list[ft.Control] = []

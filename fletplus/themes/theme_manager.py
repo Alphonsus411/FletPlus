@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
+from copy import deepcopy
 import flet as ft
 
 from fletplus.themes.palettes import (
@@ -105,6 +106,7 @@ class ThemeManager:
         *,
         palette: str | Mapping[str, Mapping[str, object]] | None = None,
         palette_mode: str | None = None,
+        device_tokens: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
     ) -> None:
         self.page = page
         self.dark_mode = False
@@ -142,6 +144,9 @@ class ThemeManager:
 
         self._palette_definition: dict[str, Mapping[str, object]] | None = None
         self._palette_name: str | None = None
+        self._device_tokens: dict[str, dict[str, dict[str, object]]] = {}
+        self._active_device: str | None = None
+        self._effective_tokens: dict[str, dict[str, object]] = deepcopy(self.tokens)
 
         if palette is not None:
             try:
@@ -154,20 +159,31 @@ class ThemeManager:
                 if isinstance(values, Mapping):
                     self.tokens.setdefault(group, {}).update(values)
 
+        if device_tokens:
+            for device, overrides in device_tokens.items():
+                self.set_device_tokens(device, overrides, refresh=False)
+
         # Aplicar la variante inicial de la paleta tras fusionar tokens
         if self._palette_definition is not None:
             self._apply_current_palette_variant()
 
+        self._refresh_effective_tokens(self._active_device)
+
     # ------------------------------------------------------------------
-    def apply_theme(self) -> None:
+    def apply_theme(self, device: str | None = None) -> None:
         """Apply current tokens to the page theme."""
 
-        colors = self.tokens.get("colors", {})
-        typography = self.tokens.get("typography", {})
-        radii = self.tokens.get("radii", {})
-        spacing = self.tokens.get("spacing", {})
-        borders = self.tokens.get("borders", {})
-        shadows = self.tokens.get("shadows", {})
+        if device is not None:
+            self._active_device = device.lower()
+
+        self._refresh_effective_tokens(self._active_device)
+
+        colors = self._effective_tokens.get("colors", {})
+        typography = self._effective_tokens.get("typography", {})
+        radii = self._effective_tokens.get("radii", {})
+        spacing = self._effective_tokens.get("spacing", {})
+        borders = self._effective_tokens.get("borders", {})
+        shadows = self._effective_tokens.get("shadows", {})
 
         self.page.theme = ft.Theme(
             color_scheme_seed=colors.get("primary"),
@@ -242,6 +258,52 @@ class ThemeManager:
             self.apply_theme()
 
     # ------------------------------------------------------------------
+    def set_device_tokens(
+        self,
+        device: str,
+        tokens: Mapping[str, Mapping[str, object]],
+        *,
+        refresh: bool = True,
+    ) -> None:
+        """Registra tokens específicos para ``device``."""
+
+        normalized_device = device.lower().strip()
+        overrides: dict[str, dict[str, object]] = {}
+        for group, values in tokens.items():
+            if isinstance(values, Mapping):
+                overrides[group] = {key: value for key, value in values.items()}
+        if not overrides:
+            return
+
+        self._device_tokens[normalized_device] = overrides
+        if refresh:
+            self.apply_theme(device=self._active_device or normalized_device)
+
+    # ------------------------------------------------------------------
+    def clear_device_tokens(self, device: str | None = None) -> None:
+        """Elimina tokens adaptativos registrados."""
+
+        if device is None:
+            self._device_tokens.clear()
+        else:
+            self._device_tokens.pop(device.lower().strip(), None)
+        self.apply_theme(device=self._active_device)
+
+    # ------------------------------------------------------------------
+    @property
+    def active_device(self) -> str | None:
+        """Devuelve el dispositivo actualmente activo."""
+
+        return self._active_device
+
+    # ------------------------------------------------------------------
+    @property
+    def effective_tokens(self) -> dict[str, dict[str, object]]:
+        """Tokens tras aplicar overrides por dispositivo."""
+
+        return self._effective_tokens
+
+    # ------------------------------------------------------------------
     @staticmethod
     def _split_name(name: str) -> tuple[str, str]:
         """Split a ``group.token`` string into its components.
@@ -305,7 +367,7 @@ class ThemeManager:
         The token value if present, otherwise ``None``.
         """
         group, token = self._split_name(name)
-        return self.tokens.get(group, {}).get(token)
+        return self._effective_tokens.get(group, {}).get(token)
 
     # ------------------------------------------------------------------
     def set_primary_color(self, color: str) -> None:
@@ -317,13 +379,13 @@ class ThemeManager:
     def get_color(self, token: str, default: object | None = None) -> object | None:
         """Recupera un color almacenado en ``tokens.colors``."""
 
-        return self.tokens.get("colors", {}).get(token, default)
+        return self._effective_tokens.get("colors", {}).get(token, default)
 
     # ------------------------------------------------------------------
     def get_gradient(self, token: str) -> object | None:
         """Devuelve un gradiente preparado para usarse en contenedores."""
 
-        return self.tokens.get("gradients", {}).get(token)
+        return self._effective_tokens.get("gradients", {}).get(token)
 
     # ------------------------------------------------------------------
     def list_available_palettes(self) -> list[tuple[str, str]]:
@@ -346,6 +408,7 @@ class ThemeManager:
                 return
 
         self._merge_palette_tokens(variant)
+        self._refresh_effective_tokens(self._active_device)
 
     # ------------------------------------------------------------------
     def _merge_palette_tokens(self, palette_tokens: Mapping[str, object]) -> None:
@@ -361,6 +424,28 @@ class ThemeManager:
             if isinstance(values, Mapping):
                 target = self.tokens.setdefault(group, {})
                 target.update(values)
+
+        self._refresh_effective_tokens(self._active_device)
+
+    # ------------------------------------------------------------------
+    def _refresh_effective_tokens(self, device: str | None) -> None:
+        base = {group: dict(values) for group, values in self.tokens.items()}
+        overrides = self._resolve_device_overrides(device)
+        for group, values in overrides.items():
+            target = base.setdefault(group, {})
+            target.update(values)
+        self._effective_tokens = base
+
+    # ------------------------------------------------------------------
+    def _resolve_device_overrides(
+        self, device: str | None
+    ) -> dict[str, dict[str, object]]:
+        if not device:
+            return {}
+        overrides = self._device_tokens.get(device.lower())
+        if not overrides:
+            return {}
+        return {group: dict(values) for group, values in overrides.items()}
 
     # ------------------------------------------------------------------
     @staticmethod
