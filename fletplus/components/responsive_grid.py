@@ -155,6 +155,14 @@ class ResponsiveGrid:
         section_background_image_fit: ft.ImageFit | None = None,
         section_overlay_color: str | None = None,
         header_layout: str = "auto",
+        header_layout_by_device: Dict[str, str] | None = None,
+        section_device_backgrounds: Dict[str, str] | None = None,
+        section_device_gradient_tokens: Dict[str, str] | None = None,
+        section_device_gradients: Dict[str, ft.Gradient] | None = None,
+        section_overlay_color_by_device: Dict[str, str] | None = None,
+        header_badge: str | ft.Control | None = None,
+        header_badge_icon: str | None = None,
+        header_badge_style: Style | None = None,
     ) -> None:
         """Grid responsiva basada en breakpoints.
 
@@ -201,6 +209,38 @@ class ResponsiveGrid:
         if layout_value not in {"auto", "centered", "split"}:
             layout_value = "auto"
         self.header_layout = layout_value
+        normalized_layouts: Dict[str, str] = {}
+        if header_layout_by_device:
+            for key, value in header_layout_by_device.items():
+                if not isinstance(value, str):
+                    continue
+                normalized = value.strip().lower()
+                if normalized not in {"auto", "centered", "split"}:
+                    continue
+                normalized_layouts[str(key).lower()] = normalized
+        self.header_layout_by_device = normalized_layouts
+
+        self.section_device_backgrounds = {
+            str(key).lower(): value
+            for key, value in (section_device_backgrounds or {}).items()
+            if isinstance(value, str)
+        }
+        self.section_device_gradient_tokens = {
+            str(key).lower(): value
+            for key, value in (section_device_gradient_tokens or {}).items()
+            if isinstance(value, str)
+        }
+        self.section_device_gradients = {
+            str(key).lower(): value
+            for key, value in (section_device_gradients or {}).items()
+            if isinstance(value, ft.Gradient)
+        }
+        self.section_overlay_color_by_device = {
+            str(key).lower(): value
+            for key, value in (section_overlay_color_by_device or {}).items()
+            if isinstance(value, str)
+        }
+
         self._section_actions_row = ft.Row(
             controls=list(header_actions or []), spacing=12, wrap=True
         )
@@ -214,6 +254,36 @@ class ResponsiveGrid:
             self._section_icon_control = ft.Icon(header_icon, size=30)
         else:
             self._section_icon_control = None
+
+        self._header_badge: ft.Control | None = None
+        if isinstance(header_badge, ft.Control):
+            self._header_badge = header_badge
+        elif header_badge:
+            badge_text = ft.Text(str(header_badge), weight=ft.FontWeight.BOLD, size=12)
+            badge_content: ft.Control = badge_text
+            if header_badge_icon:
+                badge_content = ft.Row(
+                    controls=[ft.Icon(header_badge_icon, size=14), badge_text],
+                    spacing=6,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                )
+            if header_badge_style:
+                self._header_badge = header_badge_style.apply(badge_content)
+            else:
+                accent = None
+                if self.theme:
+                    accent = (
+                        self.theme.get_color("accent")
+                        or self.theme.get_color("primary")
+                        or ft.Colors.BLUE_400
+                    )
+                self._header_badge = ft.Container(
+                    content=badge_content,
+                    padding=ft.Padding(12, 6, 12, 6),
+                    bgcolor=ft.Colors.with_opacity(0.14, accent or ft.Colors.BLUE_200),
+                    border_radius=ft.border_radius.all(40),
+                    border=ft.border.all(1, ft.Colors.with_opacity(0.2, accent or ft.Colors.BLUE)),
+                )
 
         self._wrap_requested = False
 
@@ -461,7 +531,12 @@ class ResponsiveGrid:
         return _clone_padding(padding) or ft.Padding(20, 20, 20, 20)
 
     # ------------------------------------------------------------------
-    def _resolve_section_background(self) -> str | None:
+    def _resolve_section_background(self, device: DeviceName) -> str | None:
+        device_backgrounds = getattr(self, "section_device_backgrounds", None)
+        if device_backgrounds:
+            custom = device_backgrounds.get(device)
+            if custom:
+                return custom
         if self.section_background:
             return self.section_background
         if self.theme:
@@ -469,17 +544,27 @@ class ResponsiveGrid:
                 self.theme.get_color("surface_variant")
                 or self.theme.get_color("surface")
                 or self.theme.get_color("background")
-            )
+        )
         return ft.Colors.with_opacity(0.02, "#000000")
 
     # ------------------------------------------------------------------
-    def _resolve_section_gradient(self) -> ft.Gradient | None:
+    def _resolve_section_gradient(self, device: DeviceName) -> ft.Gradient | None:
+        if self.section_device_gradients:
+            gradient = self.section_device_gradients.get(device)
+            if gradient:
+                return gradient
         if self.section_gradient is not None:
             return self.section_gradient
         if self.theme and self.section_gradient_token:
             gradient = self.theme.get_gradient(self.section_gradient_token)
             if gradient is not None:
                 return gradient
+        if self.theme and self.section_device_gradient_tokens:
+            token = self.section_device_gradient_tokens.get(device)
+            if token:
+                gradient = self.theme.get_gradient(token)
+                if gradient is not None:
+                    return gradient
         return None
 
     # ------------------------------------------------------------------
@@ -504,21 +589,28 @@ class ResponsiveGrid:
         padding = self._resolve_section_padding(device)
         self._section_container.padding = padding
 
-        gradient = self._resolve_section_gradient()
+        gradient = self._resolve_section_gradient(device)
         if gradient:
             self._section_container.gradient = gradient
             self._section_container.bgcolor = None
         else:
             self._section_container.gradient = None
-            self._section_container.bgcolor = self._resolve_section_background()
+            self._section_container.bgcolor = self._resolve_section_background(device)
 
         if self.section_background_image:
             self._section_container.image_src = self.section_background_image
             self._section_container.image_fit = (
                 self.section_background_image_fit or ft.ImageFit.COVER
             )
-            if self.section_overlay_color:
-                self._section_container.bgcolor = self.section_overlay_color
+            overlay_color = (
+                self.section_overlay_color_by_device.get(device)
+                if isinstance(getattr(self, "section_overlay_color_by_device", None), dict)
+                else None
+            )
+            if overlay_color is None:
+                overlay_color = self.section_overlay_color
+            if overlay_color:
+                self._section_container.bgcolor = overlay_color
         else:
             self._section_container.image_src = None
 
@@ -570,6 +662,7 @@ class ResponsiveGrid:
         self._section_header_container.visible = True
 
         device = self._resolve_device_name(width)
+        layout_mode = self.header_layout_by_device.get(device, self.header_layout)
 
         title_size = {"mobile": 20, "tablet": 22, "desktop": 24, "large_desktop": 28}
         subtitle_size = {"mobile": 15, "tablet": 16, "desktop": 18, "large_desktop": 20}
@@ -604,6 +697,8 @@ class ResponsiveGrid:
             )
 
         text_controls: list[ft.Control] = []
+        if self._header_badge:
+            text_controls.append(self._header_badge)
         if title_control:
             text_controls.append(title_control)
         if subtitle_control:
@@ -632,15 +727,13 @@ class ResponsiveGrid:
         if self._section_metadata_row.controls:
             meta_alignment = (
                 ft.MainAxisAlignment.CENTER
-                if device == "mobile" or self.header_layout == "centered"
+                if device == "mobile" or layout_mode == "centered"
                 else ft.MainAxisAlignment.START
             )
             self._section_metadata_row.alignment = meta_alignment
             metadata_control: ft.Control | None = self._section_metadata_row
         else:
             metadata_control = None
-
-        layout_mode = self.header_layout
 
         if device == "mobile":
             mobile_controls: list[ft.Control] = []

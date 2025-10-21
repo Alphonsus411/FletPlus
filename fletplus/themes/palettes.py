@@ -421,6 +421,108 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "zenith": {
+        "description": "Azules profundos con dorados suaves para portales corporativos.",
+        "light": {
+            "colors": {
+                "primary": "#1D4E89",
+                "on_primary": "#FFFFFF",
+                "background": "#F2F6FC",
+                "on_background": "#0F172A",
+                "surface": "#FFFFFF",
+                "on_surface": "#102A43",
+                "surface_variant": "#E1E8F5",
+                "on_surface_variant": "#1D3A64",
+                "outline": "#8091B2",
+                "accent": "#F59E0B",
+                "muted": "#6B7280",
+                "gradient_app_header_start": "#1D4E89",
+                "gradient_app_header_end": "#F59E0B",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#102A43", "#1D4E89", "#F59E0B"],
+                    "begin": (-0.3, -1.0),
+                    "end": (0.8, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#60A5FA",
+                "on_primary": "#0B1120",
+                "background": "#0A1224",
+                "on_background": "#CBD5F5",
+                "surface": "#111C33",
+                "on_surface": "#CBD5F5",
+                "surface_variant": "#1E2F4F",
+                "on_surface_variant": "#9CB7E0",
+                "outline": "#3B82F6",
+                "accent": "#FBBF24",
+                "muted": "#8193B2",
+                "gradient_app_header_start": "#0B1120",
+                "gradient_app_header_end": "#2563EB",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B1120", "#1D4E89", "#2563EB"],
+                    "begin": (-0.2, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
+    "terracotta": {
+        "description": "Paleta cálida de arcilla con acentos turquesa para sitios editoriales.",
+        "light": {
+            "colors": {
+                "primary": "#BF6C43",
+                "on_primary": "#FFFFFF",
+                "background": "#FBF3EF",
+                "on_background": "#43281C",
+                "surface": "#FFFFFF",
+                "on_surface": "#4E342E",
+                "surface_variant": "#F0D6CB",
+                "on_surface_variant": "#6E4B3C",
+                "outline": "#C49A7E",
+                "accent": "#1BA39C",
+                "muted": "#8B6F60",
+                "gradient_app_header_start": "#BF6C43",
+                "gradient_app_header_end": "#1BA39C",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#8C4A2F", "#BF6C43", "#1BA39C"],
+                    "begin": (-0.5, -1.0),
+                    "end": (0.5, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#F2A97D",
+                "on_primary": "#3A1C12",
+                "background": "#22130E",
+                "on_background": "#FFE1D2",
+                "surface": "#2F1C14",
+                "on_surface": "#FFE1D2",
+                "surface_variant": "#4B2C1F",
+                "on_surface_variant": "#FFC7AA",
+                "outline": "#D28B68",
+                "accent": "#30CBC1",
+                "muted": "#B08774",
+                "gradient_app_header_start": "#22130E",
+                "gradient_app_header_end": "#30CBC1",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#22130E", "#BF6C43", "#30CBC1"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.7, 1.0),
+                }
+            },
+        },
+    },
 }
 
 
