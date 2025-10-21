@@ -829,6 +829,108 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "solstice": {
+        "description": "Transición cálida del amanecer con acentos azules para apps narrativas.",
+        "light": {
+            "colors": {
+                "primary": "#F97316",
+                "on_primary": "#FFFFFF",
+                "background": "#FFF7ED",
+                "on_background": "#431407",
+                "surface": "#FFFFFF",
+                "on_surface": "#572008",
+                "surface_variant": "#FED7AA",
+                "on_surface_variant": "#7C2D12",
+                "outline": "#EA580C",
+                "accent": "#2563EB",
+                "muted": "#9A3412",
+                "gradient_app_header_start": "#F97316",
+                "gradient_app_header_end": "#2563EB",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#F97316", "#FB923C", "#2563EB"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#FDBA74",
+                "on_primary": "#451A03",
+                "background": "#2B1004",
+                "on_background": "#FED7AA",
+                "surface": "#361306",
+                "on_surface": "#FED7AA",
+                "surface_variant": "#4C1D0A",
+                "on_surface_variant": "#FB923C",
+                "outline": "#EA580C",
+                "accent": "#38BDF8",
+                "muted": "#C2410C",
+                "gradient_app_header_start": "#451A03",
+                "gradient_app_header_end": "#2563EB",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#451A03", "#7C2D12", "#2563EB"],
+                    "begin": (-0.3, -1.0),
+                    "end": (0.7, 1.0),
+                }
+            },
+        },
+    },
+    "noir": {
+        "description": "Minimalismo monocromático con acentos eléctricos para paneles premium.",
+        "light": {
+            "colors": {
+                "primary": "#1F2933",
+                "on_primary": "#FFFFFF",
+                "background": "#F7F7F7",
+                "on_background": "#111827",
+                "surface": "#FFFFFF",
+                "on_surface": "#111827",
+                "surface_variant": "#E5E7EB",
+                "on_surface_variant": "#4B5563",
+                "outline": "#9CA3AF",
+                "accent": "#2563EB",
+                "muted": "#6B7280",
+                "gradient_app_header_start": "#111827",
+                "gradient_app_header_end": "#2563EB",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#111827", "#1F2937", "#2563EB"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#9CA3AF",
+                "on_primary": "#111827",
+                "background": "#0B0F16",
+                "on_background": "#E5E7EB",
+                "surface": "#111827",
+                "on_surface": "#E5E7EB",
+                "surface_variant": "#1F2937",
+                "on_surface_variant": "#94A3B8",
+                "outline": "#4B5563",
+                "accent": "#2563EB",
+                "muted": "#6B7280",
+                "gradient_app_header_start": "#0B0F16",
+                "gradient_app_header_end": "#2563EB",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B0F16", "#1F2933", "#2563EB"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
     "aurora": {
         "description": "Inspirada en auroras boreales: contrastes vibrantes y neones suaves.",
         "light": {
