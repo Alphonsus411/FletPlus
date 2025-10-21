@@ -625,6 +625,210 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "metropolis": {
+        "description": "Paleta urbana con neutros elegantes y acentos tecnológicos.",
+        "light": {
+            "colors": {
+                "primary": "#2563EB",
+                "on_primary": "#FFFFFF",
+                "background": "#F5F5F5",
+                "on_background": "#1F2933",
+                "surface": "#FFFFFF",
+                "on_surface": "#1F2933",
+                "surface_variant": "#E2E8F0",
+                "on_surface_variant": "#334155",
+                "outline": "#94A3B8",
+                "accent": "#14B8A6",
+                "muted": "#64748B",
+                "gradient_app_header_start": "#0F172A",
+                "gradient_app_header_end": "#14B8A6",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0F172A", "#2563EB", "#14B8A6"],
+                    "begin": (-1.0, 0.0),
+                    "end": (1.0, 0.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#60A5FA",
+                "on_primary": "#0B1120",
+                "background": "#0B1120",
+                "on_background": "#E2E8F0",
+                "surface": "#111827",
+                "on_surface": "#E2E8F0",
+                "surface_variant": "#1E293B",
+                "on_surface_variant": "#CBD5F5",
+                "outline": "#38BDF8",
+                "accent": "#10B981",
+                "muted": "#64748B",
+                "gradient_app_header_start": "#0B1120",
+                "gradient_app_header_end": "#2563EB",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B1120", "#1E3A8A", "#2563EB"],
+                    "begin": (-0.6, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
+    "oasis": {
+        "description": "Tonos desérticos con turquesas refrescantes para experiencias cálidas.",
+        "light": {
+            "colors": {
+                "primary": "#E07A5F",
+                "on_primary": "#FFFFFF",
+                "background": "#FFF7ED",
+                "on_background": "#3C2F2F",
+                "surface": "#FFFFFF",
+                "on_surface": "#3C2F2F",
+                "surface_variant": "#F3D2C1",
+                "on_surface_variant": "#855C47",
+                "outline": "#D4A373",
+                "accent": "#3AA6B9",
+                "muted": "#927D75",
+                "gradient_app_header_start": "#F3D2C1",
+                "gradient_app_header_end": "#3AA6B9",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#F3D2C1", "#E07A5F", "#3AA6B9"],
+                    "begin": (0.0, -1.0),
+                    "end": (1.0, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#F2C6B4",
+                "on_primary": "#431A12",
+                "background": "#24120F",
+                "on_background": "#FDEFE8",
+                "surface": "#2E1C17",
+                "on_surface": "#FDEFE8",
+                "surface_variant": "#4B2A20",
+                "on_surface_variant": "#F6D5C0",
+                "outline": "#DAA588",
+                "accent": "#4AC3D4",
+                "muted": "#B08C7F",
+                "gradient_app_header_start": "#24120F",
+                "gradient_app_header_end": "#4AC3D4",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#24120F", "#E07A5F", "#4AC3D4"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
+    "lumen": {
+        "description": "Diseño luminoso con acentos ámbar para interfaces minimalistas.",
+        "light": {
+            "colors": {
+                "primary": "#1F7A8C",
+                "on_primary": "#FFFFFF",
+                "background": "#F5FCFF",
+                "on_background": "#12343B",
+                "surface": "#FFFFFF",
+                "on_surface": "#12343B",
+                "surface_variant": "#CCE5F2",
+                "on_surface_variant": "#1F7A8C",
+                "outline": "#8FBCCB",
+                "accent": "#FFBA49",
+                "muted": "#5E7C88",
+                "gradient_app_header_start": "#12343B",
+                "gradient_app_header_end": "#FFBA49",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#12343B", "#1F7A8C", "#FFBA49"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#7FD1E8",
+                "on_primary": "#08252B",
+                "background": "#09171A",
+                "on_background": "#D6F2F9",
+                "surface": "#112E34",
+                "on_surface": "#D6F2F9",
+                "surface_variant": "#1B4A55",
+                "on_surface_variant": "#9EDAEA",
+                "outline": "#51B8D1",
+                "accent": "#FFC66B",
+                "muted": "#6FA0AD",
+                "gradient_app_header_start": "#08252B",
+                "gradient_app_header_end": "#FFC66B",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#08252B", "#1F7A8C", "#FFC66B"],
+                    "begin": (-0.3, -1.0),
+                    "end": (0.7, 1.0),
+                }
+            },
+        },
+    },
+    "aurora": {
+        "description": "Inspirada en auroras boreales: contrastes vibrantes y neones suaves.",
+        "light": {
+            "colors": {
+                "primary": "#6D28D9",
+                "on_primary": "#FFFFFF",
+                "background": "#F4F5FF",
+                "on_background": "#0F172A",
+                "surface": "#FFFFFF",
+                "on_surface": "#0F172A",
+                "surface_variant": "#E0E7FF",
+                "on_surface_variant": "#3730A3",
+                "outline": "#A5B4FC",
+                "accent": "#F472B6",
+                "muted": "#64748B",
+                "gradient_app_header_start": "#0F172A",
+                "gradient_app_header_end": "#7C3AED",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0F172A", "#1E3A8A", "#7C3AED"],
+                    "begin": (-1.0, 0.0),
+                    "end": (1.0, 0.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#C4B5FD",
+                "on_primary": "#1E1B4B",
+                "background": "#0B1026",
+                "on_background": "#E2E8F0",
+                "surface": "#151A33",
+                "on_surface": "#E2E8F0",
+                "surface_variant": "#1E2550",
+                "on_surface_variant": "#C7D2FE",
+                "outline": "#818CF8",
+                "accent": "#F472B6",
+                "muted": "#94A3B8",
+                "gradient_app_header_start": "#0B1026",
+                "gradient_app_header_end": "#7C3AED",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0B1026", "#312E81", "#7C3AED"],
+                    "begin": (-0.4, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
 }
 
 
