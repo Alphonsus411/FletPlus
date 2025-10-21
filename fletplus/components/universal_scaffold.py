@@ -21,6 +21,7 @@ from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.device_profiles import (
     DeviceProfile,
     DEFAULT_DEVICE_PROFILES,
+    EXTENDED_DEVICE_PROFILES,
     get_device_profile,
     iter_device_profiles,
 )
@@ -88,6 +89,12 @@ class UniversalAdaptiveScaffold:
         actions: Sequence[ft.Control] | None = None,
         drawer: ft.Control | None = None,
         device_profiles: Sequence[DeviceProfile] | None = None,
+        desktop_max_content_width: int | None = None,
+        large_desktop_panel_width: int = 360,
+        auto_show_accessibility_on_large_desktop: bool = True,
+        app_bar_gradient_token: str | None = "app_header",
+        app_bar_background: str | None = None,
+        app_bar_gradient: ft.Gradient | None = None,
     ) -> None:
         from fletplus.components.accessibility_panel import AccessibilityPanel
 
@@ -103,8 +110,14 @@ class UniversalAdaptiveScaffold:
         self.floating_action_button = floating_action_button
         self.actions = list(actions or [])
         self.drawer = drawer
-        self.device_profiles = tuple(device_profiles or DEFAULT_DEVICE_PROFILES)
+        self.device_profiles = tuple(device_profiles or EXTENDED_DEVICE_PROFILES)
         self.page_title = page_title
+        self.desktop_max_content_width = desktop_max_content_width
+        self.large_desktop_panel_width = large_desktop_panel_width
+        self.auto_show_accessibility_on_large_desktop = auto_show_accessibility_on_large_desktop
+        self.app_bar_gradient_token = app_bar_gradient_token
+        self.app_bar_background = app_bar_background
+        self._explicit_app_bar_gradient = app_bar_gradient
 
         if accessibility_panel is None:
             self.accessibility_panel = AccessibilityPanel(
@@ -213,9 +226,10 @@ class UniversalAdaptiveScaffold:
             ],
         )
 
+        self._app_bar_padding_base = (16, 12, 16, 12)
         self._app_bar = ft.Container(
             bgcolor=ft.Colors.with_opacity(0.94, ft.Colors.SURFACE),
-            padding=ft.Padding(16, 12, 16, 12),
+            padding=ft.Padding(*self._app_bar_padding_base),
             content=ft.Column(
                 spacing=4,
                 controls=[
@@ -225,6 +239,7 @@ class UniversalAdaptiveScaffold:
                 ],
             ),
         )
+        self._refresh_app_bar_style()
 
         self._content_host = ft.Container(expand=True)
         self._main_content = ft.Semantics(
@@ -297,6 +312,7 @@ class UniversalAdaptiveScaffold:
         self.caption_overlay.build(page)
 
         self.accessibility.apply(page, self.theme)
+        self._refresh_app_bar_style()
         self._refresh_caption_targets()
         self._refresh_content()
 
@@ -377,6 +393,37 @@ class UniversalAdaptiveScaffold:
         self._inline_caption_container.visible = show_inline and bool(self._inline_caption_text.value)
 
     # ------------------------------------------------------------------
+    def _resolve_app_bar_background(self) -> tuple[str | None, ft.Gradient | None]:
+        if self._explicit_app_bar_gradient is not None:
+            return None, self._explicit_app_bar_gradient
+
+        gradient = None
+        if self.theme and self.app_bar_gradient_token:
+            gradient = self.theme.get_gradient(self.app_bar_gradient_token)
+        if isinstance(gradient, ft.LinearGradient):
+            return None, gradient
+
+        if self.app_bar_background is not None:
+            return self.app_bar_background, None
+
+        if self.theme:
+            candidate = (
+                self.theme.get_color("surface")
+                or self.theme.get_color("surface_variant")
+                or self.theme.get_color("background")
+            )
+            if isinstance(candidate, str):
+                return ft.Colors.with_opacity(0.96, candidate), None
+
+        return ft.Colors.with_opacity(0.94, ft.Colors.SURFACE), None
+
+    # ------------------------------------------------------------------
+    def _refresh_app_bar_style(self) -> None:
+        color, gradient = self._resolve_app_bar_background()
+        self._app_bar.bgcolor = color
+        self._app_bar.gradient = gradient
+
+    # ------------------------------------------------------------------
     def _refresh_content(self) -> None:
         item = self.selected_item
         content = self.content_builder(item, self._selected_index)
@@ -398,14 +445,26 @@ class UniversalAdaptiveScaffold:
 
     # ------------------------------------------------------------------
     def _apply_device_layout(self, device_name: str) -> None:
+        previous_device = getattr(self, "_current_device", device_name)
         self._current_device = device_name
         is_mobile = device_name == "mobile"
-        is_desktop = device_name == "desktop"
+        is_desktop = device_name in {"desktop", "large_desktop"}
+        is_large_desktop = device_name == "large_desktop"
 
         self._drawer_button.visible = bool(self.drawer) and not is_desktop
         self._nav_bar.visible = is_mobile
         self._nav_rail.visible = not is_mobile
         self._nav_rail.extended = is_desktop
+
+        if is_large_desktop and self.auto_show_accessibility_on_large_desktop and previous_device != "large_desktop":
+            self._show_desktop_accessibility_panel = True
+
+        if is_large_desktop:
+            self._app_bar.padding = ft.Padding(24, 18, 24, 18)
+        elif is_desktop:
+            self._app_bar.padding = ft.Padding(20, 14, 20, 14)
+        else:
+            self._app_bar.padding = ft.Padding(*self._app_bar_padding_base)
 
         central_column = ft.Column(
             expand=True,
@@ -423,17 +482,41 @@ class UniversalAdaptiveScaffold:
             self._show_desktop_accessibility_panel = False
         else:
             self._accessibility_bottom_sheet.open = False
+            rail_width = 110 if is_large_desktop else (92 if is_desktop else 80)
+            rail_padding = ft.Padding(16, 16, 16, 16) if is_large_desktop else ft.Padding(12, 12, 12, 12)
+            rail_bg = ft.Colors.with_opacity(0.04, ft.Colors.BLUE_GREY)
+            if self.theme:
+                candidate = self.theme.get_color("surface_variant")
+                if isinstance(candidate, str):
+                    rail_bg = ft.Colors.with_opacity(0.18 if is_large_desktop else 0.08, candidate)
             rail_container = ft.Container(
-                width=92 if is_desktop else 80,
-                bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_GREY),
-                padding=ft.Padding(12, 12, 12, 12),
+                width=rail_width,
+                bgcolor=rail_bg,
+                padding=rail_padding,
                 content=self._nav_rail,
             )
 
-            controls = [rail_container, central_column]
+            central_host: ft.Control = central_column
+            if is_desktop and self.desktop_max_content_width:
+                central_host = ft.Row(
+                    expand=True,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(
+                            width=self.desktop_max_content_width,
+                            content=central_column,
+                        )
+                    ],
+                )
+
+            controls: list[ft.Control] = [rail_container, central_host]
 
             self._refresh_secondary_panel()
-            self._secondary_panel_host.width = 320 if is_desktop else 280
+            self._secondary_panel_host.width = (
+                self.large_desktop_panel_width
+                if is_large_desktop
+                else (320 if is_desktop else 280)
+            )
             if not is_desktop:
                 self._show_desktop_accessibility_panel = False
 
@@ -442,7 +525,7 @@ class UniversalAdaptiveScaffold:
                 side_controls.append(
                     ft.Container(
                         bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_GREY),
-                        padding=ft.Padding(16, 12, 16, 12),
+                        padding=ft.Padding(18, 16, 18, 16) if is_large_desktop else ft.Padding(16, 12, 16, 12),
                         border=ft.border.only(left=ft.BorderSide(1, ft.Colors.with_opacity(0.1, ft.Colors.BLACK))),
                         content=ft.Column(
                             tight=True,
@@ -462,7 +545,7 @@ class UniversalAdaptiveScaffold:
 
             self._body_container.content = ft.Row(
                 expand=True,
-                spacing=0,
+                spacing=16 if is_large_desktop else 0,
                 controls=controls,
             )
             self._footer_container.content = ft.Container()
@@ -496,7 +579,7 @@ class UniversalAdaptiveScaffold:
 
     # ------------------------------------------------------------------
     def _toggle_accessibility_panel(self, _: ft.ControlEvent | None = None) -> None:
-        if self._current_device == "desktop":
+        if self._current_device in {"desktop", "large_desktop"}:
             self._show_desktop_accessibility_panel = not self._show_desktop_accessibility_panel
             self._apply_device_layout(self._current_device)
             return

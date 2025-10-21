@@ -166,6 +166,57 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "selva": {
+        "description": "Verdes botánicos con acentos lima pensados para paneles ecológicos.",
+        "light": {
+            "colors": {
+                "primary": "#2E7D32",
+                "on_primary": "#FFFFFF",
+                "background": "#F1F8E9",
+                "on_background": "#1B4332",
+                "surface": "#FFFFFF",
+                "on_surface": "#2F4F4F",
+                "surface_variant": "#E5F2D6",
+                "on_surface_variant": "#3D6651",
+                "outline": "#7BA882",
+                "accent": "#A5D936",
+                "muted": "#5C7E68",
+                "gradient_app_header_start": "#2E7D32",
+                "gradient_app_header_end": "#A5D936",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#1B5E20", "#2E7D32", "#A5D936"],
+                    "begin": (-0.6, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#81C784",
+                "on_primary": "#0B2611",
+                "background": "#0D1F15",
+                "on_background": "#CDEACC",
+                "surface": "#12281C",
+                "on_surface": "#CDEACC",
+                "surface_variant": "#1B3A28",
+                "on_surface_variant": "#8FB399",
+                "outline": "#4E7F5E",
+                "accent": "#B2F369",
+                "muted": "#7AA882",
+                "gradient_app_header_start": "#0D2B18",
+                "gradient_app_header_end": "#4CAF50",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0D2B18", "#1B5E20", "#4CAF50"],
+                    "begin": (-0.6, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
     "midnight": {
         "description": "Contraste elegante con acentos cian para apps nocturnas.",
         "light": {
