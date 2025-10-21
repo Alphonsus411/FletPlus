@@ -851,6 +851,19 @@ class ResponsiveGrid:
     def init_responsive(self, page: ft.Page) -> ft.Control:
         """Inicializa el grid y reacciona ante cambios de tamaño."""
 
+        if self.theme:
+            orientation = (
+                "landscape"
+                if (page.width or 0) >= (page.height or 0)
+                else "portrait"
+            )
+            device = self._resolve_device_name(page.width or 0)
+            self.theme.apply_theme(
+                device=device,
+                orientation=orientation,
+                width=page.width or 0,
+            )
+
         layout = self.build(page.width)
         row = self._row
         if row is None:
@@ -859,6 +872,18 @@ class ResponsiveGrid:
         def rebuild(width: int) -> None:
             if self._row is None:
                 return
+            if self.theme:
+                orientation = (
+                    "landscape"
+                    if (page.width or 0) >= (page.height or 0)
+                    else "portrait"
+                )
+                device_name = self._resolve_device_name(page.width or 0)
+                self.theme.apply_theme(
+                    device=device_name,
+                    orientation=orientation,
+                    width=page.width or 0,
+                )
             new_row = self._build_row(width)
             self._row.controls.clear()
             self._row.controls.extend(new_row.controls)

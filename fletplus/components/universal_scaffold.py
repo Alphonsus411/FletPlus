@@ -393,6 +393,37 @@ class UniversalAdaptiveScaffold:
         self._inline_caption_container.visible = show_inline and bool(self._inline_caption_text.value)
 
     # ------------------------------------------------------------------
+    def _style_navigation(self, device_name: str) -> None:
+        if not self.theme:
+            return
+
+        surface = (
+            self.theme.get_color("surface")
+            or self.theme.get_color("surface_variant")
+            or self.theme.get_color("background")
+        )
+        accent = self.theme.get_color("accent") or self.theme.get_color("primary")
+
+        nav_bg: str | None = None
+        rail_bg: str | None = None
+        if isinstance(surface, str):
+            nav_bg = ft.Colors.with_opacity(0.95 if device_name == "mobile" else 0.9, surface)
+            rail_bg = ft.Colors.with_opacity(
+                0.16 if device_name == "large_desktop" else 0.1,
+                surface,
+            )
+
+        if nav_bg is not None:
+            self._nav_bar.bgcolor = nav_bg
+        if rail_bg is not None:
+            self._nav_rail.bgcolor = rail_bg
+
+        if isinstance(accent, str):
+            indicator = ft.Colors.with_opacity(0.22, accent)
+            self._nav_bar.indicator_color = indicator
+            self._nav_rail.indicator_color = indicator
+
+    # ------------------------------------------------------------------
     def _resolve_app_bar_background(self) -> tuple[str | None, ft.Gradient | None]:
         if self._explicit_app_bar_gradient is not None:
             return None, self._explicit_app_bar_gradient
@@ -450,6 +481,20 @@ class UniversalAdaptiveScaffold:
         is_mobile = device_name == "mobile"
         is_desktop = device_name in {"desktop", "large_desktop"}
         is_large_desktop = device_name == "large_desktop"
+
+        if self.theme and self._page:
+            orientation = (
+                "landscape"
+                if (self._page.width or 0) >= (self._page.height or 0)
+                else "portrait"
+            )
+            self.theme.apply_theme(
+                device=device_name,
+                orientation=orientation,
+                width=self._page.width or 0,
+            )
+            self._refresh_app_bar_style()
+        self._style_navigation(device_name)
 
         self._drawer_button.visible = bool(self.drawer) and not is_desktop
         self._nav_bar.visible = is_mobile
