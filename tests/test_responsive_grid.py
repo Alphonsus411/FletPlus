@@ -1,9 +1,14 @@
 import flet as ft
 import pytest
 
-from fletplus.components.responsive_grid import ResponsiveGrid, ResponsiveGridItem
+from fletplus.components.responsive_grid import (
+    HeaderHighlight,
+    ResponsiveGrid,
+    ResponsiveGridItem,
+)
 from fletplus.styles import Style
 from fletplus.utils.responsive_style import ResponsiveStyle
+from fletplus.themes.theme_manager import ThemeManager
 
 
 @pytest.fixture
@@ -97,3 +102,112 @@ def test_responsive_grid_registers_responsive_styles(page_factory):
 
     registered_style = getattr(container, "_fletplus_responsive_style", None)
     assert isinstance(registered_style, ResponsiveStyle)
+
+
+def test_responsive_grid_header_tags_and_highlights(page_factory):
+    page = page_factory(width=1280, height=720)
+    theme = ThemeManager(page=page)
+    grid = ResponsiveGrid(
+        header_title="Panel de control",
+        header_tags=["Urgente", ("Beta", ft.Icons.FLUTTER_DASH)],
+        header_highlights=[
+            HeaderHighlight(label="Usuarios", value="1.2K", icon=ft.Icons.PEOPLE),
+            {"label": "Satisfacción", "value": "97%", "description": "Últimos 7 días"},
+        ],
+        section_glass_background=True,
+        section_border=ft.border.all(2, "#334155"),
+        theme=theme,
+        header_background="#0F172A",
+        header_padding={"desktop": ft.Padding(28, 24, 28, 32)},
+    )
+
+    layout = grid.init_responsive(page)
+    assert layout is not None
+
+    tags_layout = grid._build_tags_layout("desktop")
+    assert tags_layout is not None
+    assert getattr(tags_layout, "wrap", False)
+
+    highlights_layout = grid._build_highlight_layout("desktop")
+    assert highlights_layout is not None
+    assert any(isinstance(ctrl, ft.Container) for ctrl in highlights_layout.controls)
+
+    grid._update_section_layout(page.width)
+    assert grid._section_container is not None
+    assert grid._section_container.border is not None
+    assert grid._section_container.shadow is not None
+
+    grid._update_section_header(page.width)
+    assert grid._section_header_container is not None
+    assert isinstance(grid._section_header_container.padding, ft.Padding)
+
+
+def test_responsive_grid_item_visibility_across_devices():
+    grid = ResponsiveGrid(
+        items=[
+            ResponsiveGridItem(
+                ft.Text("Solo escritorio"),
+                visible_devices=["desktop", "large_desktop"],
+            ),
+            ResponsiveGridItem(
+                ft.Text("Oculto móvil"),
+                hidden_devices="mobile",
+            ),
+            ResponsiveGridItem(
+                ft.Text("Rango ancho"),
+                min_width=700,
+                max_width=1100,
+            ),
+        ]
+    )
+
+    mobile_row = grid.build(page_width=360)
+    assert isinstance(mobile_row, ft.ResponsiveRow)
+    assert len(mobile_row.controls) == 0
+
+    tablet_row = grid.build(page_width=820)
+    assert [
+        container.content.value for container in tablet_row.controls
+    ] == ["Oculto móvil", "Rango ancho"]
+
+    desktop_row = grid.build(page_width=1200)
+    assert [
+        container.content.value for container in desktop_row.controls
+    ] == ["Solo escritorio", "Oculto móvil"]
+
+
+def test_responsive_grid_header_surface_customization(page_factory):
+    page = page_factory(width=1024, height=720)
+    theme = ThemeManager(page=page)
+    header_gradient = ft.LinearGradient(
+        colors=["#1F2937", "#3B82F6"],
+        begin=ft.Alignment(-1.0, 0.0),
+        end=ft.Alignment(1.0, 0.0),
+    )
+    grid = ResponsiveGrid(
+        header_title="Resumen",
+        header_gradient=header_gradient,
+        header_border=ft.border.all(1, "#3B82F6"),
+        header_shadow=ft.BoxShadow(
+            blur_radius=16,
+            spread_radius=0,
+            color=ft.Colors.with_opacity(0.18, "#1F2937"),
+            offset=ft.Offset(0, 6),
+        ),
+        header_padding={"desktop": ft.Padding(32, 24, 32, 28), "mobile": ft.Padding(16, 12, 16, 16)},
+        theme=theme,
+    )
+
+    layout = grid.init_responsive(page)
+    assert layout is not None
+    grid._update_section_header(page.width)
+    header_container = grid._section_header_container
+    assert header_container is not None
+    assert header_container.gradient is header_gradient
+    assert header_container.border is not None
+    assert header_container.shadow is not None
+    assert isinstance(header_container.padding, ft.Padding)
+    assert header_container.padding.left == 32
+
+    grid._update_section_header(420)
+    assert grid._section_header_container.padding.left == 16

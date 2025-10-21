@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Sequence
+from typing import Dict, Mapping, Optional, Sequence
 
 import flet as ft
 
@@ -85,6 +85,14 @@ class ResponsiveGridItem:
     responsive_style:
         Instancia de :class:`ResponsiveStyle` aplicada automáticamente cuando el
         grid se registra mediante :meth:`ResponsiveGrid.init_responsive`.
+    visible_devices:
+        Lista de dispositivos donde el item debe mostrarse. Si se define tiene
+        prioridad sobre ``hidden_devices``.
+    hidden_devices:
+        Lista de dispositivos donde el item no debe renderizarse.
+    min_width / max_width:
+        Límites de ancho (en px) para mostrar el item independientemente del
+        dispositivo detectado.
     """
 
     control: ft.Control
@@ -93,6 +101,16 @@ class ResponsiveGridItem:
     span_devices: Dict[DeviceName, int] | None = None
     style: Style | None = None
     responsive_style: ResponsiveStyle | Dict[int, Style] | None = None
+    visible_devices: Sequence[DeviceName] | DeviceName | None = None
+    hidden_devices: Sequence[DeviceName] | DeviceName | None = None
+    min_width: int | None = None
+    max_width: int | None = None
+
+    def __post_init__(self) -> None:
+        self.visible_devices = self._normalize_device_sequence(self.visible_devices)
+        self.hidden_devices = self._normalize_device_sequence(self.hidden_devices)
+        self.min_width = self._sanitize_dimension(self.min_width)
+        self.max_width = self._sanitize_dimension(self.max_width)
 
     def resolve_span(
         self, width: int, columns: int, device: DeviceName | None = None
@@ -119,6 +137,128 @@ class ResponsiveGridItem:
             value = 12
         return max(1, min(12, value))
 
+    @staticmethod
+    def _sanitize_dimension(value: object | None) -> int | None:
+        if value is None:
+            return None
+        try:
+            number = int(value)
+        except (TypeError, ValueError):  # pragma: no cover - validación defensiva
+            return None
+        return max(0, number)
+
+    @staticmethod
+    def _normalize_device_sequence(
+        value: Sequence[DeviceName] | DeviceName | None,
+    ) -> tuple[DeviceName, ...] | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            items: Sequence[DeviceName] = [value]
+        else:
+            items = value
+        normalized: list[DeviceName] = []
+        for item in items:
+            if item is None:
+                continue
+            text = str(item).strip().lower()
+            if not text:
+                continue
+            if text not in normalized:
+                normalized.append(text)
+        return tuple(normalized) if normalized else None
+
+    def is_visible(self, width: int, device: DeviceName) -> bool:
+        if self.min_width is not None and width < self.min_width:
+            return False
+        if self.max_width is not None and width > self.max_width:
+            return False
+        normalized_device = device.lower()
+        if self.visible_devices is not None:
+            return normalized_device in self.visible_devices
+        if self.hidden_devices is not None and normalized_device in self.hidden_devices:
+            return False
+        return True
+
+
+@dataclass
+class HeaderHighlight:
+    """Pequeño bloque de métricas destacado en el encabezado."""
+
+    label: str
+    value: str
+    icon: str | ft.Control | None = None
+    description: str | None = None
+
+    def build_control(
+        self,
+        theme: ThemeManager | None,
+        accent: str,
+        device: DeviceName,
+    ) -> ft.Control:
+        on_surface = None
+        muted = None
+        if theme:
+            on_surface = theme.get_color("on_surface") or theme.get_color("on_background")
+            muted = theme.get_color("muted") or theme.get_color("on_surface_variant")
+        if not isinstance(on_surface, str):
+            on_surface = ft.Colors.BLACK
+        if not isinstance(muted, str):
+            muted = ft.Colors.GREY_600
+
+        value_size = 22 if device in {"desktop", "large_desktop"} else 18
+        label_size = 12
+        description_size = 12
+
+        icon_control: ft.Control | None = None
+        if isinstance(self.icon, ft.Control):
+            icon_control = self.icon
+        elif isinstance(self.icon, str) and self.icon:
+            icon_control = ft.Icon(
+                self.icon,
+                size=20 if device != "mobile" else 18,
+                color=accent,
+            )
+
+        value_text = ft.Text(
+            self.value,
+            weight=ft.FontWeight.W_600,
+            size=value_size,
+            color=on_surface,
+        )
+        label_text = ft.Text(self.label, size=label_size, color=muted)
+
+        body_controls: list[ft.Control] = [value_text, label_text]
+        if self.description:
+            body_controls.append(
+                ft.Text(self.description, size=description_size, color=muted, opacity=0.9)
+            )
+
+        column = ft.Column(body_controls, spacing=2, tight=True)
+        row_children: list[ft.Control] = [column]
+        if icon_control is not None:
+            row_children.insert(0, icon_control)
+
+        content_row = ft.Row(
+            controls=row_children,
+            spacing=10,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+            wrap=False,
+        )
+
+        padding = ft.Padding(18, 16, 18, 16) if device != "mobile" else ft.Padding(14, 12, 14, 12)
+        radius = 18 if device != "mobile" else 14
+
+        container = ft.Container(
+            content=content_row,
+            padding=padding,
+            bgcolor=ft.Colors.with_opacity(0.12, accent),
+            border_radius=ft.border_radius.all(radius),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.28, accent)),
+            expand=device in {"desktop", "large_desktop"},
+        )
+        return container
+
 
 class ResponsiveGrid:
     def __init__(
@@ -138,6 +278,21 @@ class ResponsiveGrid:
         header_icon: str | ft.Control | None = None,
         header_actions: Sequence[ft.Control] | None = None,
         header_metadata: Sequence[ft.Control] | None = None,
+        header_tags: Sequence[
+            str
+            | ft.Control
+            | Mapping[str, object]
+            | Sequence[object]
+        ]
+        | None = None,
+        header_tag_style: Style | None = None,
+        header_tag_spacing: int = 10,
+        header_highlights: Sequence[
+            HeaderHighlight
+            | Mapping[str, object]
+            | Sequence[object]
+        ]
+        | None = None,
         section_padding: Dict[str, object] | ft.Padding | int | float | None = None,
         section_gap: int = 18,
         section_background: str | None = None,
@@ -160,9 +315,18 @@ class ResponsiveGrid:
         section_device_gradient_tokens: Dict[str, str] | None = None,
         section_device_gradients: Dict[str, ft.Gradient] | None = None,
         section_overlay_color_by_device: Dict[str, str] | None = None,
+        section_border: ft.Border | None = None,
+        section_glass_background: bool = False,
         header_badge: str | ft.Control | None = None,
         header_badge_icon: str | None = None,
         header_badge_style: Style | None = None,
+        header_padding: Dict[str, object] | ft.Padding | int | float | None = None,
+        header_background: str | None = None,
+        header_gradient_token: str | None = None,
+        header_gradient: ft.Gradient | None = None,
+        header_border: ft.Border | None = None,
+        header_border_radius: ft.BorderRadius | float | None = None,
+        header_shadow: ft.BoxShadow | Sequence[ft.BoxShadow] | None = None,
     ) -> None:
         """Grid responsiva basada en breakpoints.
 
@@ -205,6 +369,14 @@ class ResponsiveGrid:
         self.section_background_image = section_background_image
         self.section_background_image_fit = section_background_image_fit
         self.section_overlay_color = section_overlay_color
+        self.section_border = section_border
+        self.section_glass_background = section_glass_background
+        self.header_background = header_background
+        self.header_gradient_token = header_gradient_token
+        self.header_gradient = header_gradient
+        self.header_border = header_border
+        self.header_border_radius = header_border_radius
+        self.header_shadow = header_shadow
         layout_value = (header_layout or "auto").strip().lower()
         if layout_value not in {"auto", "centered", "split"}:
             layout_value = "auto"
@@ -240,6 +412,25 @@ class ResponsiveGrid:
             for key, value in (section_overlay_color_by_device or {}).items()
             if isinstance(value, str)
         }
+
+        try:
+            self.header_tag_spacing = max(0, int(header_tag_spacing))
+        except (TypeError, ValueError):
+            self.header_tag_spacing = 10
+
+        self._header_tag_controls: list[ft.Control] = []
+        if header_tags:
+            for tag in header_tags:
+                control = self._create_tag_control(tag, header_tag_style)
+                if control is not None:
+                    self._header_tag_controls.append(control)
+
+        self._header_highlights: list[HeaderHighlight] = []
+        if header_highlights:
+            for highlight in header_highlights:
+                normalized = self._normalize_highlight(highlight)
+                if normalized is not None:
+                    self._header_highlights.append(normalized)
 
         self._section_actions_row = ft.Row(
             controls=list(header_actions or []), spacing=12, wrap=True
@@ -319,6 +510,17 @@ class ResponsiveGrid:
         else:
             self._section_padding_config = {}
 
+        header_shared_padding = _as_padding(header_padding)
+        if isinstance(header_padding, dict):
+            self._header_padding_config: Dict[str, ft.Padding | None] = {
+                str(device).lower(): _as_padding(value)
+                for device, value in header_padding.items()
+            }
+        elif header_shared_padding is not None:
+            self._header_padding_config = {"*": header_shared_padding}
+        else:
+            self._header_padding_config = {}
+
         self._wrap_requested = any(
             [
                 header_title,
@@ -335,7 +537,18 @@ class ResponsiveGrid:
                 section_max_content_width,
                 section_background_image,
                 section_overlay_color,
+                section_border,
+                section_glass_background,
+                bool(header_tags),
+                bool(header_highlights),
                 bool(self._section_padding_config),
+                bool(self._header_padding_config),
+                header_background,
+                header_gradient_token,
+                header_gradient,
+                header_border,
+                header_border_radius,
+                header_shadow,
             ]
         )
 
@@ -427,8 +640,9 @@ class ResponsiveGrid:
         item: ResponsiveGridItem,
         width: int,
         columns: int,
+        device: DeviceName | None = None,
     ) -> ft.Container:
-        device = self._resolve_device_name(width)
+        device = device or self._resolve_device_name(width)
         content: ft.Control = item.control
         if item.style:
             styled = item.style.apply(content)
@@ -455,8 +669,14 @@ class ResponsiveGrid:
     # ------------------------------------------------------------------
     def _build_row(self, width: int) -> ft.ResponsiveRow:
         columns = self._resolve_columns(width)
+        device = self._resolve_device_name(width)
+        containers = [
+            self._build_item_container(item, width, columns, device)
+            for item in self._items
+            if item.is_visible(width, device)
+        ]
         row = ft.ResponsiveRow(
-            controls=[self._build_item_container(item, width, columns) for item in self._items],
+            controls=containers,
             alignment=self.alignment,
             run_spacing=self.run_spacing,
         )
@@ -531,6 +751,20 @@ class ResponsiveGrid:
         return _clone_padding(padding) or ft.Padding(20, 20, 20, 20)
 
     # ------------------------------------------------------------------
+    def _resolve_header_padding(self, device: DeviceName) -> ft.Padding | None:
+        if not self._header_padding_config:
+            return None
+        padding: ft.Padding | None = None
+        for key in [device, "*", "desktop", "tablet", "mobile"]:
+            stored = self._header_padding_config.get(key)
+            if stored is not None:
+                padding = stored
+                break
+        if isinstance(padding, ft.Padding):
+            return _clone_padding(padding)
+        return padding
+
+    # ------------------------------------------------------------------
     def _resolve_section_background(self, device: DeviceName) -> str | None:
         device_backgrounds = getattr(self, "section_device_backgrounds", None)
         if device_backgrounds:
@@ -568,6 +802,16 @@ class ResponsiveGrid:
         return None
 
     # ------------------------------------------------------------------
+    def _resolve_header_gradient(self) -> ft.Gradient | None:
+        if self.header_gradient is not None:
+            return self.header_gradient
+        if self.theme and self.header_gradient_token:
+            gradient = self.theme.get_gradient(self.header_gradient_token)
+            if gradient is not None:
+                return gradient
+        return None
+
+    # ------------------------------------------------------------------
     def _resolve_icon_background(self) -> str | None:
         if not self.theme:
             return ft.Colors.with_opacity(0.08, "#000000")
@@ -579,6 +823,182 @@ class ResponsiveGrid:
         if isinstance(accent, str):
             return ft.Colors.with_opacity(0.15, accent)
         return ft.Colors.with_opacity(0.08, "#000000")
+
+    # ------------------------------------------------------------------
+    def _resolve_accent_color(self) -> str:
+        if self.theme:
+            for token in (
+                "accent",
+                "primary",
+                "secondary",
+                "info_500",
+                "primary_500",
+            ):
+                color = self.theme.get_color(token)
+                if isinstance(color, str):
+                    return color
+        return "#4C6EF5"
+
+    # ------------------------------------------------------------------
+    def _create_tag_control(
+        self,
+        tag: object,
+        style: Style | None,
+    ) -> ft.Control | None:
+        if isinstance(tag, ft.Control):
+            return tag
+
+        label: str | None = None
+        icon_value: object | None = None
+        tooltip: object | None = None
+
+        if isinstance(tag, Mapping):
+            label = tag.get("label") or tag.get("text")
+            icon_value = tag.get("icon")
+            tooltip = tag.get("tooltip")
+        elif isinstance(tag, (list, tuple)) and tag:
+            label = tag[0]
+            if len(tag) > 1:
+                icon_value = tag[1]
+            if len(tag) > 2:
+                tooltip = tag[2]
+        else:
+            label = tag
+
+        if label is None:
+            return None
+
+        label_text = str(label).strip()
+        if not label_text:
+            return None
+
+        icon_control: ft.Control | None = None
+        if isinstance(icon_value, ft.Control):
+            icon_control = icon_value
+        elif isinstance(icon_value, str) and icon_value:
+            icon_control = ft.Icon(icon_value, size=14)
+
+        accent = self._resolve_accent_color()
+        text_color = accent
+        content_controls: list[ft.Control] = []
+        if icon_control is not None:
+            if isinstance(icon_control, ft.Icon):
+                icon_control.color = accent
+            content_controls.append(icon_control)
+        content_controls.append(
+            ft.Text(label_text, size=12, weight=ft.FontWeight.W_600, color=text_color)
+        )
+
+        tag_row = ft.Row(
+            controls=content_controls,
+            spacing=6,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            wrap=False,
+        )
+
+        container: ft.Control = ft.Container(
+            content=tag_row,
+            padding=ft.Padding(14, 8, 14, 8),
+            bgcolor=ft.Colors.with_opacity(0.1, accent),
+            border_radius=ft.border_radius.all(40),
+            border=ft.border.all(1, ft.Colors.with_opacity(0.22, accent)),
+        )
+
+        if style:
+            styled = style.apply(container)
+            if isinstance(styled, ft.Control):
+                container = styled
+
+        if tooltip:
+            container = ft.Tooltip(content=container, message=str(tooltip))
+
+        return container
+
+    # ------------------------------------------------------------------
+    def _normalize_highlight(self, highlight: object) -> HeaderHighlight | None:
+        if isinstance(highlight, HeaderHighlight):
+            return highlight
+
+        label: object | None = None
+        value: object | None = None
+        icon: object | None = None
+        description: object | None = None
+
+        if isinstance(highlight, Mapping):
+            label = highlight.get("label") or highlight.get("title")
+            value = highlight.get("value") or highlight.get("amount")
+            icon = highlight.get("icon")
+            description = highlight.get("description") or highlight.get("help")
+        elif isinstance(highlight, (list, tuple)):
+            if len(highlight) < 2:
+                return None
+            label, value = highlight[0], highlight[1]
+            if len(highlight) > 2:
+                icon = highlight[2]
+            if len(highlight) > 3:
+                description = highlight[3]
+        else:
+            return None
+
+        if label is None or value is None:
+            return None
+
+        label_text = str(label).strip()
+        value_text = str(value).strip()
+        if not label_text or not value_text:
+            return None
+
+        description_text = None
+        if description is not None:
+            description_text = str(description)
+
+        return HeaderHighlight(
+            label=label_text,
+            value=value_text,
+            icon=icon,
+            description=description_text,
+        )
+
+    # ------------------------------------------------------------------
+    def _build_tags_layout(self, device: DeviceName) -> ft.Control | None:
+        if not self._header_tag_controls:
+            return None
+
+        alignment = (
+            ft.MainAxisAlignment.CENTER
+            if device == "mobile"
+            else ft.MainAxisAlignment.START
+        )
+
+        return ft.Row(
+            controls=list(self._header_tag_controls),
+            spacing=self.header_tag_spacing,
+            run_spacing=8,
+            wrap=True,
+            alignment=alignment,
+        )
+
+    # ------------------------------------------------------------------
+    def _build_highlight_layout(self, device: DeviceName) -> ft.Control | None:
+        if not self._header_highlights:
+            return None
+
+        accent = self._resolve_accent_color()
+        controls = [
+            highlight.build_control(self.theme, accent, device)
+            for highlight in self._header_highlights
+        ]
+
+        if device == "mobile":
+            return ft.Column(controls=controls, spacing=8, tight=True)
+
+        return ft.Row(
+            controls=controls,
+            spacing=12,
+            run_spacing=10,
+            wrap=True,
+            alignment=ft.MainAxisAlignment.START,
+        )
 
     # ------------------------------------------------------------------
     def _update_section_layout(self, width: int) -> None:
@@ -595,7 +1015,15 @@ class ResponsiveGrid:
             self._section_container.bgcolor = None
         else:
             self._section_container.gradient = None
-            self._section_container.bgcolor = self._resolve_section_background(device)
+            base_color = self._resolve_section_background(device)
+            self._section_container.bgcolor = base_color
+            if self.section_glass_background and not self.section_background_image:
+                tint_source = base_color
+                if not isinstance(tint_source, str) and self.theme:
+                    tint_source = self.theme.get_color("surface")
+                if not isinstance(tint_source, str):
+                    tint_source = "#FFFFFF"
+                self._section_container.bgcolor = ft.Colors.with_opacity(0.78, tint_source)
 
         if self.section_background_image:
             self._section_container.image_src = self.section_background_image
@@ -623,12 +1051,29 @@ class ResponsiveGrid:
                 radius_value = 20
             self._section_container.border_radius = ft.border_radius.all(radius_value)
 
+        if self.section_border is not None:
+            self._section_container.border = self.section_border
+        elif self.section_glass_background:
+            accent = self._resolve_accent_color()
+            self._section_container.border = ft.border.all(
+                1, ft.Colors.with_opacity(0.26, accent)
+            )
+        else:
+            self._section_container.border = None
+
         if self.section_shadow is None:
+            blur_radius = 22
+            offset_y = 10
+            shadow_opacity = 0.12
+            if self.section_glass_background:
+                blur_radius = 36
+                offset_y = 16
+                shadow_opacity = 0.18
             self._section_container.shadow = ft.BoxShadow(
-                blur_radius=22,
+                blur_radius=blur_radius,
                 spread_radius=0,
-                color=ft.Colors.with_opacity(0.12, "#000000"),
-                offset=ft.Offset(0, 10),
+                color=ft.Colors.with_opacity(shadow_opacity, "#000000"),
+                offset=ft.Offset(0, offset_y),
             )
         else:
             self._section_container.shadow = self.section_shadow
@@ -663,6 +1108,59 @@ class ResponsiveGrid:
 
         device = self._resolve_device_name(width)
         layout_mode = self.header_layout_by_device.get(device, self.header_layout)
+
+        if self._header_padding_config:
+            padding = self._resolve_header_padding(device)
+            self._section_header_container.padding = padding
+
+        header_gradient = self._resolve_header_gradient()
+        if header_gradient:
+            self._section_header_container.gradient = header_gradient
+            self._section_header_container.bgcolor = None
+        elif self.header_background is not None:
+            self._section_header_container.gradient = None
+            self._section_header_container.bgcolor = self.header_background
+        else:
+            self._section_header_container.gradient = None
+            if self._section_header_container.bgcolor is not None:
+                self._section_header_container.bgcolor = None
+
+        accent = self._resolve_accent_color()
+        if self.header_border is not None:
+            self._section_header_container.border = self.header_border
+        elif self.header_background is not None or header_gradient is not None:
+            self._section_header_container.border = ft.border.all(
+                1, ft.Colors.with_opacity(0.16, accent)
+            )
+        else:
+            self._section_header_container.border = None
+
+        if isinstance(self.header_border_radius, ft.BorderRadius):
+            self._section_header_container.border_radius = self.header_border_radius
+        elif self.header_border_radius is not None:
+            try:
+                radius_value = float(self.header_border_radius)
+            except (TypeError, ValueError):
+                radius_value = 20
+            self._section_header_container.border_radius = ft.border_radius.all(
+                radius_value
+            )
+        elif self.header_background is not None or header_gradient is not None:
+            self._section_header_container.border_radius = ft.border_radius.all(20)
+        else:
+            self._section_header_container.border_radius = None
+
+        if self.header_shadow is not None:
+            self._section_header_container.shadow = self.header_shadow
+        elif self.header_background is not None or header_gradient is not None:
+            self._section_header_container.shadow = ft.BoxShadow(
+                blur_radius=18,
+                spread_radius=0,
+                color=ft.Colors.with_opacity(0.12, "#000000"),
+                offset=ft.Offset(0, 8),
+            )
+        else:
+            self._section_header_container.shadow = None
 
         title_size = {"mobile": 20, "tablet": 22, "desktop": 24, "large_desktop": 28}
         subtitle_size = {"mobile": 15, "tablet": 16, "desktop": 18, "large_desktop": 20}
@@ -706,6 +1204,10 @@ class ResponsiveGrid:
         if description_control:
             text_controls.append(description_control)
 
+        tag_layout = self._build_tags_layout(device)
+        if tag_layout:
+            text_controls.append(tag_layout)
+
         text_column = ft.Column(controls=text_controls, spacing=4, tight=True)
 
         icon_wrapper = None
@@ -724,6 +1226,7 @@ class ResponsiveGrid:
                 bgcolor=self._resolve_icon_background(),
             )
 
+        metadata_segments: list[ft.Control] = []
         if self._section_metadata_row.controls:
             meta_alignment = (
                 ft.MainAxisAlignment.CENTER
@@ -731,9 +1234,22 @@ class ResponsiveGrid:
                 else ft.MainAxisAlignment.START
             )
             self._section_metadata_row.alignment = meta_alignment
-            metadata_control: ft.Control | None = self._section_metadata_row
+            metadata_segments.append(self._section_metadata_row)
+
+        highlight_layout = self._build_highlight_layout(device)
+        if highlight_layout:
+            metadata_segments.append(highlight_layout)
+
+        if not metadata_segments:
+            metadata_control: ft.Control | None = None
+        elif len(metadata_segments) == 1:
+            metadata_control = metadata_segments[0]
         else:
-            metadata_control = None
+            metadata_control = ft.Column(
+                controls=metadata_segments,
+                spacing=12,
+                tight=True,
+            )
 
         if device == "mobile":
             mobile_controls: list[ft.Control] = []
@@ -862,6 +1378,7 @@ class ResponsiveGrid:
                 device=device,
                 orientation=orientation,
                 width=page.width or 0,
+                platform=getattr(page, "platform", None),
             )
 
         layout = self.build(page.width)
@@ -883,6 +1400,7 @@ class ResponsiveGrid:
                     device=device_name,
                     orientation=orientation,
                     width=page.width or 0,
+                    platform=getattr(page, "platform", None),
                 )
             new_row = self._build_row(width)
             self._row.controls.clear()
