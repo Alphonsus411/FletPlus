@@ -211,3 +211,42 @@ def test_responsive_grid_header_surface_customization(page_factory):
 
     grid._update_section_header(420)
     assert grid._section_header_container.padding.left == 16
+
+
+def test_responsive_grid_orientation_controls(page_factory):
+    page = page_factory(width=900, height=1200)
+    theme = ThemeManager(page=page)
+    landscape_gradient = ft.LinearGradient(
+        colors=["#0EA5E9", "#1D4ED8"],
+        begin=ft.Alignment(-1.0, 0.0),
+        end=ft.Alignment(1.0, 0.0),
+    )
+    grid = ResponsiveGrid(
+        header_title="Reporte",
+        items=[ResponsiveGridItem(ft.Text("Bloque"))],
+        section_gap=18,
+        section_gap_by_device={"mobile": 14, "tablet": 24, "desktop": 36},
+        section_max_content_width_by_device={"tablet": 720, "desktop": 1280},
+        section_orientation_backgrounds={"portrait": "#123456", "landscape": "#abcdef"},
+        section_orientation_gradients={"landscape": landscape_gradient},
+        theme=theme,
+    )
+
+    layout = grid.init_responsive(page)
+    assert layout is not None
+
+    grid._update_section_layout(page.width)
+    assert grid.section_gap == 24
+    assert grid._section_inner_container is not None
+    assert grid._section_inner_container.width == 720
+    assert grid._section_container.bgcolor == "#123456"
+
+    # Simulate rotating the device to landscape desktop
+    page.width = 1280
+    page.height = 720
+    grid._manager.orientation_callbacks["landscape"]("landscape")
+
+    assert grid.section_gap == 36
+    assert grid._section_inner_container.width == 1280
+    assert grid._section_container.gradient is landscape_gradient
+    assert grid._section_container.bgcolor is None

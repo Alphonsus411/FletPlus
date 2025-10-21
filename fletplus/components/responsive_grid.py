@@ -22,6 +22,17 @@ from fletplus.utils.device_profiles import (
 DeviceName = str
 
 
+_GRADIENT_TYPES: tuple[type, ...] = tuple(
+    cls
+    for cls in (
+        getattr(ft, "Gradient", None),
+        getattr(ft, "LinearGradient", None),
+        getattr(ft, "RadialGradient", None),
+    )
+    if isinstance(cls, type)
+)
+
+
 def _as_padding(value: object) -> ft.Padding | None:
     if value is None:
         return None
@@ -301,6 +312,7 @@ class ResponsiveGrid:
         section_border_radius: ft.BorderRadius | float | None = None,
         section_shadow: ft.BoxShadow | Sequence[ft.BoxShadow] | None = None,
         section_max_content_width: int | None = None,
+        section_max_content_width_by_device: Dict[str, float | int | None] | None = None,
         theme: ThemeManager | None = None,
         device_profiles: Sequence[DeviceProfile] | None = None,
         device_columns: Dict[str, int] | None = None,
@@ -311,12 +323,17 @@ class ResponsiveGrid:
         section_overlay_color: str | None = None,
         header_layout: str = "auto",
         header_layout_by_device: Dict[str, str] | None = None,
+        header_layout_by_orientation: Dict[str, str] | None = None,
         section_device_backgrounds: Dict[str, str] | None = None,
         section_device_gradient_tokens: Dict[str, str] | None = None,
         section_device_gradients: Dict[str, ft.Gradient] | None = None,
         section_overlay_color_by_device: Dict[str, str] | None = None,
         section_border: ft.Border | None = None,
         section_glass_background: bool = False,
+        section_gap_by_device: Dict[str, int] | None = None,
+        section_orientation_backgrounds: Dict[str, str] | None = None,
+        section_orientation_gradient_tokens: Dict[str, str] | None = None,
+        section_orientation_gradients: Dict[str, ft.Gradient] | None = None,
         header_badge: str | ft.Control | None = None,
         header_badge_icon: str | None = None,
         header_badge_style: Style | None = None,
@@ -342,6 +359,7 @@ class ResponsiveGrid:
         self._base_run_spacing = run_spacing
         self.alignment = alignment or ft.MainAxisAlignment.START
         self.section_gap = section_gap
+        self._base_section_gap = section_gap
         self.theme = theme
         self.adaptive_spacing = adaptive_spacing
         default_scale = {"mobile": 0.75, "tablet": 0.9, "desktop": 1.0, "large_desktop": 1.2}
@@ -366,11 +384,23 @@ class ResponsiveGrid:
         self.section_border_radius = section_border_radius
         self.section_shadow = section_shadow
         self.section_max_content_width = section_max_content_width
+        self.section_max_content_width_by_device = {
+            str(key).lower(): value
+            for key, value in (section_max_content_width_by_device or {}).items()
+        }
         self.section_background_image = section_background_image
         self.section_background_image_fit = section_background_image_fit
         self.section_overlay_color = section_overlay_color
         self.section_border = section_border
         self.section_glass_background = section_glass_background
+        self.section_gap_by_device = {}
+        if section_gap_by_device:
+            for key, value in section_gap_by_device.items():
+                try:
+                    normalized = max(0, int(value))
+                except (TypeError, ValueError):
+                    continue
+                self.section_gap_by_device[str(key).lower()] = normalized
         self.header_background = header_background
         self.header_gradient_token = header_gradient_token
         self.header_gradient = header_gradient
@@ -391,10 +421,28 @@ class ResponsiveGrid:
                     continue
                 normalized_layouts[str(key).lower()] = normalized
         self.header_layout_by_device = normalized_layouts
+        orientation_layouts: Dict[str, str] = {}
+        if header_layout_by_orientation:
+            for key, value in header_layout_by_orientation.items():
+                if not isinstance(value, str):
+                    continue
+                orientation = str(key).strip().lower()
+                if orientation not in {"portrait", "landscape"}:
+                    continue
+                normalized = value.strip().lower()
+                if normalized not in {"auto", "centered", "split"}:
+                    continue
+                orientation_layouts[orientation] = normalized
+        self.header_layout_by_orientation = orientation_layouts
 
         self.section_device_backgrounds = {
             str(key).lower(): value
             for key, value in (section_device_backgrounds or {}).items()
+            if isinstance(value, str)
+        }
+        self.section_orientation_backgrounds = {
+            str(key).lower(): value
+            for key, value in (section_orientation_backgrounds or {}).items()
             if isinstance(value, str)
         }
         self.section_device_gradient_tokens = {
@@ -402,10 +450,20 @@ class ResponsiveGrid:
             for key, value in (section_device_gradient_tokens or {}).items()
             if isinstance(value, str)
         }
+        self.section_orientation_gradient_tokens = {
+            str(key).lower(): value
+            for key, value in (section_orientation_gradient_tokens or {}).items()
+            if isinstance(value, str)
+        }
         self.section_device_gradients = {
             str(key).lower(): value
             for key, value in (section_device_gradients or {}).items()
-            if isinstance(value, ft.Gradient)
+            if not _GRADIENT_TYPES or isinstance(value, _GRADIENT_TYPES)
+        }
+        self.section_orientation_gradients = {
+            str(key).lower(): value
+            for key, value in (section_orientation_gradients or {}).items()
+            if not _GRADIENT_TYPES or isinstance(value, _GRADIENT_TYPES)
         }
         self.section_overlay_color_by_device = {
             str(key).lower(): value
@@ -574,7 +632,9 @@ class ResponsiveGrid:
         self._section_container: ft.Container | None = None
         self._section_column: ft.Column | None = None
         self._section_header_container: ft.Container | None = None
+        self._section_inner_container: ft.Container | None = None
         self._layout_root: ft.Control | None = None
+        self._current_orientation: str = "landscape"
 
     # ------------------------------------------------------------------
     def _resolve_columns(self, width: int) -> int:
@@ -725,14 +785,22 @@ class ResponsiveGrid:
         self._section_column = column
 
         content: ft.Control = column
-        if self.section_max_content_width:
-            inner = ft.Container(width=self.section_max_content_width, content=column)
+        need_inner = bool(
+            self.section_max_content_width or self.section_max_content_width_by_device
+        )
+        if need_inner:
+            device = self._resolve_device_name(width)
+            inner_width = self._resolve_section_max_width(device)
+            inner = ft.Container(width=inner_width, content=column)
+            self._section_inner_container = inner
             wrapper = ft.Column(
                 controls=[inner],
                 tight=True,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
             content = wrapper
+        else:
+            self._section_inner_container = None
 
         container = ft.Container(content=content, clip_behavior=ft.ClipBehavior.ANTI_ALIAS)
         self._section_container = container
@@ -751,6 +819,23 @@ class ResponsiveGrid:
         return _clone_padding(padding) or ft.Padding(20, 20, 20, 20)
 
     # ------------------------------------------------------------------
+    def _resolve_section_gap(self, device: DeviceName) -> int:
+        if not self.section_gap_by_device:
+            return self._base_section_gap
+        for key in (device, "desktop", "tablet", "mobile"):
+            if key in self.section_gap_by_device:
+                return self.section_gap_by_device[key]
+        return self._base_section_gap
+
+    # ------------------------------------------------------------------
+    def _resolve_section_max_width(self, device: DeviceName) -> float | int | None:
+        if self.section_max_content_width_by_device:
+            for key in (device, "desktop", "tablet", "mobile"):
+                if key in self.section_max_content_width_by_device:
+                    return self.section_max_content_width_by_device[key]
+        return self.section_max_content_width
+
+    # ------------------------------------------------------------------
     def _resolve_header_padding(self, device: DeviceName) -> ft.Padding | None:
         if not self._header_padding_config:
             return None
@@ -766,6 +851,11 @@ class ResponsiveGrid:
 
     # ------------------------------------------------------------------
     def _resolve_section_background(self, device: DeviceName) -> str | None:
+        orientation = getattr(self, "_current_orientation", "landscape")
+        if self.section_orientation_backgrounds:
+            background = self.section_orientation_backgrounds.get(orientation)
+            if background:
+                return background
         device_backgrounds = getattr(self, "section_device_backgrounds", None)
         if device_backgrounds:
             custom = device_backgrounds.get(device)
@@ -783,12 +873,23 @@ class ResponsiveGrid:
 
     # ------------------------------------------------------------------
     def _resolve_section_gradient(self, device: DeviceName) -> ft.Gradient | None:
+        orientation = getattr(self, "_current_orientation", "landscape")
+        if self.section_orientation_gradients:
+            gradient = self.section_orientation_gradients.get(orientation)
+            if gradient:
+                return gradient
         if self.section_device_gradients:
             gradient = self.section_device_gradients.get(device)
             if gradient:
                 return gradient
         if self.section_gradient is not None:
             return self.section_gradient
+        if self.section_orientation_gradient_tokens and self.theme:
+            token = self.section_orientation_gradient_tokens.get(orientation)
+            if token:
+                gradient = self.theme.get_gradient(token)
+                if gradient is not None:
+                    return gradient
         if self.theme and self.section_gradient_token:
             gradient = self.theme.get_gradient(self.section_gradient_token)
             if gradient is not None:
@@ -1006,6 +1107,10 @@ class ResponsiveGrid:
             return
 
         device = self._resolve_device_name(width)
+        self.section_gap = self._resolve_section_gap(device)
+        if self._section_inner_container is not None:
+            self._section_inner_container.width = self._resolve_section_max_width(device)
+
         padding = self._resolve_section_padding(device)
         self._section_container.padding = padding
 
@@ -1108,6 +1213,12 @@ class ResponsiveGrid:
 
         device = self._resolve_device_name(width)
         layout_mode = self.header_layout_by_device.get(device, self.header_layout)
+        orientation_layout = self.header_layout_by_orientation.get(
+            getattr(self, "_current_orientation", "landscape"),
+            "auto",
+        )
+        if orientation_layout != "auto":
+            layout_mode = orientation_layout
 
         if self._header_padding_config:
             padding = self._resolve_header_padding(device)
@@ -1378,8 +1489,8 @@ class ResponsiveGrid:
                 device=device,
                 orientation=orientation,
                 width=page.width or 0,
-                platform=getattr(page, "platform", None),
             )
+            self._current_orientation = orientation
 
         layout = self.build(page.width)
         row = self._row
@@ -1400,8 +1511,8 @@ class ResponsiveGrid:
                     device=device_name,
                     orientation=orientation,
                     width=page.width or 0,
-                    platform=getattr(page, "platform", None),
                 )
+                self._current_orientation = orientation
             new_row = self._build_row(width)
             self._row.controls.clear()
             self._row.controls.extend(new_row.controls)
@@ -1413,7 +1524,31 @@ class ResponsiveGrid:
             page.update()
 
         callbacks = {bp: rebuild for bp in self.breakpoints}
-        self._manager = ResponsiveManager(page, callbacks)
+
+        def _orientation_changed(orientation: str) -> None:
+            normalized = orientation.lower()
+            if normalized not in {"portrait", "landscape"}:
+                return
+            self._current_orientation = normalized
+            if self.theme:
+                device_name = self._resolve_device_name(page.width or 0)
+                self.theme.apply_theme(
+                    device=device_name,
+                    orientation=normalized,
+                    width=page.width or 0,
+                )
+            self._update_section_layout(page.width or 0)
+
+        orientation_callbacks = {
+            "portrait": _orientation_changed,
+            "landscape": _orientation_changed,
+        }
+
+        self._manager = ResponsiveManager(
+            page,
+            callbacks,
+            orientation_callbacks=orientation_callbacks,
+        )
         self._register_item_styles(page, row.controls, self._manager)
         return layout
 

@@ -94,7 +94,7 @@ ft.app(target=main)
 
 ### Nuevas paletas predefinidas
 
-Además de las variantes originales ahora dispones de **seis** paletas listas para aplicar:
+Además de las variantes originales ahora dispones de **siete** paletas listas para aplicar:
 
 * `aurora`
 * `sunset`
@@ -102,6 +102,7 @@ Además de las variantes originales ahora dispones de **seis** paletas listas pa
 * `midnight` – tonos profundos azul marino con acentos cian para dashboards nocturnos
 * `sakura` – gradientes pastel inspirados en cerezos para interfaces creativas
 * `selva` – verdes botánicos con acentos lima ideales para proyectos sostenibles
+* `marina` – combinación de azules oceánicos con turquesas pensada para interfaces de analítica y streaming de datos
 
 Todas ellas incluyen tokens de gradiente `gradients.app_header` compatibles con el encabezado adaptable del layout.
 
@@ -208,6 +209,14 @@ Nuevas capacidades del grid responsivo:
   acciones. También puedes aportar una imagen o degradado mediante
   `section_background_image`, `section_overlay_color` y
   `section_gradient_token` para crear secciones tipo "hero" en la web.
+- **Orientación consciente**: los parámetros `section_orientation_backgrounds`
+  y `section_orientation_gradient_tokens` permiten alternar fondos y degradados
+  distintos al rotar la pantalla entre modo retrato y paisaje, manteniendo un
+  diseño coherente en smartphones y tablets.
+- **Densidad adaptable**: con `section_gap_by_device` y
+  `section_max_content_width_by_device` puedes fijar espacios y anchos máximos
+  específicos para móvil, tablet, escritorio y monitores ultraanchos sin crear
+  contenedores manuales.
 
 ## 🧭 Encabezados más expresivos
 
@@ -217,6 +226,18 @@ sombras suaves, bordes redondeados y soporte para botones de menú cuando se usa
 en móviles. Puedes aportar tu propio `Style` o `ResponsiveStyle` a través del
 parámetro `header_style`, o especificar tokens de color alternativos mediante
 `header_background_token`.
+
+El componente `AdaptiveAppHeader` también evoluciona para escenarios
+multiplataforma:
+
+- Ajusta automáticamente la maquetación según la orientación (`layout_by_orientation`)
+  para mantener acciones en línea en escritorio y apilarlas en móviles.
+- Permite alternar la posición del *hero* con `hero_position` o forzar un ancho
+  máximo por dispositivo (`hero_max_height_by_device`), logrando portadas más
+  cinematográficas en web sin sacrificar legibilidad en teléfonos.
+- Aplica relaciones de aspecto (`hero_aspect_ratio`) y rellenos adaptativos
+  para que ilustraciones, gráficos o vídeos se escalen de forma uniforme al
+  compartir la misma base de código entre web, escritorio y apps móviles.
 
 ## 🔄 Ejemplo completo con ThemeManager
 

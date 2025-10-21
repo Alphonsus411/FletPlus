@@ -217,6 +217,57 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "marina": {
+        "description": "Azules oceánicos con acentos turquesa pensados para dashboards fluidos.",
+        "light": {
+            "colors": {
+                "primary": "#0E7490",
+                "on_primary": "#FFFFFF",
+                "background": "#F1FAFE",
+                "on_background": "#0F172A",
+                "surface": "#FFFFFF",
+                "on_surface": "#0F172A",
+                "surface_variant": "#E0F2FE",
+                "on_surface_variant": "#075985",
+                "outline": "#38BDF8",
+                "accent": "#14B8A6",
+                "muted": "#64748B",
+                "gradient_app_header_start": "#0EA5E9",
+                "gradient_app_header_end": "#22D3EE",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#0EA5E9", "#06B6D4", "#22D3EE"],
+                    "begin": (-1.0, 0.0),
+                    "end": (1.0, 0.0),
+                }
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#38BDF8",
+                "on_primary": "#082F49",
+                "background": "#06111F",
+                "on_background": "#E2F3FF",
+                "surface": "#0B1A2B",
+                "on_surface": "#E2F3FF",
+                "surface_variant": "#0F2A40",
+                "on_surface_variant": "#BAE6FD",
+                "outline": "#38BDF8",
+                "accent": "#0EA5E9",
+                "muted": "#94A3B8",
+                "gradient_app_header_start": "#082F49",
+                "gradient_app_header_end": "#22D3EE",
+            },
+            "gradients": {
+                "app_header": {
+                    "colors": ["#082F49", "#0E7490", "#22D3EE"],
+                    "begin": (-0.6, -1.0),
+                    "end": (0.6, 1.0),
+                }
+            },
+        },
+    },
     "midnight": {
         "description": "Contraste elegante con acentos cian para apps nocturnas.",
         "light": {
