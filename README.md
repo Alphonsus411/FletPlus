@@ -80,9 +80,9 @@ def main(page: ft.Page):
     theme = ThemeManager(page, tokens={"typography": {"button_size": 16}})
     theme.apply_theme()
     page.add(
-        PrimaryButton("Guardar", icon=ft.icons.SAVE, theme=theme),
+        PrimaryButton("Guardar", icon=ft.Icons.SAVE, theme=theme),
         SecondaryButton("Cancelar", theme=theme),
-        IconButton(ft.icons.DELETE, label="Eliminar", theme=theme),
+        IconButton(ft.Icons.DELETE, label="Eliminar", theme=theme),
     )
 
 ft.app(target=main)
@@ -281,7 +281,7 @@ def main(page: ft.Page):
 
     # Botón para alternar entre modo claro y oscuro
     toggle = ft.IconButton(
-        ft.icons.DARK_MODE,
+        ft.Icons.DARK_MODE,
         on_click=lambda _: theme.toggle_dark_mode(),
     )
     page.add(ft.Text("Modo actual"), toggle)

@@ -60,12 +60,12 @@ class FletPlusApp:
         for index, route_key in enumerate(self._routes_order):
             item = raw_sidebar[index] if index < len(raw_sidebar) else {}
             title_value = item.get("title") or route_key.replace("_", " ").title()
-            icon_value = item.get("icon", ft.icons.CIRCLE)
+            icon_value = item.get("icon", ft.Icons.CIRCLE)
             self._nav_items.append({"title": title_value, "icon": icon_value})
 
         if not self._nav_items:
             for route_key in self._routes_order:
-                self._nav_items.append({"title": route_key.title(), "icon": ft.icons.CIRCLE})
+                self._nav_items.append({"title": route_key.title(), "icon": ft.Icons.CIRCLE})
 
         self.sidebar_items = self._nav_items
         self.sidebar = SidebarAdmin(
@@ -240,7 +240,7 @@ class FletPlusApp:
 
         destinations = [
             ft.NavigationBarDestination(
-                icon=item.get("icon", ft.icons.CIRCLE),
+                icon=item.get("icon", ft.Icons.CIRCLE),
                 label=item.get("title", ""),
             )
             for item in self._nav_items
@@ -261,7 +261,7 @@ class FletPlusApp:
         drawer_controls = [
             ft.NavigationDrawerDestination(
                 label=item.get("title", ""),
-                icon=item.get("icon", ft.icons.CIRCLE),
+                icon=item.get("icon", ft.Icons.CIRCLE),
             )
             for item in self._nav_items
         ]

@@ -8,8 +8,8 @@ def test_sidebar_admin_build_and_selection():
         selected.append(index)
 
     menu_items = [
-        {"title": "Inicio", "icon": ft.icons.HOME},
-        {"title": "Usuarios", "icon": ft.icons.PEOPLE},
+        {"title": "Inicio", "icon": ft.Icons.HOME},
+        {"title": "Usuarios", "icon": ft.Icons.PEOPLE},
     ]
 
     sidebar = SidebarAdmin(menu_items=menu_items, on_select=on_select)

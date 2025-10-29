@@ -15,11 +15,10 @@ def _ensure_bootstrap_imported() -> None:
     module_name = "examples._bootstrap"
     bootstrap_path = Path(__file__).resolve().parent / "_bootstrap.py"
 
-    if __package__ in (None, ""):
-        project_root = bootstrap_path.parents[1]
-        project_root_str = str(project_root)
-        if project_root_str not in sys.path:
-            sys.path.insert(0, project_root_str)
+    project_root = bootstrap_path.parents[1]
+    project_root_str = str(project_root)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
 
     try:
         bootstrap = importlib.import_module(module_name)
@@ -70,11 +69,11 @@ def main(page: ft.Page):
     )
 
     page.add(
-        OutlinedButton("Editar", icon=ft.icons.EDIT, theme=theme),
+        OutlinedButton("Editar", icon=ft.Icons.EDIT, theme=theme),
         TextButton(
-            "Continuar", icon=ft.icons.ARROW_FORWARD, icon_position="end", theme=theme
+            "Continuar", icon=ft.Icons.ARROW_FORWARD, icon_position="end", theme=theme
         ),
-        FloatingActionButton(icon=ft.icons.ADD, theme=theme),
+        FloatingActionButton(icon=ft.Icons.ADD, theme=theme),
     )
 
 

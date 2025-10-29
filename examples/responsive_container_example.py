@@ -15,11 +15,10 @@ def _ensure_bootstrap_imported() -> None:
     module_name = "examples._bootstrap"
     bootstrap_path = Path(__file__).resolve().parent / "_bootstrap.py"
 
-    if __package__ in (None, ""):
-        project_root = bootstrap_path.parents[1]
-        project_root_str = str(project_root)
-        if project_root_str not in sys.path:
-            sys.path.insert(0, project_root_str)
+    project_root = bootstrap_path.parents[1]
+    project_root_str = str(project_root)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
 
     try:
         bootstrap = importlib.import_module(module_name)

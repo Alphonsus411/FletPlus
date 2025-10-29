@@ -34,8 +34,8 @@ def test_fletplus_app_initialization_and_routing():
     }
 
     sidebar_items = [
-        {"title": "Inicio", "icon": ft.icons.HOME},
-        {"title": "Usuarios", "icon": ft.icons.PEOPLE}
+        {"title": "Inicio", "icon": ft.Icons.HOME},
+        {"title": "Usuarios", "icon": ft.Icons.PEOPLE}
     ]
 
     # Crear instancia falsa de la página
