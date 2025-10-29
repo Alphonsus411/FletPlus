@@ -39,7 +39,7 @@ def test_primary_button_style_and_callback():
     called: list[str] = []
     btn = PrimaryButton(
         "Enviar",
-        icon=ft.icons.SEND,
+        icon=ft.Icons.SEND,
         theme=theme,
         style=Style(bgcolor=ft.Colors.YELLOW),
         on_click=lambda e: called.append("ok"),
@@ -83,7 +83,7 @@ def test_secondary_button_style_and_callback():
     called: list[str] = []
     btn = SecondaryButton(
         "Cancelar",
-        icon=ft.icons.CLOSE,
+        icon=ft.Icons.CLOSE,
         theme=theme,
         style=Style(bgcolor=ft.Colors.BLUE),
         on_click=lambda e: called.append("cancel"),
@@ -127,7 +127,7 @@ def test_icon_button_style_and_callback():
     )
     called: list[str] = []
     btn = IconButton(
-        icon=ft.icons.INFO,
+        icon=ft.Icons.INFO,
         label="Info",
         theme=theme,
         style=Style(bgcolor=ft.Colors.ORANGE),
@@ -172,7 +172,7 @@ def test_outlined_button_states_and_icon_position():
     )
     btn = OutlinedButton(
         "Editar",
-        icon=ft.icons.EDIT,
+        icon=ft.Icons.EDIT,
         icon_position="end",
         theme=theme,
         style=Style(bgcolor=ft.Colors.WHITE),
@@ -206,7 +206,7 @@ def test_text_button_states():
             "typography": {"button_size": 12, "icon_size": 16},
         },
     )
-    btn = TextButton("Seguir", icon=ft.icons.NAVIGATE_NEXT, theme=theme)
+    btn = TextButton("Seguir", icon=ft.Icons.NAVIGATE_NEXT, theme=theme)
     control = btn.build()
     style = control.style
     assert style.text_style[ft.ControlState.DEFAULT].size == 12
@@ -230,7 +230,7 @@ def test_fab_states_and_shape():
         },
     )
     btn = FloatingActionButton(
-        icon=ft.icons.ADD,
+        icon=ft.Icons.ADD,
         theme=theme,
         style=Style(bgcolor=ft.Colors.YELLOW),
     )
@@ -306,7 +306,7 @@ def test_status_buttons(cls, color_key, colors):
     )
     btn = cls(
         "Aceptar",
-        icon=ft.icons.CHECK,
+        icon=ft.Icons.CHECK,
         theme=theme,
         style=Style(bgcolor=ft.Colors.BLACK),
     )
@@ -341,7 +341,7 @@ def test_status_buttons_icon_end(cls, color_key, color):
     )
     btn = cls(
         "Acción",
-        icon=ft.icons.CHECK,
+        icon=ft.Icons.CHECK,
         icon_position="end",
         theme=theme,
         style=Style(bgcolor=ft.Colors.WHITE),

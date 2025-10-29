@@ -60,7 +60,7 @@ def test_smart_table_style_applied():
 
 def test_smart_table_sort_with_non_text_controls():
     rows = [
-        ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Icon(ft.icons.STAR))]),
+        ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Icon(ft.Icons.STAR))]),
         ft.DataRow(cells=[ft.DataCell(ft.Text("2")), ft.DataCell(ft.TextField(value="a"))]),
         ft.DataRow(cells=[ft.DataCell(ft.Text("3")), ft.DataCell(ft.Text("b"))]),
     ]

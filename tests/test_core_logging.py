@@ -7,11 +7,10 @@ import sys
 def _ensure_tests_importable() -> None:
     """Garantiza que ``tests`` sea importable aunque se ejecute el archivo directamente."""
 
-    if __package__ in (None, ""):
-        project_root = Path(__file__).resolve().parent.parent
-        project_root_str = str(project_root)
-        if project_root_str not in sys.path:
-            sys.path.insert(0, project_root_str)
+    project_root = Path(__file__).resolve().parent.parent
+    project_root_str = str(project_root)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
 
 
 _ensure_tests_importable()

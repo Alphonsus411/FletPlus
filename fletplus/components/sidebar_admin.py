@@ -37,7 +37,7 @@ class SidebarAdmin:
 
         nav_controls: list[ft.Control] = []
         for i, item in enumerate(self.menu_items):
-            icon = ft.Icon(item.get("icon", ft.icons.CIRCLE), size=20)
+            icon = ft.Icon(item.get("icon", ft.Icons.CIRCLE), size=20)
             text = ft.Text(item.get("title", ""), weight=ft.FontWeight.W_500)
             row = ft.Row(
                 spacing=12,
