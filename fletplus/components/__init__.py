@@ -29,6 +29,7 @@ from fletplus.components.adaptive_layout import (
 )
 from fletplus.components.caption_overlay import CaptionOverlay
 from fletplus.components.accessibility_panel import AccessibilityPanel
+from fletplus.components.layouts import FlexRow, FlexColumn
 from fletplus.components.responsive_container import ResponsiveContainer
 from fletplus.components.responsive_grid import ResponsiveGrid, ResponsiveGridItem
 from fletplus.components.sidebar_admin import SidebarAdmin
@@ -56,6 +57,8 @@ __all__ = [
     "AccessibilityPanel",
     "AdaptiveDestination",
     "AdaptiveNavigationLayout",
+    "FlexRow",
+    "FlexColumn",
     "AdaptiveNavigationItem",
     "UniversalAdaptiveScaffold",
     "CaptionOverlay",
