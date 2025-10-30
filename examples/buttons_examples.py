@@ -2,47 +2,17 @@
 
 from __future__ import annotations
 
-import importlib
-import importlib.util
 from pathlib import Path
 import sys
-from types import ModuleType
 
+project_root = Path(__file__).resolve().parents[1]
+project_root_str = str(project_root)
+if project_root_str not in sys.path:
+    sys.path.insert(0, project_root_str)
 
-def _ensure_bootstrap_imported() -> None:
-    """Permite cargar ``examples._bootstrap`` sin depender del modo de ejecución."""
+from examples._bootstrap import ensure_project_root
 
-    module_name = "examples._bootstrap"
-    bootstrap_path = Path(__file__).resolve().parent / "_bootstrap.py"
-
-    project_root = bootstrap_path.parents[1]
-    project_root_str = str(project_root)
-    if project_root_str not in sys.path:
-        sys.path.insert(0, project_root_str)
-
-    try:
-        bootstrap = importlib.import_module(module_name)
-    except ModuleNotFoundError:
-        spec = importlib.util.spec_from_file_location(module_name, bootstrap_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(
-                f"No se pudo cargar {module_name} desde {bootstrap_path}."
-            ) from None
-
-        if "examples" not in sys.modules:
-            package = ModuleType("examples")
-            package.__path__ = [str(bootstrap_path.parent)]
-            sys.modules["examples"] = package
-
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
-        bootstrap = module
-
-    bootstrap.ensure_project_root()
-
-
-_ensure_bootstrap_imported()
+ensure_project_root()
 
 import flet as ft
 
