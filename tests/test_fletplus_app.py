@@ -1,5 +1,6 @@
 import flet as ft
 
+from fletplus.context import locale_context, theme_context, user_context
 from fletplus.core import FletPlusApp
 from fletplus.state import Store
 
@@ -41,6 +42,8 @@ def test_fletplus_app_initialization_and_routing():
 
     # Crear instancia falsa de la página
     page = DummyPage()
+    page.user = "Admin"
+    page.locale = "en-US"
 
     # Crear la app sin iniciar Flet
     app = FletPlusApp(page, routes, sidebar_items, title="TestApp")
@@ -57,11 +60,26 @@ def test_fletplus_app_initialization_and_routing():
     assert app.router.current_path == "/inicio"
     assert isinstance(app.state, Store)
     assert page.state is app.state
+    assert page.contexts["theme"] is theme_context
+    assert theme_context.get() is app.theme
+    assert user_context.get() == "Admin"
+    assert locale_context.get() == "en-US"
+    assert app.command_palette.dialog.title.value == "Comandos para Admin"
+    assert app.command_palette.search.hint_text == "Search command..."
 
     # Simular navegación a la segunda página
     app._on_nav(1)
     assert app.content_container.content.value == "Usuarios"
     assert app.router.current_path == "/usuarios"
+
+    # Actualizar contexto de usuario e idioma
+    app.set_user("Carlos")
+    assert user_context.get() == "Carlos"
+    app.set_locale("pt-BR")
+    assert locale_context.get() == "pt-BR"
+    assert app.command_palette.search.hint_text == "Buscar comando..."
+
+    app.dispose()
 
 
 def test_fletplus_app_without_routes():
@@ -69,6 +87,7 @@ def test_fletplus_app_without_routes():
     app = FletPlusApp(page, {})
     app.build()
     assert app.content_container.content is None
+    app.dispose()
 
 
 def test_fletplus_app_invalid_route_index():
@@ -91,3 +110,4 @@ def test_fletplus_app_invalid_route_index():
     # Índice negativo
     app._on_nav(-1)
     assert app.content_container.content == original_content
+    app.dispose()

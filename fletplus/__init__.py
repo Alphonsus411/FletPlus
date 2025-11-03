@@ -7,6 +7,13 @@ se distribuye la librería y mejora la experiencia para los usuarios finales.
 """
 
 from fletplus.core import FletPlusApp
+from fletplus.context import (
+    Context,
+    ContextProvider,
+    locale_context,
+    theme_context,
+    user_context,
+)
 from fletplus.router import Router, Route, LayoutInstance, layout_from_attribute
 from fletplus.themes import (
     ThemeManager,
@@ -113,4 +120,9 @@ __all__ = [
     "DerivedSignal",
     "Signal",
     "Store",
+    "Context",
+    "ContextProvider",
+    "theme_context",
+    "user_context",
+    "locale_context",
 ]

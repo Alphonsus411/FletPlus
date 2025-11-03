@@ -1,7 +1,9 @@
 import logging
+from typing import Callable, Dict, List, Tuple
 
 import flet as ft
-from typing import Callable, Dict, List, Tuple
+
+from fletplus.context import locale_context, user_context
 
 
 class CommandPalette:
@@ -21,6 +23,9 @@ class CommandPalette:
                 height=400,
             ),
         )
+        self.dialog.title = ft.Text("")
+        self._subscriptions: list[Callable[[], None]] = []
+        self._setup_context_bindings()
         self._refresh()
 
     def _on_search(self, _):
@@ -58,3 +63,50 @@ class CommandPalette:
         page.dialog = self.dialog
         self.dialog.open = True
         page.update()
+
+    # ------------------------------------------------------------------
+    def _setup_context_bindings(self) -> None:
+        try:
+            unsubscribe_locale = locale_context.subscribe(self._on_locale_change, immediate=True)
+            self._subscriptions.append(unsubscribe_locale)
+        except LookupError:
+            self._on_locale_change(locale_context.get(default="es"))
+
+        try:
+            unsubscribe_user = user_context.subscribe(self._on_user_change, immediate=True)
+            self._subscriptions.append(unsubscribe_user)
+        except LookupError:
+            self._on_user_change(user_context.get(default=None))
+
+    # ------------------------------------------------------------------
+    def _on_locale_change(self, locale: str | None) -> None:
+        hints = {
+            "es": "Buscar comando...",
+            "en": "Search command...",
+            "pt": "Buscar comando...",
+        }
+        key = (locale or "es").lower()[:2]
+        self.search.hint_text = hints.get(key, hints["es"])
+        if self.search.page:
+            self.search.update()
+
+    # ------------------------------------------------------------------
+    def _on_user_change(self, user: object | None) -> None:
+        if user:
+            title = f"Comandos para {user}"
+        else:
+            title = "Paleta de comandos"
+        if isinstance(self.dialog.title, ft.Text):
+            self.dialog.title.value = title
+        else:
+            self.dialog.title = ft.Text(title)
+        if self.dialog.page:
+            self.dialog.update()
+
+    # ------------------------------------------------------------------
+    def __del__(self):  # pragma: no cover - liberación defensiva
+        for unsubscribe in self._subscriptions:
+            try:
+                unsubscribe()
+            except Exception:
+                logging.exception("Error al cancelar la subscripción de CommandPalette")
