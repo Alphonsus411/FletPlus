@@ -3,6 +3,12 @@ from typing import Callable, Iterable
 
 import flet as ft
 
+from fletplus.context import (
+    ContextProvider,
+    locale_context,
+    theme_context,
+    user_context,
+)
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.components.sidebar_admin import SidebarAdmin
 from fletplus.desktop.window_manager import WindowManager
@@ -76,6 +82,14 @@ class FletPlusApp:
         self.theme = ThemeManager(page, **config)
         self.window_manager = WindowManager(page) if use_window_manager else None
 
+        self.contexts: dict[str, object] = {
+            "theme": theme_context,
+            "user": user_context,
+            "locale": locale_context,
+        }
+        self._context_providers: dict[str, ContextProvider] = {}
+        self._activate_contexts()
+
         self.command_palette = CommandPalette(commands or {})
         self.shortcuts = ShortcutManager(page)
         self.shortcuts.register("k", lambda: self.command_palette.open(self.page), ctrl=True)
@@ -132,6 +146,73 @@ class FletPlusApp:
             bgcolor=surface_variant,
             shadow=shadow,
         )
+
+    # ------------------------------------------------------------------
+    def _activate_contexts(self) -> None:
+        providers: dict[str, ContextProvider] = {}
+        theme_provider = theme_context.provide(self.theme)
+        providers["theme"] = theme_provider
+
+        user_value = getattr(self.page, "user", None)
+        providers["user"] = user_context.provide(user_value)
+
+        locale_value = self._resolve_locale_value()
+        providers["locale"] = locale_context.provide(locale_value)
+
+        for provider in providers.values():
+            provider.__enter__()
+        self._context_providers = providers
+        setattr(self.page, "contexts", self.contexts)
+
+    # ------------------------------------------------------------------
+    def _resolve_locale_value(self) -> str:
+        candidate = getattr(self.page, "locale", None) or getattr(self.page, "language", None)
+        if isinstance(candidate, str) and candidate:
+            return candidate
+        default = getattr(locale_context, "default", None)
+        if isinstance(default, str):
+            return default
+        return "es"
+
+    # ------------------------------------------------------------------
+    def dispose(self) -> None:
+        if hasattr(self, "_router_unsubscribe") and callable(self._router_unsubscribe):
+            try:
+                self._router_unsubscribe()
+            except Exception:  # pragma: no cover - la limpieza no debe romper la app
+                logger.exception("Error al cancelar la subscripción del router")
+            finally:
+                self._router_unsubscribe = lambda: None
+        self._cleanup_contexts()
+
+    # ------------------------------------------------------------------
+    def _cleanup_contexts(self) -> None:
+        for provider in list(self._context_providers.values()):
+            provider.close()
+        self._context_providers.clear()
+        setattr(self.page, "contexts", {})
+
+    # ------------------------------------------------------------------
+    def set_user(self, user: object) -> None:
+        provider = self._context_providers.get("user")
+        if provider is not None:
+            provider.set(user)
+        setattr(self.page, "user", user)
+
+    # ------------------------------------------------------------------
+    def set_locale(self, locale: str) -> None:
+        provider = self._context_providers.get("locale")
+        if provider is not None and locale:
+            provider.set(locale)
+        if locale:
+            setattr(self.page, "locale", locale)
+
+    # ------------------------------------------------------------------
+    def __del__(self):  # pragma: no cover - método defensivo
+        try:
+            self.dispose()
+        except Exception:
+            logger.exception("Error liberando recursos de FletPlusApp")
 
     # ------------------------------------------------------------------
     def build(self) -> None:

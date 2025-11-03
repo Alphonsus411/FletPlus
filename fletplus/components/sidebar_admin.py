@@ -1,6 +1,8 @@
 # fletplus/components/sidebar_admin.py
 
 import flet as ft
+
+from fletplus.context import theme_context
 from fletplus.styles import Style
 
 
@@ -26,8 +28,22 @@ class SidebarAdmin:
         self.tiles: list[ft.Container] = []
         self._tile_entries: list[tuple[ft.Container, ft.Icon, ft.Text]] = []
         self.style = style
-        self.active_color = active_color or ft.Colors.PRIMARY
-        self.inactive_color = inactive_color or ft.Colors.with_opacity(0.72, ft.Colors.ON_SURFACE)
+
+        resolved_active = active_color
+        resolved_inactive = inactive_color
+        if resolved_active is None:
+            try:
+                theme_manager = theme_context.get()
+                resolved_active = theme_manager.get_color("primary", ft.Colors.PRIMARY) or ft.Colors.PRIMARY
+            except LookupError:
+                resolved_active = ft.Colors.PRIMARY
+        if resolved_inactive is None:
+            base = resolved_active or ft.Colors.PRIMARY
+            fallback = ft.Colors.ON_SURFACE if base == ft.Colors.PRIMARY else base
+            resolved_inactive = ft.Colors.with_opacity(0.72, fallback)
+
+        self.active_color = resolved_active
+        self.inactive_color = resolved_inactive
         self._selected_bg = ft.Colors.with_opacity(0.12, self.active_color)
         self._base_bg = ft.Colors.with_opacity(0.04, self.active_color)
 

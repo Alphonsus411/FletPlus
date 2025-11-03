@@ -73,6 +73,49 @@ ft.app(target=main)
   `store.derive()` para escuchar *snapshots* inmutables o crear señales
   derivadas.
 
+## 🌐 Contextos compartidos
+
+El paquete `fletplus.context` introduce un sistema jerárquico de contextos que
+permite exponer información transversal (tema actual, usuario autenticado o
+idioma activo) a cualquier control sin necesidad de pasar parámetros a través
+de todas las funciones intermedias.
+
+```python
+import flet as ft
+from fletplus.context import Context, theme_context
+
+
+# Crear un contexto personalizado con valor por defecto
+request_context = Context("request_id", default=None)
+
+
+def render_widget():
+    # Recupera el identificador más cercano
+    return ft.Text(f"ID actual: {request_context.get(default='N/A')}")
+
+
+with request_context as provider:
+    provider.set("req-1234")
+    control = render_widget()  # Muestra "req-1234"
+
+
+# Los contextos principales pueden consultarse en cualquier parte de la app
+current_theme = theme_context.get(default=None)
+```
+
+`FletPlusApp` activa automáticamente tres contextos globales:
+
+- `theme_context`: expone la instancia de :class:`~fletplus.themes.ThemeManager`.
+- `user_context`: mantiene el usuario autenticado actual (valor `None` si no
+  existe sesión).
+- `locale_context`: almacena el código de idioma vigente. El `CommandPalette`
+  utiliza este contexto para mostrar un *placeholder* localizado y su título
+  refleja el nombre del usuario.
+
+Puedes actualizar estos valores mediante `app.set_user("Nombre")` o
+`app.set_locale("es-ES")`, y suscribirte a cambios usando
+`locale_context.subscribe(callback)` para sincronizar tus propios controles.
+
 # 📝 Logging
 
 FletPlus utiliza el módulo estándar `logging` para registrar mensajes de la
