@@ -1,6 +1,7 @@
 import flet as ft
 
 from fletplus.core import FletPlusApp
+from fletplus.state import Store
 
 
 class DummyPage:
@@ -54,6 +55,8 @@ def test_fletplus_app_initialization_and_routing():
     assert isinstance(app.content_container.content, ft.Text)
     assert app.content_container.content.value == "Inicio"
     assert app.router.current_path == "/inicio"
+    assert isinstance(app.state, Store)
+    assert page.state is app.state
 
     # Simular navegación a la segunda página
     app._on_nav(1)

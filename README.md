@@ -30,6 +30,49 @@ pip install fletplus
 | `PrimaryButton` / `SecondaryButton` / `IconButton` | Conjunto de botones tematizados y personalizables |
 | `ResponsiveVisibility` | Oculta o muestra controles según tamaño u orientación |
 
+## 🔁 Gestión de estado reactivo
+
+FletPlus incorpora un módulo `fletplus.state` con primitivas reactivas ligeras
+para compartir datos entre componentes sin acoplarlos al árbol de controles.
+
+```python
+import flet as ft
+from fletplus import FletPlusApp, Signal, Store
+
+
+store = Store({"count": 0})
+
+
+def counter_view():
+    label = ft.Text()
+    store.bind("count", label, attr="value", transform=lambda v: f"Total: {v}")
+
+    def increment(_):
+        store.update("count", lambda value: value + 1)
+
+    return ft.Column(
+        controls=[
+            label,
+            ft.ElevatedButton("Sumar", on_click=increment),
+        ]
+    )
+
+
+def main(page: ft.Page):
+    app = FletPlusApp(page, {"Inicio": counter_view}, state=store)
+    app.build()
+
+
+ft.app(target=main)
+```
+
+- `Signal` expone los métodos `.get()` y `.set()` junto con `signal.bind_control`
+  para sincronizar atributos de controles Flet y ejecutar `update()`
+  automáticamente.
+- `Store` centraliza señales nombradas y ofrece `store.subscribe()` y
+  `store.derive()` para escuchar *snapshots* inmutables o crear señales
+  derivadas.
+
 # 📝 Logging
 
 FletPlus utiliza el módulo estándar `logging` para registrar mensajes de la
