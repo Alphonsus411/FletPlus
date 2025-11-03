@@ -12,6 +12,7 @@ from fletplus.utils.device import is_mobile, is_web, is_desktop
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.styles import Style
 from fletplus.router import Route, Router, RouteMatch
+from fletplus.state import Store
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,12 @@ class FletPlusApp:
         title: str = "FletPlus App",
         theme_config: dict | None = None,
         use_window_manager: bool = False,
+        state: Store | None = None,
     ) -> None:
         self.page = page
+        self.state = state or Store()
+        if not hasattr(self.page, "state"):
+            setattr(self.page, "state", self.state)
         raw_sidebar = list(sidebar_items or [])
         self.title = title
 
