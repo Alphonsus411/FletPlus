@@ -19,7 +19,15 @@ from typing import Protocol, cast
 
 
 class _SmartTableModule(Protocol):
-    def test_smart_table_full_behavior(self) -> None: ...
+    def test_smart_table_builds_with_filters_and_multi_sort(self) -> None: ...
+
+    def test_inline_editing_with_validation_and_callback(self) -> None: ...
+
+    def test_toggle_sort_cycle_removes_sort(self) -> None: ...
+
+    def test_set_filter_requires_filterable_column(self) -> None: ...
+
+    def test_virtualized_async_provider_and_manual_refresh(self) -> None: ...
 
 
 class _SidebarAdminModule(Protocol):
@@ -79,7 +87,11 @@ def _load_tests() -> tuple[
 
 
 def test_all_components() -> None:
-    test_smart_table_module.test_smart_table_full_behavior()
+    test_smart_table_module.test_smart_table_builds_with_filters_and_multi_sort()
+    test_smart_table_module.test_inline_editing_with_validation_and_callback()
+    test_smart_table_module.test_toggle_sort_cycle_removes_sort()
+    test_smart_table_module.test_set_filter_requires_filterable_column()
+    test_smart_table_module.test_virtualized_async_provider_and_manual_refresh()
     test_sidebar_admin_module.test_sidebar_admin_build_and_selection()
     test_responsive_grid_module.test_responsive_grid_builds_correctly()
     test_theme_manager_module.test_theme_manager_initialization_and_toggle()
