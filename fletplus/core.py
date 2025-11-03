@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Callable, Iterable
 
 import flet as ft
 
@@ -11,6 +11,7 @@ from fletplus.components.command_palette import CommandPalette
 from fletplus.utils.device import is_mobile, is_web, is_desktop
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.styles import Style
+from fletplus.router import Route, Router, RouteMatch
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class FletPlusApp:
     def __init__(
         self,
         page: ft.Page,
-        routes: dict[str, Callable[[], ft.Control]],
+        routes: dict[str, Callable[[], ft.Control]] | Iterable[Route] | Router,
         sidebar_items=None,
         commands: dict | None = None,
         title: str = "FletPlus App",
@@ -27,9 +28,28 @@ class FletPlusApp:
         use_window_manager: bool = False,
     ) -> None:
         self.page = page
-        self.routes = routes
         raw_sidebar = list(sidebar_items or [])
         self.title = title
+
+        self.router, base_nav = self._build_router(routes, raw_sidebar)
+        self._nav_routes: list[dict[str, object]] = []
+        self._nav_index_by_path: dict[str, int] = {}
+        for index, nav_data in enumerate(base_nav):
+            item = raw_sidebar[index] if index < len(raw_sidebar) else {}
+            title_value = item.get("title") if isinstance(item, dict) else None
+            icon_value = item.get("icon") if isinstance(item, dict) else None
+            path_value = self._normalize_path_value(str(nav_data["path"]))
+            name_value = nav_data.get("name")
+            match_value = nav_data.get("match")
+            if isinstance(item, dict) and item.get("match"):
+                match_value = item.get("match")
+            resolved_title = title_value or name_value or path_value.strip("/").replace("-", " ").title() or "Inicio"
+            resolved_icon = icon_value or ft.Icons.CIRCLE
+            nav_entry = {"title": resolved_title, "icon": resolved_icon, "path": path_value}
+            self._nav_routes.append(nav_entry)
+            self._nav_index_by_path[path_value] = index
+            if match_value:
+                self._nav_index_by_path[self._normalize_path_value(str(match_value))] = index
 
         if is_mobile(page):
             self.platform = "mobile"
@@ -55,19 +75,10 @@ class FletPlusApp:
         self.shortcuts = ShortcutManager(page)
         self.shortcuts.register("k", lambda: self.command_palette.open(self.page), ctrl=True)
 
-        self._routes_order = list(self.routes.keys())
-        self._nav_items = []
-        for index, route_key in enumerate(self._routes_order):
-            item = raw_sidebar[index] if index < len(raw_sidebar) else {}
-            title_value = item.get("title") or route_key.replace("_", " ").title()
-            icon_value = item.get("icon", ft.Icons.CIRCLE)
-            self._nav_items.append({"title": title_value, "icon": icon_value})
-
-        if not self._nav_items:
-            for route_key in self._routes_order:
-                self._nav_items.append({"title": route_key.title(), "icon": ft.Icons.CIRCLE})
-
-        self.sidebar_items = self._nav_items
+        if not self._nav_routes:
+            self.sidebar_items = []
+        else:
+            self.sidebar_items = self._nav_routes
         self.sidebar = SidebarAdmin(
             self.sidebar_items,
             on_select=self._on_nav,
@@ -84,6 +95,8 @@ class FletPlusApp:
             border_radius=ft.border_radius.only(top_left=28, top_right=0, bottom_left=0, bottom_right=0),
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
         )
+
+        self._router_unsubscribe = self.router.observe(self._handle_route_change)
 
         self._layout_mode = "desktop"
         self._responsive_manager: ResponsiveManager | None = None
@@ -128,8 +141,22 @@ class FletPlusApp:
         self._create_navigation_shell()
         self._setup_navigation_components()
 
-        if self.routes:
-            self._activate_route(0)
+        initial_path: str | None = None
+        if self._nav_routes:
+            candidate = str(self._nav_routes[0]["path"])
+            if "<" in candidate and ">" in candidate:
+                candidate = None
+            initial_path = candidate
+        if initial_path:
+            try:
+                self.router.replace(initial_path)
+            except Exception:  # pragma: no cover - errores del usuario
+                logger.exception("No se pudo activar la ruta inicial '%s'", initial_path)
+        elif self.router.current_path is None:
+            try:
+                self.router.replace("/")
+            except Exception:
+                logger.debug("No hay ruta inicial disponible para '/'")
 
         if not hasattr(self.page, "width") or self.page.width is None:
             self.page.width = 1280
@@ -235,7 +262,7 @@ class FletPlusApp:
 
     # ------------------------------------------------------------------
     def _setup_navigation_components(self) -> None:
-        if not self._nav_items:
+        if not self._nav_routes:
             return
 
         destinations = [
@@ -243,7 +270,7 @@ class FletPlusApp:
                 icon=item.get("icon", ft.Icons.CIRCLE),
                 label=item.get("title", ""),
             )
-            for item in self._nav_items
+            for item in self._nav_routes
         ]
         indicator = self.theme.get_color("accent", self.theme.get_color("primary", ft.Colors.PRIMARY))
         nav_bg = self.theme.get_color("surface_variant")
@@ -252,7 +279,7 @@ class FletPlusApp:
         self._mobile_nav = ft.NavigationBar(
             destinations=destinations,
             on_change=self._handle_mobile_nav_change,
-            selected_index=0,
+            selected_index=getattr(self.sidebar, "selected_index", 0),
             label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
             indicator_color=indicator,
             bgcolor=nav_bg,
@@ -263,21 +290,21 @@ class FletPlusApp:
                 label=item.get("title", ""),
                 icon=item.get("icon", ft.Icons.CIRCLE),
             )
-            for item in self._nav_items
+            for item in self._nav_routes
         ]
         self._drawer = ft.NavigationDrawer(
             controls=drawer_controls,
-            selected_index=0,
+            selected_index=getattr(self.sidebar, "selected_index", 0),
             on_change=self._handle_drawer_change,
         )
 
     # ------------------------------------------------------------------
     def _handle_mobile_nav_change(self, e: ft.ControlEvent) -> None:
-        self._activate_route(e.control.selected_index)
+        self._navigate_to_index(e.control.selected_index)
 
     # ------------------------------------------------------------------
     def _handle_drawer_change(self, e: ft.ControlEvent) -> None:
-        self._activate_route(e.control.selected_index)
+        self._navigate_to_index(e.control.selected_index)
         self.page.close_drawer()
 
     # ------------------------------------------------------------------
@@ -382,23 +409,36 @@ class FletPlusApp:
         self.page.update()
 
     # ------------------------------------------------------------------
-    def _activate_route(self, index: int) -> None:
-        if not 0 <= index < len(self._routes_order):
+    def _navigate_to_index(self, index: int) -> None:
+        if not 0 <= index < len(self._nav_routes):
             logger.error("Invalid route index: %s", index)
             return
 
-        route_key = self._routes_order[index]
-        builder = self.routes[route_key]
+        path = str(self._nav_routes[index]["path"])
         try:
-            content = builder()
+            self.router.go(path)
         except Exception:  # pragma: no cover - errores del usuario
-            logger.exception("Error building route '%s'", route_key)
-            content = ft.Container(
-                content=ft.Text(f"No se pudo cargar la ruta '{route_key}'"),
-                padding=20,
-            )
-        self.content_container.content = content
+            logger.exception("No se pudo navegar a la ruta '%s'", path)
 
+    # ------------------------------------------------------------------
+    def _on_nav(self, index: int) -> None:
+        self._navigate_to_index(index)
+
+    # ------------------------------------------------------------------
+    def _load_route(self, index: int) -> None:
+        self._navigate_to_index(index)
+
+    # ------------------------------------------------------------------
+    def _handle_route_change(self, match: RouteMatch, control: ft.Control) -> None:
+        if self.content_container is not None:
+            self.content_container.content = control
+        index = self._nav_index_by_path.get(match.node.full_path)
+        if index is not None:
+            self._update_nav_selection(index)
+        self.page.update()
+
+    # ------------------------------------------------------------------
+    def _update_nav_selection(self, index: int) -> None:
         if hasattr(self.sidebar, "select"):
             self.sidebar.select(index)
         else:
@@ -409,15 +449,89 @@ class FletPlusApp:
         if self._drawer is not None:
             self._drawer.selected_index = index
 
-        self.page.update()
+    # ------------------------------------------------------------------
+    def _build_router(
+        self,
+        routes_input: dict[str, Callable[[], ft.Control]] | Iterable[Route] | Router,
+        sidebar_items: list,
+    ) -> tuple[Router, list[dict[str, object]]]:
+        if isinstance(routes_input, Router):
+            nav_data: list[dict[str, object]] = []
+            for item in sidebar_items:
+                if isinstance(item, dict) and "path" in item:
+                    nav_data.append({"path": self._normalize_path_value(str(item["path"])), "name": item.get("title")})
+            return routes_input, nav_data
+
+        router = Router()
+        nav_data: list[dict[str, object]] = []
+
+        if isinstance(routes_input, dict):
+            for key, target in routes_input.items():
+                if isinstance(target, Route):
+                    router.register(target)
+                    nav_data.append({
+                        "path": self._normalize_path_value(target.path),
+                        "name": target.name or key,
+                    })
+                else:
+                    if not callable(target):
+                        raise TypeError(f"El valor asociado a la ruta '{key}' debe ser callable o Route")
+                    path = self._path_from_key(str(key))
+                    router.register(Route(path=path, name=str(key), view=self._wrap_view(target)))
+                    nav_data.append({"path": path, "name": str(key)})
+            return router, nav_data
+
+        for route in routes_input:
+            if not isinstance(route, Route):
+                raise TypeError("Todos los elementos deben ser instancias de Route")
+            router.register(route)
+            nav_data.append({
+                "path": self._normalize_path_value(route.path),
+                "name": route.name,
+            })
+
+        if not nav_data:
+            for item in sidebar_items:
+                if isinstance(item, dict) and "path" in item:
+                    nav_data.append({"path": self._normalize_path_value(str(item["path"])), "name": item.get("title")})
+
+        return router, nav_data
 
     # ------------------------------------------------------------------
-    def _on_nav(self, index: int) -> None:
-        self._activate_route(index)
+    @staticmethod
+    def _wrap_view(builder: Callable[[], ft.Control]) -> Callable[[RouteMatch], ft.Control]:
+        def _view(_match: RouteMatch) -> ft.Control:
+            return builder()
+
+        return _view
 
     # ------------------------------------------------------------------
-    def _load_route(self, index: int) -> None:
-        self._activate_route(index)
+    @staticmethod
+    def _normalize_path_value(path: str) -> str:
+        cleaned = path.strip()
+        if not cleaned:
+            return "/"
+        if not cleaned.startswith("/"):
+            cleaned = "/" + cleaned
+        if len(cleaned) > 1 and cleaned.endswith("/"):
+            cleaned = cleaned[:-1]
+        return cleaned
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _path_from_key(key: str) -> str:
+        slug = key.strip().lower().replace(" ", "-")
+        allowed = []
+        for char in slug:
+            if char.isalnum() or char in {"-", "_"}:
+                allowed.append(char)
+            else:
+                allowed.append("-")
+        cleaned = "".join(allowed)
+        cleaned = "-".join(filter(None, cleaned.split("-")))
+        if not cleaned:
+            cleaned = "inicio"
+        return "/" + cleaned
 
     # ------------------------------------------------------------------
     def open_window(self, name: str, page: ft.Page) -> None:

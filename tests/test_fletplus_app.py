@@ -53,10 +53,12 @@ def test_fletplus_app_initialization_and_routing():
     assert app.content_container.content is not None
     assert isinstance(app.content_container.content, ft.Text)
     assert app.content_container.content.value == "Inicio"
+    assert app.router.current_path == "/inicio"
 
     # Simular navegación a la segunda página
     app._on_nav(1)
     assert app.content_container.content.value == "Usuarios"
+    assert app.router.current_path == "/usuarios"
 
 
 def test_fletplus_app_without_routes():

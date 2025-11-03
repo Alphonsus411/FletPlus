@@ -7,6 +7,7 @@ se distribuye la librería y mejora la experiencia para los usuarios finales.
 """
 
 from fletplus.core import FletPlusApp
+from fletplus.router import Router, Route, LayoutInstance, layout_from_attribute
 from fletplus.themes import (
     ThemeManager,
     load_palette_from_file,
@@ -104,4 +105,8 @@ __all__ = [
     "generate_manifest",
     "generate_service_worker",
     "register_pwa",
+    "Router",
+    "Route",
+    "LayoutInstance",
+    "layout_from_attribute",
 ]
