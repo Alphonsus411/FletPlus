@@ -17,7 +17,7 @@ pip install fletplus
 
 | Componente      | Descripción                                       |
 |----------------|---------------------------------------------------|
-| `SmartTable`   | Tabla con paginación y ordenamiento integrados   |
+| `SmartTable`   | Tabla virtualizada con filtros, orden multi-columna y edición en línea |
 | `SidebarAdmin` | Menú lateral dinámico con ítems y selección       |
 | `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
 | `ResponsiveContainer` | Aplica estilos según breakpoints definidos |
@@ -29,6 +29,24 @@ pip install fletplus
 | `SystemTray`   | Icono de bandeja del sistema con eventos         |
 | `PrimaryButton` / `SecondaryButton` / `IconButton` | Conjunto de botones tematizados y personalizables |
 | `ResponsiveVisibility` | Oculta o muestra controles según tamaño u orientación |
+
+## 🚀 SmartTable avanzada
+
+`SmartTable` ahora combina carga incremental con `DataTable` virtualizado,
+proveedores síncronos/asíncronos y edición en línea.
+
+Características destacadas:
+
+- Scroll infinito con `load_more()` y proveedores que reciben
+  :class:`~fletplus.components.smart_table.SmartTableQuery` para aplicar filtros
+  y ordenamiento en el servidor.
+- Filtros de columna con `set_filter()` y campos de búsqueda integrados.
+- Orden multi-columna (Shift + clic) con indicadores visuales y ciclo asc/desc.
+- Controles editables por columna, validadores y `on_save` (sync/async) para
+  persistir cambios.
+
+Ejecuta `python -m examples.smart_table_examples` para ver todos los flujos
+trabajando juntos.
 
 ## 🔁 Gestión de estado reactivo
 
