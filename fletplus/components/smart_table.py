@@ -256,6 +256,7 @@ class SmartTable:
         self._filters: Dict[str, SmartTableFilter] = {}
         self._sorts: List[SmartTableSort] = []
         self._records: List[_SmartTableRecord] = []
+        self._needs_virtual_reset = False
         self._next_row_id = 0
         self._exhausted = False
         self._editing_rows: set[int] = set()
@@ -314,14 +315,14 @@ class SmartTable:
             value=value,
             predicate=predicate or _default_filter_predicate,
         )
-        self.refresh()
+        self._on_query_changed()
 
     def clear_filter(self, key: str) -> None:
         """Elimina el filtro de una columna."""
 
         if key in self._filters:
             self._filters.pop(key)
-            self.refresh()
+            self._on_query_changed()
 
     def toggle_sort(self, key: str, multi: bool = False) -> None:
         """Alterna el estado de ordenamiento para ``key``."""
@@ -340,20 +341,28 @@ class SmartTable:
             if not multi:
                 self._sorts.clear()
             self._sorts.append(SmartTableSort(key=key, ascending=True))
-        self.refresh()
+        self._on_query_changed()
 
     def clear_sorts(self) -> None:
         """Elimina todos los ordenamientos."""
 
         if self._sorts:
             self._sorts.clear()
-            self.refresh()
+            self._on_query_changed()
 
     def load_more(self, *, sync: bool = False) -> Optional[Awaitable[Any]]:
         """Solicita el siguiente bloque de datos al proveedor."""
 
         if not self.virtualized or self._exhausted or self.data_provider is None:
             return None
+
+        if self._needs_virtual_reset:
+            self._records.clear()
+            self._next_row_id = 0
+            self._editing_rows.clear()
+            self._edit_buffers.clear()
+            self._needs_virtual_reset = False
+            self._exhausted = False
 
         start = len(self._records)
         end = start + self.page_size
@@ -541,6 +550,20 @@ class SmartTable:
         maybe = self.save_row(row_id)
         if inspect.isawaitable(maybe):
             _run_async(maybe)
+
+    def _on_query_changed(self) -> None:
+        reset_virtual = self.virtualized and self.data_provider is not None
+
+        if reset_virtual:
+            self._exhausted = False
+            self._needs_virtual_reset = True
+            has_results = bool(self._apply_query(self._records))
+            self.refresh()
+            if self.auto_load and not has_results:
+                self.load_more(sync=True)
+            return
+
+        self.refresh()
 
     def _apply_query(
         self, records: Sequence[_SmartTableRecord]
