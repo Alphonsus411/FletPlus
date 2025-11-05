@@ -56,8 +56,7 @@ def main(page: ft.Page) -> None:
         "Gestionar usuarios": lambda: app.router.go("/usuarios"),
         "Configuración general": lambda: app.router.go("/configuracion"),
     }
-    app.command_palette.filtered = list(app.command_palette.commands.items())
-    app.command_palette._refresh()
+    app.command_palette.refresh()
 
 
 def run() -> None:

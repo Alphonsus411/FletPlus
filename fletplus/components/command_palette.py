@@ -11,7 +11,7 @@ class CommandPalette:
 
     def __init__(self, commands: Dict[str, Callable]):
         self.commands = commands
-        self.filtered: List[Tuple[str, Callable]] = list(commands.items())
+        self.filtered: List[Tuple[str, Callable]] = []
 
         self.search = ft.TextField(on_change=self._on_search, autofocus=True)
         self.list_view = ft.ListView(expand=True, spacing=0)
@@ -26,15 +26,22 @@ class CommandPalette:
         self.dialog.title = ft.Text("")
         self._subscriptions: list[Callable[[], None]] = []
         self._setup_context_bindings()
-        self._refresh()
+        self.refresh()
 
     def _on_search(self, _):
+        self.refresh()
+
+    def refresh(self) -> None:
+        """Reconstruye el listado de comandos visibles."""
         query = (self.search.value or "").lower()
-        self.filtered = [
-            (name, cb)
-            for name, cb in self.commands.items()
-            if query in name.lower()
-        ]
+        if query:
+            self.filtered = [
+                (name, cb)
+                for name, cb in self.commands.items()
+                if query in name.lower()
+            ]
+        else:
+            self.filtered = list(self.commands.items())
         self._refresh()
 
     def _refresh(self):
@@ -59,7 +66,7 @@ class CommandPalette:
                 self.dialog.update()
 
     def open(self, page: ft.Page):
-        self._refresh()
+        self.refresh()
         page.dialog = self.dialog
         self.dialog.open = True
         page.update()
