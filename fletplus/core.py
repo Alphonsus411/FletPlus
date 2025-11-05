@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass, field
 from typing import Callable, Iterable
 
 import flet as ft
@@ -23,6 +24,52 @@ from fletplus.state import Store
 logger = logging.getLogger(__name__)
 
 
+def _default_menu_padding() -> ft.Padding:
+    return ft.Padding(20, 20, 20, 20)
+
+
+@dataclass(slots=True)
+class FloatingMenuOptions:
+    """Opciones visuales y de comportamiento del menú flotante móvil."""
+
+    alignment: ft.alignment.Alignment = field(default_factory=lambda: ft.alignment.Alignment(1, 1))
+    horizontal_margin: float = 24
+    vertical_margin: float = 28
+    width: float = 320
+    max_height: float = 420
+    padding: ft.Padding = field(default_factory=_default_menu_padding)
+    border_radius: float = 26
+    hidden_offset: float = 0.08
+    backdrop_color: str = ft.Colors.BLACK
+    backdrop_opacity: float = 0.35
+    animation_duration: int = 280
+    animation_curve: ft.AnimationCurve = ft.AnimationCurve.DECELERATE
+    fab_icon: str = ft.Icons.MENU
+    fab_bgcolor: str | None = None
+    fab_icon_color: str | None = None
+
+
+@dataclass(slots=True)
+class ResponsiveNavigationConfig:
+    """Configura los breakpoints y la variante móvil del menú."""
+
+    mobile_breakpoint: int = 720
+    tablet_breakpoint: int = 1100
+    desktop_breakpoint: int = 1440
+    floating_breakpoint: int | None = 720
+    floating_options: FloatingMenuOptions = field(default_factory=FloatingMenuOptions)
+
+    def layout_for_width(self, width: int) -> str:
+        if width < self.mobile_breakpoint:
+            return "mobile"
+        if width < self.tablet_breakpoint:
+            return "tablet"
+        return "desktop"
+
+    def should_use_floating(self, width: int) -> bool:
+        return bool(self.floating_breakpoint is not None and width <= self.floating_breakpoint)
+
+
 class FletPlusApp:
     def __init__(
         self,
@@ -34,6 +81,7 @@ class FletPlusApp:
         theme_config: dict | None = None,
         use_window_manager: bool = False,
         state: Store | None = None,
+        responsive_navigation: ResponsiveNavigationConfig | None = None,
     ) -> None:
         self.page = page
         self.state = state or Store()
@@ -80,6 +128,7 @@ class FletPlusApp:
             config.pop(key, None)
 
         self.theme = ThemeManager(page, **config)
+        self.responsive_navigation = responsive_navigation or ResponsiveNavigationConfig()
         self.window_manager = WindowManager(page) if use_window_manager else None
 
         self.contexts: dict[str, object] = {
@@ -115,6 +164,8 @@ class FletPlusApp:
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
         )
 
+        self._content_stack = ft.Stack(controls=[self.content_container], expand=True)
+
         self._router_unsubscribe = self.router.observe(self._handle_route_change)
 
         self._layout_mode = "desktop"
@@ -130,6 +181,14 @@ class FletPlusApp:
         self._main_shell: ft.Column | None = None
         self._mobile_nav: ft.NavigationBar | None = None
         self._drawer: ft.NavigationDrawer | None = None
+        self._content_area_container: ft.Container | None = None
+        self._floating_menu_visible: bool = False
+        self._floating_backdrop: ft.Container | None = None
+        self._floating_menu_control: ft.Container | None = None
+        self._floating_menu_host: ft.Container | None = None
+        self._floating_button: ft.FloatingActionButton | None = None
+        self._floating_button_host: ft.Container | None = None
+        self._floating_tiles: list[ft.ListTile] = []
 
     # ------------------------------------------------------------------
     def _create_sidebar_style(self) -> Style:
@@ -249,14 +308,14 @@ class FletPlusApp:
         if not hasattr(self.page, "height") or self.page.height is None:
             self.page.height = 800
 
+        breakpoint_values = {0, self.responsive_navigation.mobile_breakpoint, self.responsive_navigation.tablet_breakpoint, self.responsive_navigation.desktop_breakpoint}
+        if self.responsive_navigation.floating_breakpoint is not None:
+            breakpoint_values.add(self.responsive_navigation.floating_breakpoint)
+        sorted_breakpoints = {value: self._handle_resize for value in sorted(breakpoint_values)}
+
         self._responsive_manager = ResponsiveManager(
             self.page,
-            breakpoints={
-                0: self._handle_resize,
-                640: self._handle_resize,
-                900: self._handle_resize,
-                1280: self._handle_resize,
-            },
+            breakpoints=sorted_breakpoints,
         )
         self._apply_layout_mode(self._resolve_layout_mode(self.page.width or 0), force=True)
 
@@ -325,8 +384,14 @@ class FletPlusApp:
             alignment=ft.alignment.top_left,
         )
 
+        self._content_area_container = ft.Container(
+            expand=True,
+            bgcolor=self.theme.get_color("background", ft.Colors.SURFACE),
+            content=self._content_stack,
+        )
+
         self._body_row = ft.Row(
-            controls=[self._sidebar_container, self.content_container],
+            controls=[self._sidebar_container, self._content_area_container],
             expand=True,
             spacing=0,
             vertical_alignment=ft.CrossAxisAlignment.STRETCH,
@@ -384,6 +449,103 @@ class FletPlusApp:
             on_change=self._handle_drawer_change,
         )
 
+        self._build_floating_navigation()
+
+    # ------------------------------------------------------------------
+    def _build_floating_navigation(self) -> None:
+        if not self._nav_routes or self._content_stack is None:
+            return
+
+        # Elimina componentes previos cuando el tema se reconstruye
+        for control in [self._floating_backdrop, self._floating_menu_host, self._floating_button_host]:
+            if control is not None and control in self._content_stack.controls:
+                self._content_stack.controls.remove(control)
+
+        options = self.responsive_navigation.floating_options
+        accent = self.theme.get_color("accent", self.theme.get_color("primary", ft.Colors.PRIMARY))
+        surface = self.theme.get_color("surface_container_high", None) or self.theme.get_color("surface", ft.Colors.SURFACE)
+        on_surface = self.theme.get_color("on_surface", ft.Colors.ON_SURFACE)
+        muted = self.theme.get_color("muted", on_surface)
+
+        self._floating_tiles = []
+        for index, item in enumerate(self._nav_routes):
+            tile = ft.ListTile(
+                dense=True,
+                data=index,
+                leading=ft.Icon(item.get("icon", ft.Icons.CIRCLE), color=muted, size=22),
+                title=ft.Text(item.get("title", ""), color=on_surface, weight=ft.FontWeight.W_500),
+                on_click=lambda _e, idx=index: self._handle_floating_item_click(idx),
+                selected=index == getattr(self.sidebar, "selected_index", 0),
+            )
+            tile.selected_color = accent
+            tile.hover_color = ft.Colors.with_opacity(0.08, accent if isinstance(accent, str) else ft.Colors.PRIMARY)
+            tile.shape = ft.RoundedRectangleBorder(radius=18)
+            self._floating_tiles.append(tile)
+
+        menu_column = ft.Column(
+            controls=self._floating_tiles,
+            tight=True,
+            spacing=4,
+            height=options.max_height,
+            scroll=ft.ScrollMode.AUTO,
+        )
+
+        self._floating_menu_control = ft.Container(
+            width=options.width,
+            bgcolor=surface,
+            border_radius=ft.border_radius.all(options.border_radius),
+            padding=options.padding,
+            content=menu_column,
+            opacity=0,
+            offset=ft.transform.Offset(0, options.hidden_offset),
+            animate_opacity=ft.Animation(options.animation_duration, curve=options.animation_curve),
+            animate_offset=ft.Animation(options.animation_duration, curve=options.animation_curve),
+            shadow=ft.BoxShadow(
+                blur_radius=36,
+                spread_radius=-18,
+                color=ft.Colors.with_opacity(0.22, ft.Colors.BLACK),
+                offset=ft.Offset(0, 28),
+            ),
+        )
+
+        self._floating_backdrop = ft.Container(
+            expand=True,
+            bgcolor=options.backdrop_color,
+            opacity=0,
+            visible=False,
+            animate_opacity=ft.Animation(options.animation_duration, curve=options.animation_curve),
+            on_click=lambda _e: self._toggle_floating_menu(False),
+        )
+
+        fab_bg = options.fab_bgcolor or accent
+        fab_fg = options.fab_icon_color or self.theme.get_color("on_primary", ft.Colors.ON_PRIMARY)
+        self._floating_button = ft.FloatingActionButton(
+            icon=options.fab_icon,
+            bgcolor=fab_bg,
+            foreground_color=fab_fg,
+            on_click=lambda _e: self._toggle_floating_menu(),
+        )
+
+        padding = ft.Padding(options.horizontal_margin, options.vertical_margin, options.horizontal_margin, options.vertical_margin)
+        self._floating_menu_host = ft.Container(
+            alignment=options.alignment,
+            padding=padding,
+            content=self._floating_menu_control,
+            visible=False,
+        )
+        self._floating_button_host = ft.Container(
+            alignment=options.alignment,
+            padding=padding,
+            content=self._floating_button,
+            visible=False,
+        )
+
+        self._content_stack.controls.extend(
+            [self._floating_backdrop, self._floating_menu_host, self._floating_button_host]
+        )
+        self._floating_menu_visible = False
+        self._refresh_floating_controls()
+
     # ------------------------------------------------------------------
     def _handle_mobile_nav_change(self, e: ft.ControlEvent) -> None:
         self._navigate_to_index(e.control.selected_index)
@@ -394,6 +556,64 @@ class FletPlusApp:
         self.page.close_drawer()
 
     # ------------------------------------------------------------------
+    def _handle_floating_item_click(self, index: int) -> None:
+        self._close_floating_menu()
+        self._navigate_to_index(index)
+
+    # ------------------------------------------------------------------
+    def _refresh_floating_controls(self) -> None:
+        use_floating = self._should_use_floating_navigation()
+        if not use_floating:
+            self._floating_menu_visible = False
+
+        options = self.responsive_navigation.floating_options
+        if self._floating_button_host is not None:
+            self._floating_button_host.visible = use_floating
+        if self._floating_backdrop is not None:
+            self._floating_backdrop.visible = use_floating and self._floating_menu_visible
+            self._floating_backdrop.opacity = options.backdrop_opacity if (use_floating and self._floating_menu_visible) else 0
+        if self._floating_menu_host is not None:
+            self._floating_menu_host.visible = use_floating
+        if self._floating_menu_control is not None:
+            self._floating_menu_control.opacity = 1 if (use_floating and self._floating_menu_visible) else 0
+            self._floating_menu_control.offset = ft.transform.Offset(
+                0, 0 if (use_floating and self._floating_menu_visible) else options.hidden_offset
+            )
+
+    # ------------------------------------------------------------------
+    def _toggle_floating_menu(self, open_state: bool | None = None) -> None:
+        if not self._should_use_floating_navigation():
+            return
+
+        desired_state = (not self._floating_menu_visible) if open_state is None else bool(open_state)
+        if desired_state == self._floating_menu_visible:
+            return
+
+        self._floating_menu_visible = desired_state
+        self._refresh_floating_controls()
+        self.page.update()
+
+    # ------------------------------------------------------------------
+    def _close_floating_menu(self, *, refresh: bool = True) -> None:
+        if self._floating_menu_visible:
+            self._floating_menu_visible = False
+            self._refresh_floating_controls()
+            if refresh:
+                self.page.update()
+
+    # ------------------------------------------------------------------
+    def _should_use_floating_navigation(self) -> bool:
+        if not self._nav_routes or self.responsive_navigation is None:
+            return False
+
+        width = getattr(self.page, "width", 0) or 0
+        try:
+            numeric_width = int(width)
+        except (TypeError, ValueError):  # pragma: no cover - ancho proviene de Flet
+            numeric_width = 0
+        return self.responsive_navigation.should_use_floating(numeric_width)
+
+    # ------------------------------------------------------------------
     def _open_drawer(self, _e: ft.ControlEvent | None = None) -> None:
         if self.page.drawer:
             self.page.open_drawer()
@@ -402,6 +622,7 @@ class FletPlusApp:
     def _toggle_theme(self, _e: ft.ControlEvent | None = None) -> None:
         self.theme.toggle_dark_mode()
         self._update_header_colors()
+        self._build_floating_navigation()
         self._apply_layout_mode(self._layout_mode, force=True)
 
     # ------------------------------------------------------------------
@@ -441,13 +662,12 @@ class FletPlusApp:
         self._apply_layout_mode(self._resolve_layout_mode(width))
 
     # ------------------------------------------------------------------
-    @staticmethod
-    def _resolve_layout_mode(width: int) -> str:
-        if width < 720:
-            return "mobile"
-        if width < 1100:
-            return "tablet"
-        return "desktop"
+    def _resolve_layout_mode(self, width: int) -> str:
+        try:
+            numeric_width = int(width)
+        except (TypeError, ValueError):  # pragma: no cover - valores de Flet
+            numeric_width = 0
+        return self.responsive_navigation.layout_for_width(numeric_width)
 
     # ------------------------------------------------------------------
     def _apply_layout_mode(self, mode: str, *, force: bool = False) -> None:
@@ -455,6 +675,7 @@ class FletPlusApp:
             return
 
         self._layout_mode = mode
+        use_floating = self._should_use_floating_navigation()
         is_mobile = mode == "mobile"
         is_tablet = mode == "tablet"
         padding_map = {
@@ -475,6 +696,9 @@ class FletPlusApp:
         if self._header_container is not None:
             self._header_container.padding = header_padding.get(mode, self._header_container.padding)
 
+        if self._content_area_container is not None:
+            self._content_area_container.bgcolor = self.theme.get_color("background", ft.Colors.SURFACE)
+
         if self._sidebar_container is not None:
             self._sidebar_container.visible = not is_mobile
             sidebar_width = 260 if mode == "desktop" else 220
@@ -486,11 +710,18 @@ class FletPlusApp:
             self._menu_button.visible = is_mobile or is_tablet
 
         if self._drawer is not None:
-            self.page.drawer = self._drawer if (is_mobile or is_tablet) else None
+            self.page.drawer = self._drawer if (is_tablet or (is_mobile and not use_floating)) else None
 
         if self._mobile_nav is not None:
             self._mobile_nav.selected_index = getattr(self.sidebar, "selected_index", 0)
-            self.page.navigation_bar = self._mobile_nav if is_mobile else None
+            if is_mobile and not use_floating:
+                self.page.navigation_bar = self._mobile_nav
+            else:
+                current_nav = getattr(self.page, "navigation_bar", None)
+                if current_nav is self._mobile_nav:
+                    setattr(self.page, "navigation_bar", None)
+
+        self._refresh_floating_controls()
 
         self.page.update()
 
@@ -521,6 +752,8 @@ class FletPlusApp:
         index = self._nav_index_by_path.get(match.node.full_path)
         if index is not None:
             self._update_nav_selection(index)
+        if self._floating_menu_visible:
+            self._close_floating_menu(refresh=False)
         self.page.update()
 
     # ------------------------------------------------------------------
@@ -534,6 +767,12 @@ class FletPlusApp:
             self._mobile_nav.selected_index = index
         if self._drawer is not None:
             self._drawer.selected_index = index
+        accent = self.theme.get_color("accent", self.theme.get_color("primary", ft.Colors.PRIMARY))
+        muted = self.theme.get_color("muted", self.theme.get_color("on_surface", ft.Colors.ON_SURFACE))
+        for idx, tile in enumerate(self._floating_tiles):
+            tile.selected = idx == index
+            if isinstance(tile.leading, ft.Icon):
+                tile.leading.color = accent if idx == index else muted
 
     # ------------------------------------------------------------------
     def _build_router(
@@ -644,6 +883,7 @@ class FletPlusApp:
         title: str = "FletPlus App",
         theme_config=None,
         use_window_manager: bool = False,
+        responsive_navigation: ResponsiveNavigationConfig | None = None,
     ) -> None:
         logging.basicConfig(
             level=logging.INFO,
@@ -659,6 +899,7 @@ class FletPlusApp:
                 title,
                 theme_config,
                 use_window_manager,
+                responsive_navigation,
             )
             app.build()
 

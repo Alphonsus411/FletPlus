@@ -134,6 +134,58 @@ Puedes actualizar estos valores mediante `app.set_user("Nombre")` o
 `app.set_locale("es-ES")`, y suscribirte a cambios usando
 `locale_context.subscribe(callback)` para sincronizar tus propios controles.
 
+## 📱 Navegación responsiva flotante
+
+`FletPlusApp` ahora detecta automáticamente el breakpoint activo y alterna entre
+un menú lateral fijo y una variante flotante optimizada para móviles. El botón
+de acción flotante abre un panel deslizable con las mismas rutas definidas en la
+barra lateral.
+
+- Controla los tamaños y animaciones con `FloatingMenuOptions`.
+- Ajusta los breakpoints globales desde `ResponsiveNavigationConfig` para
+  alinear la navegación con tu diseño.
+- La variante flotante se activa cuando el ancho es inferior a
+  `floating_breakpoint`, ocultando la barra inferior clásica.
+
+```python
+import flet as ft
+from fletplus import FletPlusApp, FloatingMenuOptions, ResponsiveNavigationConfig
+
+
+def dashboard_view():
+    return ft.Column([
+        ft.Text("Panel principal", size=20, weight=ft.FontWeight.W_600),
+        ft.Text("Contenido adaptativo"),
+    ])
+
+
+responsive_nav = ResponsiveNavigationConfig(
+    mobile_breakpoint=760,
+    floating_breakpoint=680,
+    floating_options=FloatingMenuOptions(width=300, fab_icon=ft.Icons.MENU_OPEN),
+)
+
+
+def main(page: ft.Page):
+    app = FletPlusApp(
+        page,
+        {
+            "Inicio": dashboard_view,
+            "Reportes": lambda: ft.Text("Datos en vivo"),
+            "Perfil": lambda: ft.Text("Preferencias"),
+        },
+        responsive_navigation=responsive_nav,
+    )
+    app.build()
+
+
+ft.app(target=main)
+```
+
+- Puedes cambiar el icono, colores y desplazamiento del panel flotante.
+- El panel se cierra automáticamente al navegar, manteniendo el foco en el
+  contenido.
+
 # 📝 Logging
 
 FletPlus utiliza el módulo estándar `logging` para registrar mensajes de la

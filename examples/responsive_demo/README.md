@@ -38,3 +38,13 @@ python theme_demo.py
 
 ![Vista del cambio entre tema claro y oscuro](theme_demo.png)
 
+## floating_navigation_demo.py
+Explora la variante de navegación flotante para móviles, configurando los
+breakpoints y animaciones del panel lateral.
+
+```bash
+python floating_navigation_demo.py
+```
+
+![Vista del menú flotante abierto sobre la pantalla principal](floating_navigation_demo.png)
+
