@@ -22,6 +22,7 @@ from fletplus.themes.palettes import (
     has_palette,
     list_palettes,
 )
+from fletplus.state import Signal
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,13 @@ class ThemeManager:
         self._active_width: int | None = None
         self._active_breakpoint: int | None = None
         self._effective_tokens: dict[str, dict[str, object]] = deepcopy(self.tokens)
+        self._persistent_overrides: dict[str, dict[str, object]] = {}
+
+        self.mode_signal: Signal[bool] = Signal(self.dark_mode)
+        self.tokens_signal: Signal[dict[str, dict[str, object]]] = Signal(
+            deepcopy(self._effective_tokens)
+        )
+        self.overrides_signal: Signal[dict[str, dict[str, object]]] = Signal({})
 
         if palette is not None:
             try:
@@ -185,6 +193,7 @@ class ThemeManager:
         self._refresh_effective_tokens(
             self._active_device, self._active_orientation, self._active_width
         )
+        self._emit_tokens_snapshot()
 
     # ------------------------------------------------------------------
     def apply_theme(
@@ -241,14 +250,31 @@ class ThemeManager:
             setattr(self.page, "surface_tint_color", surface)
 
         self.page.update()
+        self._emit_tokens_snapshot()
+
+    # ------------------------------------------------------------------
+    def set_dark_mode(self, value: bool, *, refresh: bool = True) -> None:
+        """Establece el modo oscuro de forma explícita."""
+
+        desired = bool(value)
+        if desired == self.dark_mode:
+            return
+        self.dark_mode = desired
+        self._apply_current_palette_variant()
+        if refresh:
+            self.apply_theme()
+        else:
+            self._refresh_effective_tokens(
+                self._active_device, self._active_orientation, self._active_width
+            )
+            self._emit_tokens_snapshot()
+        self.mode_signal.set(self.dark_mode)
 
     # ------------------------------------------------------------------
     def toggle_dark_mode(self) -> None:
         """Toggle between light and dark modes."""
 
-        self.dark_mode = not self.dark_mode
-        self._apply_current_palette_variant()
-        self.apply_theme()
+        self.set_dark_mode(not self.dark_mode)
 
     # ------------------------------------------------------------------
     def apply_palette(
@@ -290,6 +316,7 @@ class ThemeManager:
 
         if refresh:
             self.apply_theme()
+        self.mode_signal.set(self.dark_mode)
 
     # ------------------------------------------------------------------
     def set_device_tokens(
@@ -465,6 +492,8 @@ class ThemeManager:
         """
         group, token = self._split_name(name)
         self.tokens.setdefault(group, {})[token] = value
+        self._persistent_overrides.setdefault(group, {})[token] = value
+        self._emit_overrides_snapshot()
         self.apply_theme()
 
     # ------------------------------------------------------------------
@@ -527,6 +556,7 @@ class ThemeManager:
         self._refresh_effective_tokens(
             self._active_device, self._active_orientation, self._active_width
         )
+        self._emit_tokens_snapshot()
 
     # ------------------------------------------------------------------
     def _merge_palette_tokens(self, palette_tokens: Mapping[str, object]) -> None:
@@ -546,6 +576,7 @@ class ThemeManager:
         self._refresh_effective_tokens(
             self._active_device, self._active_orientation, self._active_width
         )
+        self._emit_tokens_snapshot()
 
     # ------------------------------------------------------------------
     def _refresh_effective_tokens(
@@ -571,7 +602,64 @@ class ThemeManager:
             target = base.setdefault(group, {})
             target.update(values)
 
+        for group, values in self._persistent_overrides.items():
+            target = base.setdefault(group, {})
+            target.update(values)
+
         self._effective_tokens = base
+
+    # ------------------------------------------------------------------
+    def load_token_overrides(
+        self,
+        overrides: Mapping[str, Mapping[str, object]] | None,
+        *,
+        refresh: bool = True,
+    ) -> None:
+        """Carga y aplica tokens personalizados persistentes."""
+
+        if not overrides:
+            return
+
+        updated = False
+        for group, values in overrides.items():
+            if not isinstance(values, Mapping):
+                continue
+            target = self.tokens.setdefault(group, {})
+            persisted_group = self._persistent_overrides.setdefault(group, {})
+            for token, value in values.items():
+                target[token] = value
+                persisted_group[token] = value
+                updated = True
+
+        if not updated:
+            return
+
+        if refresh:
+            self.apply_theme()
+        else:
+            self._refresh_effective_tokens(
+                self._active_device, self._active_orientation, self._active_width
+            )
+            self._emit_tokens_snapshot()
+        self._emit_overrides_snapshot()
+
+    # ------------------------------------------------------------------
+    def get_token_overrides(self) -> dict[str, dict[str, object]]:
+        """Devuelve una copia de los tokens personalizados persistentes."""
+
+        return {
+            group: dict(values) for group, values in self._persistent_overrides.items()
+        }
+
+    # ------------------------------------------------------------------
+    def _emit_tokens_snapshot(self) -> None:
+        snapshot = deepcopy(self._effective_tokens)
+        self.tokens_signal.set(snapshot)
+
+    # ------------------------------------------------------------------
+    def _emit_overrides_snapshot(self) -> None:
+        overrides = self.get_token_overrides()
+        self.overrides_signal.set(overrides)
 
     # ------------------------------------------------------------------
     def _resolve_device_overrides(

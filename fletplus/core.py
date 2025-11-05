@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Mapping
 
 import flet as ft
 
@@ -20,6 +20,7 @@ from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.styles import Style
 from fletplus.router import Route, Router, RouteMatch
 from fletplus.state import Store
+from fletplus.utils.preferences import PreferenceStorage
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,13 @@ class FletPlusApp:
         self.theme = ThemeManager(page, **config)
         self.responsive_navigation = responsive_navigation or ResponsiveNavigationConfig()
         self.window_manager = WindowManager(page) if use_window_manager else None
+        self._preference_storage = PreferenceStorage(page)
+        self._preference_unsubscribers: list[Callable[[], None]] = []
+        self._restore_theme_preferences()
+        self._observe_theme_preferences()
+        self.theme_mode_signal = self.theme.mode_signal
+        self.theme_tokens_signal = self.theme.tokens_signal
+        self.theme_overrides_signal = self.theme.overrides_signal
 
         self.contexts: dict[str, object] = {
             "theme": theme_context,
@@ -224,6 +232,54 @@ class FletPlusApp:
         setattr(self.page, "contexts", self.contexts)
 
     # ------------------------------------------------------------------
+    def _restore_theme_preferences(self) -> None:
+        try:
+            preferences = self._preference_storage.load()
+        except Exception:  # pragma: no cover - errores inesperados
+            logger.exception("No se pudieron cargar las preferencias de tema")
+            return
+
+        theme_prefs = preferences.get("theme") if isinstance(preferences, Mapping) else None
+        if not isinstance(theme_prefs, Mapping):
+            return
+
+        updated = False
+        dark_mode = theme_prefs.get("dark_mode")
+        overrides = theme_prefs.get("overrides")
+
+        if isinstance(dark_mode, bool):
+            self.theme.set_dark_mode(dark_mode, refresh=False)
+            updated = True
+
+        if isinstance(overrides, Mapping):
+            self.theme.load_token_overrides(overrides, refresh=False)
+            updated = True
+
+        if updated:
+            self.theme.apply_theme()
+
+    # ------------------------------------------------------------------
+    def _observe_theme_preferences(self) -> None:
+        def persist_on_change(_value: object) -> None:
+            self._persist_theme_preferences()
+
+        self._preference_unsubscribers.append(
+            self.theme.mode_signal.subscribe(persist_on_change)
+        )
+        self._preference_unsubscribers.append(
+            self.theme.overrides_signal.subscribe(persist_on_change)
+        )
+
+    # ------------------------------------------------------------------
+    def _persist_theme_preferences(self) -> None:
+        snapshot = self._preference_storage.load()
+        snapshot["theme"] = {
+            "dark_mode": self.theme.dark_mode,
+            "overrides": self.theme.get_token_overrides(),
+        }
+        self._preference_storage.save(snapshot)
+
+    # ------------------------------------------------------------------
     def _resolve_locale_value(self) -> str:
         candidate = getattr(self.page, "locale", None) or getattr(self.page, "language", None)
         if isinstance(candidate, str) and candidate:
@@ -242,6 +298,13 @@ class FletPlusApp:
                 logger.exception("Error al cancelar la subscripción del router")
             finally:
                 self._router_unsubscribe = lambda: None
+        for unsubscribe in list(getattr(self, "_preference_unsubscribers", [])):
+            try:
+                unsubscribe()
+            except Exception:  # pragma: no cover - limpieza tolerante a fallos
+                logger.exception("Error al cancelar observadores de preferencias")
+        if hasattr(self, "_preference_unsubscribers"):
+            self._preference_unsubscribers.clear()
         self._cleanup_contexts()
 
     # ------------------------------------------------------------------

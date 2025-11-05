@@ -247,6 +247,22 @@ ft.app(target=main)
 # 🌓 Gestor de temas
 
 `ThemeManager` permite centralizar los tokens de estilo y alternar entre modo claro y oscuro.
+Ahora expone señales reactivas (`mode_signal`, `tokens_signal` y `overrides_signal`) para
+sincronizar controles o efectos secundarios cada vez que cambie el modo o alguno de los
+tokens. Basta con suscribirse a la señal para reflejar cambios inmediatos en la interfaz:
+
+```python
+def _update_badge_color(tokens: dict[str, dict[str, object]]):
+    badge.bgcolor = tokens["colors"]["primary"]
+
+app.theme_tokens_signal.subscribe(_update_badge_color, immediate=True)
+```
+
+`FletPlusApp` también recuerda automáticamente las preferencias de tema y los tokens
+personalizados. Primero intenta persistir los datos en `page.client_storage`; si no está
+disponible, utiliza un archivo local (`~/.fletplus/preferences.json`). Al reiniciar la app,
+las preferencias se restauran antes de construir la interfaz y los toggles del tema se
+sincronizan con el modo guardado.
 
 ### Nuevas paletas predefinidas
 
