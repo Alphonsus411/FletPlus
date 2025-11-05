@@ -18,6 +18,12 @@ setup(
     install_requires=[
         "flet>=0.8.0",  # Ajusta según versión actual de Flet
     ],
+    entry_points={
+        "console_scripts": [
+            "fletplus-demo=fletplus_demo:main",
+            "fletplus_demo=fletplus_demo:main",
+        ]
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
