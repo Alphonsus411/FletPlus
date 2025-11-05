@@ -6,7 +6,7 @@ la estructura interna de submódulos. Esto evita errores de importación cuando
 se distribuye la librería y mejora la experiencia para los usuarios finales.
 """
 
-from fletplus.core import FletPlusApp
+from fletplus.core import FletPlusApp, FloatingMenuOptions, ResponsiveNavigationConfig
 from fletplus.context import (
     Context,
     ContextProvider,
@@ -69,6 +69,8 @@ from fletplus.state import DerivedSignal, Signal, Store
 
 __all__ = [
     "FletPlusApp",
+    "FloatingMenuOptions",
+    "ResponsiveNavigationConfig",
     "ThemeManager",
     "load_palette_from_file",
     "list_palettes",
