@@ -98,13 +98,6 @@ def _sidebar_items() -> list[dict[str, object]]:
     ]
 
 
-def _command_palette_entries(app: FletPlusApp) -> dict[str, Callable[[], None]]:
-    return {
-        route.command_label: (lambda r=route: app.router.go(r.path))
-        for route in DEMO_ROUTES
-    }
-
-
 def create_app(page: ft.Page) -> FletPlusApp:
     """Construye la aplicación de demostración sobre ``page`` y la devuelve."""
 
@@ -115,7 +108,10 @@ def create_app(page: ft.Page) -> FletPlusApp:
         title="FletPlus Demo",
     )
     app.build()
-    app.command_palette.commands = _command_palette_entries(app)
+    app.command_palette.commands = {
+        route.command_label: (lambda r=route: app.router.go(r.path))
+        for route in DEMO_ROUTES
+    }
     app.command_palette.refresh()
     return app
 
