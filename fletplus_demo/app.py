@@ -180,7 +180,7 @@ def run(argv: Sequence[str] | None = None) -> None:
     if requested_assets:
         from .capture import capture_assets
 
-        capture_assets(
+        summary = capture_assets(
             screenshot_dir=Path(args.capture) if args.capture else None,
             recording_dir=Path(args.record) if args.record else None,
             viewport=(args.width, args.height),
@@ -188,6 +188,15 @@ def run(argv: Sequence[str] | None = None) -> None:
             record_duration=args.duration,
             record_fps=args.fps,
         )
+
+        if summary.screenshots:
+            print("Capturas generadas:")
+            for route, path in summary.screenshots.items():
+                print(f"  {route} -> {path}")
+        if summary.recordings:
+            print("Clips exportados:")
+            for route, path in summary.recordings.items():
+                print(f"  {route} -> {path}")
         if not args.launch:
             return
 
