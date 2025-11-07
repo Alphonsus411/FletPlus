@@ -16,7 +16,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "flet>=0.8.0",  # Ajusta según versión actual de Flet
+        "flet>=0.27.0",
     ],
     entry_points={
         "console_scripts": [
@@ -34,5 +34,5 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.9',
 )
