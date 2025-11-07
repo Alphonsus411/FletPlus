@@ -1,6 +1,6 @@
 import pytest
 
-from fletplus.state import Signal, Store
+from fletplus.state import Signal, Store, reactive, use_signal, use_state, watch
 
 
 class DummyControl:
@@ -10,6 +10,30 @@ class DummyControl:
 
     def update(self):
         self.updated += 1
+
+
+class PageStub:
+    def __init__(self):
+        self.updated = 0
+
+    def update(self):
+        self.updated += 1
+
+
+class ReactiveComponent:
+    def __init__(self, external: Signal):
+        self.page = PageStub()
+        self.external = external
+        self.internal: Signal | None = None
+        self.render_calls = 0
+
+    @reactive
+    def render(self) -> int:
+        self.render_calls += 1
+        state = use_state(0)
+        self.internal = state
+        ext_signal = use_signal(self.external)
+        return state.get() + ext_signal.get()
 
 
 def test_signal_notifies_and_updates_control():
@@ -71,3 +95,34 @@ def test_store_signal_missing_key_raises():
     store = Store()
     with pytest.raises(KeyError):
         store.signal("unknown")
+
+
+def test_reactive_use_state_triggers_page_update():
+    external = Signal(5)
+    component = ReactiveComponent(external)
+
+    assert component.render() == 5
+    assert component.render_calls == 1
+
+    assert component.internal is not None
+    component.internal.set(2)
+    assert component.page.updated >= 1
+
+    external.set(7)
+    assert component.page.updated >= 2
+
+    # El estado debe persistir entre renderizados explícitos
+    assert component.render() == 9
+    assert component.render_calls == 2
+
+
+def test_watch_runs_callback_for_signal_changes():
+    signal = Signal(0)
+    observed: list[int] = []
+
+    stop = watch(signal, lambda value: observed.append(value))
+    signal.set(1)
+    stop()
+    signal.set(2)
+
+    assert observed == [0, 1]

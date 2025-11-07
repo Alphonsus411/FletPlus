@@ -93,6 +93,52 @@ ft.app(target=main)
   `store.derive()` para escuchar *snapshots* inmutables o crear señales
   derivadas.
 
+### Hooks reactivos ligeros
+
+Desde esta versión, `fletplus.state` incorpora helpers inspirados en los hooks
+de React para reducir el código imperativo necesario al construir controles
+dinámicos. El decorador `@reactive` memoriza el estado por instancia y vuelve a
+invocar `update()` en la página cuando cualquiera de las señales observadas
+emite un cambio.
+
+```python
+import flet as ft
+from fletplus.state import reactive, use_signal, use_state, watch
+
+
+class CounterCard(ft.UserControl):
+    def __init__(self, shared):
+        super().__init__()
+        self.shared = shared
+        self._total = ft.Text()
+        self._summary = ft.Text()
+
+    @reactive
+    def build(self):
+        local = use_state(0)
+        global_signal = use_signal(self.shared)
+
+        local_text = ft.Text()
+        local.bind_control(local_text, attr="value", transform=lambda v: f"Local: {v}")
+
+        if not hasattr(self, "_setup"):
+            watch(self.shared, lambda value: setattr(self._total, "value", f"Global: {value}"))
+            watch((local, global_signal), lambda l, g: setattr(self._summary, "value", f"Suma: {l + g}"))
+            self._setup = True
+
+        return ft.Column(
+            controls=[
+                local_text,
+                self._total,
+                self._summary,
+                ft.ElevatedButton("Sumar", on_click=lambda _: local.set(local.get() + 1)),
+            ]
+        )
+```
+
+Ejecuta `python -m examples.state_hooks_example` para ver una demostración
+completa integrando estos helpers dentro de `FletPlusApp`.
+
 ## 🌐 Contextos compartidos
 
 El paquete `fletplus.context` introduce un sistema jerárquico de contextos que

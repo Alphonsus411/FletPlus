@@ -150,6 +150,7 @@ class FletPlusApp:
         self.command_palette = CommandPalette(commands or {})
         self.shortcuts = ShortcutManager(page)
         self.shortcuts.register("k", lambda: self.command_palette.open(self.page), ctrl=True)
+        self._reactive_renders: list[object] = []
 
         if not self._nav_routes:
             self.sidebar_items = []
@@ -305,6 +306,15 @@ class FletPlusApp:
                 logger.exception("Error al cancelar observadores de preferencias")
         if hasattr(self, "_preference_unsubscribers"):
             self._preference_unsubscribers.clear()
+        for runtime in list(getattr(self, "_reactive_renders", [])):
+            dispose = getattr(runtime, "dispose", None)
+            if callable(dispose):
+                try:
+                    dispose()
+                except Exception:  # pragma: no cover - limpieza reactiva tolerante
+                    logger.exception("Error al limpiar un render reactivo")
+        if hasattr(self, "_reactive_renders"):
+            self._reactive_renders.clear()
         self._cleanup_contexts()
 
     # ------------------------------------------------------------------
@@ -818,6 +828,18 @@ class FletPlusApp:
         if self._floating_menu_visible:
             self._close_floating_menu(refresh=False)
         self.page.update()
+
+    # ------------------------------------------------------------------
+    def _register_reactive_render(self, runtime: object) -> None:
+        if runtime not in self._reactive_renders:
+            self._reactive_renders.append(runtime)
+
+    # ------------------------------------------------------------------
+    def _reactive_trigger(self, _runtime: object | None = None) -> None:
+        try:
+            self.page.update()
+        except Exception:  # pragma: no cover - errores del usuario
+            logger.exception("No se pudo actualizar la página tras un cambio reactivo")
 
     # ------------------------------------------------------------------
     def _update_nav_selection(self, index: int) -> None:
