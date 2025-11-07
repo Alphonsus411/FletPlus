@@ -22,7 +22,9 @@ Ambos comandos lanzan la aplicación definida en `fletplus_demo.main`.
 
 Si necesitas recursos actualizados para documentación o presentaciones puedes
 solicitar que la demo renderice cada pantalla fuera de cámara y genere los
-archivos correspondientes:
+archivos correspondientes. La rutina monta la aplicación en una ventana oculta
+fuera de pantalla y captura cada ruta real con ``page.screenshot()``, de modo
+que los archivos siempre reflejan el estado actual de la demo.
 
 ```bash
 fletplus-demo --capture docs/assets/demo/capturas
@@ -45,8 +47,14 @@ La grabación requiere instalar dependencias opcionales:
 pip install imageio imageio-ffmpeg
 ```
 
+En entornos Linux sin servidor gráfico visible puedes envolver el comando con
+`xvfb-run` (o un proveedor de pantalla virtual equivalente) para que Flet pueda
+abrir la ventana oculta y tomar las capturas.
+
 Los nombres de archivo reflejan el estado actual de cada vista definida en la
 aplicación (`inicio`, `dashboard`, `reportes`, `usuarios` y `configuracion`).
 Cuando únicamente se solicitan capturas o grabaciones la herramienta finaliza
 una vez exportados los recursos, sin abrir la interfaz interactiva. Si deseas
 generar los activos y, además, abrir la aplicación, añade la bandera `--launch`.
+Al completar el proceso se mostrará un resumen en consola con las rutas y los
+archivos escritos.
