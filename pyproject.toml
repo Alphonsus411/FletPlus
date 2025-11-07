@@ -18,7 +18,9 @@ dependencies = [
 ]
 
 [project.scripts]
+# Permite invocar la demo directamente con un comando con guion.
 fletplus-demo = "fletplus_demo:main"
+# Se conserva el comando histórico con guion bajo para compatibilidad.
 fletplus_demo = "fletplus_demo:main"
 
 [project.urls]
