@@ -20,7 +20,9 @@ setup(
     ],
     entry_points={
         "console_scripts": [
+            # Nuevo alias con guion para lanzar la demo desde la terminal.
             "fletplus-demo=fletplus_demo:main",
+            # Alias existente con guion bajo para mantener compatibilidad.
             "fletplus_demo=fletplus_demo:main",
         ]
     },

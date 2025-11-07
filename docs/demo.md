@@ -1,12 +1,16 @@
 # Demo de FletPlus
 
-Tras instalar el paquete puedes ejecutar la demostración de dos formas equivalentes:
+Tras instalar el paquete puedes ejecutar la demostración de dos formas equivalentes.
+Desde la versión actual el alias oficial con guion (`fletplus-demo`) queda
+registrado automáticamente, aunque el comando clásico con guion bajo se mantiene
+por compatibilidad:
 
 ```bash
 fletplus-demo
 ```
 
-o bien utilizando `pipx` si prefieres ejecutar la demo sin instalarla globalmente:
+o bien utilizando `pipx` si prefieres ejecutar la demo sin instalarla globalmente
+o comprobarla tras reinstalar el paquete:
 
 ```bash
 pipx run fletplus_demo
