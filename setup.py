@@ -20,8 +20,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "fletplus-demo=fletplus_demo:main",
-            "fletplus_demo=fletplus_demo:main",
+            "fletplus-demo=fletplus_demo.app:run",
+            "fletplus_demo=fletplus_demo.app:run",
         ]
     },
     classifiers=[
