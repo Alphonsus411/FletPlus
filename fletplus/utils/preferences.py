@@ -45,7 +45,23 @@ class _ClientStorageBackend(_BaseBackend):
         try:
             self._storage.set(self._key, payload)
         except TypeError:
-            self._storage.set(self._key, json.dumps(payload))
+            try:
+                serialized = json.dumps(payload)
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Preferencias no serializables para client_storage: %s", payload
+                )
+                return
+            try:
+                self._storage.set(self._key, serialized)
+            except TypeError:
+                logger.warning(
+                    "Preferencias no serializables para client_storage: %s", payload
+                )
+            except Exception:  # pragma: no cover - errores de Flet
+                logger.exception(
+                    "No se pudieron guardar preferencias en client_storage"
+                )
         except Exception:  # pragma: no cover - errores de Flet
             logger.exception("No se pudieron guardar preferencias en client_storage")
 
