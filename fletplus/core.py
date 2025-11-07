@@ -4,6 +4,8 @@ from typing import Callable, Iterable, Mapping
 
 import flet as ft
 
+from fletplus.animation import AnimationController, animation_controller_context
+
 from fletplus.context import (
     ContextProvider,
     locale_context,
@@ -129,6 +131,7 @@ class FletPlusApp:
             config.pop(key, None)
 
         self.theme = ThemeManager(page, **config)
+        self.animation_controller = AnimationController(self.page)
         self.responsive_navigation = responsive_navigation or ResponsiveNavigationConfig()
         self.window_manager = WindowManager(page) if use_window_manager else None
         self._preference_storage = PreferenceStorage(page)
@@ -143,6 +146,7 @@ class FletPlusApp:
             "theme": theme_context,
             "user": user_context,
             "locale": locale_context,
+            "animation": animation_controller_context,
         }
         self._context_providers: dict[str, ContextProvider] = {}
         self._activate_contexts()
@@ -226,6 +230,12 @@ class FletPlusApp:
 
         locale_value = self._resolve_locale_value()
         providers["locale"] = locale_context.provide(locale_value)
+
+        animation_provider = animation_controller_context.provide(
+            self.animation_controller,
+            inherit=False,
+        )
+        providers["animation"] = animation_provider
 
         for provider in providers.values():
             provider.__enter__()
@@ -828,6 +838,7 @@ class FletPlusApp:
         if self._floating_menu_visible:
             self._close_floating_menu(refresh=False)
         self.page.update()
+        self.animation_controller.trigger("mount")
 
     # ------------------------------------------------------------------
     def _register_reactive_render(self, runtime: object) -> None:
@@ -908,9 +919,10 @@ class FletPlusApp:
         return router, nav_data
 
     # ------------------------------------------------------------------
-    @staticmethod
-    def _wrap_view(builder: Callable[[], ft.Control]) -> Callable[[RouteMatch], ft.Control]:
+    def _wrap_view(self, builder: Callable[[], ft.Control]) -> Callable[[RouteMatch], ft.Control]:
         def _view(_match: RouteMatch) -> ft.Control:
+            self.animation_controller.trigger("unmount")
+            self.animation_controller.reset()
             return builder()
 
         return _view
