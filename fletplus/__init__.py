@@ -65,7 +65,7 @@ from fletplus.web import (
     generate_service_worker,
     register_pwa,
 )
-from fletplus.state import DerivedSignal, Signal, Store
+from fletplus.state import DerivedSignal, Signal, Store, reactive, use_signal, use_state, watch
 
 __all__ = [
     "FletPlusApp",
@@ -122,6 +122,10 @@ __all__ = [
     "DerivedSignal",
     "Signal",
     "Store",
+    "reactive",
+    "use_state",
+    "use_signal",
+    "watch",
     "Context",
     "ContextProvider",
     "theme_context",

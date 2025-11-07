@@ -289,8 +289,15 @@ class Store:
         )
 
 
+from .hooks import reactive, use_signal, use_state, watch
+
+
 __all__ = [
     "Signal",
     "DerivedSignal",
     "Store",
+    "reactive",
+    "use_state",
+    "use_signal",
+    "watch",
 ]
