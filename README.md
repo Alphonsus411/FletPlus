@@ -13,6 +13,8 @@ pip install fletplus
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
 - **Requiere Python 3.9+ y flet>=0.27.0**
 
+> ℹ️ Desde la versión 0.2.3, FletPlus adopta oficialmente Python 3.9 como versión mínima y depende de `flet` 0.27.0 o superior para garantizar compatibilidad con los nuevos componentes.
+
 ## 🧩 Componentes incluidos
 
 | Componente      | Descripción                                       |
