@@ -6,7 +6,6 @@ import os
 import shutil
 import subprocess
 import sys
-import textwrap
 import threading
 from importlib import resources
 from importlib.resources.abc import Traversable
@@ -16,6 +15,8 @@ from typing import Callable, Dict, Iterable
 import click
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
+
+from .build import PackagingError, run_build
 
 
 EXCLUDED_DIRS = {".git", "__pycache__", "build", "dist", "node_modules", ".venv", "venv"}
@@ -192,16 +193,37 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
 
 
 @app.command()
-def build() -> None:
-    """Compila la aplicación para distribución."""
+@click.option(
+    "--target",
+    type=click.Choice(["web", "desktop", "mobile", "all"], case_sensitive=False),
+    default="all",
+    show_default=True,
+    help="Objetivo de compilación (web, desktop, mobile o all).",
+)
+@click.option(
+    "--app",
+    "app_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=Path("src/main.py"),
+    show_default=True,
+    help="Ruta al archivo principal de la aplicación.",
+)
+def build(target: str, app_path: Path) -> None:
+    """Compila la aplicación para los objetivos seleccionados."""
 
-    mensaje = textwrap.dedent(
-        """
-        La fase de construcción aún no está implementada.
-        Puedes utilizar `flet pack` o tu herramienta preferida hasta que este comando esté disponible.
-        """
-    ).strip()
-    click.echo(mensaje)
+    try:
+        reports = run_build(Path.cwd(), app_path, target.lower())
+    except PackagingError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    failed = False
+    for report in reports:
+        prefix = "✅" if report.success else "❌"
+        click.echo(f"{prefix} {report.target.value}: {report.message}")
+        failed = failed or not report.success
+
+    if failed:
+        raise click.ClickException("La compilación terminó con errores.")
 
 
 if __name__ == "__main__":  # pragma: no cover - punto de entrada manual
