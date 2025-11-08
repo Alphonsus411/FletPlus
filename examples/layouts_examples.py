@@ -15,7 +15,14 @@ from examples._bootstrap import ensure_project_root
 ensure_project_root()
 
 import flet as ft
-from fletplus.components.layouts import ResponsiveContainer, FlexRow, FlexColumn
+from fletplus.components.layouts import (
+    ResponsiveContainer,
+    FlexRow,
+    FlexColumn,
+    Grid,
+    GridItem,
+    Wrap,
+)
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_typography import (
@@ -30,18 +37,30 @@ def desktop_demo(page: ft.Page) -> None:
     container = ResponsiveContainer(
         ft.Text("Área de contenido"),
         breakpoints={
-            0: Style(max_width=300, padding=10),
-            800: Style(max_width=600, padding=30),
+            "xs": Style(max_width=300, padding=10),
+            "md": Style(max_width=600, padding=30),
         },
     )
     row = FlexRow(
         [ft.Text("Uno"), ft.Text("Dos"), ft.Text("Tres")],
         breakpoints={
-            0: {"spacing": 5, "alignment": ft.MainAxisAlignment.START, "wrap": True},
-            800: {"spacing": 20, "alignment": ft.MainAxisAlignment.SPACE_BETWEEN, "wrap": False},
+            "xs": {"spacing": 5, "alignment": ft.MainAxisAlignment.START, "wrap": True},
+            "md": {
+                "spacing": 20,
+                "alignment": ft.MainAxisAlignment.SPACE_BETWEEN,
+                "wrap": False,
+            },
         },
     )
+    grid = Grid(
+        items=[
+            GridItem(ft.Container(ft.Text("Hero"), bgcolor=ft.Colors.BLUE_100), span_breakpoints={"xs": 12, "md": 6, "xl": 4}),
+            GridItem(ft.Container(ft.Text("Detalle"), bgcolor=ft.Colors.AMBER_100), span=6),
+        ],
+        spacing_breakpoints={"md": 24},
+    )
     page.add(container.init_responsive(page), row.init_responsive(page))
+    page.add(grid.init_responsive(page))
 
 
 def web_demo(page: ft.Page) -> None:
@@ -49,8 +68,8 @@ def web_demo(page: ft.Page) -> None:
     column = FlexColumn(
         [ft.Text(f"Item {i}") for i in range(5)],
         breakpoints={
-            0: {"spacing": 5, "alignment": ft.MainAxisAlignment.START},
-            600: {"spacing": 15, "alignment": ft.MainAxisAlignment.CENTER},
+            "xs": {"spacing": 5, "alignment": ft.MainAxisAlignment.START},
+            "md": {"spacing": 15, "alignment": ft.MainAxisAlignment.CENTER},
         },
     )
     page.add(column.init_responsive(page))
@@ -61,11 +80,15 @@ def mobile_demo(page: ft.Page) -> None:
     container = ResponsiveContainer(
         ft.Text("Móvil"),
         breakpoints={
-            0: Style(max_width=200, padding=5),
-            400: Style(max_width=300, padding=15),
+            "xs": Style(max_width=200, padding=5),
+            "md": Style(max_width=300, padding=15),
         },
     )
-    page.add(container.init_responsive(page))
+    actions = Wrap(
+        [ft.ElevatedButton("Aceptar"), ft.OutlinedButton("Cancelar")],
+        breakpoints={"xs": {"spacing": 4}, "md": {"spacing": 12, "run_spacing": 6}},
+    )
+    page.add(container.init_responsive(page), actions.init_responsive(page))
 
 
 def typography_demo(page: ft.Page) -> None:

@@ -9,6 +9,7 @@ import flet as ft
 
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.utils.device_profiles import (
@@ -160,7 +161,7 @@ class ResponsiveGridItem:
 
     control: ft.Control
     span: int | None = None
-    span_breakpoints: Dict[int, int] | None = None
+    span_breakpoints: Mapping[int | str, int] | None = None
     span_devices: Dict[DeviceName, int] | None = None
     style: Style | None = None
     responsive_style: ResponsiveStyle | Dict[int, Style] | None = None
@@ -174,6 +175,11 @@ class ResponsiveGridItem:
         self.hidden_devices = self._normalize_device_sequence(self.hidden_devices)
         self.min_width = self._sanitize_dimension(self.min_width)
         self.max_width = self._sanitize_dimension(self.max_width)
+        if self.span_breakpoints:
+            normalized = BreakpointRegistry.normalize(self.span_breakpoints)
+            self.span_breakpoints = {
+                bp: self._sanitize_span(value) for bp, value in normalized.items()
+            }
 
     def resolve_span(
         self, width: int, columns: int, device: DeviceName | None = None
@@ -328,7 +334,7 @@ class ResponsiveGrid:
         self,
         children: Sequence[ft.Control] | None = None,
         columns: int | None = None,
-        breakpoints: Dict[int, int] | None = None,
+        breakpoints: Mapping[int | str, int] | None = None,
         spacing: int = 10,
         style: Style | None = None,
         *,
@@ -787,7 +793,10 @@ class ResponsiveGrid:
         if columns is not None:
             self.breakpoints = {0: columns}
         elif breakpoints is not None:
-            self.breakpoints = dict(breakpoints)
+            normalized = BreakpointRegistry.normalize(breakpoints)
+            self.breakpoints = {
+                bp: max(1, int(cols)) for bp, cols in normalized.items()
+            }
         else:
             computed: Dict[int, int] = {}
             for profile in iter_device_profiles(self.device_profiles):

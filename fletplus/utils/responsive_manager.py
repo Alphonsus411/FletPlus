@@ -12,6 +12,7 @@ from fletplus.utils.device_profiles import (
     DEFAULT_DEVICE_PROFILES,
     get_device_profile,
 )
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 
 
 _STYLE_ATTRS = [
@@ -56,8 +57,14 @@ class ResponsiveManager:
         device_profiles: Sequence[DeviceProfile] | None = None,
     ):
         self.page = page
-        self.breakpoints = breakpoints or {}
-        self.height_breakpoints = height_breakpoints or {}
+        self.breakpoints = {
+            BreakpointRegistry.resolve(bp): callback
+            for bp, callback in (breakpoints or {}).items()
+        }
+        self.height_breakpoints = {
+            BreakpointRegistry.resolve(bp): callback
+            for bp, callback in (height_breakpoints or {}).items()
+        }
         self.orientation_callbacks = orientation_callbacks or {}
         self.device_callbacks = device_callbacks or {}
         self.device_profiles: Sequence[DeviceProfile] = (
@@ -191,3 +198,17 @@ class ResponsiveManager:
             self._apply_style(control)
 
         self.page.update()
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def normalize_breakpoints(mapping: Dict[int | str, Any]) -> Dict[int, Any]:
+        """Atajo para normalizar breakpoints simbólicos."""
+
+        return BreakpointRegistry.normalize(mapping)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def configure_breakpoints(**aliases: int) -> None:
+        """Permite redefinir los alias simbólicos disponibles."""
+
+        BreakpointRegistry.configure(**aliases)

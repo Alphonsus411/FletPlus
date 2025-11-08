@@ -65,3 +65,14 @@ def test_responsive_style_device_fallback(monkeypatch):
 
     assert style is not None
     assert style.text_style.size == 33
+
+
+def test_responsive_style_accepts_symbolic_width_breakpoints():
+    rs = responsive_style_module.ResponsiveStyle(width={"md": Style(padding=10)})
+    page = DummyPage()
+    page.width = 900
+
+    style = rs.get_style(page)
+
+    assert style is not None
+    assert style.padding == 10
