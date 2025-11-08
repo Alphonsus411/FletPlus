@@ -297,7 +297,9 @@ class HttpClient:
         request_context: MutableMapping[str, Any] = context or {}
         cache_key: str | None = None
         use_cache = cache if cache is not None else True
-        if self._cache and use_cache and method.upper() == "GET":
+        cache_enabled = bool(self._cache and use_cache and method.upper() == "GET")
+        if cache_enabled:
+            assert self._cache is not None
             cache_key = self._cache.build_key(request)
         event = RequestEvent(request=request, context=request_context, cache_key=cache_key)
         await self._hooks.emit_before(event)
@@ -307,19 +309,23 @@ class HttpClient:
         error: Exception | None = None
 
         try:
-            if cache_key and self._cache:
-                cached = self._cache.get(cache_key, request=request)
-                if cached is not None:
-                    response = cached
-                    from_cache = True
-            if response is None:
+            if self._interceptors:
                 for interceptor in self._interceptors:
                     request = await interceptor.apply_request(request)
                 event.request = request
+            if cache_enabled and self._cache:
+                cache_key = event.cache_key or self._cache.build_key(request)
+                event.cache_key = cache_key
+                if cache_key:
+                    cached = self._cache.get(cache_key, request=request)
+                    if cached is not None:
+                        response = cached
+                        from_cache = True
+            if response is None:
                 response = await self._client.send(request)
                 for interceptor in reversed(self._interceptors):
                     response = await interceptor.apply_response(response)
-                if cache_key and self._cache:
+                if cache_enabled and cache_key and self._cache:
                     await response.aread()
                     self._cache.set(cache_key, response)
         except Exception as exc:  # pragma: no cover - rutas excepcionales
