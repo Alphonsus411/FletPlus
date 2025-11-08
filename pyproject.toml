@@ -30,3 +30,11 @@ fletplus = "fletplus.cli.main:app"
 Homepage = "https://github.com/Alphonsus411/fletplus"
 Repository = "https://github.com/Alphonsus411/fletplus"
 Documentation = "https://github.com/Alphonsus411/fletplus#readme"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"fletplus.cli" = [
+  "templates/**",
+]

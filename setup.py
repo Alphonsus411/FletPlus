@@ -15,6 +15,12 @@ setup(
     license="MIT",
     packages=find_packages(),
     include_package_data=True,
+    package_data={
+        "fletplus.cli": [
+            "templates/app/*",
+            "templates/app/src/*",
+        ],
+    },
     install_requires=[
         "flet>=0.27.0",
     ],
