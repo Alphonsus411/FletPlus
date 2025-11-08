@@ -321,6 +321,8 @@ class HttpClient:
                     if cached is not None:
                         response = cached
                         from_cache = True
+                        for interceptor in reversed(self._interceptors):
+                            response = await interceptor.apply_response(response)
             if response is None:
                 response = await self._client.send(request)
                 for interceptor in reversed(self._interceptors):
