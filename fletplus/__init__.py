@@ -23,6 +23,17 @@ from fletplus.context import (
     user_context,
 )
 from fletplus.router import Router, Route, LayoutInstance, layout_from_attribute
+from fletplus.icons import (
+    DEFAULT_ICON_SET,
+    Icon,
+    available_icon_sets,
+    has_icon,
+    icon,
+    list_icons,
+    register_icon,
+    register_icon_set,
+    resolve_icon_name,
+)
 from fletplus.themes import (
     ThemeManager,
     load_palette_from_file,
@@ -153,6 +164,15 @@ __all__ = [
     "Route",
     "LayoutInstance",
     "layout_from_attribute",
+    "DEFAULT_ICON_SET",
+    "icon",
+    "Icon",
+    "available_icon_sets",
+    "list_icons",
+    "has_icon",
+    "resolve_icon_name",
+    "register_icon",
+    "register_icon_set",
     "DerivedSignal",
     "Signal",
     "Store",
