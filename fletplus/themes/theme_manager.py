@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 import flet as ft
 
@@ -168,6 +168,29 @@ class ThemeManager:
     primary_color:
         Backwards compatible argument used when ``tokens`` does not specify
         ``"colors.primary"``. Defaults to ``ft.Colors.BLUE``.
+    palette:
+        Nombre de una paleta registrada o un mapeo de tokens agrupados por
+        modo (``"light"``/``"dark"``) que se combinarán con los tokens
+        principales.
+    palette_mode:
+        Variante inicial de la paleta (``"light"`` o ``"dark"``). Se ignora
+        cuando ``follow_platform_theme`` es ``True`` para respetar la
+        preferencia del sistema.
+    device_tokens:
+        Diccionario de overrides por dispositivo (``"mobile"``, ``"desktop"``,
+        etc.). Cada valor contiene los grupos de tokens específicos.
+    orientation_tokens:
+        Overrides por orientación. Las claves deben ser ``"portrait"`` o
+        ``"landscape"`` y los valores contienen los tokens a aplicar.
+    breakpoint_tokens:
+        Overrides basados en anchos mínimos. Las claves indican el breakpoint y
+        cada valor contiene los tokens para esa resolución.
+    follow_platform_theme:
+        Si es ``True`` (valor por defecto) la instancia sincroniza el modo claro
+        u oscuro con ``page.platform_brightness`` o ``page.platform_theme`` y
+        se suscribe a ``page.on_platform_brightness_change`` (o APIs
+        equivalentes). Establécelo en ``False`` para controlar el modo de forma
+        manual.
     """
 
     def __init__(
@@ -181,11 +204,24 @@ class ThemeManager:
         device_tokens: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
         orientation_tokens: Mapping[str, Mapping[str, Mapping[str, object]]] | None = None,
         breakpoint_tokens: Mapping[int, Mapping[str, Mapping[str, object]]] | None = None,
+        follow_platform_theme: bool = True,
     ) -> None:
         self.page = page
-        self.dark_mode = False
-        if palette_mode in {"dark", "light"}:
-            self.dark_mode = palette_mode == "dark"
+        normalized_palette_mode = (
+            palette_mode if palette_mode in {"dark", "light"} else None
+        )
+        self._follow_platform_theme = bool(follow_platform_theme)
+        self._platform_theme_unsubscribers: list[Callable[[], None]] = []
+
+        platform_preference = (
+            self._read_platform_preference() if self._follow_platform_theme else None
+        )
+
+        self.dark_mode = (
+            normalized_palette_mode == "dark" if normalized_palette_mode else False
+        )
+        if platform_preference is not None:
+            self.dark_mode = platform_preference
 
         # Default token structure
         shade_range = range(100, 1000, 100)
@@ -231,13 +267,19 @@ class ThemeManager:
 
         self.mode_signal: Signal[bool] = Signal(self.dark_mode)
         self.tokens_signal: Signal[dict[str, dict[str, object]]] = Signal(
-            deepcopy(self._effective_tokens)
+            deepcopy(self._effective_tokens),
+            comparer=lambda _old, _new: False,
         )
         self.overrides_signal: Signal[dict[str, dict[str, object]]] = Signal({})
 
         if palette is not None:
             try:
-                self.apply_palette(palette, mode=palette_mode, refresh=False)
+                palette_variant = (
+                    None
+                    if self._follow_platform_theme
+                    else normalized_palette_mode
+                )
+                self.apply_palette(palette, mode=palette_variant, refresh=False)
             except Exception as exc:  # pragma: no cover - errores logueados
                 logger.error("Failed to apply palette '%s': %s", palette, exc)
 
@@ -266,6 +308,9 @@ class ThemeManager:
             self._active_device, self._active_orientation, self._active_width
         )
         self._emit_tokens_snapshot()
+        if self._follow_platform_theme:
+            self._install_platform_theme_listeners()
+            self.mode_signal.set(self.dark_mode)
 
     # ------------------------------------------------------------------
     def apply_theme(
@@ -349,6 +394,27 @@ class ThemeManager:
         self.set_dark_mode(not self.dark_mode)
 
     # ------------------------------------------------------------------
+    def set_follow_platform_theme(
+        self, value: bool, *, apply_current: bool = True
+    ) -> None:
+        """Activa o desactiva la sincronización automática con el sistema."""
+
+        desired = bool(value)
+        if desired == self._follow_platform_theme:
+            if desired and apply_current:
+                self._sync_with_platform_preference()
+            return
+
+        self._follow_platform_theme = desired
+
+        if desired:
+            self._install_platform_theme_listeners()
+            if apply_current:
+                self._sync_with_platform_preference()
+        else:
+            self._dispose_platform_theme_listeners()
+
+    # ------------------------------------------------------------------
     def apply_palette(
         self,
         palette: str | Mapping[str, Mapping[str, object]],
@@ -380,7 +446,7 @@ class ThemeManager:
         else:
             raise TypeError("palette must be a name or a mapping of tokens")
 
-        if mode in {"light", "dark"}:
+        if mode in {"light", "dark"} and not self._follow_platform_theme:
             self.dark_mode = mode == "dark"
 
         self._palette_definition = palette_definition
@@ -701,7 +767,7 @@ class ThemeManager:
             if variant_tokens:
                 sanitized[variant] = variant_tokens
 
-        if mode in {"light", "dark"}:
+        if mode in {"light", "dark"} and not self._follow_platform_theme:
             self.dark_mode = mode == "dark"
 
         self._palette_definition = sanitized
@@ -747,6 +813,156 @@ class ThemeManager:
             )
             self._emit_tokens_snapshot()
         self._emit_overrides_snapshot()
+
+    # ------------------------------------------------------------------
+    def _install_platform_theme_listeners(self) -> None:
+        if self._platform_theme_unsubscribers:
+            return
+
+        for event_name in (
+            "on_platform_brightness_change",
+            "on_platform_theme_change",
+        ):
+            unsubscribe = self._attach_page_event_handler(
+                event_name, self._handle_platform_theme_event
+            )
+            if unsubscribe:
+                self._platform_theme_unsubscribers.append(unsubscribe)
+
+        # Si no se pudo enlazar a ningún evento, sincronizar igualmente
+        if not self._platform_theme_unsubscribers:
+            self._sync_with_platform_preference(refresh=False)
+
+    # ------------------------------------------------------------------
+    def _dispose_platform_theme_listeners(self) -> None:
+        while self._platform_theme_unsubscribers:
+            unsubscribe = self._platform_theme_unsubscribers.pop()
+            try:
+                unsubscribe()
+            except Exception:  # pragma: no cover - limpieza defensiva
+                logger.exception("Error al cancelar escucha de brillo del sistema")
+
+    # ------------------------------------------------------------------
+    def _sync_with_platform_preference(self, *, refresh: bool = True) -> None:
+        preference = self._read_platform_preference()
+        if preference is None:
+            return
+        self.set_dark_mode(preference, refresh=refresh)
+
+    # ------------------------------------------------------------------
+    def _handle_platform_theme_event(self, event) -> None:
+        if not self._follow_platform_theme:
+            return
+
+        preference = self._extract_preference_from_event(event)
+        if preference is None:
+            preference = self._read_platform_preference()
+        if preference is None:
+            return
+        self.set_dark_mode(preference)
+
+    # ------------------------------------------------------------------
+    def _read_platform_preference(self) -> bool | None:
+        brightness = getattr(self.page, "platform_brightness", None)
+        preference = self._normalize_mode_value(brightness)
+        if preference is not None:
+            return preference
+        theme_value = getattr(self.page, "platform_theme", None)
+        return self._normalize_mode_value(theme_value)
+
+    # ------------------------------------------------------------------
+    def _extract_preference_from_event(self, event) -> bool | None:
+        if event is None:
+            return None
+
+        candidate = None
+        if isinstance(event, Mapping):
+            for key in ("brightness", "theme", "value", "data"):
+                if key in event and event[key] is not None:
+                    candidate = event[key]
+                    break
+        else:
+            for attr in ("brightness", "theme", "value", "data"):
+                if hasattr(event, attr):
+                    candidate = getattr(event, attr)
+                    if candidate is not None:
+                        break
+            if candidate is None and isinstance(event, str):
+                candidate = event
+
+        return self._normalize_mode_value(candidate)
+
+    # ------------------------------------------------------------------
+    def _normalize_mode_value(self, value) -> bool | None:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value
+        else:
+            for attr in ("value", "name"):
+                attr_value = getattr(value, attr, None)
+                if isinstance(attr_value, str):
+                    normalized = attr_value
+                    break
+            else:
+                normalized = str(value)
+
+        lowered = normalized.strip().lower()
+        if not lowered:
+            return None
+        if "dark" in lowered:
+            return True
+        if "light" in lowered:
+            return False
+        return None
+
+    # ------------------------------------------------------------------
+    def _attach_page_event_handler(
+        self, event_name: str, callback: Callable[[object], None]
+    ) -> Callable[[], None] | None:
+        handler = getattr(self.page, event_name, None)
+
+        if hasattr(handler, "subscribe") and callable(handler.subscribe):
+            try:
+                return handler.subscribe(callback)
+            except Exception:  # pragma: no cover - defensivo
+                logger.exception(
+                    "No se pudo suscribir al evento %s mediante 'subscribe'",
+                    event_name,
+                )
+                return None
+
+        original = handler if callable(handler) else None
+
+        def combined(event):
+            if original:
+                try:
+                    original(event)
+                except Exception:  # pragma: no cover - evitar romper callbacks ajenos
+                    logger.exception(
+                        "Error en el manejador original de %s", event_name
+                    )
+            callback(event)
+
+        try:
+            setattr(self.page, event_name, combined)
+        except Exception:  # pragma: no cover - páginas no mutables
+            logger.exception(
+                "No se pudo asignar el manejador combinado para %s", event_name
+            )
+            return None
+
+        def restore() -> None:
+            try:
+                setattr(self.page, event_name, original)
+            except Exception:  # pragma: no cover - tolerante a fallos
+                logger.exception(
+                    "No se pudo restaurar el manejador original de %s", event_name
+                )
+
+        return restore
 
     # ------------------------------------------------------------------
     def get_token_overrides(self) -> dict[str, dict[str, object]]:
