@@ -312,6 +312,28 @@ disponible, utiliza un archivo local (`~/.fletplus/preferences.json`). Al reinic
 las preferencias se restauran antes de construir la interfaz y los toggles del tema se
 sincronizan con el modo guardado.
 
+### Sincronización con el tema del sistema
+
+Desde ahora `ThemeManager` detecta el brillo inicial de la plataforma mediante
+`page.platform_brightness`/`page.platform_theme` y se suscribe automáticamente a
+`page.on_platform_brightness_change` (o al evento equivalente) para reflejar cambios de
+modo en cuanto el usuario actualiza la preferencia del sistema. Los `signals` de tokens y
+modo se actualizan en cada cambio para que los controles reactivos vuelvan a renderizarse
+sin intervención manual.
+
+Si tu aplicación necesita forzar el modo claro/oscuro y evitar la sincronización automática,
+puedes desactivarla de dos maneras:
+
+```python
+theme = ThemeManager(page, follow_platform_theme=False)
+# o después de crear la instancia
+theme.set_follow_platform_theme(False)
+theme.set_dark_mode(True)  # controlas el modo manualmente
+```
+
+En `FletPlusApp` basta con añadir `"follow_platform_theme": False` dentro de `theme_config`
+para conservar el comportamiento manual en toda la aplicación.
+
 ### Nuevas paletas predefinidas
 
 Además de las variantes originales ahora dispones de un catálogo ampliado con
