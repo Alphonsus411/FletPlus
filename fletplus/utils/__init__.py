@@ -16,6 +16,7 @@ from fletplus.utils.device_profiles import (
 )
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.dragdrop import FileDropZone
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.utils.responsive_typography import (
@@ -32,6 +33,7 @@ __all__ = [
     "responsive_text",
     "responsive_spacing",
     "ResponsiveManager",
+    "BreakpointRegistry",
     "ShortcutManager",
     "FileDropZone",
     "ResponsiveVisibility",

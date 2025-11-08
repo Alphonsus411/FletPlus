@@ -66,6 +66,25 @@ def test_responsive_grid_handles_none_width():
     assert all(isinstance(control, ft.Container) for control in layout.controls)
 
 
+def test_responsive_grid_accepts_symbolic_breakpoints():
+    grid = ResponsiveGrid(
+        items=[
+            ResponsiveGridItem(
+                ft.Text("Bloque"), span_breakpoints={"xs": 12, "md": 6, "xl": 3}
+            )
+        ],
+        breakpoints={"xs": 1, "md": 2, "xl": 4},
+    )
+
+    mobile_row = grid.build(page_width=400)
+    desktop_row = grid.build(page_width=900)
+    ultra_row = grid.build(page_width=1400)
+
+    assert mobile_row.controls[0].col == 12
+    assert desktop_row.controls[0].col == 6
+    assert ultra_row.controls[0].col == 3
+
+
 def test_responsive_grid_item_span_by_device():
     grid = ResponsiveGrid(
         items=[

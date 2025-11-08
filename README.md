@@ -414,10 +414,10 @@ grid = ResponsiveGrid(
             ft.Text("Destacado"),
             span_devices={"mobile": 12, "tablet": 6, "desktop": 4},
             responsive_style=ResponsiveStyle(
-                width={800: Style(padding=ft.Padding(24, 24, 24, 24))}
+                width={"md": Style(padding=ft.Padding(24, 24, 24, 24))}
             ),
         ),
-        ResponsiveGridItem(ft.Text("Complemento"), span_breakpoints={0: 12, 900: 4}),
+        ResponsiveGridItem(ft.Text("Complemento"), span_breakpoints={"xs": 12, "xl": 4}),
     ],
     run_spacing=24,
 )
@@ -456,6 +456,47 @@ Nuevas capacidades del grid responsivo:
 - **Acciones adaptadas al contexto**: ajusta la alineación de botones y filtros
   del encabezado con `header_actions_alignment`, así como mapas por dispositivo
   u orientación para mejorar la ergonomía en smartphones y escritorios.
+
+Puedes definir tus propios breakpoints simbólicos (`xs`, `md`, `xl`) mediante el
+registro global:
+
+```python
+from fletplus.utils import BreakpointRegistry
+
+BreakpointRegistry.configure(xs=360, md=768, xl=1440)
+```
+
+Todos los componentes que aceptan mapas de breakpoints (por ejemplo
+`ResponsiveStyle`, `ResponsiveGrid` o los nuevos layouts descritos más abajo)
+interpretarán automáticamente estos alias.
+
+## 🧱 Layouts responsivos ligeros
+
+`Grid`, `Wrap`, `Stack` y `Spacer` ofrecen atajos simples para componer
+estructuras comunes sin necesidad de configurar `ResponsiveGrid` completo. Por
+ejemplo, la combinación de `Grid` y `Wrap` permite definir spans y espaciados
+por breakpoint simbólico:
+
+```python
+import flet as ft
+from fletplus.components import Grid, GridItem, Wrap
+
+cards = Grid(
+    items=[
+        GridItem(ft.Text("Hero"), span_breakpoints={"xs": 12, "md": 6, "xl": 3}),
+        GridItem(ft.Text("Detalle"), span=6),
+    ],
+    spacing_breakpoints={"md": 24},
+)
+
+toolbar = Wrap(
+    [ft.Text("Filtro"), ft.Text("Orden")],
+    breakpoints={"xs": {"spacing": 8}, "md": {"spacing": 16, "run_spacing": 8}},
+)
+```
+
+`Stack` permite alternar visibilidad de controles por breakpoint y `Spacer`
+ajusta separadores horizontales o verticales según el ancho actual.
 
 ## 🧭 Encabezados más expresivos
 

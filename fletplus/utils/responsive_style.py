@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Mapping, Optional
 
 import flet as ft
 
 from fletplus.styles import Style
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 
 try:  # soporte opcional para detección de dispositivo
     _device_module = __import__("fletplus.utils.device", fromlist=["device"])
@@ -91,14 +92,14 @@ class ResponsiveStyle:
     def __init__(
         self,
         *,
-        width: Optional[Dict[int, Style]] = None,
-        height: Optional[Dict[int, Style]] = None,
+        width: Optional[Mapping[int | str, Style]] = None,
+        height: Optional[Mapping[int | str, Style]] = None,
         orientation: Optional[Dict[str, Style]] = None,
         device: Optional[Dict[str, Style]] = None,
         base: Optional[Style] = None,
     ) -> None:
-        self.width = width or {}
-        self.height = height or {}
+        self.width = BreakpointRegistry.normalize(width) if width else {}
+        self.height = BreakpointRegistry.normalize(height) if height else {}
         self.orientation = orientation or {}
         self.device = device or {}
         self.base = base
