@@ -25,11 +25,9 @@ class FileStorageProvider(StorageProvider[Any]):
         self._path = Path(path)
         self._encoding = encoding
         self._cache: Dict[str, Any] = {}
+        super().__init__(serializer=serializer, deserializer=deserializer)
         self._load_cache()
-        super().__init__(
-            serializer=serializer or json.dumps,
-            deserializer=deserializer or json.loads,
-        )
+        self._refresh_snapshot()
 
     # ------------------------------------------------------------------
     def _load_cache(self) -> None:
