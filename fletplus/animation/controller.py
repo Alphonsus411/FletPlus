@@ -60,12 +60,14 @@ animation_controller_context: Context["AnimationController | None"] = Context(
 class AnimationController:
     """Coordina animaciones declarativas a través de eventos simbólicos."""
 
-    __slots__ = ("page", "_listeners", "_fired")
+    __slots__ = ("page", "_listeners", "_fired", "_reverse_counts", "_reverse_waiters")
 
     def __init__(self, page: ft.Page | None = None) -> None:
         self.page = page
         self._listeners: Dict[str, list[_WeakCallback]] = {}
         self._fired: set[str] = set()
+        self._reverse_counts: Dict[str, int] = {}
+        self._reverse_waiters: Dict[str, list[Callable[[], None]]] = {}
 
     # ------------------------------------------------------------------
     def bind_page(self, page: ft.Page) -> None:
@@ -79,6 +81,7 @@ class AnimationController:
 
         self._listeners.clear()
         self._fired.clear()
+        self._reverse_waiters.clear()
 
     # ------------------------------------------------------------------
     def add_listener(
@@ -165,4 +168,42 @@ class AnimationController:
                 self.page.update()
             except Exception:  # pragma: no cover - errores del usuario
                 pass
+
+    # ------------------------------------------------------------------
+    def begin_reverse(self, trigger: str) -> None:
+        """Marca que una animación inversa asociada al *trigger* está en curso."""
+
+        if not trigger:
+            return
+        self._reverse_counts[trigger] = self._reverse_counts.get(trigger, 0) + 1
+
+    # ------------------------------------------------------------------
+    def end_reverse(self, trigger: str) -> None:
+        """Indica que una animación inversa terminó y despacha esperas pendientes."""
+
+        if not trigger:
+            return
+        remaining = self._reverse_counts.get(trigger, 0) - 1
+        if remaining <= 0:
+            self._reverse_counts.pop(trigger, None)
+            waiters = self._reverse_waiters.pop(trigger, [])
+            for callback in waiters:
+                try:
+                    callback()
+                except Exception:  # pragma: no cover - errores del usuario
+                    continue
+        else:
+            self._reverse_counts[trigger] = remaining
+
+    # ------------------------------------------------------------------
+    def wait_for_reverse(self, trigger: str, callback: Callable[[], None]) -> None:
+        """Ejecuta *callback* tras completarse todas las animaciones inversas."""
+
+        if not trigger:
+            callback()
+            return
+        if self._reverse_counts.get(trigger, 0) == 0:
+            callback()
+            return
+        self._reverse_waiters.setdefault(trigger, []).append(callback)
 
