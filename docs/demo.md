@@ -58,3 +58,27 @@ una vez exportados los recursos, sin abrir la interfaz interactiva. Si deseas
 generar los activos y, además, abrir la aplicación, añade la bandera `--launch`.
 Al completar el proceso se mostrará un resumen en consola con las rutas y los
 archivos escritos.
+
+## Temas con presets y JSON completos
+
+La demo aprovecha `ThemeManager` para alternar tokens en tiempo real. Desde esta
+versión puedes replicar el flujo con los nuevos helpers:
+
+```python
+from fletplus import ThemeManager
+
+theme = ThemeManager(page)
+theme.apply_material3()  # Base Material 3
+theme.apply_fluent(mode="dark")  # Cambia toda la demo a Fluent oscuro
+```
+
+Si prefieres un archivo externo que describa colores, tipografías, radios y
+espaciados puedes cargarlo con `load_theme_from_json`:
+
+```python
+theme.load_theme_from_json("mi_tema.json")
+```
+
+El JSON puede indicar el preset base (`material3`, `fluent` o `cupertino`) y
+añadir overrides por modo (claro/oscuro), lo que facilita mantener un catálogo
+de estilos consistente entre distintas demos o proyectos.

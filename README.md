@@ -334,6 +334,25 @@ paletas listas para aplicar en cualquier dispositivo:
 
 Todas ellas incluyen tokens de gradiente `gradients.app_header` compatibles con el encabezado adaptable del layout.
 
+### Presets listos para usar
+
+Cuando necesites algo más que colores, `ThemeManager` incorpora **presets completos**
+de tokens inspirados en Material Design 3, Fluent y Cupertino. Cada helper fusiona
+los valores con tus tokens actuales (colores, tipografía, radios, espaciados, etc.)
+para mantener personalizaciones previas:
+
+```python
+from fletplus import ThemeManager
+
+theme = ThemeManager(page)
+theme.apply_material3()     # Material 3 claro por defecto
+theme.apply_fluent(mode="dark")  # Variante Fluent directamente en modo oscuro
+theme.apply_cupertino(refresh=False)  # Mezcla Cupertino sin refrescar la página aún
+```
+
+Cambiar de modo (`set_dark_mode(True)`) alternará automáticamente entre la
+definición clara y oscura del preset activo.
+
 ## 📁 Cargar tokens/paletas desde JSON o YAML
 
 Las paletas pueden definirse en un archivo **JSON** o **YAML** con las claves `light` y `dark`.
@@ -357,6 +376,29 @@ light:
 dark:
   primary: "#0D47A1"
 ```
+
+También puedes definir un **tema completo** en JSON utilizando `load_theme_from_json`.
+El archivo puede indicar el preset base y añadir overrides específicos por modo:
+
+```json
+{
+  "preset": "material3",
+  "mode": "dark",
+  "tokens": {"spacing": {"md": 20}},
+  "light": {"colors": {"primary": "#3366FF"}},
+  "dark": {"colors": {"primary": "#99BBFF"}}
+}
+```
+
+```python
+from fletplus import ThemeManager, load_theme_from_json
+
+theme = ThemeManager(page)
+theme.load_theme_from_json("theme.json")
+```
+
+El gestor aplicará el preset indicado, fusionará los overrides comunes (`tokens`)
+y los específicos de cada variante (`light`/`dark`) antes de refrescar la página.
 
 ### Grupos de colores semánticos
 
