@@ -89,6 +89,7 @@ from fletplus.utils import (
     is_desktop,
 )
 from fletplus.desktop import WindowManager, SystemTray, show_notification
+from fletplus.http import DiskCache, HttpClient, HttpInterceptor, RequestEvent, ResponseEvent
 from fletplus.web import (
     generate_manifest,
     generate_service_worker,
@@ -157,6 +158,11 @@ __all__ = [
     "WindowManager",
     "SystemTray",
     "show_notification",
+    "HttpClient",
+    "DiskCache",
+    "HttpInterceptor",
+    "RequestEvent",
+    "ResponseEvent",
     "generate_manifest",
     "generate_service_worker",
     "register_pwa",

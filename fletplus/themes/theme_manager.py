@@ -446,7 +446,9 @@ class ThemeManager:
         else:
             raise TypeError("palette must be a name or a mapping of tokens")
 
-        if mode in {"light", "dark"} and not self._follow_platform_theme:
+        if mode in {"light", "dark"}:
+            if self._follow_platform_theme:
+                self.set_follow_platform_theme(False, apply_current=False)
             self.dark_mode = mode == "dark"
 
         self._palette_definition = palette_definition
@@ -767,7 +769,9 @@ class ThemeManager:
             if variant_tokens:
                 sanitized[variant] = variant_tokens
 
-        if mode in {"light", "dark"} and not self._follow_platform_theme:
+        if mode in {"light", "dark"}:
+            if self._follow_platform_theme:
+                self.set_follow_platform_theme(False, apply_current=False)
             self.dark_mode = mode == "dark"
 
         self._palette_definition = sanitized
