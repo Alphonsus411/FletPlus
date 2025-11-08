@@ -198,6 +198,7 @@ class FletPlusApp:
         self._floating_menu_visible: bool = False
         self._floating_backdrop: ft.Container | None = None
         self._floating_menu_control: ft.Container | None = None
+        self._pending_content_swap_token: object | None = None
         self._floating_menu_host: ft.Container | None = None
         self._floating_button: ft.FloatingActionButton | None = None
         self._floating_button_host: ft.Container | None = None
@@ -836,11 +837,18 @@ class FletPlusApp:
         if self._floating_menu_visible:
             self._close_floating_menu(refresh=False)
         if self.content_container is None:
+            self._pending_content_swap_token = None
             self.page.update()
             self.animation_controller.trigger("mount")
             return
 
+        swap_token = object()
+        self._pending_content_swap_token = swap_token
+
         def _swap_content() -> None:
+            if self._pending_content_swap_token is not swap_token:
+                return
+            self._pending_content_swap_token = None
             if self.content_container is not None:
                 self.content_container.content = control
             self.animation_controller.trigger("mount")
