@@ -22,9 +22,80 @@ from fletplus.themes.palettes import (
     has_palette,
     list_palettes,
 )
+from fletplus.themes.presets import (
+    get_preset_definition,
+    has_preset,
+)
 from fletplus.state import Signal
 
 logger = logging.getLogger(__name__)
+
+
+def _merge_token_groups(
+    target: dict[str, dict[str, object]],
+    updates: Mapping[str, object],
+) -> None:
+    for group, values in updates.items():
+        if not isinstance(values, Mapping):
+            continue
+        existing = target.setdefault(group, {})
+        if not isinstance(existing, dict):
+            target[group] = dict(values)
+        else:
+            existing.update(values)
+
+
+def _parse_theme_json(file_path: str) -> dict[str, object]:
+    try:
+        with open(file_path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        logger.error("Theme file '%s' not found", file_path)
+        return {}
+    except json.JSONDecodeError as exc:
+        logger.error("Invalid JSON in theme file '%s': %s", file_path, exc)
+        return {}
+
+    if not isinstance(data, Mapping):
+        logger.error("Theme file '%s' must contain a JSON object", file_path)
+        return {}
+
+    preset_name = data.get("preset")
+    normalized_preset: str | None = None
+
+    if isinstance(preset_name, str):
+        candidate = preset_name.lower()
+        if has_preset(candidate):
+            normalized_preset = candidate
+            definition = get_preset_definition(candidate)
+        else:
+            logger.error("Preset '%s' referenced in '%s' is not registered", preset_name, file_path)
+            definition = {"light": {}, "dark": {}}
+    else:
+        definition = {"light": {}, "dark": {}}
+
+    common_tokens = data.get("tokens")
+    if isinstance(common_tokens, Mapping):
+        for variant in ("light", "dark"):
+            variant_mapping = definition.setdefault(variant, {})
+            _merge_token_groups(variant_mapping, common_tokens)
+
+    for variant in ("light", "dark"):
+        overrides = data.get(variant)
+        if isinstance(overrides, Mapping):
+            variant_mapping = definition.setdefault(variant, {})
+            _merge_token_groups(variant_mapping, overrides)
+
+    mode = data.get("mode")
+    mode_value: str | None = None
+    if isinstance(mode, str) and mode.lower() in {"light", "dark"}:
+        mode_value = mode.lower()
+
+    return {
+        "preset": normalized_preset,
+        "mode": mode_value,
+        "variants": definition,
+    }
 
 
 def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, object]:
@@ -147,6 +218,7 @@ class ThemeManager:
 
         self._palette_definition: dict[str, Mapping[str, object]] | None = None
         self._palette_name: str | None = None
+        self._preset_name: str | None = None
         self._device_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._orientation_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._breakpoint_tokens: dict[int, dict[str, dict[str, object]]] = {}
@@ -312,6 +384,7 @@ class ThemeManager:
             self.dark_mode = mode == "dark"
 
         self._palette_definition = palette_definition
+        self._preset_name = None
         self._apply_current_palette_variant()
 
         if refresh:
@@ -609,6 +682,38 @@ class ThemeManager:
         self._effective_tokens = base
 
     # ------------------------------------------------------------------
+    def _apply_preset_definition(
+        self,
+        definition: Mapping[str, Mapping[str, object]],
+        *,
+        preset_name: str | None,
+        mode: str | None,
+        refresh: bool,
+    ) -> None:
+        sanitized: dict[str, dict[str, dict[str, object]]] = {}
+        for variant, values in definition.items():
+            if not isinstance(values, Mapping):
+                continue
+            variant_tokens: dict[str, dict[str, object]] = {}
+            for group, group_values in values.items():
+                if isinstance(group_values, Mapping):
+                    variant_tokens[group] = {k: v for k, v in group_values.items()}
+            if variant_tokens:
+                sanitized[variant] = variant_tokens
+
+        if mode in {"light", "dark"}:
+            self.dark_mode = mode == "dark"
+
+        self._palette_definition = sanitized
+        self._palette_name = None
+        self._preset_name = preset_name.lower() if preset_name else None
+        self._apply_current_palette_variant()
+
+        if refresh:
+            self.apply_theme()
+
+        self.mode_signal.set(self.dark_mode)
+
     def load_token_overrides(
         self,
         overrides: Mapping[str, Mapping[str, object]] | None,
@@ -728,4 +833,109 @@ class ThemeManager:
             except (TypeError, ValueError):
                 pass
         return ft.alignment.center
+
+    # ------------------------------------------------------------------
+    def _apply_preset(
+        self,
+        preset_name: str,
+        *,
+        mode: str | None = None,
+        refresh: bool = True,
+    ) -> None:
+        normalized = preset_name.lower()
+        if not has_preset(normalized):
+            raise ValueError(f"Preset '{preset_name}' is not registered")
+
+        definition = get_preset_definition(normalized)
+        self._apply_preset_definition(
+            definition,
+            preset_name=normalized,
+            mode=mode,
+            refresh=refresh,
+        )
+
+    # ------------------------------------------------------------------
+    def apply_material3(
+        self,
+        *,
+        mode: str | None = None,
+        refresh: bool = True,
+    ) -> None:
+        """Fusiona el preset Material Design 3 con los tokens actuales."""
+
+        self._apply_preset("material3", mode=mode, refresh=refresh)
+
+    # ------------------------------------------------------------------
+    def apply_fluent(
+        self,
+        *,
+        mode: str | None = None,
+        refresh: bool = True,
+    ) -> None:
+        """Fusiona el preset Fluent Design System con los tokens actuales."""
+
+        self._apply_preset("fluent", mode=mode, refresh=refresh)
+
+    # ------------------------------------------------------------------
+    def apply_cupertino(
+        self,
+        *,
+        mode: str | None = None,
+        refresh: bool = True,
+    ) -> None:
+        """Fusiona el preset inspirado en Cupertino con los tokens actuales."""
+
+        self._apply_preset("cupertino", mode=mode, refresh=refresh)
+
+    # ------------------------------------------------------------------
+    def load_theme_from_json(
+        self,
+        file_path: str,
+        *,
+        refresh: bool = True,
+    ) -> None:
+        """Carga un tema completo desde un JSON y lo aplica al ``ThemeManager``.
+
+        El archivo debe contener un objeto JSON con la siguiente estructura
+        orientativa::
+
+            {
+                "preset": "material3",
+                "mode": "light",
+                "tokens": {"spacing": {"md": 20}},
+                "light": {"colors": {"primary": "#6750A4"}},
+                "dark": {"colors": {"primary": "#D0BCFF"}}
+            }
+
+        Los valores bajo ``"tokens"`` se aplican tanto al modo claro como al
+        oscuro, mientras que ``"light"`` y ``"dark"`` permiten ajustar cada
+        variante de manera independiente. El campo ``"preset"`` determina el
+        preset base que se fusionará antes de los overrides.
+        """
+
+        payload = _parse_theme_json(file_path)
+        if not payload:
+            return
+
+        variants = payload.get("variants")
+        if not isinstance(variants, Mapping):
+            return
+
+        preset_name = payload.get("preset")
+        preset_value = preset_name if isinstance(preset_name, str) else None
+        mode_value = payload.get("mode")
+        mode_str = mode_value if isinstance(mode_value, str) else None
+
+        self._apply_preset_definition(
+            variants,
+            preset_name=preset_value,
+            mode=mode_str,
+            refresh=refresh,
+        )
+
+
+def load_theme_from_json(file_path: str) -> dict[str, object]:
+    """Carga un archivo JSON y devuelve la definición de tema normalizada."""
+
+    return _parse_theme_json(file_path)
 
