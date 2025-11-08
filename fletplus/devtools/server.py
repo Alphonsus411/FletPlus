@@ -41,7 +41,7 @@ class DevToolsServer:
     ) -> None:
         """Reenvía ``message`` a los clientes conectados, excluyendo ``sender``."""
 
-        self._remember_initial_payload(message)
+        await self._remember_initial_payload(message)
 
         async with self._lock:
             targets: Iterable[ServerProtocol] = (
@@ -89,10 +89,13 @@ class DevToolsServer:
             await self._unregister(websocket)
 
     async def _send_initial_payloads(self, websocket: ServerProtocol) -> None:
-        for message in self._initial_payloads.values():
+        async with self._lock:
+            initial_payloads = list(self._initial_payloads.values())
+
+        for message in initial_payloads:
             await self._safe_send(websocket, message)
 
-    def _remember_initial_payload(self, message: str) -> None:
+    async def _remember_initial_payload(self, message: str) -> None:
         try:
             payload = json.loads(message)
         except json.JSONDecodeError:
@@ -103,7 +106,8 @@ class DevToolsServer:
             return
 
         if any(keyword in payload_type.lower() for keyword in {"snapshot"}):
-            self._initial_payloads[payload_type] = message
+            async with self._lock:
+                self._initial_payloads[payload_type] = message
 
     def _extract_payload_type(self, payload: object) -> str | None:
         if not isinstance(payload, dict):
