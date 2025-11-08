@@ -33,11 +33,14 @@ class _BaseAnimatedContainer(ft.Container):
         replay_if_fired: bool = True,
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)
+        user_on_animation_end = kwargs.pop("on_animation_end", None)
+        super().__init__(on_animation_end=self._handle_animation_end, **kwargs)
         self._controller = _resolve_controller(controller)
         self._trigger = trigger
         self._reverse_trigger = reverse_trigger
         self._unsubscribers: list[Callable[[], None]] = []
+        self._user_on_animation_end = user_on_animation_end
+        self._reversing = False
         if self._controller is not None and self._trigger:
             self._unsubscribers.append(
                 self._controller.add_listener(self._trigger, self._handle_forward, replay_if_fired=replay_if_fired)
@@ -55,9 +58,28 @@ class _BaseAnimatedContainer(ft.Container):
 
     # ------------------------------------------------------------------
     def _handle_reverse(self, _event: str) -> None:
+        tracking = self._controller is not None and self._reverse_trigger is not None
+        if tracking:
+            self._controller.begin_reverse(self._reverse_trigger)  # type: ignore[arg-type]
+            self._reversing = True
+        else:
+            self._reversing = False
         self._play_reverse()
         if self._controller is not None:
             self._controller.request_update(self)
+        if not tracking:
+            self._reversing = False
+
+    # ------------------------------------------------------------------
+    def _handle_animation_end(self, event: ft.ControlEvent) -> None:  # type: ignore[override]
+        if self._user_on_animation_end is not None:
+            try:
+                self._user_on_animation_end(event)
+            except Exception:  # pragma: no cover - errores del usuario
+                pass
+        if self._reversing and self._controller is not None and self._reverse_trigger is not None:
+            self._controller.end_reverse(self._reverse_trigger)  # type: ignore[arg-type]
+            self._reversing = False
 
     # ------------------------------------------------------------------
     def _play_forward(self) -> None:

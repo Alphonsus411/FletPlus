@@ -830,15 +830,24 @@ class FletPlusApp:
 
     # ------------------------------------------------------------------
     def _handle_route_change(self, match: RouteMatch, control: ft.Control) -> None:
-        if self.content_container is not None:
-            self.content_container.content = control
         index = self._nav_index_by_path.get(match.node.full_path)
         if index is not None:
             self._update_nav_selection(index)
         if self._floating_menu_visible:
             self._close_floating_menu(refresh=False)
+        if self.content_container is None:
+            self.page.update()
+            self.animation_controller.trigger("mount")
+            return
+
+        def _swap_content() -> None:
+            if self.content_container is not None:
+                self.content_container.content = control
+            self.animation_controller.trigger("mount")
+            self.page.update()
+
+        self.animation_controller.wait_for_reverse("unmount", _swap_content)
         self.page.update()
-        self.animation_controller.trigger("mount")
 
     # ------------------------------------------------------------------
     def _register_reactive_render(self, runtime: object) -> None:
