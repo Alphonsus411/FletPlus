@@ -96,6 +96,10 @@ from fletplus.web import (
     register_pwa,
 )
 from fletplus.state import DerivedSignal, Signal, Store, reactive, use_signal, use_state, watch
+from fletplus.storage import StorageProvider
+from fletplus.storage.files import FileStorageProvider
+from fletplus.storage.local import LocalStorageProvider
+from fletplus.storage.session import SessionStorageProvider
 
 __all__ = [
     "FletPlusApp",
@@ -186,6 +190,10 @@ __all__ = [
     "use_state",
     "use_signal",
     "watch",
+    "StorageProvider",
+    "LocalStorageProvider",
+    "SessionStorageProvider",
+    "FileStorageProvider",
     "Context",
     "ContextProvider",
     "theme_context",
