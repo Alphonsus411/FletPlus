@@ -262,6 +262,28 @@ class HttpClient:
         self._interceptors: list[HttpInterceptor] = list(interceptors or [])
 
     # ------------------------------------------------------------------
+    @staticmethod
+    def _clone_response(response: httpx.Response) -> httpx.Response:
+        """Create an independent copy of a cached response."""
+
+        headers = response.headers.copy()
+        extensions = dict(response.extensions)
+        history = list(response.history)
+        default_encoding = response.encoding or response.default_encoding
+
+        cloned = httpx.Response(
+            response.status_code,
+            headers=headers,
+            content=response.content,
+            request=response.request,
+            extensions=extensions,
+            history=history,
+            default_encoding=default_encoding,
+        )
+
+        return cloned
+
+    # ------------------------------------------------------------------
     @property
     def before_request(self) -> Signal[RequestEvent | None]:
         return self._hooks.before_signal
@@ -319,7 +341,7 @@ class HttpClient:
                 if cache_key:
                     cached = self._cache.get(cache_key, request=request)
                     if cached is not None:
-                        response = cached
+                        response = self._clone_response(cached)
                         from_cache = True
                         for interceptor in reversed(self._interceptors):
                             response = await interceptor.apply_response(response)
