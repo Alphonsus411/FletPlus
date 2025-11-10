@@ -3,8 +3,9 @@
 `ThemeManager` centraliza los *tokens* de diseño de una página de Flet y
 permite aplicar paletas, presets y overrides según el dispositivo,
 orientación o breakpoint activo. Esta guía resume la API disponible en
-`fletplus.themes.theme_manager` y cómo integrarla con señales reactivas y
-persistencia de preferencias.
+`fletplus.themes.theme_manager`, describe cómo leer archivos externos de
+paletas/temas y cómo integrarla con señales reactivas y persistencia de
+preferencias.
 
 ## Inicialización de `ThemeManager`
 
@@ -46,6 +47,10 @@ Al crear la instancia puedes proporcionar:
   tokens y se fusiona automáticamente cuando se invoca `apply_theme`.
 - `palette_mode`: fuerza la variante inicial (`"light"` o `"dark"`) cuando
   se desactiva la sincronización automática.
+- `follow_platform_theme`: controla si el modo se sincroniza con los eventos
+  de `page.on_platform_brightness_change` o `page.on_platform_theme_change`.
+  Cuando la preferencia del sistema cambia, el gestor emite una nueva señal y
+  vuelve a aplicar la paleta activa.
 
 El método `apply_theme()` refresca el `ft.Page` asignando colores, tipografías
 personalizadas y cualquier token adicional almacenado bajo `theme.tokens`.
@@ -53,7 +58,8 @@ personalizadas y cualquier token adicional almacenado bajo `theme.tokens`.
 ## Presets disponibles
 
 `ThemeManager` puede arrancar desde un preset registrado. Utiliza las
-funciones auxiliares de `fletplus.themes.presets`:
+funciones auxiliares de `fletplus.themes.presets` para descubrir las opciones
+disponibles:
 
 ```python
 from fletplus.themes.presets import list_presets, get_preset_definition
@@ -69,10 +75,13 @@ material = get_preset_definition("material3")
 - `get_preset_definition(nombre)` regresa un diccionario con grupos de
   tokens por variante (`light`/`dark`). Puedes pasarlo directamente a
   `ThemeManager._apply_preset_definition()` si necesitas fusionarlo con
-  otros datos antes de instanciar el gestor.
+  otros datos antes de instanciar el gestor o con `ThemeManager.apply_palette`
+  para combinarlo con overrides ya cargados.
 
 Para cargar un preset durante la ejecución existe `ThemeManager.apply_palette()`
-y los atajos `apply_material3()`, `apply_fluent()` y `apply_cupertino()`.
+y los atajos `apply_material3()`, `apply_fluent()` y `apply_cupertino()`. Si
+llamas a estos métodos con `mode="dark"`, el gestor desactiva la sincronización
+automática y aplica la variante solicitada antes de refrescar la página.
 
 ## Paletas y archivos externos
 
@@ -95,6 +104,8 @@ palette = load_palette_from_file("paletas/digital_ocean.json", mode="dark")
   claves `light` y/o `dark`, aplana los grupos de colores (por ejemplo
   `info -> 100` se convierte en `info_100`) y devuelve un diccionario de
   tokens listo para combinarse con `ThemeManager.tokens`.
+- `ThemeManager.list_available_palettes()` reutiliza internamente
+  `list_palettes()` para integrar el listado desde la propia instancia.
 
 Puedes pasar el resultado a `ThemeManager.apply_palette()` o fusionarlo en
 los tokens manualmente.
@@ -163,7 +174,8 @@ El archivo puede verse así:
 - Cada variante puede agregar o reemplazar grupos específicos.
 - `mode` admite `"light"` o `"dark"`. Si lo dejas en `null` (o lo omites)
   y `follow_platform_theme=True`, el gestor seguirá la preferencia del
-  sistema (modo automático).
+  sistema (modo automático). Cuando se detecte un cambio en la plataforma,
+  se actualizará `mode_signal` y se re-renderizará la página.
 
 Si solo necesitas validar el archivo sin aplicarlo, usa la función de módulo
 `load_theme_from_json(ruta)` que devuelve el diccionario normalizado.
@@ -198,7 +210,9 @@ Para persistir las decisiones del usuario (por ejemplo, colores ajustados en
 un editor), combina `overrides_signal` con los proveedores descritos en la
 [guía de almacenamiento reactivo](storage.md). Cuando cargues la app, inyecta
 las preferencias previas mediante `ThemeManager.load_token_overrides()` antes
-de invocar `apply_theme()`.
+de invocar `apply_theme()`. Si además guardas el modo claro/oscuro elegido,
+puedes restaurarlo ajustando `theme.set_dark_mode(valor, refresh=False)` antes
+de aplicar los tokens para evitar parpadeos.
 
 ---
 
