@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fletplus",
-    version="0.2.1",
+    version="0.2.4",
     author="Adolfo González Hernández",
     author_email="adolfogonzal@gmail.com",
     description="Componentes avanzados y utilidades para apps Flet en Python",
@@ -16,8 +16,16 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "flet>=0.8.0",  # Ajusta según versión actual de Flet
+        "flet>=0.27.0",
     ],
+    entry_points={
+        "console_scripts": [
+            # Nuevo alias con guion para lanzar la demo desde la terminal.
+            "fletplus-demo=fletplus_demo:main",
+            # Alias existente con guion bajo para mantener compatibilidad.
+            "fletplus_demo=fletplus_demo:main",
+        ]
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -26,5 +34,5 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.9',
 )

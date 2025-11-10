@@ -1,4 +1,5 @@
 import sys
+import logging
 import fletplus.desktop.notifications as notifications
 
 
@@ -48,3 +49,12 @@ def test_fallback_to_in_page(monkeypatch):
     monkeypatch.setattr(notifications, "_notify_in_page", fake_fallback)
     notifications.show_notification("Hola", "Fallback")
     assert called == [True]
+
+
+def test_show_notification_logs_error(monkeypatch, caplog):
+    monkeypatch.setattr(sys, "platform", "win32")
+
+    with caplog.at_level(logging.ERROR):
+        notifications.show_notification("Hola", "Error")
+
+    assert "Error al mostrar la notificación" in caplog.text

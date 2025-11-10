@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fletplus"
-version = "0.2.1"
+version = "0.2.4"
 description = "Componentes visuales avanzados para Flet en Python"
 authors = [
   { name="Adolfo González", email="adolfogonzal@gmail.com" }
@@ -14,8 +14,18 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 dependencies = [
-  "flet>=0.27.0"
+  "flet>=0.27.0",
+  "click>=8.1",
+  "watchdog>=3.0",
+  "websockets>=12.0"
 ]
+
+[project.scripts]
+# Permite invocar la demo directamente con un comando con guion.
+fletplus-demo = "fletplus_demo:main"
+# Se conserva el comando histórico con guion bajo para compatibilidad.
+fletplus_demo = "fletplus_demo:main"
+fletplus = "fletplus.cli.main:app"
 
 [project.urls]
 Homepage = "https://github.com/Alphonsus411/fletplus"

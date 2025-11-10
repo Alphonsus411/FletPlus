@@ -20,7 +20,7 @@ class LineChart:
         height: int = 300,
         x_range: Optional[Tuple[float, float]] = None,
         y_range: Optional[Tuple[float, float]] = None,
-        axis_color: str = ft.colors.BLACK,
+        axis_color: str = ft.Colors.BLACK,
         style: Style | None = None,
     ) -> None:
         """Inicializa el gráfico de líneas.
@@ -45,7 +45,7 @@ class LineChart:
         self.y_max = y_range[1] if y_range else max(y for _, y in data)
 
         self.scale: float = 1.0
-        self.tooltip = ft.Text(visible=False, bgcolor=ft.colors.WHITE)
+        self.tooltip = ft.Text(visible=False, bgcolor=ft.Colors.WHITE)
         self.canvas = cv.Canvas(width=self.width, height=self.height)
 
         self._update_canvas()
@@ -68,6 +68,7 @@ class LineChart:
             self.scale *= 1.1
         elif delta > 0:
             self.scale /= 1.1
+        self.scale = max(0.1, min(self.scale, 10))
         self._update_canvas()
 
     # ------------------------------------------------------------------
@@ -86,11 +87,19 @@ class LineChart:
         data_pt = self.data[index]
         self.tooltip.value = f"{data_pt[0]}, {data_pt[1]}"
         self.tooltip.visible = True
+        if self.tooltip.page:
+            self.tooltip.update()
 
     # ------------------------------------------------------------------
     def _screen_points(self) -> List[Tuple[float, float]]:
-        span_x = (self.x_max - self.x_min) * self.scale
-        span_y = (self.y_max - self.y_min) * self.scale
+        span_x = self.x_max - self.x_min
+        span_y = self.y_max - self.y_min
+        if span_x == 0:
+            span_x = 1
+        if span_y == 0:
+            span_y = 1
+        span_x *= self.scale
+        span_y *= self.scale
         return [
             (
                 (x - self.x_min) / span_x * self.width,
@@ -105,7 +114,7 @@ class LineChart:
         shapes = []
 
         paint_axis = ft.Paint(stroke_width=1, color=self.axis_color)
-        paint_line = ft.Paint(stroke_width=2, color=ft.colors.BLUE)
+        paint_line = ft.Paint(stroke_width=2, color=ft.Colors.BLUE)
 
         shapes.append(cv.Line(0, self.height, self.width, self.height, paint=paint_axis))
         shapes.append(cv.Line(0, 0, 0, self.height, paint=paint_axis))

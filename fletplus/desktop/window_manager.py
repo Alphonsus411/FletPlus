@@ -1,5 +1,8 @@
-import flet as ft
+from __future__ import annotations
+
 from typing import Dict
+
+import flet as ft
 
 
 class WindowManager:
