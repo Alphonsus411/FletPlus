@@ -18,6 +18,7 @@ pip install fletplus
 ## 📚 Documentación
 
 - [CLI de FletPlus](docs/cli.md)
+- [Herramientas de desarrollo y publicación](docs/tooling.md)
 - [Generación de iconos](docs/icons.md)
 - [Cliente HTTP reactivo](docs/http.md)
 - [Arquitectura de FletPlusApp](docs/app.md)
@@ -30,7 +31,7 @@ pip install fletplus
 
 ### 🌐 Sitio estático con MkDocs
 
-- La documentación pública se publica automáticamente en **GitHub Pages** desde la rama `gh-pages` utilizando MkDocs y el tema Material.
+- La documentación pública se publica automáticamente en **GitHub Pages** desde la rama `gh-pages` utilizando MkDocs, el tema Material y el workflow oficial **“Publicar documentación”** (`.github/workflows/docs.yml`).
 - Cada push a la rama por defecto (`main`) ejecuta el workflow `docs.yml`, que construye el sitio y lo despliega. No es necesario lanzar acciones manuales una vez habilitado el flujo.
 - La URL final sigue el formato `https://<usuario>.github.io/FletPlus/`; reemplaza `<usuario>` por la organización o cuenta propietaria del repositorio.
 
@@ -38,7 +39,7 @@ pip install fletplus
 
 1. Instala las dependencias con `pip install -r requirements-docs.txt`.
 2. Ejecuta `mkdocs serve` para obtener una vista previa local con recarga en caliente.
-3. Tras realizar cambios en los archivos dentro de `docs/` o en `README.md`, haz commit y sube la rama. El pipeline publicará la nueva versión.
+3. Tras realizar cambios en los archivos dentro de `docs/` o en `README.md`, haz commit y sube la rama. El pipeline publicará la nueva versión (consulta más detalles en [Herramientas de desarrollo y publicación](docs/tooling.md)).
 
 > ⚠️ **Paso manual inicial**: desde la pestaña **Settings → Pages** del repositorio, selecciona “GitHub Actions” como fuente y guarda los cambios. Esta acción solo es necesaria una vez para habilitar la publicación.
 

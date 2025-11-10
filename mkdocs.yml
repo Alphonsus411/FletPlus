@@ -5,6 +5,7 @@ nav:
   - Guías:
       - CLI de FletPlus: cli.md
       - Compilación y empaquetado: building.md
+      - Herramientas de desarrollo y publicación: tooling.md
       - Arquitectura de FletPlusApp: app.md
       - Gestor de temas, paletas y overrides: themes.md
       - Router declarativo: router.md
