@@ -107,3 +107,10 @@ await cliente.get("https://api.example.com/items")
 ```
 
 Puede deshabilitarse el almacenamiento por petición con `cache=False`.
+
+## Relación con el almacenamiento reactivo
+
+Cuando necesites recordar tokens de autenticación, cabeceras personalizadas o la
+última respuesta consumida por la UI, combina el cliente con un
+[`StorageProvider`](storage.md). Las señales expuestas por los proveedores permiten
+persistir datos y reenviarlos a controles de Flet sin escribir lógica adicional.

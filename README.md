@@ -20,6 +20,7 @@ pip install fletplus
 - [CLI de FletPlus](docs/cli.md)
 - [Generación de iconos](docs/icons.md)
 - [Cliente HTTP reactivo](docs/http.md)
+- [Proveedores de almacenamiento reactivo](docs/storage.md)
 - [Compilación y empaquetado](docs/building.md)
 - [Recorrido por la demo](docs/demo.md)
 - [Router declarativo y layouts persistentes](docs/router.md)
@@ -63,6 +64,10 @@ trabajando juntos.
 
 FletPlus incorpora un módulo `fletplus.state` con primitivas reactivas ligeras
 para compartir datos entre componentes sin acoplarlos al árbol de controles.
+
+> ℹ️ ¿Necesitas persistir estas señales? Consulta la guía de
+> [almacenamiento reactivo](docs/storage.md) para conocer los proveedores
+> disponibles (local, sesión y archivos) y cómo enlazarlos con controles.
 
 ```python
 import flet as ft
