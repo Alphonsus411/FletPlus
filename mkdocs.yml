@@ -7,6 +7,7 @@ nav:
       - Compilación y empaquetado: building.md
       - Herramientas de desarrollo y publicación: tooling.md
       - Arquitectura de FletPlusApp: app.md
+      - Contextos y proveedores: context.md
       - Perfiles de dispositivo y breakpoints: responsive.md
       - Gestor de temas, paletas y overrides: themes.md
       - Router declarativo: router.md
