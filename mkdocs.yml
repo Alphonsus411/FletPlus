@@ -10,6 +10,7 @@ nav:
       - Perfiles de dispositivo y breakpoints: responsive.md
       - Gestor de temas, paletas y overrides: themes.md
       - Router declarativo: router.md
+      - Animaciones coordinadas: animation.md
       - Almacenamiento reactivo: storage.md
   - Referencias:
       - Cliente HTTP reactivo: http.md
