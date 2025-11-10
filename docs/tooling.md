@@ -22,6 +22,50 @@ El comando `fletplus run` monitoriza el árbol del proyecto (ignorando carpetas 
 
 `SystemTray` ofrece una envoltura mínima sobre el icono de bandeja, manteniendo su visibilidad y un manejador de clic configurable a través de `on_click`. Puedes mostrar u ocultar el icono con `show()`/`hide()` y simular eventos durante pruebas con `_emit_click`. Es útil para exponer accesos rápidos a estados de la app cuando se minimiza a la bandeja.【F:fletplus/desktop/system_tray.py†L1-L25】
 
+## Gestor de drop de archivos
+
+`FileDropZone` encapsula las comprobaciones necesarias para aceptar archivos arrastrados desde el sistema operativo. Cada entrada se normaliza con `Path.resolve(strict=True)` y se descarta cualquier ruta que no exista, apunte a directorios o atraviese enlaces simbólicos en su camino.【F:fletplus/utils/dragdrop.py†L9-L58】
+
+- **Sanitización de rutas**: al establecer `base_directory`, la ruta resultante debe pertenecer a dicho directorio (se usa `Path.relative_to`). Esto evita que un usuario entregue ficheros fuera del sandbox configurado, incluso si intenta usar `..` o enlaces simbólicos.【F:fletplus/utils/dragdrop.py†L32-L44】
+- **Filtros por extensión y tamaño**: `allowed_extensions` acepta colecciones con o sin punto (`{"jpg", ".png"}`) y se evalúan en minúsculas. `max_size` recibe un entero en bytes y se contrasta usando `os.path.getsize`; si falla la lectura o el archivo excede el límite, el elemento se ignora.【F:fletplus/utils/dragdrop.py†L18-L53】
+- **Callbacks y señales**: `on_files` se ejecuta cuando al menos un archivo pasa los filtros y recibe la lista final. Puedes enlazarlo con una señal reactiva (`Signal`) para actualizar controles sin lógica adicional o disparar subidas asíncronas.
+
+Ejemplo combinando la señalización de FletPlus y un `ListView` de Flet:
+
+```python
+import flet as ft
+from fletplus.state import Signal
+from fletplus.utils.dragdrop import FileDropZone
+
+
+def main(page: ft.Page) -> None:
+    accepted_files = Signal([])
+
+    drop_zone = FileDropZone(
+        allowed_extensions={".png", "jpg"},
+        max_size=5 * 1024 * 1024,
+        base_directory="/home/usuario/Downloads",
+        on_files=accepted_files.set,
+    )
+
+    file_list = ft.ListView(expand=True)
+    accepted_files.bind_control(
+        file_list,
+        attr="controls",
+        transform=lambda files: [ft.Text(path) for path in files],
+    )
+
+    def handle_drop(event: ft.DragTargetEvent) -> None:
+        drop_zone.drop(file.path for file in event.files)
+        page.update()
+
+    page.on_drop = handle_drop
+    page.add(ft.Text("Arrastra tus imágenes"), file_list)
+
+
+ft.app(target=main)
+```
+
 ## Preferencias persistentes y temas
 
 `PreferenceStorage` determina el backend disponible en tiempo de ejecución: si la página cuenta con `client_storage` (p. ej. aplicaciones empaquetadas con Flet), se guarda bajo una clave JSON; de lo contrario utiliza un archivo local configurable vía `FLETPLUS_PREFS_FILE`. Los métodos `load()` y `save()` devuelven/reciben diccionarios con los valores a persistir.【F:fletplus/utils/preferences.py†L19-L107】

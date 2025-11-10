@@ -868,7 +868,9 @@ def main(page: ft.Page):
 ft.app(target=main)
 ```
 
-## 🔔 Ejemplo de SystemTray
+## 🛠️ Herramientas auxiliares
+
+### Ejemplo de SystemTray
 
 ```python
 from fletplus.desktop.system_tray import SystemTray
@@ -876,6 +878,51 @@ from fletplus.desktop.system_tray import SystemTray
 tray = SystemTray(icon="icon.png", menu=["Abrir", "Salir"])
 tray.on_click(lambda: print("Clic en el icono"))
 tray.show()
+```
+
+### Zona de drop de archivos (FileDropZone)
+
+`fletplus.utils.FileDropZone` centraliza la lógica de validación cuando el usuario arrastra
+archivos sobre la ventana de la app. Internamente normaliza la lista de rutas recibidas,
+descarta entradas no válidas y devuelve únicamente aquellos ficheros que pasan los filtros
+de seguridad.
+
+- `allowed_extensions`: colección opcional de extensiones permitidas. Se aceptan valores
+  con o sin punto inicial y se comparan en minúsculas, por ejemplo `{"jpg", ".png"}`.
+- `max_size`: límite de tamaño en bytes. Cualquier archivo que exceda este umbral se
+  ignora silenciosamente.
+- `base_directory`: ruta desde la que se permite arrastrar archivos. Se resuelve a un
+  directorio absoluto y cualquier fichero fuera de ese árbol queda descartado.
+- `on_files`: *callback* opcional que recibe la lista final de rutas aceptadas y permite
+  lanzar procesos adicionales como subir el archivo o actualizar controles.
+
+Cada ruta se resuelve con `Path.resolve(strict=True)`, se comprueba que no atraviese
+enlaces simbólicos y que apunte a un archivo real antes de aplicar los filtros anteriores.
+
+```python
+import flet as ft
+from fletplus.utils.dragdrop import FileDropZone
+
+
+def main(page: ft.Page) -> None:
+    drop_zone = FileDropZone(
+        allowed_extensions={".jpg", "png"},
+        max_size=5 * 1024 * 1024,
+        base_directory="/home/usuario/Downloads",
+        on_files=lambda files: print("Archivos listos:", files),
+    )
+
+    def handle_drop(event: ft.DragTargetEvent) -> None:
+        accepted = drop_zone.drop(file.path for file in event.files)
+        page.snack_bar = ft.SnackBar(ft.Text(f"{len(accepted)} archivos preparados"))
+        page.snack_bar.open = True
+        page.update()
+
+    page.on_drop = handle_drop
+    page.add(ft.Text("Arrastra tus imágenes aquí"))
+
+
+ft.app(target=main)
 ```
 # 🔧 Estructura del proyecto
 
