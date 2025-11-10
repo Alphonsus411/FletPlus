@@ -129,6 +129,23 @@ escenarios híbridos.
 - Cada push a la rama por defecto (`main`) ejecuta el workflow `docs.yml`, que construye el sitio y lo despliega. No es necesario lanzar acciones manuales una vez habilitado el flujo.
 - La URL final sigue el formato `https://<usuario>.github.io/FletPlus/`; reemplaza `<usuario>` por la organización o cuenta propietaria del repositorio.
 
+```yaml
+# .github/workflows/docs.yml
+jobs:
+  build:
+    steps:
+      - uses: actions/checkout@v4          # Checkout del repositorio
+      - run: pip install -r requirements-docs.txt  # Instala dependencias de MkDocs
+      - run: mkdocs build --strict --site-dir site # Construye el sitio estático
+  deploy:
+    steps:
+      - uses: actions/deploy-pages@v4      # Publica en GitHub Pages
+```
+
+- 📄 Guarda este workflow en `.github/workflows/docs.yml` dentro del repositorio.
+- 🌐 Habilita **Settings → Pages → Build and deployment → Source: GitHub Actions** la primera vez para permitir el despliegue automático.
+- 🔗 Consulta la guía extendida en [Herramientas de desarrollo y publicación](docs/tooling.md#workflow-de-documentación) para más detalles sobre el pipeline y tareas relacionadas.
+
 #### Cómo actualizar o previsualizar la documentación
 
 1. Instala las dependencias con `pip install -r requirements-docs.txt`.
