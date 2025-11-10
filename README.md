@@ -15,6 +15,15 @@ pip install fletplus
 
 > ℹ️ Desde la versión 0.2.3, FletPlus adopta oficialmente Python 3.9 como versión mínima y depende de `flet` 0.27.0 o superior para garantizar compatibilidad con los nuevos componentes.
 
+## 📚 Documentación
+
+- [CLI de FletPlus](docs/cli.md)
+- [Generación de iconos](docs/icons.md)
+- [Cliente HTTP reactivo](docs/http.md)
+- [Compilación y empaquetado](docs/building.md)
+- [Recorrido por la demo](docs/demo.md)
+- [Router declarativo y layouts persistentes](docs/router.md)
+
 ## 🧩 Componentes incluidos
 
 | Componente      | Descripción                                       |
@@ -138,6 +147,16 @@ class CounterCard(ft.UserControl):
 
 Ejecuta `python -m examples.state_hooks_example` para ver una demostración
 completa integrando estos helpers dentro de `FletPlusApp`.
+
+## 🧭 Router declarativo
+
+El módulo `fletplus.router` aporta navegación jerárquica declarativa sin depender del `View` integrado de Flet. Puedes registrar rutas con `Route`, anidar segmentos mediante `children` y mantener layouts persistentes con `LayoutInstance`.
+
+- Soporta coincidencias dinámicas (`/items/<id>`) cuyos valores se recuperan con `RouteMatch.param()`.
+- Expone `Router.observe` para reaccionar a cada activación y montar el árbol resultante en la página.
+- Recuerda layouts ya creados para que shells y menús permanezcan montados entre transiciones.
+
+Consulta la guía completa en [docs/router.md](docs/router.md).
 
 ## 🌐 Contextos compartidos
 
