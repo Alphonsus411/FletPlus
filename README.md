@@ -27,6 +27,7 @@ pip install fletplus
 - [Compilación y empaquetado](docs/building.md)
 - [Recorrido por la demo](docs/demo.md)
 - [Router declarativo y layouts persistentes](docs/router.md)
+- [Animaciones coordinadas con AnimationController](docs/animation.md): coordina triggers compartidos y envoltorios como FadeIn o AnimatedContainer.
 - [Catálogo de componentes](docs/components.md)
 - [Perfiles de dispositivo y breakpoints](docs/responsive.md)
 

@@ -86,6 +86,7 @@ Puedes añadir otros atajos llamando a `app.shortcuts.register(...)` después de
 `FletPlusApp` crea un `AnimationController` compartido (`self.animation_controller`) y lo expone a través de un contexto llamado `animation`. Esto permite coordinar transiciones o efectos desde diferentes componentes sin pasar la referencia explícitamente.
 
 Cuando utilizas decoradores como `@reactive` (sección de hooks), puedes recuperar esta instancia con `animation_controller_context.get()` siempre que la vista actual se haya montado dentro de `FletPlusApp`.
+Revisa la guía [Animaciones coordinadas](animation.md) para ver ejemplos completos de los envoltorios disponibles y cómo disparar eventos personalizados.
 
 ## Contexto global y proveedores {#contexto-global}
 
