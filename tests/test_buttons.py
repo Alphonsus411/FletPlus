@@ -28,10 +28,10 @@ def test_primary_button_style_and_callback():
         page=page,
         tokens={
             "colors": {
-                "primary": ft.colors.RED,
-                "primary_hover": ft.colors.ORANGE,
-                "primary_focus": ft.colors.PINK,
-                "primary_pressed": ft.colors.PURPLE,
+                "primary": ft.Colors.RED,
+                "primary_hover": ft.Colors.ORANGE,
+                "primary_focus": ft.Colors.PINK,
+                "primary_pressed": ft.Colors.PURPLE,
             },
             "typography": {"button_size": 20, "icon_size": 24},
         },
@@ -39,25 +39,25 @@ def test_primary_button_style_and_callback():
     called: list[str] = []
     btn = PrimaryButton(
         "Enviar",
-        icon=ft.icons.SEND,
+        icon=ft.Icons.SEND,
         theme=theme,
-        style=Style(bgcolor=ft.colors.YELLOW),
+        style=Style(bgcolor=ft.Colors.YELLOW),
         on_click=lambda e: called.append("ok"),
     )
     container = btn.build()
     assert isinstance(container, ft.Container)
-    assert container.bgcolor == ft.colors.YELLOW
+    assert container.bgcolor == ft.Colors.YELLOW
     assert (
-        container.content.style.bgcolor[ft.ControlState.DEFAULT] == ft.colors.RED
+        container.content.style.bgcolor[ft.ControlState.DEFAULT] == ft.Colors.RED
     )
     assert (
-        container.content.style.bgcolor[ft.ControlState.HOVERED] == ft.colors.ORANGE
+        container.content.style.bgcolor[ft.ControlState.HOVERED] == ft.Colors.ORANGE
     )
     assert (
-        container.content.style.bgcolor[ft.ControlState.FOCUSED] == ft.colors.PINK
+        container.content.style.bgcolor[ft.ControlState.FOCUSED] == ft.Colors.PINK
     )
     assert (
-        container.content.style.bgcolor[ft.ControlState.PRESSED] == ft.colors.PURPLE
+        container.content.style.bgcolor[ft.ControlState.PRESSED] == ft.Colors.PURPLE
     )
     assert (
         btn.style.text_style[ft.ControlState.DEFAULT].size == 20
@@ -72,10 +72,10 @@ def test_secondary_button_style_and_callback():
         page=page,
         tokens={
             "colors": {
-                "secondary": ft.colors.GREEN,
-                "secondary_hover": ft.colors.GREEN_ACCENT,
-                "secondary_focus": ft.colors.LIME,
-                "secondary_pressed": ft.colors.TEAL,
+                "secondary": ft.Colors.GREEN,
+                "secondary_hover": ft.Colors.GREEN_ACCENT,
+                "secondary_focus": ft.Colors.LIME,
+                "secondary_pressed": ft.Colors.TEAL,
             },
             "typography": {"button_size": 18, "icon_size": 22},
         },
@@ -83,26 +83,26 @@ def test_secondary_button_style_and_callback():
     called: list[str] = []
     btn = SecondaryButton(
         "Cancelar",
-        icon=ft.icons.CLOSE,
+        icon=ft.Icons.CLOSE,
         theme=theme,
-        style=Style(bgcolor=ft.colors.BLUE),
+        style=Style(bgcolor=ft.Colors.BLUE),
         on_click=lambda e: called.append("cancel"),
     )
     container = btn.build()
     assert isinstance(container, ft.Container)
-    assert container.bgcolor == ft.colors.BLUE
+    assert container.bgcolor == ft.Colors.BLUE
     assert (
-        container.content.style.bgcolor[ft.ControlState.DEFAULT] == ft.colors.GREEN
+        container.content.style.bgcolor[ft.ControlState.DEFAULT] == ft.Colors.GREEN
     )
     assert (
         container.content.style.bgcolor[ft.ControlState.HOVERED]
-        == ft.colors.GREEN_ACCENT
+        == ft.Colors.GREEN_ACCENT
     )
     assert (
-        container.content.style.bgcolor[ft.ControlState.FOCUSED] == ft.colors.LIME
+        container.content.style.bgcolor[ft.ControlState.FOCUSED] == ft.Colors.LIME
     )
     assert (
-        container.content.style.bgcolor[ft.ControlState.PRESSED] == ft.colors.TEAL
+        container.content.style.bgcolor[ft.ControlState.PRESSED] == ft.Colors.TEAL
     )
     assert (
         btn.style.text_style[ft.ControlState.DEFAULT].size == 18
@@ -117,39 +117,39 @@ def test_icon_button_style_and_callback():
         page=page,
         tokens={
             "colors": {
-                "primary": ft.colors.BLUE,
-                "primary_hover": ft.colors.BLUE_200,
-                "primary_focus": ft.colors.BLUE_300,
-                "primary_pressed": ft.colors.BLUE_400,
+                "primary": ft.Colors.BLUE,
+                "primary_hover": ft.Colors.BLUE_200,
+                "primary_focus": ft.Colors.BLUE_300,
+                "primary_pressed": ft.Colors.BLUE_400,
             },
             "typography": {"icon_size": 32},
         },
     )
     called: list[str] = []
     btn = IconButton(
-        icon=ft.icons.INFO,
+        icon=ft.Icons.INFO,
         label="Info",
         theme=theme,
-        style=Style(bgcolor=ft.colors.ORANGE),
+        style=Style(bgcolor=ft.Colors.ORANGE),
         on_click=lambda e: called.append("info"),
     )
     container = btn.build()
     assert isinstance(container, ft.Container)
-    assert container.bgcolor == ft.colors.ORANGE
+    assert container.bgcolor == ft.Colors.ORANGE
     assert (
-        container.content.style.icon_color[ft.ControlState.DEFAULT] == ft.colors.BLUE
+        container.content.style.icon_color[ft.ControlState.DEFAULT] == ft.Colors.BLUE
     )
     assert (
         container.content.style.icon_color[ft.ControlState.HOVERED]
-        == ft.colors.BLUE_200
+        == ft.Colors.BLUE_200
     )
     assert (
         container.content.style.icon_color[ft.ControlState.FOCUSED]
-        == ft.colors.BLUE_300
+        == ft.Colors.BLUE_300
     )
     assert (
         container.content.style.icon_color[ft.ControlState.PRESSED]
-        == ft.colors.BLUE_400
+        == ft.Colors.BLUE_400
     )
     assert container.content.style.icon_size[ft.ControlState.DEFAULT] == 32
     btn.on_click(None)
@@ -162,34 +162,34 @@ def test_outlined_button_states_and_icon_position():
         page=page,
         tokens={
             "colors": {
-                "primary": ft.colors.BLUE,
-                "primary_hover": ft.colors.BLUE_100,
-                "primary_focus": ft.colors.BLUE_200,
-                "primary_pressed": ft.colors.BLUE_300,
+                "primary": ft.Colors.BLUE,
+                "primary_hover": ft.Colors.BLUE_100,
+                "primary_focus": ft.Colors.BLUE_200,
+                "primary_pressed": ft.Colors.BLUE_300,
             },
             "typography": {"button_size": 14, "icon_size": 18},
         },
     )
     btn = OutlinedButton(
         "Editar",
-        icon=ft.icons.EDIT,
+        icon=ft.Icons.EDIT,
         icon_position="end",
         theme=theme,
-        style=Style(bgcolor=ft.colors.WHITE),
+        style=Style(bgcolor=ft.Colors.WHITE),
     )
     container = btn.build()
     assert isinstance(container, ft.Container)
-    assert container.bgcolor == ft.colors.WHITE
+    assert container.bgcolor == ft.Colors.WHITE
     row = container.content.content
     assert isinstance(row.controls[0], ft.Text)
     assert isinstance(row.controls[1], ft.Icon)
     assert row.controls[0].size == 14
     assert row.controls[1].size == 18
     style = container.content.style
-    assert style.side[ft.ControlState.DEFAULT].color == ft.colors.BLUE
-    assert style.bgcolor[ft.ControlState.HOVERED] == ft.colors.BLUE_100
-    assert style.bgcolor[ft.ControlState.FOCUSED] == ft.colors.BLUE_200
-    assert style.bgcolor[ft.ControlState.PRESSED] == ft.colors.BLUE_300
+    assert style.side[ft.ControlState.DEFAULT].color == ft.Colors.BLUE
+    assert style.bgcolor[ft.ControlState.HOVERED] == ft.Colors.BLUE_100
+    assert style.bgcolor[ft.ControlState.FOCUSED] == ft.Colors.BLUE_200
+    assert style.bgcolor[ft.ControlState.PRESSED] == ft.Colors.BLUE_300
 
 
 def test_text_button_states():
@@ -198,21 +198,21 @@ def test_text_button_states():
         page=page,
         tokens={
             "colors": {
-                "primary": ft.colors.BLACK,
-                "primary_hover": ft.colors.GREY_400,
-                "primary_focus": ft.colors.GREY_500,
-                "primary_pressed": ft.colors.GREY_600,
+                "primary": ft.Colors.BLACK,
+                "primary_hover": ft.Colors.GREY_400,
+                "primary_focus": ft.Colors.GREY_500,
+                "primary_pressed": ft.Colors.GREY_600,
             },
             "typography": {"button_size": 12, "icon_size": 16},
         },
     )
-    btn = TextButton("Seguir", icon=ft.icons.NAVIGATE_NEXT, theme=theme)
+    btn = TextButton("Seguir", icon=ft.Icons.NAVIGATE_NEXT, theme=theme)
     control = btn.build()
     style = control.style
     assert style.text_style[ft.ControlState.DEFAULT].size == 12
     assert style.icon_size[ft.ControlState.DEFAULT] == 16
-    assert style.color[ft.ControlState.DEFAULT] == ft.colors.BLACK
-    assert style.bgcolor[ft.ControlState.HOVERED] == ft.colors.GREY_400
+    assert style.color[ft.ControlState.DEFAULT] == ft.Colors.BLACK
+    assert style.bgcolor[ft.ControlState.HOVERED] == ft.Colors.GREY_400
 
 
 def test_fab_states_and_shape():
@@ -221,26 +221,26 @@ def test_fab_states_and_shape():
         page=page,
         tokens={
             "colors": {
-                "primary": ft.colors.RED,
-                "primary_hover": ft.colors.RED_200,
-                "primary_focus": ft.colors.RED_300,
-                "primary_pressed": ft.colors.RED_400,
+                "primary": ft.Colors.RED,
+                "primary_hover": ft.Colors.RED_200,
+                "primary_focus": ft.Colors.RED_300,
+                "primary_pressed": ft.Colors.RED_400,
             },
             "typography": {"button_size": 14, "icon_size": 24},
         },
     )
     btn = FloatingActionButton(
-        icon=ft.icons.ADD,
+        icon=ft.Icons.ADD,
         theme=theme,
-        style=Style(bgcolor=ft.colors.YELLOW),
+        style=Style(bgcolor=ft.Colors.YELLOW),
     )
     container = btn.build()
-    assert container.bgcolor == ft.colors.YELLOW
+    assert container.bgcolor == ft.Colors.YELLOW
     style = container.content.style
     assert isinstance(style.shape[ft.ControlState.DEFAULT], ft.CircleBorder)
-    assert style.bgcolor[ft.ControlState.HOVERED] == ft.colors.RED_200
-    assert style.bgcolor[ft.ControlState.FOCUSED] == ft.colors.RED_300
-    assert style.bgcolor[ft.ControlState.PRESSED] == ft.colors.RED_400
+    assert style.bgcolor[ft.ControlState.HOVERED] == ft.Colors.RED_200
+    assert style.bgcolor[ft.ControlState.FOCUSED] == ft.Colors.RED_300
+    assert style.bgcolor[ft.ControlState.PRESSED] == ft.Colors.RED_400
     assert style.icon_size[ft.ControlState.DEFAULT] == 24
 
 
@@ -251,40 +251,40 @@ def test_fab_states_and_shape():
             SuccessButton,
             "success",
             (
-                ft.colors.GREEN,
-                ft.colors.GREEN_200,
-                ft.colors.GREEN_300,
-                ft.colors.GREEN_400,
+                ft.Colors.GREEN,
+                ft.Colors.GREEN_200,
+                ft.Colors.GREEN_300,
+                ft.Colors.GREEN_400,
             ),
         ),
         (
             WarningButton,
             "warning",
             (
-                ft.colors.AMBER,
-                ft.colors.AMBER_200,
-                ft.colors.AMBER_300,
-                ft.colors.AMBER_400,
+                ft.Colors.AMBER,
+                ft.Colors.AMBER_200,
+                ft.Colors.AMBER_300,
+                ft.Colors.AMBER_400,
             ),
         ),
         (
             DangerButton,
             "error",
             (
-                ft.colors.RED,
-                ft.colors.RED_200,
-                ft.colors.RED_300,
-                ft.colors.RED_400,
+                ft.Colors.RED,
+                ft.Colors.RED_200,
+                ft.Colors.RED_300,
+                ft.Colors.RED_400,
             ),
         ),
         (
             InfoButton,
             "info",
             (
-                ft.colors.BLUE,
-                ft.colors.BLUE_200,
-                ft.colors.BLUE_300,
-                ft.colors.BLUE_400,
+                ft.Colors.BLUE,
+                ft.Colors.BLUE_200,
+                ft.Colors.BLUE_300,
+                ft.Colors.BLUE_400,
             ),
         ),
     ],
@@ -306,12 +306,12 @@ def test_status_buttons(cls, color_key, colors):
     )
     btn = cls(
         "Aceptar",
-        icon=ft.icons.CHECK,
+        icon=ft.Icons.CHECK,
         theme=theme,
-        style=Style(bgcolor=ft.colors.BLACK),
+        style=Style(bgcolor=ft.Colors.BLACK),
     )
     container = btn.build()
-    assert container.bgcolor == ft.colors.BLACK
+    assert container.bgcolor == ft.Colors.BLACK
     style = container.content.style
     assert style.bgcolor[ft.ControlState.DEFAULT] == base
     assert style.bgcolor[ft.ControlState.HOVERED] == hover
@@ -319,3 +319,39 @@ def test_status_buttons(cls, color_key, colors):
     assert style.bgcolor[ft.ControlState.PRESSED] == pressed
     assert btn.style.text_style[ft.ControlState.DEFAULT].size == 15
     assert btn.style.icon_size[ft.ControlState.DEFAULT] == 25
+
+
+@pytest.mark.parametrize(
+    "cls,color_key,color",
+    [
+        (SuccessButton, "success", ft.Colors.GREEN),
+        (WarningButton, "warning", ft.Colors.AMBER),
+        (DangerButton, "error", ft.Colors.RED),
+        (InfoButton, "info", ft.Colors.BLUE),
+    ],
+)
+def test_status_buttons_icon_end(cls, color_key, color):
+    page = DummyPage()
+    theme = ThemeManager(
+        page=page,
+        tokens={
+            "colors": {color_key: color},
+            "typography": {"button_size": 10, "icon_size": 20},
+        },
+    )
+    btn = cls(
+        "Acción",
+        icon=ft.Icons.CHECK,
+        icon_position="end",
+        theme=theme,
+        style=Style(bgcolor=ft.Colors.WHITE),
+    )
+    container = btn.build()
+    assert container.bgcolor == ft.Colors.WHITE
+    row = container.content.content
+    assert isinstance(row.controls[0], ft.Text)
+    assert isinstance(row.controls[1], ft.Icon)
+    assert row.controls[0].size == 10
+    assert row.controls[1].size == 20
+    style = container.content.style
+    assert style.bgcolor[ft.ControlState.DEFAULT] == color

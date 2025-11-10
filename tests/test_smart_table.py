@@ -1,58 +1,137 @@
+import asyncio
+
 import flet as ft
-from fletplus.components.smart_table import SmartTable
-from fletplus.styles import Style
 
-class DummyPage:
-    def update(self): pass
+from fletplus.components.smart_table import (
+    SmartTable,
+    SmartTableColumn,
+    SmartTableFilter,
+    SmartTableQuery,
+    SmartTableSort,
+)
 
-class DummyControl:
-    page = DummyPage()
 
-class DummyEvent:
-    def __init__(self, column_index):
-        self.column_index = column_index
-        self.control = DummyControl()
-
-def test_smart_table_full_behavior():
-    columns = ["ID", "Nombre"]
-    rows = [
-        ft.DataRow(cells=[ft.DataCell(ft.Text("2")), ft.DataCell(ft.Text("Bob"))]),
-        ft.DataRow(cells=[ft.DataCell(ft.Text("1")), ft.DataCell(ft.Text("Alice"))]),
-        ft.DataRow(cells=[ft.DataCell(ft.Text("3")), ft.DataCell(ft.Text("Charlie"))]),
+def test_smart_table_builds_with_filters_and_multi_sort():
+    columns = [
+        SmartTableColumn("id", "ID", sortable=True),
+        SmartTableColumn("name", "Nombre", sortable=True, filterable=True),
+        SmartTableColumn("age", "Edad", sortable=True),
     ]
 
-    table = SmartTable(columns, rows, page_size=2)
+    rows = [
+        {"id": 2, "name": "Bob", "age": 25},
+        {"id": 1, "name": "Alice", "age": 31},
+        {"id": 3, "name": "Charlie", "age": 31},
+    ]
 
-    assert table.current_page == 0
-    assert table.page_size == 2
-    assert table.sort_ascending is True
-    assert table.sorted_column is None
-
+    table = SmartTable(columns, rows=rows)
     built = table.build()
+
     assert isinstance(built, ft.Column)
-    assert any(isinstance(c, ft.DataTable) for c in built.controls)
+    assert table._table is not None
+    assert len(table._table.rows) == 3
 
-    sort_handler = table._on_sort(0)
-    sort_handler(DummyEvent(0))
-    assert table.sorted_column == 0
-    assert table.sort_ascending is True
-    assert table.rows[0].cells[0].content.value == "1"
+    table.set_filter("name", "a")
+    assert len(table._table.rows) == 2
 
-    sort_handler(DummyEvent(0))
-    assert table.sort_ascending is False
-    assert table.rows[0].cells[0].content.value == "3"
+    table.toggle_sort("age")
+    table.toggle_sort("name", multi=True)
 
-    table._next_page(DummyEvent(0))
-    assert table.current_page == 1
+    first_row = table._table.rows[0]
+    assert first_row.cells[0].content.value == "1"
+    second_row = table._table.rows[1]
+    assert second_row.cells[0].content.value == "3"
 
-    table._previous_page(DummyEvent(0))
-    assert table.current_page == 0
+    # Indicadores de orden multi-columna
+    assert isinstance(table._table.columns[2].label, ft.Row)
+    assert isinstance(table._table.columns[1].label, ft.Row)
 
 
-def test_smart_table_style_applied():
-    style = Style(bgcolor=ft.colors.YELLOW)
-    table = SmartTable(["ID"], [], style=style)
-    built = table.build()
-    assert isinstance(built, ft.Container)
-    assert built.bgcolor == ft.colors.YELLOW
-    assert isinstance(built.content, ft.Column)
+def test_inline_editing_with_validation_and_callback():
+    saved_rows = []
+
+    def email_validator(value: str) -> None:
+        if "@" not in value:
+            raise ValueError("Correo inválido")
+
+    def on_save(data):
+        saved_rows.append(data.copy())
+
+    columns = [
+        SmartTableColumn("id", "ID"),
+        SmartTableColumn("email", "Correo", editable=True, validator=email_validator),
+    ]
+
+    rows = [{"id": 1, "email": "old@example.com"}]
+    table = SmartTable(columns, rows=rows, on_save=on_save)
+    table.build()
+
+    row_id = table._records[0].row_id
+    table.start_edit(row_id)
+
+    table._edit_buffers[row_id]["email"] = "new@example.com"
+    table.save_row(row_id)
+
+    assert saved_rows[0]["email"] == "new@example.com"
+    assert table._table.rows[0].selected is False
+
+
+def test_toggle_sort_cycle_removes_sort():
+    columns = [SmartTableColumn("id", "ID", sortable=True)]
+    rows = [{"id": 2}, {"id": 1}]
+    table = SmartTable(columns, rows=rows)
+    table.build()
+
+    table.toggle_sort("id")
+    assert table._sorts[0].ascending is True
+    table.toggle_sort("id")
+    assert table._sorts[0].ascending is False
+    table.toggle_sort("id")
+    assert not table._sorts
+
+
+def test_set_filter_requires_filterable_column():
+    columns = [SmartTableColumn("id", "ID", sortable=True, filterable=False)]
+    table = SmartTable(columns, rows=[{"id": 1}])
+    table.build()
+
+    try:
+        table.set_filter("id", "1")
+    except KeyError:
+        pass
+    else:
+        raise AssertionError("Se esperaba KeyError al filtrar columna no habilitada")
+
+
+def test_virtualized_async_provider_and_manual_refresh():
+    columns = [
+        SmartTableColumn("id", "ID"),
+        SmartTableColumn("value", "Valor", filterable=True),
+    ]
+
+    async def provider(query: SmartTableQuery, start: int, end: int):
+        await asyncio.sleep(0)
+        return [
+            {"id": idx, "value": f"Row {idx}"}
+            for idx in range(start, end)
+        ]
+
+    table = SmartTable(
+        columns,
+        virtualized=True,
+        data_provider=lambda q, s, e: provider(q, s, e),
+        page_size=3,
+    )
+
+    table.build()
+    assert table._records  # carga automática inicial
+    assert len(table._records) == 3
+
+    pending = table.load_more(sync=False)
+    assert pending is not None
+    asyncio.run(pending)
+
+    assert len(table._records) == 6
+
+    table.set_filter("value", "Row 5")
+    assert len(table._table.rows) == 1

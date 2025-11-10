@@ -1,95 +1,45 @@
-import flet as ft
-from fletplus.components.smart_table import SmartTable
+import asyncio
 
-
-class DummyPage:
-    def update(self):
-        pass
-
-
-class DummyControl:
-    page = DummyPage()
+from fletplus.components.smart_table import SmartTable, SmartTableColumn
 
 
 class DummyEvent:
-    def __init__(self, column_index):
-        self.column_index = column_index
-        self.control = DummyControl()
+    def __init__(self, shift_key: bool = False):
+        self.shift_key = shift_key
 
 
-def test_virtualized_with_list_provider():
-    columns = ["ID"]
-    calls = []
+def test_query_passed_to_provider_on_virtualized_requests():
+    captured_queries = []
 
-    def provider(start, end):
-        calls.append((start, end))
+    columns = [
+        SmartTableColumn("id", "ID", sortable=True),
+        SmartTableColumn("name", "Nombre", filterable=True, sortable=True),
+    ]
+
+    async def provider(query, start, end):
+        captured_queries.append(query)
+        await asyncio.sleep(0)
         return [
-            ft.DataRow(cells=[ft.DataCell(ft.Text(str(i)))])
-            for i in range(start, end)
+            {"id": idx, "name": f"Item {idx}"}
+            for idx in range(start, end)
         ]
 
     table = SmartTable(
         columns,
         virtualized=True,
-        data_provider=provider,
-        total_rows=50,
-        page_size=10,
+        page_size=2,
+        data_provider=lambda q, s, e: provider(q, s, e),
     )
 
-    rows = table._get_page_rows()
-    assert len(rows) == 10
-    assert rows[0].cells[0].content.value == "0"
-    assert calls == [(0, 10)]
+    # Aplicar filtros y orden multi-columna antes de la siguiente carga
+    table.set_filter("name", "Item")
+    table.toggle_sort("id")
+    table.toggle_sort("name", multi=True)
 
-    table._next_page(DummyEvent(0))
-    rows = table._get_page_rows()
-    assert rows[0].cells[0].content.value == "10"
-    assert calls == [(0, 10), (10, 20)]
+    pending = table.load_more(sync=False)
+    asyncio.run(pending)
 
-
-def test_virtualized_with_generator_provider():
-    columns = ["ID"]
-
-    def provider(start, end):
-        for i in range(start, end):
-            yield ft.DataRow(cells=[ft.DataCell(ft.Text(str(i)))])
-
-    table = SmartTable(
-        columns,
-        virtualized=True,
-        data_provider=provider,
-        total_rows=30,
-        page_size=10,
-    )
-
-    rows = table._get_page_rows()
-    assert len(rows) == 10
-    assert rows[-1].cells[0].content.value == "9"
-
-
-def test_virtualized_performance_calls():
-    columns = ["ID"]
-    call_count = 0
-    ranges = []
-
-    def provider(start, end):
-        nonlocal call_count
-        call_count += 1
-        ranges.append((start, end))
-        for i in range(start, end):
-            yield ft.DataRow(cells=[ft.DataCell(ft.Text(str(i)))])
-
-    table = SmartTable(
-        columns,
-        virtualized=True,
-        data_provider=provider,
-        total_rows=1000,
-        page_size=100,
-    )
-
-    table._get_page_rows()
-    table._next_page(DummyEvent(0))
-    table._get_page_rows()
-
-    assert call_count == 2
-    assert ranges == [(0, 100), (100, 200)]
+    assert captured_queries
+    query = captured_queries[-1]
+    assert "name" in query.filters
+    assert len(query.sorts) == 2

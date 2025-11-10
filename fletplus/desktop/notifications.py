@@ -1,23 +1,28 @@
+from __future__ import annotations
+
+import logging
 import sys
 from typing import Callable
+
+logger = logging.getLogger(__name__)
 
 
 def _notify_windows(title: str, body: str) -> None:
     """Muestra una notificación en Windows."""
     # Aquí se integraría la API de notificaciones de Windows
-    pass
+    raise NotImplementedError("Las notificaciones en Windows no están implementadas")
 
 
 def _notify_macos(title: str, body: str) -> None:
     """Muestra una notificación en macOS."""
     # Aquí se integraría la API de notificaciones de macOS
-    pass
+    raise NotImplementedError("Las notificaciones en macOS no están implementadas")
 
 
 def _notify_linux(title: str, body: str) -> None:
     """Muestra una notificación en Linux."""
     # Aquí se integraría la API de notificaciones de Linux
-    pass
+    raise NotImplementedError("Las notificaciones en Linux no están implementadas")
 
 
 def _notify_in_page(title: str, body: str) -> None:
@@ -39,5 +44,6 @@ def show_notification(title: str, body: str) -> None:
 
     try:
         notifier(title, body)
-    except Exception:
+    except (OSError, NotImplementedError) as err:
+        logger.error("Error al mostrar la notificación: %s", err)
         _notify_in_page(title, body)

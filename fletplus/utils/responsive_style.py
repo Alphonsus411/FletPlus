@@ -2,16 +2,74 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Mapping, Optional
 
 import flet as ft
 
 from fletplus.styles import Style
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 
 try:  # soporte opcional para detección de dispositivo
-    from fletplus.utils import device
-except Exception:  # pragma: no cover - el módulo puede no existir
-    device = None  # type: ignore
+    _device_module = __import__("fletplus.utils.device", fromlist=["device"])
+except ImportError:  # pragma: no cover - ejecutando como script
+    _device_module = None  # type: ignore
+
+
+def _is_mobile(page: ft.Page) -> bool:
+    """Detecta si la página corre en un dispositivo móvil."""
+
+    if _device_module and hasattr(_device_module, "is_mobile"):
+        try:
+            return bool(_device_module.is_mobile(page))
+        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
+            pass
+    return getattr(page, "platform", None) in {"android", "ios"}
+
+
+def _is_tablet(page: ft.Page) -> bool:
+    """Determina si la ventana actual corresponde a una tableta."""
+
+    if _device_module and hasattr(_device_module, "is_tablet"):
+        try:
+            return bool(_device_module.is_tablet(page))
+        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
+            pass
+    width = page.width or 0
+    return 600 <= width < 1024 and getattr(page, "platform", None) not in {"windows", "macos", "linux"}
+
+
+def _is_web(page: ft.Page) -> bool:
+    """Detecta si la página corre en un entorno web."""
+
+    if _device_module and hasattr(_device_module, "is_web"):
+        try:
+            return bool(_device_module.is_web(page))
+        except Exception:  # pragma: no cover - defensivo
+            pass
+    return getattr(page, "platform", None) == "web"
+
+
+def _is_desktop(page: ft.Page) -> bool:
+    """Detecta si la página corre en un escritorio."""
+
+    if _device_module and hasattr(_device_module, "is_desktop"):
+        try:
+            return bool(_device_module.is_desktop(page))
+        except Exception:  # pragma: no cover - defensivo
+            pass
+    return getattr(page, "platform", None) in {"windows", "macos", "linux"}
+
+
+def _is_large_desktop(page: ft.Page) -> bool:
+    """Detecta estaciones de trabajo o monitores ultraanchos."""
+
+    if _device_module and hasattr(_device_module, "is_large_desktop"):
+        try:
+            return bool(_device_module.is_large_desktop(page))
+        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
+            pass
+    width = page.width or 0
+    return width >= 1440 and _is_desktop(page)
 
 
 class ResponsiveStyle:
@@ -34,14 +92,14 @@ class ResponsiveStyle:
     def __init__(
         self,
         *,
-        width: Optional[Dict[int, Style]] = None,
-        height: Optional[Dict[int, Style]] = None,
+        width: Optional[Mapping[int | str, Style]] = None,
+        height: Optional[Mapping[int | str, Style]] = None,
         orientation: Optional[Dict[str, Style]] = None,
         device: Optional[Dict[str, Style]] = None,
         base: Optional[Style] = None,
     ) -> None:
-        self.width = width or {}
-        self.height = height or {}
+        self.width = BreakpointRegistry.normalize(width) if width else {}
+        self.height = BreakpointRegistry.normalize(height) if height else {}
         self.orientation = orientation or {}
         self.device = device or {}
         self.base = base
@@ -72,12 +130,18 @@ class ResponsiveStyle:
         style = self.base
 
         # Dispositivo
-        if device and self.device:
-            if device.is_mobile(page) and "mobile" in self.device:
+        if self.device:
+            if _is_mobile(page) and "mobile" in self.device:
                 style = self._merge(style, self.device["mobile"])
-            elif device.is_web(page) and "web" in self.device:
+            elif _is_tablet(page) and "tablet" in self.device:
+                style = self._merge(style, self.device["tablet"])
+            elif _is_web(page) and "web" in self.device:
                 style = self._merge(style, self.device["web"])
-            elif device.is_desktop(page) and "desktop" in self.device:
+            elif _is_large_desktop(page) and "large_desktop" in self.device:
+                if "desktop" in self.device:
+                    style = self._merge(style, self.device["desktop"])
+                style = self._merge(style, self.device["large_desktop"])
+            elif _is_desktop(page) and "desktop" in self.device:
                 style = self._merge(style, self.device["desktop"])
 
         # Breakpoints por ancho
