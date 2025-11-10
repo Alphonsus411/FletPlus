@@ -10,6 +10,7 @@ nav:
       - Contextos y proveedores: context.md
       - Perfiles de dispositivo y breakpoints:
           - Panorama general: responsive.md
+          - Visibilidad condicional: responsive.md#controlar-visibilidad-con-responsivevisibility
           - Tipografía y espaciado responsivo: responsive.md#tipografia-y-espaciado-responsivo
       - Gestor de temas, paletas y overrides: themes.md
       - Router declarativo: router.md
