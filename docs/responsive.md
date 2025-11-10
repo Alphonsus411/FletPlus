@@ -122,6 +122,74 @@ def main(page: ft.Page) -> None:
 ft.app(target=main)
 ```
 
+## Controlar visibilidad con `ResponsiveVisibility`
+
+La utilidad `fletplus.utils.responsive_visibility.ResponsiveVisibility` ofrece
+un atajo para mostrar u ocultar cualquier control según el ancho, la altura o la
+orientación de la ventana. Internamente delega en `ResponsiveManager`, por lo
+que comparte el mismo sistema de breakpoints que otras utilidades responsivas
+del paquete.
+
+### Parámetros clave
+
+- `width_breakpoints`: diccionario donde cada clave representa un breakpoint de
+  anchura (en píxeles) y el valor indica si el control debe ser visible cuando
+  la ventana supera ese ancho. `ResponsiveManager` ejecuta el callback asociado
+  al breakpoint más cercano en cada cambio de tamaño, y `ResponsiveVisibility`
+  utiliza ese evento para actualizar la propiedad `visible` del control.
+- `height_breakpoints`: se comporta igual que la configuración de anchura, pero
+  basada en la altura disponible. Puedes combinar ambos mapas para que el
+  último cambio relevante (ancho o alto) determine la visibilidad.
+- `orientation_visibility`: mapea orientaciones (`"portrait"` o `"landscape"`)
+  a valores booleanos. `ResponsiveManager` detecta la orientación actual del
+  `Page` y dispara el callback apropiado, permitiendo forzar visibilidad distinta
+  según la rotación del dispositivo.
+
+Al instanciar la clase se evalúa inmediatamente cada conjunto de breakpoints y
+orientación para sincronizar el estado inicial antes de escuchar futuros
+eventos de redimensionado.
+
+### Ejemplo práctico
+
+El siguiente fragmento crea un `Container` que solo es visible en pantallas
+anchas (≥900 px), se oculta cuando la altura cae por debajo de 480 px y se
+desactiva en orientación vertical. Cambia el tamaño de la ventana o rota el
+dispositivo para ver cómo responde la visibilidad.
+
+```python
+import flet as ft
+
+from fletplus.utils.responsive_visibility import ResponsiveVisibility
+
+
+def main(page: ft.Page) -> None:
+    banner = ft.Container(
+        bgcolor=ft.colors.BLUE,
+        padding=24,
+        content=ft.Text("Solo en modo apaisado y con suficiente espacio"),
+    )
+
+    ResponsiveVisibility(
+        page,
+        banner,
+        width_breakpoints={900: True, 0: False},
+        height_breakpoints={0: True, 480: False},
+        orientation_visibility={"landscape": True, "portrait": False},
+    )
+
+    page.add(ft.Text("Redimensiona la ventana"), banner)
+
+
+ft.app(target=main)
+```
+
+`ResponsiveVisibility` combinará los eventos emitidos por `ResponsiveManager`
+para aplicar la visibilidad apropiada. Por ejemplo, si la ventana mide 960×600,
+la anchura activará el breakpoint `900` (visible) pero la altura activará el
+breakpoint `480` (oculto), por lo que el control permanecerá oculto hasta que
+ambas condiciones vuelvan a ser favorables y la orientación siga siendo
+"landscape".
+
 ## Detectar plataforma con `is_mobile` y `is_desktop`
 
 Cuando necesites condicionar secciones completas de la interfaz por la
