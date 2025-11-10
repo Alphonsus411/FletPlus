@@ -48,6 +48,31 @@ def test_accessibility_preferences_default_focus_colors():
     assert page.theme.text_theme.body_medium.size == 14
 
 
+def test_non_contrast_updates_preserve_custom_theme_colors():
+    page = DummyPage()
+    custom_scheme = ft.ColorScheme(
+        primary=ft.Colors.GREEN,
+        on_primary=ft.Colors.BLACK,
+        secondary=ft.Colors.GREEN_ACCENT,
+        on_secondary=ft.Colors.BLACK,
+        background=ft.Colors.BROWN_200,
+        on_background=ft.Colors.BLACK,
+        surface=ft.Colors.BROWN_100,
+        on_surface=ft.Colors.BLACK,
+        error=ft.Colors.RED,
+        on_error=ft.Colors.WHITE,
+    )
+    page.theme.color_scheme = custom_scheme
+    page.theme.scaffold_bgcolor = ft.Colors.AMBER_50
+
+    prefs = AccessibilityPreferences(text_scale=1.1, high_contrast=False)
+
+    prefs.apply(page)
+
+    assert page.theme.color_scheme is custom_scheme
+    assert page.theme.scaffold_bgcolor == ft.Colors.AMBER_50
+
+
 def test_accessibility_preferences_store_tokens_on_theme_manager():
     page = DummyPage()
 
