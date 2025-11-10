@@ -72,6 +72,10 @@ real. El flujo básico es registrar estilos con
 :class:`~fletplus.utils.responsive_manager.ResponsiveManager` utilizando
 instancias de :class:`~fletplus.utils.responsive_style.ResponsiveStyle`:
 
+> ℹ️ Consulta también la [guía de perfiles de dispositivo y
+> breakpoints](responsive.md) para aprender a calcular columnas según el
+> ancho disponible o detectar la plataforma activa.
+
 ```python
 import flet as ft
 from fletplus.components import ResponsiveContainer

@@ -28,6 +28,76 @@ pip install fletplus
 - [Recorrido por la demo](docs/demo.md)
 - [Router declarativo y layouts persistentes](docs/router.md)
 - [Catálogo de componentes](docs/components.md)
+- [Perfiles de dispositivo y breakpoints](docs/responsive.md)
+
+### 📱 Helpers de perfiles de dispositivo
+
+Los módulos `fletplus.utils.device_profiles` y `fletplus.utils.device`
+incluyen utilidades listas para detectar el tipo de dispositivo y
+resolver cuántas columnas debe mostrar un layout adaptable:
+
+- `DeviceProfile`: `dataclass` que define `name`, `min_width`,
+  `max_width`, `columns` y una `description` opcional.
+- `get_device_profile(width, profiles=None)`: elige el perfil que mejor
+  encaja con el ancho proporcionado.
+- `iter_device_profiles(profiles=None)`: itera perfiles ordenados por
+  `min_width` ascendente.
+- `device_name(width, profiles=None)`: atajo para recuperar solo el
+  nombre (`"mobile"`, `"tablet"`, etc.).
+- `columns_for_width(width, profiles=None)`: devuelve la cantidad de
+  columnas sugeridas.
+- `is_mobile(page)`, `is_web(page)` e `is_desktop(page)`: helpers que
+  inspeccionan `page.platform` para condicionar layouts o navegación.
+
+El catálogo `DEFAULT_DEVICE_PROFILES` cubre estos rangos de anchura:
+
+- **mobile**: `0–599px`, 4 columnas
+- **tablet**: `600–1023px`, 8 columnas
+- **desktop**: `≥1024px`, 12 columnas
+
+Puedes combinar estas utilidades con `ResponsiveGrid` para ajustar el
+número de columnas y mostrar información contextual según el perfil
+detectado:
+
+```python
+import flet as ft
+from fletplus.components import ResponsiveGrid, ResponsiveGridItem
+from fletplus.utils.device_profiles import columns_for_width, device_name
+
+
+def main(page: ft.Page) -> None:
+    current_name = ft.Text()
+
+    def rebuild(_: ft.ControlEvent | None = None) -> None:
+        width = page.window_width or page.width or 0
+        profile = device_name(width)
+        current_name.value = f"Perfil activo: {profile}"
+        grid.columns = columns_for_width(width)
+        page.update()
+
+    grid = ResponsiveGrid(
+        columns=columns_for_width(page.window_width or 0),
+        spacing=12,
+        controls=[
+            ResponsiveGridItem(content=ft.Container(ft.Text(f"Card {i}"),
+                                                    bgcolor=ft.colors.BLUE_50,
+                                                    padding=12))
+            for i in range(1, 7)
+        ],
+    )
+
+    page.on_resize = rebuild
+    page.add(current_name, grid)
+    rebuild()
+
+
+ft.app(target=main)
+```
+
+Consulta la guía detallada en
+[`docs/responsive.md`](docs/responsive.md) para aprender a extender
+`EXTENDED_DEVICE_PROFILES`, definir tus propios breakpoints y cubrir
+escenarios híbridos.
 
 ### 🌐 Sitio estático con MkDocs
 
