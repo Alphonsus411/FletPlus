@@ -22,6 +22,7 @@ pip install fletplus
 - [Generación de iconos](docs/icons.md)
 - [Cliente HTTP reactivo](docs/http.md)
 - [Arquitectura de FletPlusApp](docs/app.md)
+- [Contextos y proveedores](docs/context.md)
 - [Gestor de temas, paletas y overrides](docs/themes.md)
 - [Proveedores de almacenamiento reactivo](docs/storage.md)
 - [Compilación y empaquetado](docs/building.md)

@@ -90,7 +90,7 @@ Revisa la guía [Animaciones coordinadas](animation.md) para ver ejemplos comple
 
 ## Contexto global y proveedores {#contexto-global}
 
-El paquete `fletplus.context` define un sistema jerárquico de contextos basado en `contextvars`. `FletPlusApp` registra automáticamente proveedores para los contextos principales:
+El paquete `fletplus.context` define un sistema jerárquico de contextos basado en `contextvars`. `FletPlusApp` registra automáticamente proveedores para los contextos principales (consulta la [guía completa de contextos](context.md) para un repaso paso a paso):
 
 - `theme_context`
 - `user_context`
