@@ -148,3 +148,65 @@ ft.app(target=main)
 Estos helpers son ideales para alternar entre barras de navegación,
 presentar diálogos específicos o activar/desactivar atajos de teclado
 según la plataforma de ejecución.
+
+## Tipografía y espaciado responsivo
+
+`ResponsiveTypography` coordina cambios de tipografía y espaciado en función
+de los breakpoints, reutilizando `ResponsiveManager` para reaccionar a cada
+`resize` de la página. Internamente expone dos accesos directos —`responsive_text`
+y `responsive_spacing`— que devuelven el tamaño y padding recomendados en el
+momento actual, permitiendo crear estilos consistentes incluso fuera de la
+instancia principal.
+
+Cuando se vincula a un `ThemeManager`, la utilidad actualiza el token
+`spacing.default` del tema activo tras cada cambio de ancho. Eso permite que
+los componentes que lean el tema (por ejemplo, paddings globales o spacing de
+layout) reflejen el mismo valor sin duplicar lógica.
+
+El siguiente ejemplo se inspira en el test `test_responsive_typography_updates_text_and_spacing`
+para ilustrar cómo se mantiene sincronizado el texto, el espaciado y los tokens
+del tema al redimensionar la ventana:
+
+```python
+import flet as ft
+
+from fletplus.themes.theme_manager import ThemeManager
+from fletplus.utils.responsive_typography import (
+    ResponsiveTypography,
+    responsive_spacing,
+    responsive_text,
+)
+
+
+def main(page: ft.Page) -> None:
+    theme = ThemeManager(page)
+    typography = ResponsiveTypography(page, theme)
+
+    message = ft.Text("Hola", style=ft.TextStyle(size=responsive_text(page)))
+    surface = ft.Container(padding=responsive_spacing(page), content=message)
+
+    typography.register_text(message)
+    typography.register_spacing_control(surface)
+
+    status = ft.Text()
+
+    def sync(_: ft.ControlEvent | None = None) -> None:
+        size = responsive_text(page)
+        spacing = responsive_spacing(page)
+        status.value = (
+            f"Texto: {size}px — Espaciado: {spacing}px — Token spacing.default: "
+            f"{theme.tokens['spacing']['default']}"
+        )
+        page.update()
+
+    page.on_resize = sync
+    page.add(status, surface)
+    sync()
+
+
+ft.app(target=main)
+```
+
+Al ampliar la ventana se incrementa automáticamente `message.style.size`, se
+actualiza el `padding` de `surface` y el `ThemeManager` reaplica el tema con el
+nuevo valor del token de espaciado, manteniendo la coherencia de toda la UI.
