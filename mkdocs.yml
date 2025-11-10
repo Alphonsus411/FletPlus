@@ -1,0 +1,36 @@
+site_name: FletPlus
+site_description: "Componentes y utilidades para crear apps Flet enriquecidas"
+nav:
+  - Inicio: index.md
+  - Guías:
+      - CLI de FletPlus: cli.md
+      - Compilación y empaquetado: building.md
+      - Router declarativo: router.md
+      - Almacenamiento reactivo: storage.md
+  - Referencias:
+      - Cliente HTTP reactivo: http.md
+      - Generación de iconos: icons.md
+      - Recorrido por la demo: demo.md
+docs_dir: docs
+theme:
+  name: material
+  language: es
+  features:
+    - navigation.instant
+    - navigation.sections
+    - content.code.copy
+plugins:
+  - search
+  - include-markdown
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - toc:
+      permalink: true
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/FletPlus/FletPlus

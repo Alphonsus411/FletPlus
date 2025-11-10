@@ -151,8 +151,8 @@ atributo de un control Flet.
 
 ## Recursos relacionados
 
-- Consulta la sección de [Gestión de estado reactivo](../README.md#-gestión-de-estado-reactivo)
-  para combinar las señales de almacenamiento con `Store` y `Signal`.
+- Consulta la sección "Gestión de estado reactivo" en la portada para combinar
+  las señales de almacenamiento con `Store` y `Signal`.
 - Explora los ejemplos de `fletplus.state` en la demo para ver cómo los controles se
   enlazan mediante `Signal.bind_control`.
 
