@@ -58,16 +58,20 @@ async def test_http_client_hooks_and_cache(tmp_path: Path):
 @pytest.mark.anyio
 async def test_http_client_interceptors(tmp_path: Path):
     captured_header = {}
+    before_calls = 0
 
     async def handler(request: httpx.Request) -> httpx.Response:
         captured_header["X-Test"] = request.headers.get("X-Test")
         return httpx.Response(200, json={"value": "ok"})
 
     transport = httpx.MockTransport(handler)
-    client = HttpClient(transport=transport)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport)
 
     async def before(request: httpx.Request) -> httpx.Request:
-        request.headers["X-Test"] = "intercepted"
+        nonlocal before_calls
+        before_calls += 1
+        request.headers["X-Test"] = f"intercepted-{before_calls}"
         return request
 
     async def after(response: httpx.Response) -> httpx.Response:
@@ -77,10 +81,13 @@ async def test_http_client_interceptors(tmp_path: Path):
     client.add_interceptor(HttpInterceptor(before_request=before, after_response=after))
 
     respuesta = await client.get("https://example.org/secure")
+    cached = await client.get("https://example.org/secure")
     await client.aclose()
 
-    assert captured_header["X-Test"] == "intercepted"
+    assert before_calls == 1
+    assert captured_header["X-Test"] == "intercepted-1"
     assert respuesta.headers["X-Intercepted"] == "1"
+    assert cached.headers["X-Intercepted"] == "1"
 
 
 @pytest.mark.anyio

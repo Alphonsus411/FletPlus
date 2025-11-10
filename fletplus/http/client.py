@@ -260,6 +260,7 @@ class HttpClient:
         self._cache = cache
         self._hooks = _HookManager()
         self._interceptors: list[HttpInterceptor] = list(interceptors or [])
+        self._cache_aliases: dict[str, str] = {}
 
     # ------------------------------------------------------------------
     @property
@@ -300,17 +301,15 @@ class HttpClient:
         await self._hooks.emit_before(event)
         request = event.request
         cache_key: str | None = None
+        raw_cache_key: str | None = None
         response: httpx.Response | None = None
         from_cache = False
         error: Exception | None = None
 
         try:
-            for interceptor in self._interceptors:
-                request = await interceptor.apply_request(request)
-            event.request = request
-
             if self._cache and use_cache and request.method.upper() == "GET":
-                cache_key = self._cache.build_key(request)
+                raw_cache_key = self._cache.build_key(request)
+                cache_key = self._cache_aliases.get(raw_cache_key, raw_cache_key)
                 event.cache_key = cache_key
 
             if cache_key and self._cache:
@@ -318,7 +317,21 @@ class HttpClient:
                 if cached is not None:
                     response = cached
                     from_cache = True
+                elif raw_cache_key and cache_key != raw_cache_key:
+                    self._cache_aliases.pop(raw_cache_key, None)
+
             if response is None:
+                for interceptor in self._interceptors:
+                    request = await interceptor.apply_request(request)
+                event.request = request
+
+                if self._cache and use_cache and request.method.upper() == "GET":
+                    mutated_key = self._cache.build_key(request)
+                    if raw_cache_key:
+                        self._cache_aliases[raw_cache_key] = mutated_key
+                    cache_key = mutated_key
+                    event.cache_key = cache_key
+
                 response = await self._client.send(request)
                 for interceptor in reversed(self._interceptors):
                     response = await interceptor.apply_response(response)
