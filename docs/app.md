@@ -71,6 +71,8 @@ Para conocer los rangos exactos de `DEFAULT_DEVICE_PROFILES`, extenderlos con `E
 
 Además, se registran observadores sobre `PreferenceStorage` para restaurar el modo (claro/oscuro) y persistir cambios. Si tu aplicación añade un selector de tema personalizado, puedes escribir directamente sobre `self.theme_mode_signal.set(...)` o utilizar el contexto `theme_context` documentado más abajo.
 
+> 💡 Para combinar el gestor de temas con escalado de texto, alto contraste o reducción de movimiento revisa la sección de [Preferencias de accesibilidad](components.md#preferencias-accesibilidad). Allí encontrarás cómo sincronizar `AccessibilityPreferences` con `ThemeManager` y `ft.Page`.
+
 ## Paleta de comandos y atajos
 
 La paleta (`CommandPalette`) recibe un diccionario de comandos al inicializar `FletPlusApp`. Cada entrada expone `text`, `shortcut` opcional y una función a ejecutar. La clase registra el atajo `Ctrl/Cmd + K` mediante `ShortcutManager`:

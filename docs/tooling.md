@@ -80,6 +80,8 @@ ft.app(target=main)
 
 `FletPlusApp` crea automáticamente una instancia de `PreferenceStorage` y observa los cambios de `ThemeManager`. Al iniciar la app se restauran el modo claro/oscuro y los *tokens* guardados; cada vez que el usuario cambia el tema, los nuevos valores se escriben otra vez en el almacenamiento elegido. Así garantizas que la preferencia visual permanece entre sesiones sin código adicional.【F:fletplus/core.py†L120-L175】
 
+> 🧭 Si también deseas persistir preferencias de accesibilidad (escala de texto, contraste, movimiento), consulta cómo reutilizar `AccessibilityPreferences` junto al `ThemeManager` en [la guía de componentes](components.md#preferencias-accesibilidad).
+
 ## Soporte PWA
 
 El módulo `fletplus.web.pwa` incluye tres utilidades clave:

@@ -31,6 +31,98 @@ ver cómo se relaciona con el ecosistema de FletPlus.
 - **AccessibilityPanel**: panel flotante que reúne accesos directos a
   preferencias de accesibilidad y tamaño de fuente.
 
+### Preferencias de accesibilidad {#preferencias-accesibilidad}
+
+`fletplus.utils.accessibility.AccessibilityPreferences` encapsula los
+ajustes más frecuentes que una persona puede necesitar para navegar una
+aplicación con comodidad. Es una `dataclass` pensada para sincronizar el
+estado de accesibilidad entre la página (`ft.Page`), los controles
+visualizados y el `ThemeManager` activo.
+
+- **Escala de texto (`text_scale`)**: multiplica el tamaño base de las
+  tipografías y tooltips. El método `apply()` recalcula un `TextTheme`
+  completo garantizando tamaños mínimos de 12 px para evitar texto
+  ilegible.
+- **Alto contraste (`high_contrast`)**: activa una paleta accesible
+  (blanco sobre negro) y resalta los estados de foco con ámbar.
+- **Reducción de movimiento (`reduce_motion`)**: deshabilita las
+  transiciones de página en todas las plataformas soportadas.
+- **Captions (`enable_captions`, `caption_mode`, `caption_duration_ms`)**:
+  habilitan subtítulos descriptivos en componentes como
+  `CaptionOverlay`. También ajustan la duración visible de tooltips y
+  captions.
+- **Otros campos**: `tooltip_wait_ms` controla la latencia antes de
+  mostrar un tooltip y `locale` permite aplicar una localización
+  específica a la página antes de actualizar el tema.
+
+Para aplicar las preferencias llama a
+`AccessibilityPreferences.apply(page, theme_manager)`. El método acepta
+un `ThemeManager` opcional: cuando se proporciona actualiza los tokens
+`typography` y `accessibility`, y finalmente invoca
+`theme_manager.apply_theme()` para propagar los cambios a la interfaz.
+Si no trabajas con `ThemeManager`, basta con pasar únicamente la página:
+
+```python
+prefs = AccessibilityPreferences(text_scale=1.2, high_contrast=True)
+prefs.apply(page)  # Modifica page.theme y llama a page.update()
+```
+
+### Ejemplo combinado con panel accesible
+
+El siguiente fragmento muestra cómo inicializar un `ThemeManager`,
+sincronizar las preferencias y reutilizarlas tanto en un
+`AccessibilityPanel` como en un `UniversalAdaptiveScaffold`:
+
+```python
+import flet as ft
+from fletplus.components import (
+    AccessibilityPanel,
+    AdaptiveNavigationItem,
+    UniversalAdaptiveScaffold,
+)
+from fletplus.themes import ThemeManager
+from fletplus.utils.accessibility import AccessibilityPreferences
+
+
+def main(page: ft.Page) -> None:
+    theme = ThemeManager(page)
+    prefs = AccessibilityPreferences(
+        text_scale=1.3,
+        high_contrast=page.platform == "windows",
+        reduce_motion=True,
+        enable_captions=True,
+        caption_mode="overlay",
+    )
+
+    # Aplica la configuración inicial sobre la página y el tema activo.
+    prefs.apply(page, theme)
+
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=[
+            AdaptiveNavigationItem("home", "Inicio", ft.Icons.HOME_OUTLINED),
+            AdaptiveNavigationItem("reports", "Reportes", ft.Icons.INSIGHTS_OUTLINED),
+            AdaptiveNavigationItem("settings", "Ajustes", ft.Icons.SETTINGS_OUTLINED),
+        ],
+        content_builder=lambda item, _: ft.Text(f"Vista: {item.label}"),
+        theme=theme,
+        accessibility=prefs,
+        accessibility_panel=AccessibilityPanel(
+            preferences=prefs,
+            theme=theme,
+        ),
+        page_title="Panel adaptable e inclusivo",
+    )
+
+    page.add(scaffold.build(page))
+
+
+ft.app(target=main)
+```
+
+Gracias a que `AccessibilityPreferences` comparte instancia con el
+panel, cualquier ajuste del usuario (por ejemplo aumentar la escala de
+texto) se refleja automáticamente en la página y en el tema.
+
 ## Datos
 
 - **SmartTable**: tabla virtualizada con filtros, ordenamiento
