@@ -72,8 +72,11 @@ class AccessibilityPreferences:
             theme_obj.scaffold_bgcolor = ft.Colors.BLACK
         else:
             # Reset a valores acordes a Material 3 pero conservando la escala
+            base_theme = ft.Theme()
             theme_obj.focus_color = ft.Colors.BLUE_300
             theme_obj.highlight_color = ft.Colors.BLUE_100
+            theme_obj.color_scheme = base_theme.color_scheme
+            theme_obj.scaffold_bgcolor = base_theme.scaffold_bgcolor
 
         if self.reduce_motion:
             theme_obj.page_transitions = ft.PageTransitionsTheme(
