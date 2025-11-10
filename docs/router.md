@@ -1,6 +1,6 @@
 # Router de FletPlus
 
-El módulo [`fletplus.router`](../fletplus/router/__init__.py) incorpora un enrutador declarativo pensado para aplicaciones construidas con Flet. Sus piezas principales son:
+El módulo `fletplus.router` incorpora un enrutador declarativo pensado para aplicaciones construidas con Flet. Sus piezas principales son:
 
 - **`Route`**: describe un segmento de navegación. Define el `path`, la función `view` que construye el control asociado y, opcionalmente, un `layout` persistente y rutas hijas.
 - **`Router`**: gestiona el árbol completo de rutas, resuelve coincidencias, mantiene el historial (`go`, `replace`, `back`) y notifica cambios a través de `observe`.
@@ -170,6 +170,5 @@ Cuando ya no necesites escuchar cambios, invoca `unsubscribe()`. El router segui
 
 ---
 
-- [`Route` y `RouteMatch`](../fletplus/router/route.py)
-- [`Router`](../fletplus/router/router.py)
-- [Ejemplo completo del router](../examples/router_basic.py)
+- Archivos fuente principales: `fletplus/router/route.py`, `fletplus/router/router.py` y `fletplus/router/__init__.py`.
+- Revisa `examples/router_basic.py` para ver una aplicación mínima que pone en práctica la guía.
