@@ -59,6 +59,8 @@ El atributo `responsive_navigation` acepta una instancia de `ResponsiveNavigatio
 
 Internamente, `ResponsiveManager` observa los cambios de tamaño y pide a `_layout_for_mode` reconstruir los contenedores pertinentes. Los íconos y títulos provienen de `_nav_routes`, generada durante la inicialización.
 
+Para conocer los rangos exactos de `DEFAULT_DEVICE_PROFILES`, extenderlos con `EXTENDED_DEVICE_PROFILES` o detectar la plataforma mediante `is_mobile`/`is_desktop`, revisa la [guía de perfiles de dispositivo y breakpoints](responsive.md).
+
 ## Gestor de temas y preferencias
 
 `FletPlusApp` crea un `ThemeManager` con la configuración proporcionada (`theme_config`). Al detectar la plataforma activa fusiona tokens específicos (por ejemplo `mobile_tokens`) en el diccionario base y expone las señales:
