@@ -8,7 +8,9 @@ nav:
       - Herramientas de desarrollo y publicación: tooling.md
       - Arquitectura de FletPlusApp: app.md
       - Contextos y proveedores: context.md
-      - Perfiles de dispositivo y breakpoints: responsive.md
+      - Perfiles de dispositivo y breakpoints:
+          - Panorama general: responsive.md
+          - Tipografía y espaciado responsivo: responsive.md#tipografia-y-espaciado-responsivo
       - Gestor de temas, paletas y overrides: themes.md
       - Router declarativo: router.md
       - Animaciones coordinadas: animation.md

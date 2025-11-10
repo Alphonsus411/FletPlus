@@ -809,6 +809,41 @@ def main(page: ft.Page):
 ft.app(target=main)
 ```
 
+## ✨ Tipografía y espaciado responsivos
+
+`ResponsiveTypography` automatiza el escalado de textos y paddings en función
+del ancho disponible, reutilizando las utilidades `responsive_text` y
+`responsive_spacing` para consultar el valor activo en cualquier punto de la
+interfaz. Además, cuando se inicializa con un `ThemeManager`, sincroniza el
+token `spacing.default` del tema para mantener la consistencia visual entre
+controles.
+
+```python
+import flet as ft
+from fletplus.themes.theme_manager import ThemeManager
+from fletplus.utils.responsive_typography import (
+    ResponsiveTypography,
+    responsive_spacing,
+    responsive_text,
+)
+
+
+def main(page: ft.Page):
+    theme = ThemeManager(page)
+    typography = ResponsiveTypography(page, theme)
+
+    title = ft.Text("Hola FletPlus", style=ft.TextStyle(size=responsive_text(page)))
+    card = ft.Container(content=title, padding=responsive_spacing(page))
+
+    typography.register_text(title)
+    typography.register_spacing_control(card)
+
+    page.add(card)
+
+
+ft.app(target=main)
+```
+
 # ♿ Interfaz adaptable y accesible
 
 - **`AdaptiveNavigationLayout`** alterna automáticamente entre barra de
