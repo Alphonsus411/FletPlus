@@ -131,16 +131,49 @@ escenarios híbridos.
 
 ```yaml
 # .github/workflows/docs.yml
+name: Publicar documentación
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4          # Checkout del repositorio
-      - run: pip install -r requirements-docs.txt  # Instala dependencias de MkDocs
-      - run: mkdocs build --strict --site-dir site # Construye el sitio estático
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements-docs.txt
+      - uses: actions/configure-pages@v4
+      - run: mkdocs build --strict --site-dir site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/deploy-pages@v4      # Publica en GitHub Pages
+      - id: deploy
+        uses: actions/deploy-pages@v4
 ```
+
+- 🛡️ **Permisos**: permiten que el workflow lea el código, genere tokens OIDC y escriba en GitHub Pages.
+- ⚙️ **Preparación de Pages**: `configure-pages` y la subida de artefactos crean el paquete que se desplegará.
+- 🚀 **Despliegue**: `deploy-pages` publica el sitio y expone la URL final asociada al entorno `github-pages`.
 
 - 📄 Guarda este workflow en `.github/workflows/docs.yml` dentro del repositorio.
 - 🌐 Habilita **Settings → Pages → Build and deployment → Source: GitHub Actions** la primera vez para permitir el despliegue automático.
