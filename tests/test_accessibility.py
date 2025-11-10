@@ -67,3 +67,21 @@ def test_accessibility_preferences_store_tokens_on_theme_manager():
     assert manager.tokens["accessibility"]["caption_mode"] == "overlay"
     assert manager.tokens["accessibility"]["captions_enabled"] is True
     assert manager.applied == 1
+
+
+def test_high_contrast_toggle_restores_base_colors():
+    page = DummyPage()
+    base_theme = ft.Theme()
+
+    prefs = AccessibilityPreferences(high_contrast=True)
+    prefs.apply(page)
+    assert page.theme.color_scheme is not None
+    assert page.theme.scaffold_bgcolor == ft.Colors.BLACK
+
+    prefs = AccessibilityPreferences(high_contrast=False)
+    prefs.apply(page)
+
+    assert page.theme.color_scheme == base_theme.color_scheme
+    assert page.theme.scaffold_bgcolor == base_theme.scaffold_bgcolor
+    assert page.theme.focus_color == ft.Colors.BLUE_300
+    assert page.theme.highlight_color == ft.Colors.BLUE_100
