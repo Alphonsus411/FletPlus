@@ -295,27 +295,30 @@ class HttpClient:
     ) -> httpx.Response:
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context or {}
-        cache_key: str | None = None
         use_cache = cache if cache is not None else True
-        if self._cache and use_cache and method.upper() == "GET":
-            cache_key = self._cache.build_key(request)
-        event = RequestEvent(request=request, context=request_context, cache_key=cache_key)
+        event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
         request = event.request
+        cache_key: str | None = None
         response: httpx.Response | None = None
         from_cache = False
         error: Exception | None = None
 
         try:
+            for interceptor in self._interceptors:
+                request = await interceptor.apply_request(request)
+            event.request = request
+
+            if self._cache and use_cache and request.method.upper() == "GET":
+                cache_key = self._cache.build_key(request)
+                event.cache_key = cache_key
+
             if cache_key and self._cache:
                 cached = self._cache.get(cache_key, request=request)
                 if cached is not None:
                     response = cached
                     from_cache = True
             if response is None:
-                for interceptor in self._interceptors:
-                    request = await interceptor.apply_request(request)
-                event.request = request
                 response = await self._client.send(request)
                 for interceptor in reversed(self._interceptors):
                     response = await interceptor.apply_response(response)

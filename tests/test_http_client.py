@@ -81,3 +81,42 @@ async def test_http_client_interceptors(tmp_path: Path):
 
     assert captured_header["X-Test"] == "intercepted"
     assert respuesta.headers["X-Intercepted"] == "1"
+
+
+@pytest.mark.anyio
+async def test_http_client_cache_key_after_request_modifications(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"url": str(request.url), "count": call_count})
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    def before_hook(event):
+        suffix = event.context.get("suffix")
+        if suffix is None:
+            return
+        params = dict(event.request.url.params)
+        params["suffix"] = suffix
+        event.request.url = event.request.url.copy_with(params=params)
+
+    client.add_before_hook(before_hook)
+
+    resp_one = await client.get("https://example.org/items", context={"suffix": "one"})
+    resp_two = await client.get("https://example.org/items", context={"suffix": "two"})
+    resp_one_cached = await client.get(
+        "https://example.org/items", context={"suffix": "one"}
+    )
+
+    await client.aclose()
+
+    assert call_count == 2
+    assert resp_one.json() == {"url": "https://example.org/items?suffix=one", "count": 1}
+    assert resp_two.json() == {"url": "https://example.org/items?suffix=two", "count": 2}
+    assert resp_one_cached.json() == {
+        "url": "https://example.org/items?suffix=one",
+        "count": 1,
+    }
