@@ -26,6 +26,7 @@ pip install fletplus
 - [Compilación y empaquetado](docs/building.md)
 - [Recorrido por la demo](docs/demo.md)
 - [Router declarativo y layouts persistentes](docs/router.md)
+- [Catálogo de componentes](docs/components.md)
 
 ### 🌐 Sitio estático con MkDocs
 
@@ -43,20 +44,44 @@ pip install fletplus
 
 ## 🧩 Componentes incluidos
 
-| Componente      | Descripción                                       |
-|----------------|---------------------------------------------------|
-| `SmartTable`   | Tabla virtualizada con filtros, orden multi-columna y edición en línea |
-| `SidebarAdmin` | Menú lateral dinámico con ítems y selección       |
-| `ResponsiveGrid` | Distribución de contenido adaptable a pantalla |
-| `ResponsiveContainer` | Aplica estilos según breakpoints definidos |
-| `AdaptiveNavigationLayout` | Shell con navegación que cambia entre barra inferior, riel o columna según la plataforma |
-| `UniversalAdaptiveScaffold` | Estructura integral con navegación adaptable, panel secundario y controles de accesibilidad integrados |
-| `LineChart`   | Gráfico de líneas interactivo basado en Canvas   |
-| `ThemeManager` | Gestión centralizada de modo claro/oscuro        |
-| `FletPlusApp`  | Estructura base para apps con navegación y tema  |
-| `SystemTray`   | Icono de bandeja del sistema con eventos         |
-| `PrimaryButton` / `SecondaryButton` / `IconButton` | Conjunto de botones tematizados y personalizables |
-| `ResponsiveVisibility` | Oculta o muestra controles según tamaño u orientación |
+La siguiente tabla recoge todos los controles expuestos por
+`fletplus.components`, organizados por su categoría principal:
+
+| Componente | Categoría | Descripción |
+|------------|-----------|-------------|
+| `AdaptiveAppHeader` | Cabeceras y overlays | Cabecera adaptable con navegación secundaria y acciones contextuales. |
+| `MetadataBadge` | Cabeceras y overlays | Distintivo para resaltar metadatos como estados beta o deprecados. |
+| `CaptionOverlay` | Cabeceras y overlays | Superposición para títulos y descripciones sobre imágenes o vídeos. |
+| `CommandPalette` | Navegación adaptable | Paleta de comandos con búsqueda incremental y atajos de teclado. |
+| `AdaptiveNavigationLayout` | Navegación adaptable | Shell que alterna entre barra inferior, riel o columna según el dispositivo. |
+| `AdaptiveDestination` | Navegación adaptable | Destino individual para `AdaptiveNavigationLayout` con icono y etiqueta. |
+| `UniversalAdaptiveScaffold` | Navegación adaptable | Armazón integral con navegación adaptable, panel secundario y accesibilidad integrada. |
+| `AdaptiveNavigationItem` | Navegación adaptable | Ítem reutilizable para poblar `UniversalAdaptiveScaffold`. |
+| `SidebarAdmin` | Navegación adaptable | Barra lateral jerárquica con selección persistente ideal para paneles administrativos. |
+| `AccessibilityPanel` | Accesibilidad | Panel flotante con accesos rápidos a preferencias de accesibilidad. |
+| `SmartTable` | Datos | Tabla virtualizada con filtros, ordenamiento y edición en línea. |
+| `LineChart` | Datos | Gráfico de líneas interactivo compatible con temas claros y oscuros. |
+| `ResponsiveContainer` | Layouts | Contenedor que aplica estilos diferentes según breakpoints definidos. |
+| `ResponsiveGrid` | Layouts | Grilla adaptable que distribuye columnas en función del ancho disponible. |
+| `ResponsiveGridItem` | Layouts | Elemento hijo para configurar anchuras y offsets dentro de `ResponsiveGrid`. |
+| `FlexRow` | Layouts | Fila flexible con control sobre alineaciones y distribución de espacio. |
+| `FlexColumn` | Layouts | Columna flexible con alineación vertical y tamaños proporcionales. |
+| `Grid` | Layouts | Grilla densa pensada para paneles modulares o dashboards. |
+| `GridItem` | Layouts | Item asociado a `Grid` que define posición y tamaño dentro de la rejilla. |
+| `Wrap` | Layouts | Distribución fluida que envuelve controles en múltiples filas o columnas. |
+| `Stack` | Layouts | Composición en capas para overlays y elementos posicionados. |
+| `StackItem` | Layouts | Elemento para fijar posición relativa dentro de `Stack`. |
+| `Spacer` | Layouts | Control auxiliar que reserva espacio flexible entre elementos. |
+| `PrimaryButton` | Botones tematizados | Botón principal con énfasis alto en la jerarquía visual. |
+| `SecondaryButton` | Botones tematizados | Botón secundario para acciones alternativas. |
+| `SuccessButton` | Botones tematizados | Variante con énfasis positivo para confirmaciones. |
+| `WarningButton` | Botones tematizados | Variante de alerta suave para advertencias. |
+| `DangerButton` | Botones tematizados | Botón crítico orientado a acciones destructivas. |
+| `InfoButton` | Botones tematizados | Variante informativa con tono neutro. |
+| `OutlinedButton` | Botones tematizados | Botón contorneado que prioriza un estilo sutil. |
+| `TextButton` | Botones tematizados | Botón textual plano para acciones sin énfasis. |
+| `IconButton` | Botones tematizados | Botón compacto basado en iconos. |
+| `FloatingActionButton` | Botones tematizados | Botón flotante redondo para acciones destacadas. |
 
 ## 🚀 SmartTable avanzada
 
