@@ -6,6 +6,7 @@ nav:
       - CLI de FletPlus: cli.md
       - Compilación y empaquetado: building.md
       - Arquitectura de FletPlusApp: app.md
+      - Gestor de temas y presets: themes.md
       - Router declarativo: router.md
       - Almacenamiento reactivo: storage.md
   - Referencias:
