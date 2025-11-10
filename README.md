@@ -20,6 +20,7 @@ pip install fletplus
 - [CLI de FletPlus](docs/cli.md)
 - [Generación de iconos](docs/icons.md)
 - [Cliente HTTP reactivo](docs/http.md)
+- [Arquitectura de FletPlusApp](docs/app.md)
 - [Proveedores de almacenamiento reactivo](docs/storage.md)
 - [Compilación y empaquetado](docs/building.md)
 - [Recorrido por la demo](docs/demo.md)

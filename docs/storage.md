@@ -155,4 +155,5 @@ atributo de un control Flet.
   las señales de almacenamiento con `Store` y `Signal`.
 - Explora los ejemplos de `fletplus.state` en la demo para ver cómo los controles se
   enlazan mediante `Signal.bind_control`.
+- Si tu app se construye con `FletPlusApp`, revisa [Arquitectura de FletPlusApp](app.md#hooks-reactivos) para integrar las señales con hooks reactivos y contextos compartidos.
 

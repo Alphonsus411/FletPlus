@@ -6,6 +6,8 @@ El módulo `fletplus.router` incorpora un enrutador declarativo pensado para apl
 - **`Router`**: gestiona el árbol completo de rutas, resuelve coincidencias, mantiene el historial (`go`, `replace`, `back`) y notifica cambios a través de `observe`.
 - **Coincidencias (`RouteMatch`)**: cada vez que una ruta es activa, el router construye un `RouteMatch` con el contexto (parámetros, ruta completa y padre) que llega a la `view` y a los `layout`.
 
+> 💡 Cuando montas el router dentro de `FletPlusApp`, la clase se encarga de sincronizar layouts, contextos compartidos y renders reactivos. Consulta [Arquitectura de FletPlusApp](app.md#contexto-global) para ver cómo se integran los contextos y hooks con la navegación.
+
 Los segmentos dinámicos se definen envolviendo el nombre del parámetro entre `<>`. Por ejemplo, `Route(path="/projects/<id>", ...)` creará un nodo que acepta `/projects/123`. En la URL real navegas con el valor (`router.go("/projects/123")`). A lo largo de la guía se referencian parámetros como `:id` para explicar el significado del valor dinámico.
 
 Los layouts persistentes se basan en `LayoutInstance`, una envoltura que conserva la jerarquía superior incluso cuando cambia la vista hoja. Puedes crearlos manualmente o con `layout_from_attribute`, que vincula el contenido de un control Flet a través de un atributo (por ejemplo `content` en un `NavigationView`).
