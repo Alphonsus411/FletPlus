@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fletplus",
-    version="0.2.3",
+    version="0.2.4",
     author="Adolfo González Hernández",
     author_email="adolfogonzal@gmail.com",
     description="Componentes avanzados y utilidades para apps Flet en Python",
