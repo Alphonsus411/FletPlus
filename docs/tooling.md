@@ -22,6 +22,14 @@ El comando `fletplus run` monitoriza el árbol del proyecto (ignorando carpetas 
 
 `SystemTray` ofrece una envoltura mínima sobre el icono de bandeja, manteniendo su visibilidad y un manejador de clic configurable a través de `on_click`. Puedes mostrar u ocultar el icono con `show()`/`hide()` y simular eventos durante pruebas con `_emit_click`. Es útil para exponer accesos rápidos a estados de la app cuando se minimiza a la bandeja.【F:fletplus/desktop/system_tray.py†L1-L25】
 
+### Notificaciones
+
+`fletplus.desktop.show_notification` intenta llamar a un backend nativo según la plataforma (`_notify_windows`, `_notify_macos`, `_notify_linux`). Actualmente estas funciones lanzan `NotImplementedError`, por lo que el soporte real en Windows, macOS y Linux está pendiente de integración.
+
+Mientras llegan esas implementaciones, la función captura los errores y recurre a `_notify_in_page`, un *fallback* que imprime el mensaje en la salida estándar de la sesión de la app. Puedes reemplazarlo por una notificación visual propia (por ejemplo, un `SnackBar` o `Banner`) asignándola cuando detectes que la plataforma aún no dispone de backend.
+
+> 🔧 **Seguimiento**: TODO — Implementar las integraciones nativas de notificaciones para Windows, macOS y Linux en cuanto se asigne el issue correspondiente.
+
 ## Gestor de drop de archivos
 
 `FileDropZone` encapsula las comprobaciones necesarias para aceptar archivos arrastrados desde el sistema operativo. Cada entrada se normaliza con `Path.resolve(strict=True)` y se descarta cualquier ruta que no exista, apunte a directorios o atraviese enlaces simbólicos en su camino.【F:fletplus/utils/dragdrop.py†L9-L58】

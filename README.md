@@ -30,6 +30,28 @@ pip install fletplus
 - [Catálogo de componentes](docs/components.md)
 - [Perfiles de dispositivo y breakpoints](docs/responsive.md)
 
+### 🖥️ Utilidades de escritorio
+
+`fletplus.desktop.show_notification` intenta usar un backend nativo dependiendo de la plataforma, y actualmente recae en un *fallback* que escribe el mensaje en la salida estándar cuando aún no existen integraciones para Windows, macOS o Linux. Sirve para prototipos rápidos, pero si necesitas notificaciones reales deberás implementar los backends nativos.
+
+```python
+import flet as ft
+from fletplus.desktop import show_notification
+
+
+def main(page: ft.Page) -> None:
+    page.add(ft.Text("Demo de notificaciones"))
+    page.add(ft.ElevatedButton(
+        "Probar notificación",
+        on_click=lambda _: show_notification("Hola", "Implementa el backend nativo cuando lo necesites"),
+    ))
+
+
+ft.app(target=main)
+```
+
+> 🔧 **Seguimiento**: TODO — Añadir soporte nativo para Windows, macOS y Linux en los helpers de notificaciones (consulta la sección [Herramientas de desarrollo y publicación](docs/tooling.md)).
+
 ### 📱 Helpers de perfiles de dispositivo
 
 Los módulos `fletplus.utils.device_profiles` y `fletplus.utils.device`
