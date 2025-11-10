@@ -40,5 +40,48 @@ detecta un cambio se reinicia el proceso `flet run` con la opción `--devtools`.
 
 ### `fletplus build`
 
-Reservado para futuros flujos de empaquetado. Por ahora muestra un mensaje con
-recomendaciones para usar herramientas existentes como `flet pack`.
+Compila la aplicación para los distintos objetivos soportados (`web`,
+`desktop`, `mobile`) reutilizando el flujo descrito en `docs/building.md`. El
+comando coordina los empaquetadores oficiales y muestra un reporte individual
+por destino.
+
+Opciones principales:
+
+- `--target {web|desktop|mobile|all}`: define qué objetivo(s) compilar. La
+  opción `all` ejecuta la cadena completa y deja los artefactos en `dist/web/`,
+  `dist/desktop/` y `dist/mobile/` respectivamente.
+- `--app PATH`: permite indicar un punto de entrada diferente al valor
+  predeterminado `src/main.py`, útil si tu proyecto organiza la aplicación en
+  otro módulo.
+
+Durante la ejecución se imprime un estado por objetivo en el formato `✅ web:
+artefactos generados en dist/web/` o `❌ desktop: falta PyInstaller`, lo que
+facilita identificar rápidamente el resultado de cada empaquetador.
+
+Ejemplos prácticos:
+
+```bash
+fletplus build --target web
+```
+
+Genera la versión lista para despliegue estático en `dist/web/`, equivalente al
+paso "Objetivo web" descrito en la guía de compilación.
+
+```bash
+fletplus build --target desktop --app src/app.py
+```
+
+Empaqueta la aplicación de escritorio con PyInstaller tomando `src/app.py` como
+entrada y dejando los binarios en `dist/desktop/`.
+
+```bash
+fletplus build --target mobile
+```
+
+Produce el paquete móvil mediante Briefcase y coloca los artefactos generados
+en `dist/mobile/`.
+
+> **Nota de compatibilidad:** asegúrate de tener instaladas las herramientas
+> externas necesarias (`PyInstaller` para `desktop` y `Briefcase` para
+> `mobile`). Para más detalles y requisitos adicionales, consulta la [guía de
+> compilación](./building.md).
