@@ -112,6 +112,9 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
     Returns
     -------
     dict[str, object]
+        Palette dictionary for the requested mode with nested dictionaries
+        flattened using underscore-separated keys. If the mode key is
+        missing in the file, an empty dictionary is returned.
         Palette dictionary for the requested mode. Nested color groups
         such as ``{"info": {"100": "#BBDEFB"}}`` are flattened into
         ``{"info_100": "#BBDEFB"}``. This works for any semantic group
@@ -149,6 +152,20 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
         else:
             flat_palette[name] = value
 
+    palette = data.get(mode, {})
+
+    def _flatten(prefix: str, value: object) -> dict[str, object]:
+        """Flatten nested dictionaries using underscore-separated keys."""
+        if isinstance(value, dict):
+            flattened: dict[str, object] = {}
+            for k, v in value.items():
+                new_prefix = f"{prefix}_{k}" if prefix else k
+                flattened.update(_flatten(new_prefix, v))
+            return flattened
+        return {prefix: value}
+
+    return _flatten("", palette)
+  
     return flat_palette
 
 
