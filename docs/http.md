@@ -86,7 +86,33 @@ cliente = HttpClient(interceptors=[
 ```
 
 Los interceptores se ejecutan en orden de registro para las peticiones y en
-orden inverso para las respuestas.
+orden inverso para las respuestas. Cuando se utiliza caché, las funciones
+`after_response` se ejecutan igualmente sobre las respuestas recuperadas del
+disco, por lo que pueden mantener la misma lógica de normalización para ambas
+fuentes.
+
+```python
+from pathlib import Path
+from fletplus import DiskCache, HttpClient, HttpInterceptor
+
+cache = DiskCache(Path.home() / ".fletplus" / "http-cache")
+
+def marcar(response):
+    contador = int(response.headers.get("X-Intercepted", "0")) + 1
+    response.headers["X-Intercepted"] = str(contador)
+    return response
+
+cliente = HttpClient(
+    cache=cache,
+    interceptors=[HttpInterceptor(after_response=marcar)],
+)
+
+primera = await cliente.get("https://api.example.com/items")
+segunda = await cliente.get("https://api.example.com/items")
+
+assert primera.headers["X-Intercepted"] == "1"
+assert segunda.headers["X-Intercepted"] == "2"  # También pasa por el interceptor
+```
 
 ## Caché local
 
