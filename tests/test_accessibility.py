@@ -110,3 +110,76 @@ def test_high_contrast_toggle_restores_base_colors():
     assert page.theme.scaffold_bgcolor == base_theme.scaffold_bgcolor
     assert page.theme.focus_color == ft.Colors.BLUE_300
     assert page.theme.highlight_color == ft.Colors.BLUE_100
+
+
+def test_high_contrast_toggle_clears_base_theme_cache():
+    page = DummyPage()
+
+    AccessibilityPreferences(high_contrast=True).apply(page)
+    AccessibilityPreferences(high_contrast=False).apply(page)
+
+    assert not hasattr(page.theme, "_base_color_scheme")
+    assert not hasattr(page.theme, "_base_scaffold_bgcolor")
+
+    custom_scheme = ft.ColorScheme(
+        primary=ft.Colors.TEAL,
+        on_primary=ft.Colors.BLACK,
+        secondary=ft.Colors.TEAL_ACCENT,
+        on_secondary=ft.Colors.BLACK,
+        background=ft.Colors.GREY_200,
+        on_background=ft.Colors.BLACK,
+        surface=ft.Colors.GREY_100,
+        on_surface=ft.Colors.BLACK,
+        error=ft.Colors.RED_ACCENT,
+        on_error=ft.Colors.WHITE,
+    )
+    page.theme.color_scheme = custom_scheme
+    page.theme.scaffold_bgcolor = ft.Colors.GREY_300
+
+    AccessibilityPreferences(high_contrast=False).apply(page)
+
+    assert page.theme.color_scheme is custom_scheme
+    assert page.theme.scaffold_bgcolor == ft.Colors.GREY_300
+
+
+def test_high_contrast_recaptures_new_base_theme():
+    page = DummyPage()
+
+    first_scheme = ft.ColorScheme(
+        primary=ft.Colors.BLUE,
+        on_primary=ft.Colors.WHITE,
+        secondary=ft.Colors.BLUE_GREY,
+        on_secondary=ft.Colors.WHITE,
+        background=ft.Colors.BLUE_100,
+        on_background=ft.Colors.BLACK,
+        surface=ft.Colors.BLUE_50,
+        on_surface=ft.Colors.BLACK,
+        error=ft.Colors.RED,
+        on_error=ft.Colors.WHITE,
+    )
+    page.theme.color_scheme = first_scheme
+    page.theme.scaffold_bgcolor = ft.Colors.BLUE_200
+
+    AccessibilityPreferences(high_contrast=True).apply(page)
+    AccessibilityPreferences(high_contrast=False).apply(page)
+
+    second_scheme = ft.ColorScheme(
+        primary=ft.Colors.GREEN,
+        on_primary=ft.Colors.BLACK,
+        secondary=ft.Colors.GREEN_ACCENT,
+        on_secondary=ft.Colors.BLACK,
+        background=ft.Colors.GREEN_50,
+        on_background=ft.Colors.BLACK,
+        surface=ft.Colors.GREEN_100,
+        on_surface=ft.Colors.BLACK,
+        error=ft.Colors.RED,
+        on_error=ft.Colors.WHITE,
+    )
+    page.theme.color_scheme = second_scheme
+    page.theme.scaffold_bgcolor = ft.Colors.GREEN_200
+
+    AccessibilityPreferences(high_contrast=True).apply(page)
+    AccessibilityPreferences(high_contrast=False).apply(page)
+
+    assert page.theme.color_scheme is second_scheme
+    assert page.theme.scaffold_bgcolor == ft.Colors.GREEN_200
