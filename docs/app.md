@@ -75,13 +75,49 @@ Además, se registran observadores sobre `PreferenceStorage` para restaurar el m
 
 ## Paleta de comandos y atajos
 
-La paleta (`CommandPalette`) recibe un diccionario de comandos al inicializar `FletPlusApp`. Cada entrada expone `text`, `shortcut` opcional y una función a ejecutar. La clase registra el atajo `Ctrl/Cmd + K` mediante `ShortcutManager`:
+La paleta (`CommandPalette`) recibe un mapeo sencillo `dict[str, Callable]` al inicializar `FletPlusApp`. Cada clave del diccionario se muestra como etiqueta en la lista y su valor debe ser una función sin argumentos que se ejecutará cuando la persona usuaria seleccione el comando. No se admiten objetos con atributos extra; basta con la pareja `texto -> callable`.
+
+```python
+import flet as ft
+from fletplus import FletPlusApp
+from fletplus.router import Route
+
+
+def main(page: ft.Page):
+    commands = {
+        "Abrir ajustes": lambda: page.go("/settings"),
+        "Refrescar datos": lambda: page.pubsub.send_all("reload"),
+    }
+
+    app = FletPlusApp(
+        page,
+        routes=[Route(path="/", name="home", view=lambda match: ft.Text("Inicio"))],
+        commands=commands,
+    )
+
+    app.build()
+
+
+ft.app(target=main)
+```
+
+La clase registra el atajo `Ctrl/Cmd + K` mediante `ShortcutManager`:
 
 ```python
 self.shortcuts.register("k", lambda: self.command_palette.open(self.page), ctrl=True)
 ```
 
-Puedes añadir otros atajos llamando a `app.shortcuts.register(...)` después de construir la instancia. La paleta también se integra con la navegación: cualquier comando puede llamar a `app.router.go(...)` para cambiar de vista.
+Si necesitas otros atajos debes gestionarlos manualmente con `ShortcutManager`. Puedes reutilizar las mismas funciones definidas en `commands`. Por ejemplo, dentro de `main` tras construir la aplicación:
+
+```python
+    app.shortcuts.register(
+        "r",
+        commands["Refrescar datos"],
+        ctrl=True,
+    )
+```
+
+La paleta también se integra con la navegación: cualquier comando puede llamar a `app.router.go(...)` para cambiar de vista.
 
 ## Integración con animaciones y layouts reactivos
 
