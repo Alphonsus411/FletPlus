@@ -58,6 +58,30 @@ def test_router_dynamic_params():
     assert captured[-1].value == "Usuario 42"
 
 
+def test_router_prefers_static_over_dynamic():
+    static_view = ft.Text("Static settings")
+
+    router = Router(
+        [
+            Route(
+                path="/items/<item_id>",
+                view=lambda match: ft.Text(f"Item {match.param('item_id')}")
+            ),
+            Route(path="/items/settings", view=lambda match: static_view),
+        ]
+    )
+
+    rendered: list[ft.Control] = []
+    router.observe(lambda _match, control: rendered.append(control))
+
+    router.go("/items/settings")
+    assert rendered[-1] is static_view
+
+    router.go("/items/42")
+    assert isinstance(rendered[-1], ft.Text)
+    assert rendered[-1].value == "Item 42"
+
+
 def test_router_nested_layout_persistence():
     container = ft.Container()
 
