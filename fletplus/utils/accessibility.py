@@ -79,8 +79,10 @@ class AccessibilityPreferences:
             theme_obj.highlight_color = ft.Colors.BLUE_100
             if hasattr(theme_obj, "_base_color_scheme"):
                 theme_obj.color_scheme = theme_obj._base_color_scheme
+                delattr(theme_obj, "_base_color_scheme")
             if hasattr(theme_obj, "_base_scaffold_bgcolor"):
                 theme_obj.scaffold_bgcolor = theme_obj._base_scaffold_bgcolor
+                delattr(theme_obj, "_base_scaffold_bgcolor")
 
         if self.reduce_motion:
             theme_obj.page_transitions = ft.PageTransitionsTheme(
