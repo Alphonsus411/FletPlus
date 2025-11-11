@@ -211,15 +211,42 @@ class Router:
                 results.append(stack + [(node, dict(params))])
             return
         segment = segments[index]
+        # Priorizamos coincidencias exactas de segmentos estáticos antes de explorar
+        # rutas dinámicas para garantizar que, en caso de ambigüedad, la ruta más
+        # específica (estática) se resuelva primero. Esto evita que una ruta con
+        # parámetro capture rutas estáticas registradas posteriormente.
+        static_children: List[_RouteNode] = []
+        dynamic_children: List[_RouteNode] = []
         for child in node.children:
             if child.dynamic:
+                dynamic_children.append(child)
+            else:
+                static_children.append(child)
+
+        for child in static_children:
+            if child.segment == segment:
                 new_params = dict(params)
-                key = child.parameter_name or "param"
-                new_params[key] = segment
-                self._dfs_match(child, segments, index + 1, new_params, stack + [(child, dict(new_params))], results)
-            elif child.segment == segment:
-                new_params = dict(params)
-                self._dfs_match(child, segments, index + 1, new_params, stack + [(child, dict(new_params))], results)
+                self._dfs_match(
+                    child,
+                    segments,
+                    index + 1,
+                    new_params,
+                    stack + [(child, dict(new_params))],
+                    results,
+                )
+
+        for child in dynamic_children:
+            new_params = dict(params)
+            key = child.parameter_name or "param"
+            new_params[key] = segment
+            self._dfs_match(
+                child,
+                segments,
+                index + 1,
+                new_params,
+                stack + [(child, dict(new_params))],
+                results,
+            )
 
     # ------------------------------------------------------------------
     @staticmethod
