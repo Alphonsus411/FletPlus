@@ -84,6 +84,42 @@ async def test_http_client_interceptors(tmp_path: Path):
 
 
 @pytest.mark.anyio
+async def test_http_client_response_interceptors_with_cache(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(
+            200,
+            json={"value": call_count},
+            headers={"X-Call": str(call_count)},
+        )
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    intercepted_headers: list[str | None] = []
+
+    def after(response: httpx.Response) -> httpx.Response:
+        intercepted_headers.append(response.headers.get("X-Call"))
+        response.headers["X-Intercepted"] = str(len(intercepted_headers))
+        return response
+
+    client.add_interceptor(HttpInterceptor(after_response=after))
+
+    primera_respuesta = await client.get("https://example.org/data")
+    segunda_respuesta = await client.get("https://example.org/data")
+
+    await client.aclose()
+
+    assert call_count == 1
+    assert primera_respuesta.headers["X-Intercepted"] == "1"
+    assert segunda_respuesta.headers["X-Intercepted"] == "2"
+    assert intercepted_headers == ["1", "1"]
+
+
+@pytest.mark.anyio
 async def test_http_client_cache_key_after_request_modifications(tmp_path: Path):
     call_count = 0
 

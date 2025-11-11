@@ -316,6 +316,12 @@ class HttpClient:
             if cache_key and self._cache:
                 cached = self._cache.get(cache_key, request=request)
                 if cached is not None:
+                    # DiskCache.get construye un httpx.Response nuevo en cada lectura,
+                    # así que los interceptores pueden modificarlo sin necesidad de
+                    # clonar ni invalidar la instancia para evitar efectos secundarios
+                    # compartidos entre llamadas.
+                    for interceptor in reversed(self._interceptors):
+                        cached = await interceptor.apply_response(cached)
                     response = cached
                     from_cache = True
             if response is None:
