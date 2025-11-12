@@ -83,9 +83,17 @@ def get_device_profile(
 def iter_device_profiles(
     profiles: Sequence[DeviceProfile] | None = None,
 ) -> Iterable[DeviceProfile]:
-    """Itera perfiles ordenados por ``min_width`` ascendente."""
+    """Itera perfiles ordenados por ``min_width`` ascendente.
 
-    catalog = tuple(profiles or DEFAULT_DEVICE_PROFILES)
+    Si ``profiles`` es ``None`` se utiliza :data:`DEFAULT_DEVICE_PROFILES`.
+    En caso contrario se respeta la secuencia proporcionada, incluso si
+    está vacía.
+    """
+
+    if profiles is None:
+        catalog = DEFAULT_DEVICE_PROFILES
+    else:
+        catalog = tuple(profiles)
     return tuple(sorted(catalog, key=lambda p: p.min_width))
 
 
