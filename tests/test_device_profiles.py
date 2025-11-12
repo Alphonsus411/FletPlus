@@ -24,6 +24,10 @@ def test_iter_device_profiles_returns_sorted_sequence():
     assert names == ["mobile", "tablet", "desktop"]
 
 
+def test_iter_device_profiles_respects_empty_sequence():
+    assert iter_device_profiles(()) == ()
+
+
 def test_custom_profiles_override_defaults():
     profiles = (
         DeviceProfile("watch", min_width=0, max_width=299, columns=2),
