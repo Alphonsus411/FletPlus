@@ -81,6 +81,11 @@ la semántica existente.
 
 ## Integración con `ResponsiveGrid`
 
+`ResponsiveGrid` puede recibir controles planos mediante el parámetro
+`children=` o instancias enriquecidas a través de `items=`. En el ejemplo
+siguiente usamos la segunda opción para envolver cada tarjeta con
+`ResponsiveGridItem(control=...)`.
+
 El siguiente fragmento actualiza el número de columnas y muestra el
 nombre del perfil activo cada vez que cambia el ancho de la ventana.
 
@@ -96,9 +101,9 @@ def main(page: ft.Page) -> None:
     grid = ResponsiveGrid(
         columns=columns_for_width(page.window_width or 0),
         spacing=16,
-        controls=[
+        items=[
             ResponsiveGridItem(
-                content=ft.Container(
+                control=ft.Container(
                     content=ft.Text(f"Card {i}"),
                     padding=12,
                     bgcolor=ft.colors.with_opacity(0.08, ft.colors.BLUE),

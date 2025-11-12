@@ -102,10 +102,14 @@ def main(page: ft.Page) -> None:
     grid = ResponsiveGrid(
         columns=columns_for_width(page.window_width or 0),
         spacing=12,
-        controls=[
-            ResponsiveGridItem(content=ft.Container(ft.Text(f"Card {i}"),
-                                                    bgcolor=ft.colors.BLUE_50,
-                                                    padding=12))
+        items=[
+            ResponsiveGridItem(
+                control=ft.Container(
+                    ft.Text(f"Card {i}"),
+                    bgcolor=ft.colors.BLUE_50,
+                    padding=12,
+                )
+            )
             for i in range(1, 7)
         ],
     )
@@ -122,6 +126,11 @@ Consulta la guía detallada en
 [`docs/responsive.md`](docs/responsive.md) para aprender a extender
 `EXTENDED_DEVICE_PROFILES`, definir tus propios breakpoints y cubrir
 escenarios híbridos.
+
+> Nota: `ResponsiveGrid` acepta tanto controles planos mediante `children=`
+> como items con metadata adicional usando `items=`. Los ejemplos emplean la
+> segunda modalidad para ilustrar cómo envolver cada control con
+> `ResponsiveGridItem(control=...)`.
 
 ### 🌐 Sitio estático con MkDocs
 
