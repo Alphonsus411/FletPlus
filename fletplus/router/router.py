@@ -5,6 +5,11 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
 
+try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
+    from . import router_cy as _router_cy
+except Exception:  # pragma: no cover - fallback cuando no hay compilación
+    _router_cy = None
+
 import flet as ft
 
 from .route import LayoutInstance, Route, RouteMatch
@@ -131,7 +136,7 @@ class Router:
         self._render_path(normalized)
 
     def _render_path(self, path: str) -> None:
-        matches = self._match(path)
+        matches = _match(self._root, path)
         if not matches:
             raise RouteNotFoundError(f"Ruta no encontrada: {path}")
         path_nodes = matches[0]
@@ -188,66 +193,7 @@ class Router:
 
     # ------------------------------------------------------------------
     def _match(self, path: str) -> List[List[tuple[_RouteNode, Dict[str, str]]]]:
-        segments = _normalize_path(path)
-        results: List[List[tuple[_RouteNode, Dict[str, str]]]] = []
-        if not segments:
-            if self._root.view_builder is not None:
-                results.append([(self._root, {})])
-            return results
-        self._dfs_match(self._root, segments, 0, {}, [], results)
-        return results
-
-    def _dfs_match(
-        self,
-        node: _RouteNode,
-        segments: Sequence[str],
-        index: int,
-        params: Dict[str, str],
-        stack: List[tuple[_RouteNode, Dict[str, str]]],
-        results: List[List[tuple[_RouteNode, Dict[str, str]]]],
-    ) -> None:
-        if index == len(segments):
-            if node.view_builder is not None:
-                results.append(stack + [(node, dict(params))])
-            return
-        segment = segments[index]
-        # Priorizamos coincidencias exactas de segmentos estáticos antes de explorar
-        # rutas dinámicas para garantizar que, en caso de ambigüedad, la ruta más
-        # específica (estática) se resuelva primero. Esto evita que una ruta con
-        # parámetro capture rutas estáticas registradas posteriormente.
-        static_children: List[_RouteNode] = []
-        dynamic_children: List[_RouteNode] = []
-        for child in node.children:
-            if child.dynamic:
-                dynamic_children.append(child)
-            else:
-                static_children.append(child)
-
-        for child in static_children:
-            if child.segment == segment:
-                new_params = dict(params)
-                self._dfs_match(
-                    child,
-                    segments,
-                    index + 1,
-                    new_params,
-                    stack + [(child, dict(new_params))],
-                    results,
-                )
-
-        for child in dynamic_children:
-            new_params = dict(params)
-            key = child.parameter_name or "param"
-            new_params[key] = segment
-            self._dfs_match(
-                child,
-                segments,
-                index + 1,
-                new_params,
-                stack + [(child, dict(new_params))],
-                results,
-            )
-
+        return _match(self._root, path)
     # ------------------------------------------------------------------
     @staticmethod
     def _find_child(node: _RouteNode, segment: str) -> Optional[_RouteNode]:
@@ -260,11 +206,7 @@ class Router:
         return None
 
 
-def _normalize_path_string(path: str) -> str:
-    return "/" + "/".join(_normalize_path(path)) if path else "/"
-
-
-def _normalize_path(path: str) -> List[str]:
+def _normalize_path_py(path: str) -> List[str]:
     cleaned = path.strip()
     if not cleaned or cleaned == "/":
         return []
@@ -275,16 +217,77 @@ def _normalize_path(path: str) -> List[str]:
     return [segment for segment in cleaned.split("/") if segment]
 
 
-def _parse_segment(segment: str) -> tuple[bool, Optional[str]]:
+def _normalize_path_string_py(path: str) -> str:
+    return "/" + "/".join(_normalize_path_py(path)) if path else "/"
+
+
+def _parse_segment_py(segment: str) -> tuple[bool, Optional[str]]:
     if segment.startswith("<") and segment.endswith(">") and len(segment) > 2:
         return True, segment[1:-1]
     return False, None
 
 
-def _join_paths(base: str, segment: str) -> str:
+def _join_paths_py(base: str, segment: str) -> str:
     base = base.rstrip("/")
     if not base:
         base = "/"
     if segment.startswith("/"):
-        return _normalize_path_string(segment)
+        return _normalize_path_string_py(segment)
     return f"{base}/{segment}" if base != "/" else f"/{segment}"
+
+
+def _match_py(root: _RouteNode, path: str) -> List[List[tuple[_RouteNode, Dict[str, str]]]]:
+    segments = _normalize_path_py(path)
+    results: List[List[tuple[_RouteNode, Dict[str, str]]]] = []
+    if not segments:
+        if root.view_builder is not None:
+            results.append([(root, {})])
+        return results
+    _dfs_match_py(root, segments, 0, {}, [None] * (len(segments) + 1), results)
+    return results
+
+
+def _dfs_match_py(
+    node: _RouteNode,
+    segments: Sequence[str],
+    index: int,
+    params: Dict[str, str],
+    stack: List[tuple[_RouteNode, Dict[str, str]] | None],
+    results: List[List[tuple[_RouteNode, Dict[str, str]]]],
+) -> None:
+    if index == len(segments):
+        if node.view_builder is not None:
+            stack[index] = (node, dict(params))
+            results.append([entry for entry in stack[: index + 1] if entry is not None])
+        return
+    segment = segments[index]
+    static_children: List[_RouteNode] = []
+    dynamic_children: List[_RouteNode] = []
+    for child in node.children:
+        if child.dynamic:
+            dynamic_children.append(child)
+        else:
+            static_children.append(child)
+
+    for child in static_children:
+        if child.segment == segment:
+            stack[index] = (child, dict(params))
+            _dfs_match_py(child, segments, index + 1, params, stack, results)
+
+    for child in dynamic_children:
+        key = child.parameter_name or "param"
+        params[key] = segment
+        stack[index] = (child, dict(params))
+        _dfs_match_py(child, segments, index + 1, params, stack, results)
+        params.pop(key, None)
+
+
+# Selección de la implementación optimizada
+_normalize_path = _router_cy._normalize_path if _router_cy else _normalize_path_py
+_normalize_path_string = (
+    _router_cy._normalize_path_string if _router_cy else _normalize_path_string_py
+)
+_parse_segment = _router_cy._parse_segment if _router_cy else _parse_segment_py
+_join_paths = _router_cy._join_paths if _router_cy else _join_paths_py
+_dfs_match = _router_cy._dfs_match if _router_cy else _dfs_match_py
+_match = _router_cy._match if _router_cy else _match_py

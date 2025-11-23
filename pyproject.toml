@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "Cython>=3.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,3 +31,6 @@ fletplus = "fletplus.cli.main:app"
 Homepage = "https://github.com/Alphonsus411/fletplus"
 Repository = "https://github.com/Alphonsus411/fletplus"
 Documentation = "https://github.com/Alphonsus411/fletplus#readme"
+
+[tool.setuptools.package-data]
+"fletplus.router" = ["router_cy.c", "router_cy.pyx", "router_cy.pxd"]
