@@ -9,6 +9,7 @@ DEFAULT_CYTHON_MODULES = (
     ("fletplus.router.router_cy", Path("fletplus/router/router_cy.pyx")),
     ("fletplus.http.disk_cache", Path("fletplus/http/disk_cache.pyx")),
     ("fletplus.state.state", Path("fletplus/state/state.pyx")),
+    ("fletplus.utils.responsive_manager", Path("fletplus/utils/responsive_manager.pyx")),
 )
 
 
@@ -86,6 +87,11 @@ setup(
         "fletplus.router": ["router_cy.c", "router_cy.pyx", "router_cy.pxd"],
         "fletplus.http": ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"],
         "fletplus.state": ["state.c", "state.pyx", "state.pxd"],
+        "fletplus.utils": [
+            "responsive_manager.c",
+            "responsive_manager.pyx",
+            "responsive_manager.pxd",
+        ],
     },
     install_requires=[
         "flet>=0.27.0",
