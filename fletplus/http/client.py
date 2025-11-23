@@ -307,8 +307,22 @@ class HttpClient:
         request_context.setdefault("websocket", True)
         event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
+        request = event.request
         try:
-            websocket = await self._client.websocket_connect(url, **kwargs)
+            for interceptor in self._interceptors:
+                request = await interceptor.apply_request(request)
+            event.request = request
+
+            connect_kwargs = dict(kwargs)
+            connect_kwargs.pop("headers", None)
+            connect_kwargs.pop("params", None)
+            websocket = await self._client.websocket_connect(
+                str(request.url), headers=request.headers, **connect_kwargs
+            )
+            response = websocket.response
+            for interceptor in reversed(self._interceptors):
+                response = await interceptor.apply_response(response)
+            websocket.response = response
         except Exception as exc:  # pragma: no cover - rutas excepcionales
             response_event = ResponseEvent(
                 request_event=event,
@@ -321,7 +335,7 @@ class HttpClient:
             raise
         response_event = ResponseEvent(
             request_event=event,
-            response=websocket.response,
+            response=response,
             context=request_context,
             from_cache=False,
             error=None,
