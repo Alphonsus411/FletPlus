@@ -133,3 +133,33 @@ def test_router_invalid_route():
 
     with pytest.raises(ValueError):
         router.go("/unknown")
+
+
+def test_router_match_consistency_between_impls():
+    router = Router(
+        [
+            Route(path="/static", view=lambda match: ft.Text("Static")),
+            Route(path="/items/<item_id>", view=lambda match: ft.Text(match.param("item_id"))),
+        ]
+    )
+
+    from fletplus.router import router as router_mod
+
+    paths = ["/static", "/items/1", "/items/abc"]
+
+    def normalize(results):
+        normalized = []
+        for path_nodes in results:
+            normalized.append([(node.full_path, params) for node, params in path_nodes])
+        return normalized
+
+    base_results = [normalize(router._match(path)) for path in paths]
+    py_results = [normalize(router_mod._match_py(router._root, path)) for path in paths]
+
+    # Si la implementación en C está disponible, verificamos también su salida.
+    cy_module = router_mod._router_cy
+    if cy_module is not None:
+        cy_results = [normalize(cy_module._match(router._root, path)) for path in paths]
+        assert cy_results == base_results
+
+    assert py_results == base_results
