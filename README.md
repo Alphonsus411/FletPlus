@@ -37,12 +37,13 @@ pip install fletplus
 La CLI incluye un comando de perfilado que ejecuta flujos representativos (navegación del router, generación de plantillas y utilidades responsivas) con `cProfile` y muestra un reporte ordenado por tiempo usando `pstats`:
 
 ```bash
-fletplus profile --output build/profile.txt --sort cumtime --limit 30
+fletplus profile --output tools/profile-report.txt --sort tottime --limit 40
 ```
 
-- Sin filtros (`--flow`) se ejecutan todos los flujos; para limitar el análisis, indica los nombres disponibles: `--flow router`, `--flow scaffold`, `--flow responsive`.
-- El reporte se imprime en consola y se guarda en la ruta indicada por `--output`.
-- El ordenamiento admite `tottime`, `cumtime`, `ncalls` o `calls` para ayudarte a detectar cuellos de botella.
+- Sin filtros (`--flow`) se ejecutan todos los flujos; para limitar el análisis, indica los nombres disponibles como banderas repetibles: `--flow router --flow scaffold --flow responsive`.
+- El reporte se imprime en consola y se guarda en la ruta indicada por `--output` (por defecto `profile-report.txt` en el directorio actual).
+- El ordenamiento (`--sort`) admite `tottime`, `cumtime`, `ncalls` o `calls` y se ordena por `tottime` de manera predeterminada.
+- El límite de filas impresas (`--limit`) es 40 si no se especifica otro valor.
 
 ## ⚙️ Configuración de módulos Cython
 
