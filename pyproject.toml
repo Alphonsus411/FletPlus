@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fletplus"
-version = "0.2.5"
+version = "0.2.6"
 description = "Componentes visuales avanzados para Flet en Python"
 authors = [
   { name="Adolfo González", email="adolfogonzal@gmail.com" }

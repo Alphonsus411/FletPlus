@@ -53,7 +53,7 @@ def _load_module_config() -> list[tuple[str, Path]]:
     return modules
 
 
-def _build_extensions():
+def _build_extensions(Cython=None):
     modules = _load_module_config()
     try:
         from Cython.Build import cythonize
@@ -70,7 +70,7 @@ def _build_extensions():
 
 setup(
     name="fletplus",
-    version="0.2.5",
+    version="0.2.6",
     author="Adolfo González Hernández",
     author_email="adolfogonzal@gmail.com",
     description="Componentes avanzados y utilidades para apps Flet en Python",
