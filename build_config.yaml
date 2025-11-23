@@ -1,0 +1,5 @@
+cython_modules:
+  - name: fletplus.router.router_cy
+    path: fletplus/router/router_cy.pyx
+  - name: fletplus.http.disk_cache
+    path: fletplus/http/disk_cache.pyx

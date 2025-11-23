@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import cProfile
+import io
 import os
+import pstats
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 from importlib import resources
 from importlib.resources.abc import Traversable
@@ -51,6 +55,63 @@ def _copy_template_tree(template_root: Traversable, destination: Path, context: 
                     shutil.copyfileobj(source, target)
             else:
                 target_path.write_text(_render_template(content, context), encoding="utf-8")
+
+
+def _profile_router_navigation() -> None:
+    from fletplus.router import Route, Router
+    import flet as ft
+
+    router = Router(
+        routes=[
+            Route(path="/", view=lambda _: ft.Text("inicio")),
+            Route(path="/dashboard", view=lambda _: ft.Text("dashboard")),
+            Route(
+                path="/usuarios/{user_id}",
+                view=lambda match: ft.Text(
+                    f"usuario {match.params.get('user_id')}",
+                    key=match.params.get("user_id"),
+                ),
+            ),
+        ]
+    )
+    router.observe(lambda _match, _view: None)
+    for path in ("/", "/dashboard", "/usuarios/42", "/usuarios/99", "/dashboard", "/"):
+        router.go(path)
+
+
+def _profile_scaffold_generation() -> None:
+    template_root = resources.files(TEMPLATE_PACKAGE).joinpath("templates", "app")
+    context = {"project_name": "Perfil", "package_name": "perfil"}
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        destino = Path(tmp_dir) / "demo"
+        destino.mkdir(parents=True, exist_ok=True)
+        _copy_template_tree(template_root, destino, context)
+
+
+def _profile_responsive_utils() -> None:
+    from fletplus.utils.device_profiles import columns_for_width, iter_device_profiles
+
+    profiles = tuple(iter_device_profiles())
+    for width in (320, 480, 640, 800, 1024, 1366, 1600, 1920):
+        columns_for_width(width, profiles)
+
+
+PROFILE_FLOWS: dict[str, Callable[[], None]] = {
+    "router": _profile_router_navigation,
+    "scaffold": _profile_scaffold_generation,
+    "responsive": _profile_responsive_utils,
+}
+
+
+def _run_profile(flows: Iterable[Callable[[], None]], *, sort: str, limit: int) -> str:
+    profiler = cProfile.Profile()
+    for flow in flows:
+        profiler.runcall(flow)
+
+    output = io.StringIO()
+    stats = pstats.Stats(profiler, stream=output).sort_stats(sort)
+    stats.print_stats(limit)
+    return output.getvalue()
 
 
 @app.command()
@@ -190,6 +251,50 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
         observer.stop()
         observer.join()
         _stop_process(proceso)
+
+
+@app.command()
+@click.option(
+    "--flow",
+    "flow_names",
+    multiple=True,
+    type=click.Choice(sorted(PROFILE_FLOWS)),
+    help="Flujos a ejecutar (por defecto todos).",
+)
+@click.option(
+    "--output",
+    "output_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=Path("profile-report.txt"),
+    show_default=True,
+    help="Archivo donde se almacenará el reporte.",
+)
+@click.option(
+    "--sort",
+    type=click.Choice(["tottime", "cumtime", "ncalls", "calls"], case_sensitive=False),
+    default="tottime",
+    show_default=True,
+    help="Columna por la que se ordenará el reporte de pstats.",
+)
+@click.option(
+    "--limit",
+    type=int,
+    default=40,
+    show_default=True,
+    help="Número de filas a mostrar en el reporte impreso.",
+)
+def profile(flow_names: tuple[str, ...], output_path: Path, sort: str, limit: int) -> None:
+    """Ejecuta flujos clave con cProfile y genera un reporte."""
+
+    selected_names = flow_names or tuple(PROFILE_FLOWS)
+    flows = [PROFILE_FLOWS[name] for name in selected_names]
+    click.echo(f"Ejecutando {len(flows)} flujo(s): {', '.join(selected_names)}")
+    report = _run_profile(flows, sort=sort, limit=limit)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(report, encoding="utf-8")
+    click.echo(f"Reporte almacenado en {output_path}")
+    click.echo(report)
 
 
 @app.command()

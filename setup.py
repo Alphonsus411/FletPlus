@@ -1,13 +1,58 @@
+import json
 from pathlib import Path
 
 from setuptools import Extension, find_packages, setup
 
 
+CONFIG_FILENAMES = ("build_config.yaml", "build_config.yml", "build_config.json")
+DEFAULT_CYTHON_MODULES = (
+    ("fletplus.router.router_cy", Path("fletplus/router/router_cy.pyx")),
+    ("fletplus.http.disk_cache", Path("fletplus/http/disk_cache.pyx")),
+)
+
+
+def _load_module_config() -> list[tuple[str, Path]]:
+    base_dir = Path(__file__).parent
+    for filename in CONFIG_FILENAMES:
+        config_path = base_dir / filename
+        if not config_path.exists():
+            continue
+
+        try:
+            if config_path.suffix in {".yaml", ".yml"}:
+                import yaml  # type: ignore
+
+                data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+            else:
+                data = json.loads(config_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        if not isinstance(data, dict):
+            continue
+
+        modules = []
+        for entry in data.get("cython_modules", ()):  # type: ignore[arg-type]
+            if not isinstance(entry, dict):
+                continue
+            name = entry.get("name")
+            path_str = entry.get("path")
+            if not name or not path_str:
+                continue
+            path = Path(str(path_str))
+            modules.append((str(name), path if path.is_absolute() else base_dir / path))
+
+        if modules:
+            return modules
+
+    modules = []
+    for name, path in DEFAULT_CYTHON_MODULES:
+        modules.append((name, path if path.is_absolute() else base_dir / path))
+    return modules
+
+
 def _build_extensions():
-    modules = [
-        ("fletplus.router.router_cy", Path("fletplus/router/router_cy.pyx")),
-        ("fletplus.http.disk_cache", Path("fletplus/http/disk_cache.pyx")),
-    ]
+    modules = _load_module_config()
     try:
         from Cython.Build import cythonize
 
