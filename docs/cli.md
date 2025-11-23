@@ -38,6 +38,36 @@ Opciones relevantes:
 El comando mantiene un observador de archivos usando `watchdog`; cada vez que se
 detecta un cambio se reinicia el proceso `flet run` con la opción `--devtools`.
 
+### `fletplus profile`
+
+Ejecuta flujos internos con `cProfile` para detectar cuellos de botella dentro
+del propio paquete y genera un reporte en texto plano.
+
+Opciones principales:
+
+- `--flow`: permite seleccionar uno o varios flujos (`router`, `scaffold`,
+  `responsive`). Si no se especifica, se ejecutan todos.
+- `--output`: ruta del archivo donde se guardará el reporte (por defecto
+  `profile-report.txt`).
+- `--sort`: columna por la que ordenar el reporte de `pstats` (`tottime`,
+  `cumtime`, `ncalls` o `calls`).
+- `--limit`: número de filas a mostrar al imprimir el reporte.
+
+Ejemplos prácticos:
+
+```bash
+fletplus profile --output build/profile.txt --sort cumtime --limit 30
+```
+
+Genera un perfil ordenado por tiempo acumulado y lo guarda en `build/profile.txt`.
+
+```bash
+fletplus profile --flow router --flow responsive --limit 10
+```
+
+Perfilado parcial ejecutando únicamente los flujos de navegación y utilidades
+responsivas, mostrando las 10 filas más relevantes.
+
 ### `fletplus build`
 
 Compila la aplicación para los distintos objetivos soportados (`web`,
