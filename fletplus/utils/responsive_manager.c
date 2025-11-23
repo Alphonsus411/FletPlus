@@ -1543,8 +1543,8 @@ struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager {
 };
 
 
-/* "fletplus/utils/responsive_manager.pyx":51
- *     """
+/* "fletplus/utils/responsive_manager.pyx":57
+ *         return BreakpointRegistry.normalize(mapping)
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
@@ -1906,6 +1906,53 @@ static CYTHON_INLINE int __Pyx_ParseKeywords(
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
 
+/* PyDictVersioning.proto (used by GetModuleGlobalName) */
+#if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
+#define __PYX_DICT_VERSION_INIT  ((PY_UINT64_T) -1)
+#define __PYX_GET_DICT_VERSION(dict)  (((PyDictObject*)(dict))->ma_version_tag)
+#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)\
+    (version_var) = __PYX_GET_DICT_VERSION(dict);\
+    (cache_var) = (value);
+#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP) {\
+    static PY_UINT64_T __pyx_dict_version = 0;\
+    static PyObject *__pyx_dict_cached_value = NULL;\
+    if (likely(__PYX_GET_DICT_VERSION(DICT) == __pyx_dict_version)) {\
+        (VAR) = __Pyx_XNewRef(__pyx_dict_cached_value);\
+    } else {\
+        (VAR) = __pyx_dict_cached_value = (LOOKUP);\
+        __pyx_dict_version = __PYX_GET_DICT_VERSION(DICT);\
+    }\
+}
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj);
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj);
+static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version);
+#else
+#define __PYX_GET_DICT_VERSION(dict)  (0)
+#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)
+#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP)  (VAR) = (LOOKUP);
+#endif
+
+/* GetModuleGlobalName.proto */
+#if CYTHON_USE_DICT_VERSIONS
+#define __Pyx_GetModuleGlobalName(var, name)  do {\
+    static PY_UINT64_T __pyx_dict_version = 0;\
+    static PyObject *__pyx_dict_cached_value = NULL;\
+    (var) = (likely(__pyx_dict_version == __PYX_GET_DICT_VERSION(__pyx_mstate_global->__pyx_d))) ?\
+        (likely(__pyx_dict_cached_value) ? __Pyx_NewRef(__pyx_dict_cached_value) : __Pyx_GetBuiltinName(name)) :\
+        __Pyx__GetModuleGlobalName(name, &__pyx_dict_version, &__pyx_dict_cached_value);\
+} while(0)
+#define __Pyx_GetModuleGlobalNameUncached(var, name)  do {\
+    PY_UINT64_T __pyx_dict_version;\
+    PyObject *__pyx_dict_cached_value;\
+    (var) = __Pyx__GetModuleGlobalName(name, &__pyx_dict_version, &__pyx_dict_cached_value);\
+} while(0)
+static PyObject *__Pyx__GetModuleGlobalName(PyObject *name, PY_UINT64_T *dict_version, PyObject **dict_cached_value);
+#else
+#define __Pyx_GetModuleGlobalName(var, name)  (var) = __Pyx__GetModuleGlobalName(name)
+#define __Pyx_GetModuleGlobalNameUncached(var, name)  (var) = __Pyx__GetModuleGlobalName(name)
+static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name);
+#endif
+
 /* RaiseClosureNameError.proto */
 static void __Pyx_RaiseClosureNameError(const char *varname);
 
@@ -1958,53 +2005,6 @@ static CYTHON_INLINE PyObject* __Pyx_dict_iterator(PyObject* dict, int is_dict, 
                                                    Py_ssize_t* p_orig_length, int* p_is_dict);
 static CYTHON_INLINE int __Pyx_dict_iter_next(PyObject* dict_or_iter, Py_ssize_t orig_length, Py_ssize_t* ppos,
                                               PyObject** pkey, PyObject** pvalue, PyObject** pitem, int is_dict);
-
-/* PyDictVersioning.proto (used by GetModuleGlobalName) */
-#if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
-#define __PYX_DICT_VERSION_INIT  ((PY_UINT64_T) -1)
-#define __PYX_GET_DICT_VERSION(dict)  (((PyDictObject*)(dict))->ma_version_tag)
-#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)\
-    (version_var) = __PYX_GET_DICT_VERSION(dict);\
-    (cache_var) = (value);
-#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP) {\
-    static PY_UINT64_T __pyx_dict_version = 0;\
-    static PyObject *__pyx_dict_cached_value = NULL;\
-    if (likely(__PYX_GET_DICT_VERSION(DICT) == __pyx_dict_version)) {\
-        (VAR) = __Pyx_XNewRef(__pyx_dict_cached_value);\
-    } else {\
-        (VAR) = __pyx_dict_cached_value = (LOOKUP);\
-        __pyx_dict_version = __PYX_GET_DICT_VERSION(DICT);\
-    }\
-}
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj);
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj);
-static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version);
-#else
-#define __PYX_GET_DICT_VERSION(dict)  (0)
-#define __PYX_UPDATE_DICT_CACHE(dict, value, cache_var, version_var)
-#define __PYX_PY_DICT_LOOKUP_IF_MODIFIED(VAR, DICT, LOOKUP)  (VAR) = (LOOKUP);
-#endif
-
-/* GetModuleGlobalName.proto */
-#if CYTHON_USE_DICT_VERSIONS
-#define __Pyx_GetModuleGlobalName(var, name)  do {\
-    static PY_UINT64_T __pyx_dict_version = 0;\
-    static PyObject *__pyx_dict_cached_value = NULL;\
-    (var) = (likely(__pyx_dict_version == __PYX_GET_DICT_VERSION(__pyx_mstate_global->__pyx_d))) ?\
-        (likely(__pyx_dict_cached_value) ? __Pyx_NewRef(__pyx_dict_cached_value) : __Pyx_GetBuiltinName(name)) :\
-        __Pyx__GetModuleGlobalName(name, &__pyx_dict_version, &__pyx_dict_cached_value);\
-} while(0)
-#define __Pyx_GetModuleGlobalNameUncached(var, name)  do {\
-    PY_UINT64_T __pyx_dict_version;\
-    PyObject *__pyx_dict_cached_value;\
-    (var) = __Pyx__GetModuleGlobalName(name, &__pyx_dict_version, &__pyx_dict_cached_value);\
-} while(0)
-static PyObject *__Pyx__GetModuleGlobalName(PyObject *name, PY_UINT64_T *dict_version, PyObject **dict_cached_value);
-#else
-#define __Pyx_GetModuleGlobalName(var, name)  (var) = __Pyx__GetModuleGlobalName(name)
-#define __Pyx_GetModuleGlobalNameUncached(var, name)  (var) = __Pyx__GetModuleGlobalName(name)
-static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name);
-#endif
 
 /* RaiseUnexpectedTypeError.proto */
 static int __Pyx_RaiseUnexpectedTypeError(const char *expected, PyObject *obj);
@@ -2333,6 +2333,10 @@ static CYTHON_INLINE PyObject *__Pyx_Import(PyObject *name, PyObject *const *imp
 /* ImportFrom.proto */
 static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
 
+/* GetNameInClass.proto */
+#define __Pyx_GetNameInClass(var, nmspace, name)  (var) = __Pyx__GetNameInClass(nmspace, name)
+static PyObject *__Pyx__GetNameInClass(PyObject *nmspace, PyObject *name);
+
 /* CLineInTraceback.proto (used by AddTraceback) */
 #if CYTHON_CLINE_IN_TRACEBACK && CYTHON_CLINE_IN_TRACEBACK_RUNTIME
 static int __Pyx_CLineForTraceback(PyThreadState *tstate, int c_line);
@@ -2509,22 +2513,24 @@ int __pyx_module_is_main_fletplus__utils__responsive_manager = 0;
 /* Implementation of "fletplus.utils.responsive_manager" */
 /* #### Code section: global_var ### */
 static PyObject *__pyx_builtin_object;
+static PyObject *__pyx_builtin_staticmethod;
 static PyObject *__pyx_builtin_sorted;
 /* #### Code section: string_decls ### */
 static const char __pyx_k_Gestor_de_breakpoints_para_respo[] = "Gestor de breakpoints para responder a cambios de tama\303\261o de la p\303\241gina.";
 /* #### Code section: decls ### */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_normalize_breakpoints(PyObject *__pyx_v_mapping); /* proto */
 static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8__init____combined_resize(PyObject *__pyx_self, PyObject *__pyx_v_event); /* proto */
-static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___init__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_page, PyObject *__pyx_v_breakpoints, PyObject *__pyx_v_height_breakpoints, PyObject *__pyx_v_orientation_callbacks, PyObject *__pyx_v_device_callbacks, PyObject *__pyx_v_device_profiles); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2register_styles(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_styles); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4_apply_style(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_6_capture_base_attributes(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8_safe_setattr(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_attr, PyObject *__pyx_v_value); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_10_handle_resize(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_e); /* proto */
+static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2__init__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_page, PyObject *__pyx_v_breakpoints, PyObject *__pyx_v_height_breakpoints, PyObject *__pyx_v_orientation_callbacks, PyObject *__pyx_v_device_callbacks, PyObject *__pyx_v_device_profiles); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4register_styles(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_styles); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_6_apply_style(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8_capture_base_attributes(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_10_safe_setattr(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_attr, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_12_handle_resize(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_e); /* proto */
 static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4page___get__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self); /* proto */
 static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4page_2__set__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4page_4__del__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_12__reduce_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_14__setstate_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_14__reduce_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_16__setstate_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager___pyx_unpickle_ResponsiveManager(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_tp_new_8fletplus_5utils_18responsive_manager_ResponsiveManager(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -2557,8 +2563,8 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_tuple[3];
-  PyObject *__pyx_codeobj_tab[9];
-  PyObject *__pyx_string_tab[139];
+  PyObject *__pyx_codeobj_tab[10];
+  PyObject *__pyx_string_tab[145];
   PyObject *__pyx_number_tab[1];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
@@ -2634,116 +2640,122 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_ResponsiveManager__capture_base __pyx_string_tab[26]
 #define __pyx_n_u_ResponsiveManager__handle_resize __pyx_string_tab[27]
 #define __pyx_n_u_ResponsiveManager__safe_setattr __pyx_string_tab[28]
-#define __pyx_n_u_ResponsiveManager_register_style __pyx_string_tab[29]
-#define __pyx_n_u_ResponsiveStyle __pyx_string_tab[30]
-#define __pyx_n_u_Sequence __pyx_string_tab[31]
-#define __pyx_n_u_Style __pyx_string_tab[32]
-#define __pyx_n_u_alignment __pyx_string_tab[33]
-#define __pyx_n_u_animate __pyx_string_tab[34]
-#define __pyx_n_u_apply __pyx_string_tab[35]
-#define __pyx_n_u_apply_style __pyx_string_tab[36]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[37]
-#define __pyx_n_u_attr __pyx_string_tab[38]
-#define __pyx_n_u_base __pyx_string_tab[39]
-#define __pyx_n_u_bgcolor __pyx_string_tab[40]
-#define __pyx_n_u_border __pyx_string_tab[41]
-#define __pyx_n_u_border_radius __pyx_string_tab[42]
-#define __pyx_n_u_breakpoints __pyx_string_tab[43]
-#define __pyx_n_u_capture_base_attributes __pyx_string_tab[44]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[45]
-#define __pyx_n_u_combined_resize __pyx_string_tab[46]
-#define __pyx_n_u_control __pyx_string_tab[47]
-#define __pyx_n_u_device_callbacks __pyx_string_tab[48]
-#define __pyx_n_u_device_profiles __pyx_string_tab[49]
-#define __pyx_n_u_dict __pyx_string_tab[50]
-#define __pyx_n_u_dict_2 __pyx_string_tab[51]
-#define __pyx_n_u_e __pyx_string_tab[52]
-#define __pyx_n_u_event __pyx_string_tab[53]
-#define __pyx_n_u_flet __pyx_string_tab[54]
-#define __pyx_n_u_fletplus_styles __pyx_string_tab[55]
-#define __pyx_n_u_fletplus_utils_device_profiles __pyx_string_tab[56]
-#define __pyx_n_u_fletplus_utils_responsive_breakp __pyx_string_tab[57]
-#define __pyx_n_u_fletplus_utils_responsive_manage __pyx_string_tab[58]
-#define __pyx_n_u_fletplus_utils_responsive_style __pyx_string_tab[59]
-#define __pyx_n_u_ft __pyx_string_tab[60]
-#define __pyx_n_u_func __pyx_string_tab[61]
-#define __pyx_n_u_get __pyx_string_tab[62]
-#define __pyx_n_u_get_device_profile __pyx_string_tab[63]
-#define __pyx_n_u_get_style __pyx_string_tab[64]
-#define __pyx_n_u_getstate __pyx_string_tab[65]
-#define __pyx_n_u_gradient __pyx_string_tab[66]
-#define __pyx_n_u_handle_resize __pyx_string_tab[67]
-#define __pyx_n_u_height __pyx_string_tab[68]
-#define __pyx_n_u_height_breakpoints __pyx_string_tab[69]
-#define __pyx_n_u_image_fit __pyx_string_tab[70]
-#define __pyx_n_u_image_src __pyx_string_tab[71]
-#define __pyx_n_u_init___locals__combined_resize __pyx_string_tab[72]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[73]
-#define __pyx_n_u_items __pyx_string_tab[74]
-#define __pyx_n_u_keys __pyx_string_tab[75]
-#define __pyx_n_u_landscape __pyx_string_tab[76]
-#define __pyx_n_u_main __pyx_string_tab[77]
-#define __pyx_n_u_margin __pyx_string_tab[78]
-#define __pyx_n_u_max_height __pyx_string_tab[79]
-#define __pyx_n_u_max_width __pyx_string_tab[80]
-#define __pyx_n_u_min_height __pyx_string_tab[81]
-#define __pyx_n_u_min_width __pyx_string_tab[82]
-#define __pyx_n_u_module __pyx_string_tab[83]
-#define __pyx_n_u_name __pyx_string_tab[84]
-#define __pyx_n_u_name_2 __pyx_string_tab[85]
-#define __pyx_n_u_new __pyx_string_tab[86]
-#define __pyx_n_u_object __pyx_string_tab[87]
-#define __pyx_n_u_offset __pyx_string_tab[88]
-#define __pyx_n_u_on_resize __pyx_string_tab[89]
-#define __pyx_n_u_opacity __pyx_string_tab[90]
-#define __pyx_n_u_orientation_callbacks __pyx_string_tab[91]
-#define __pyx_n_u_padding __pyx_string_tab[92]
-#define __pyx_n_u_page __pyx_string_tab[93]
-#define __pyx_n_u_pop __pyx_string_tab[94]
-#define __pyx_n_u_portrait __pyx_string_tab[95]
-#define __pyx_n_u_pyx_checksum __pyx_string_tab[96]
-#define __pyx_n_u_pyx_result __pyx_string_tab[97]
-#define __pyx_n_u_pyx_state __pyx_string_tab[98]
-#define __pyx_n_u_pyx_type __pyx_string_tab[99]
-#define __pyx_n_u_pyx_unpickle_ResponsiveManager __pyx_string_tab[100]
-#define __pyx_n_u_pyx_vtable __pyx_string_tab[101]
-#define __pyx_n_u_qualname __pyx_string_tab[102]
-#define __pyx_n_u_reduce __pyx_string_tab[103]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[104]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[105]
-#define __pyx_n_u_register_styles __pyx_string_tab[106]
-#define __pyx_n_u_resolve __pyx_string_tab[107]
-#define __pyx_n_u_return __pyx_string_tab[108]
-#define __pyx_n_u_reverse __pyx_string_tab[109]
-#define __pyx_n_u_rotate __pyx_string_tab[110]
-#define __pyx_n_u_rstyle __pyx_string_tab[111]
-#define __pyx_n_u_safe_setattr __pyx_string_tab[112]
-#define __pyx_n_u_scale __pyx_string_tab[113]
-#define __pyx_n_u_self __pyx_string_tab[114]
-#define __pyx_n_u_set_name __pyx_string_tab[115]
-#define __pyx_n_u_setdefault __pyx_string_tab[116]
-#define __pyx_n_u_setstate __pyx_string_tab[117]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[118]
-#define __pyx_n_u_shadow __pyx_string_tab[119]
-#define __pyx_n_u_sorted __pyx_string_tab[120]
-#define __pyx_n_u_state __pyx_string_tab[121]
-#define __pyx_n_u_styles __pyx_string_tab[122]
-#define __pyx_n_u_test __pyx_string_tab[123]
-#define __pyx_n_u_typing __pyx_string_tab[124]
-#define __pyx_n_u_update __pyx_string_tab[125]
-#define __pyx_n_u_use_setstate __pyx_string_tab[126]
-#define __pyx_n_u_value __pyx_string_tab[127]
-#define __pyx_n_u_values __pyx_string_tab[128]
-#define __pyx_n_u_width __pyx_string_tab[129]
-#define __pyx_kp_b_iso88591_A_1IV1 __pyx_string_tab[130]
-#define __pyx_kp_b_iso88591_A_1_HA_G1IV1_vWA_AXQ_q __pyx_string_tab[131]
-#define __pyx_kp_b_iso88591_A_Qha_Q__AV1_HA_M_D_1_M __pyx_string_tab[132]
-#define __pyx_kp_b_iso88591_A_m4q_T_Qa_1_7_Q_6_A_XT_1_Qk_uAQ __pyx_string_tab[133]
-#define __pyx_kp_b_iso88591_Q_4q_D_gWJa_T_D_z_A_Q_1_1_F_vS __pyx_string_tab[134]
-#define __pyx_kp_b_iso88591_T_4_D_WW_oos_t_F_F_J_J_Y_Y_g_g __pyx_string_tab[135]
-#define __pyx_kp_b_iso88591_W_Fa_q_xq __pyx_string_tab[136]
-#define __pyx_kp_b_iso88591_q_0_kQR_HAQ_7_314H_VW_1 __pyx_string_tab[137]
-#define __pyx_kp_b_iso88591_q_a __pyx_string_tab[138]
+#define __pyx_n_u_ResponsiveManager_normalize_brea __pyx_string_tab[29]
+#define __pyx_n_u_ResponsiveManager_register_style __pyx_string_tab[30]
+#define __pyx_n_u_ResponsiveStyle __pyx_string_tab[31]
+#define __pyx_n_u_Sequence __pyx_string_tab[32]
+#define __pyx_n_u_Style __pyx_string_tab[33]
+#define __pyx_n_u_alignment __pyx_string_tab[34]
+#define __pyx_n_u_animate __pyx_string_tab[35]
+#define __pyx_n_u_apply __pyx_string_tab[36]
+#define __pyx_n_u_apply_style __pyx_string_tab[37]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[38]
+#define __pyx_n_u_attr __pyx_string_tab[39]
+#define __pyx_n_u_base __pyx_string_tab[40]
+#define __pyx_n_u_bgcolor __pyx_string_tab[41]
+#define __pyx_n_u_border __pyx_string_tab[42]
+#define __pyx_n_u_border_radius __pyx_string_tab[43]
+#define __pyx_n_u_breakpoints __pyx_string_tab[44]
+#define __pyx_n_u_capture_base_attributes __pyx_string_tab[45]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[46]
+#define __pyx_n_u_combined_resize __pyx_string_tab[47]
+#define __pyx_n_u_control __pyx_string_tab[48]
+#define __pyx_n_u_device_callbacks __pyx_string_tab[49]
+#define __pyx_n_u_device_profiles __pyx_string_tab[50]
+#define __pyx_n_u_dict __pyx_string_tab[51]
+#define __pyx_n_u_dict_2 __pyx_string_tab[52]
+#define __pyx_n_u_e __pyx_string_tab[53]
+#define __pyx_n_u_event __pyx_string_tab[54]
+#define __pyx_n_u_flet __pyx_string_tab[55]
+#define __pyx_n_u_fletplus_styles __pyx_string_tab[56]
+#define __pyx_n_u_fletplus_utils_device_profiles __pyx_string_tab[57]
+#define __pyx_n_u_fletplus_utils_responsive_breakp __pyx_string_tab[58]
+#define __pyx_n_u_fletplus_utils_responsive_manage __pyx_string_tab[59]
+#define __pyx_n_u_fletplus_utils_responsive_style __pyx_string_tab[60]
+#define __pyx_n_u_ft __pyx_string_tab[61]
+#define __pyx_n_u_func __pyx_string_tab[62]
+#define __pyx_n_u_get __pyx_string_tab[63]
+#define __pyx_n_u_get_device_profile __pyx_string_tab[64]
+#define __pyx_n_u_get_style __pyx_string_tab[65]
+#define __pyx_n_u_getstate __pyx_string_tab[66]
+#define __pyx_n_u_gradient __pyx_string_tab[67]
+#define __pyx_n_u_handle_resize __pyx_string_tab[68]
+#define __pyx_n_u_height __pyx_string_tab[69]
+#define __pyx_n_u_height_breakpoints __pyx_string_tab[70]
+#define __pyx_n_u_image_fit __pyx_string_tab[71]
+#define __pyx_n_u_image_src __pyx_string_tab[72]
+#define __pyx_n_u_init___locals__combined_resize __pyx_string_tab[73]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[74]
+#define __pyx_n_u_items __pyx_string_tab[75]
+#define __pyx_n_u_keys __pyx_string_tab[76]
+#define __pyx_n_u_landscape __pyx_string_tab[77]
+#define __pyx_n_u_main __pyx_string_tab[78]
+#define __pyx_n_u_mapping __pyx_string_tab[79]
+#define __pyx_n_u_margin __pyx_string_tab[80]
+#define __pyx_n_u_max_height __pyx_string_tab[81]
+#define __pyx_n_u_max_width __pyx_string_tab[82]
+#define __pyx_n_u_min_height __pyx_string_tab[83]
+#define __pyx_n_u_min_width __pyx_string_tab[84]
+#define __pyx_n_u_module __pyx_string_tab[85]
+#define __pyx_n_u_name __pyx_string_tab[86]
+#define __pyx_n_u_name_2 __pyx_string_tab[87]
+#define __pyx_n_u_new __pyx_string_tab[88]
+#define __pyx_n_u_normalize __pyx_string_tab[89]
+#define __pyx_n_u_normalize_breakpoints __pyx_string_tab[90]
+#define __pyx_n_u_object __pyx_string_tab[91]
+#define __pyx_n_u_offset __pyx_string_tab[92]
+#define __pyx_n_u_on_resize __pyx_string_tab[93]
+#define __pyx_n_u_opacity __pyx_string_tab[94]
+#define __pyx_n_u_orientation_callbacks __pyx_string_tab[95]
+#define __pyx_n_u_padding __pyx_string_tab[96]
+#define __pyx_n_u_page __pyx_string_tab[97]
+#define __pyx_n_u_pop __pyx_string_tab[98]
+#define __pyx_n_u_portrait __pyx_string_tab[99]
+#define __pyx_n_u_pyx_checksum __pyx_string_tab[100]
+#define __pyx_n_u_pyx_result __pyx_string_tab[101]
+#define __pyx_n_u_pyx_state __pyx_string_tab[102]
+#define __pyx_n_u_pyx_type __pyx_string_tab[103]
+#define __pyx_n_u_pyx_unpickle_ResponsiveManager __pyx_string_tab[104]
+#define __pyx_n_u_pyx_vtable __pyx_string_tab[105]
+#define __pyx_n_u_qualname __pyx_string_tab[106]
+#define __pyx_n_u_reduce __pyx_string_tab[107]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[108]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[109]
+#define __pyx_n_u_register_styles __pyx_string_tab[110]
+#define __pyx_n_u_resolve __pyx_string_tab[111]
+#define __pyx_n_u_return __pyx_string_tab[112]
+#define __pyx_n_u_reverse __pyx_string_tab[113]
+#define __pyx_n_u_rotate __pyx_string_tab[114]
+#define __pyx_n_u_rstyle __pyx_string_tab[115]
+#define __pyx_n_u_safe_setattr __pyx_string_tab[116]
+#define __pyx_n_u_scale __pyx_string_tab[117]
+#define __pyx_n_u_self __pyx_string_tab[118]
+#define __pyx_n_u_set_name __pyx_string_tab[119]
+#define __pyx_n_u_setdefault __pyx_string_tab[120]
+#define __pyx_n_u_setstate __pyx_string_tab[121]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[122]
+#define __pyx_n_u_shadow __pyx_string_tab[123]
+#define __pyx_n_u_sorted __pyx_string_tab[124]
+#define __pyx_n_u_state __pyx_string_tab[125]
+#define __pyx_n_u_staticmethod __pyx_string_tab[126]
+#define __pyx_n_u_styles __pyx_string_tab[127]
+#define __pyx_n_u_test __pyx_string_tab[128]
+#define __pyx_n_u_typing __pyx_string_tab[129]
+#define __pyx_n_u_update __pyx_string_tab[130]
+#define __pyx_n_u_use_setstate __pyx_string_tab[131]
+#define __pyx_n_u_value __pyx_string_tab[132]
+#define __pyx_n_u_values __pyx_string_tab[133]
+#define __pyx_n_u_width __pyx_string_tab[134]
+#define __pyx_kp_b_iso88591_A_1A __pyx_string_tab[135]
+#define __pyx_kp_b_iso88591_A_1IV1 __pyx_string_tab[136]
+#define __pyx_kp_b_iso88591_A_1_HA_G1IV1_vWA_AXQ_q __pyx_string_tab[137]
+#define __pyx_kp_b_iso88591_A_Qha_Q__AV1_HA_M_D_1_M __pyx_string_tab[138]
+#define __pyx_kp_b_iso88591_A_m4q_T_Qa_1_7_Q_6_A_XT_1_Qk_uAQ __pyx_string_tab[139]
+#define __pyx_kp_b_iso88591_Q_4q_D_gWJa_T_D_z_A_Q_1_1_F_vS __pyx_string_tab[140]
+#define __pyx_kp_b_iso88591_T_4_D_WW_oos_t_F_F_J_J_Y_Y_g_g __pyx_string_tab[141]
+#define __pyx_kp_b_iso88591_W_Fa_q_xq __pyx_string_tab[142]
+#define __pyx_kp_b_iso88591_q_0_kQR_HAQ_7_314H_VW_1 __pyx_string_tab[143]
+#define __pyx_kp_b_iso88591_q_a __pyx_string_tab[144]
 #define __pyx_int_193960764 __pyx_number_tab[0]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
@@ -2764,8 +2776,8 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__);
   Py_CLEAR(clear_module_state->__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__);
   for (int i=0; i<3; ++i) { Py_CLEAR(clear_module_state->__pyx_tuple[i]); }
-  for (int i=0; i<9; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<139; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<10; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<145; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<1; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
@@ -2794,8 +2806,8 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   Py_VISIT(traverse_module_state->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__);
   Py_VISIT(traverse_module_state->__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__);
   for (int i=0; i<3; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_tuple[i]); }
-  for (int i=0; i<9; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<139; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<10; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<145; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<1; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
@@ -2813,14 +2825,181 @@ return 0;
 /* "fletplus/utils/responsive_manager.pyx":51
  *     """
  * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def normalize_breakpoints(mapping):
+ *         """Normaliza ``mapping`` resolviendo aliases simblicos."""
+*/
+
+/* Python wrapper */
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1normalize_breakpoints(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_normalize_breakpoints, "Normaliza ``mapping`` resolviendo aliases simb\303\263licos.");
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1normalize_breakpoints = {"normalize_breakpoints", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1normalize_breakpoints, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_normalize_breakpoints};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1normalize_breakpoints(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  PyObject *__pyx_v_mapping = 0;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[1] = {0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("normalize_breakpoints (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_SIZE
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_mapping,0};
+    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 51, __pyx_L3_error)
+    if (__pyx_kwds_len > 0) {
+      switch (__pyx_nargs) {
+        case  1:
+        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 51, __pyx_L3_error)
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      const Py_ssize_t kwd_pos_args = __pyx_nargs;
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "normalize_breakpoints", 0) < (0)) __PYX_ERR(0, 51, __pyx_L3_error)
+      for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("normalize_breakpoints", 1, 1, 1, i); __PYX_ERR(0, 51, __pyx_L3_error) }
+      }
+    } else if (unlikely(__pyx_nargs != 1)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 51, __pyx_L3_error)
+    }
+    __pyx_v_mapping = values[0];
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("normalize_breakpoints", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 51, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_AddTraceback("fletplus.utils.responsive_manager.ResponsiveManager.normalize_breakpoints", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_normalize_breakpoints(__pyx_v_mapping);
+
+  /* function exit code */
+  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+    Py_XDECREF(values[__pyx_temp]);
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_normalize_breakpoints(PyObject *__pyx_v_mapping) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  size_t __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("normalize_breakpoints", 0);
+
+  /* "fletplus/utils/responsive_manager.pyx":55
+ *         """Normaliza ``mapping`` resolviendo aliases simblicos."""
+ * 
+ *         return BreakpointRegistry.normalize(mapping)             # <<<<<<<<<<<<<<
+ * 
+ *     def __init__(
+*/
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = NULL;
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_BreakpointRegistry); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_normalize); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_5 = 1;
+  #if CYTHON_UNPACK_METHODS
+  if (unlikely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_4);
+    assert(__pyx_t_2);
+    PyObject* __pyx__function = PyMethod_GET_FUNCTION(__pyx_t_4);
+    __Pyx_INCREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx__function);
+    __Pyx_DECREF_SET(__pyx_t_4, __pyx__function);
+    __pyx_t_5 = 0;
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_v_mapping};
+    __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  }
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "fletplus/utils/responsive_manager.pyx":51
+ *     """
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def normalize_breakpoints(mapping):
+ *         """Normaliza ``mapping`` resolviendo aliases simblicos."""
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_AddTraceback("fletplus.utils.responsive_manager.ResponsiveManager.normalize_breakpoints", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "fletplus/utils/responsive_manager.pyx":57
+ *         return BreakpointRegistry.normalize(mapping)
+ * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
  *         page: ft.Page,
 */
 
 /* Python wrapper */
-static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_page = 0;
   PyObject *__pyx_v_breakpoints = 0;
   PyObject *__pyx_v_height_breakpoints = 0;
@@ -2845,40 +3024,40 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_page,&__pyx_mstate_global->__pyx_n_u_breakpoints,&__pyx_mstate_global->__pyx_n_u_height_breakpoints,&__pyx_mstate_global->__pyx_n_u_orientation_callbacks,&__pyx_mstate_global->__pyx_n_u_device_callbacks,&__pyx_mstate_global->__pyx_n_u_device_profiles,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_VARARGS(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 51, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 57, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  6:
         values[5] = __Pyx_ArgRef_VARARGS(__pyx_args, 5);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  5:
         values[4] = __Pyx_ArgRef_VARARGS(__pyx_args, 4);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  4:
         values[3] = __Pyx_ArgRef_VARARGS(__pyx_args, 3);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  3:
         values[2] = __Pyx_ArgRef_VARARGS(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_VARARGS(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_VARARGS(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__init__", 0) < (0)) __PYX_ERR(0, 51, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "__init__", 0) < (0)) __PYX_ERR(0, 57, __pyx_L3_error)
 
-      /* "fletplus/utils/responsive_manager.pyx":54
+      /* "fletplus/utils/responsive_manager.pyx":60
  *         self,
  *         page: ft.Page,
  *         breakpoints: Dict[int, Callable[[int], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2887,7 +3066,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[1]) values[1] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":55
+      /* "fletplus/utils/responsive_manager.pyx":61
  *         page: ft.Page,
  *         breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2896,7 +3075,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[2]) values[2] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":56
+      /* "fletplus/utils/responsive_manager.pyx":62
  *         breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2905,7 +3084,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[3]) values[3] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":57
+      /* "fletplus/utils/responsive_manager.pyx":63
  *         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,
  *         device_callbacks: Dict[str, Callable[[str], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2914,7 +3093,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[4]) values[4] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":58
+      /* "fletplus/utils/responsive_manager.pyx":64
  *         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,
  *         device_callbacks: Dict[str, Callable[[str], None]] | None = None,
  *         device_profiles: Sequence[DeviceProfile] | None = None,             # <<<<<<<<<<<<<<
@@ -2923,38 +3102,38 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[5]) values[5] = __Pyx_NewRef(((PyObject *)Py_None));
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 6, i); __PYX_ERR(0, 51, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 6, i); __PYX_ERR(0, 57, __pyx_L3_error) }
       }
     } else {
       switch (__pyx_nargs) {
         case  6:
         values[5] = __Pyx_ArgRef_VARARGS(__pyx_args, 5);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[5])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  5:
         values[4] = __Pyx_ArgRef_VARARGS(__pyx_args, 4);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[4])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  4:
         values[3] = __Pyx_ArgRef_VARARGS(__pyx_args, 3);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  3:
         values[2] = __Pyx_ArgRef_VARARGS(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_VARARGS(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 57, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_VARARGS(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 51, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 57, __pyx_L3_error)
         break;
         default: goto __pyx_L5_argtuple_error;
       }
 
-      /* "fletplus/utils/responsive_manager.pyx":54
+      /* "fletplus/utils/responsive_manager.pyx":60
  *         self,
  *         page: ft.Page,
  *         breakpoints: Dict[int, Callable[[int], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2963,7 +3142,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[1]) values[1] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":55
+      /* "fletplus/utils/responsive_manager.pyx":61
  *         page: ft.Page,
  *         breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2972,7 +3151,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[2]) values[2] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":56
+      /* "fletplus/utils/responsive_manager.pyx":62
  *         breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2981,7 +3160,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[3]) values[3] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":57
+      /* "fletplus/utils/responsive_manager.pyx":63
  *         height_breakpoints: Dict[int, Callable[[int], None]] | None = None,
  *         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,
  *         device_callbacks: Dict[str, Callable[[str], None]] | None = None,             # <<<<<<<<<<<<<<
@@ -2990,7 +3169,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
 */
       if (!values[4]) values[4] = __Pyx_NewRef(((PyObject *)Py_None));
 
-      /* "fletplus/utils/responsive_manager.pyx":58
+      /* "fletplus/utils/responsive_manager.pyx":64
  *         orientation_callbacks: Dict[str, Callable[[str], None]] | None = None,
  *         device_callbacks: Dict[str, Callable[[str], None]] | None = None,
  *         device_profiles: Sequence[DeviceProfile] | None = None,             # <<<<<<<<<<<<<<
@@ -3008,7 +3187,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 6, __pyx_nargs); __PYX_ERR(0, 51, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 6, __pyx_nargs); __PYX_ERR(0, 57, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3019,10 +3198,10 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___init__(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_page, __pyx_v_breakpoints, __pyx_v_height_breakpoints, __pyx_v_orientation_callbacks, __pyx_v_device_callbacks, __pyx_v_device_profiles);
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2__init__(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_page, __pyx_v_breakpoints, __pyx_v_height_breakpoints, __pyx_v_orientation_callbacks, __pyx_v_device_callbacks, __pyx_v_device_profiles);
 
-  /* "fletplus/utils/responsive_manager.pyx":51
- *     """
+  /* "fletplus/utils/responsive_manager.pyx":57
+ *         return BreakpointRegistry.normalize(mapping)
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
@@ -3037,7 +3216,7 @@ static int __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1_
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":87
+/* "fletplus/utils/responsive_manager.pyx":93
  *         previous_handler = getattr(self.page, "on_resize", None)
  * 
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:             # <<<<<<<<<<<<<<
@@ -3084,24 +3263,24 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_event,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 87, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 93, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 87, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 93, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_combined_resize", 0) < (0)) __PYX_ERR(0, 87, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_combined_resize", 0) < (0)) __PYX_ERR(0, 93, __pyx_L3_error)
       if (!values[0]) values[0] = __Pyx_NewRef(((PyObject *)Py_None));
     } else {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 87, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 93, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
@@ -3112,7 +3291,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_combined_resize", 0, 0, 1, __pyx_nargs); __PYX_ERR(0, 87, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_combined_resize", 0, 0, 1, __pyx_nargs); __PYX_ERR(0, 93, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3151,33 +3330,33 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   __pyx_outer_scope = (struct __pyx_obj_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__ *) __Pyx_CyFunction_GetClosure(__pyx_self);
   __pyx_cur_scope = __pyx_outer_scope;
 
-  /* "fletplus/utils/responsive_manager.pyx":88
+  /* "fletplus/utils/responsive_manager.pyx":94
  * 
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:
  *             self._handle_resize(event)             # <<<<<<<<<<<<<<
  *             if callable(previous_handler):
  *                 previous_handler(event)
 */
-  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 88, __pyx_L1_error) }
+  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 94, __pyx_L1_error) }
   __pyx_t_1.__pyx_n = 1;
   __pyx_t_1.e = __pyx_v_event;
-  ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_cur_scope->__pyx_v_self->__pyx_vtab)->_handle_resize(__pyx_cur_scope->__pyx_v_self, 0, &__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 88, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_cur_scope->__pyx_v_self->__pyx_vtab)->_handle_resize(__pyx_cur_scope->__pyx_v_self, 0, &__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 94, __pyx_L1_error)
 
-  /* "fletplus/utils/responsive_manager.pyx":89
+  /* "fletplus/utils/responsive_manager.pyx":95
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:
  *             self._handle_resize(event)
  *             if callable(previous_handler):             # <<<<<<<<<<<<<<
  *                 previous_handler(event)
  * 
 */
-  if (unlikely(!__pyx_cur_scope->__pyx_v_previous_handler)) { __Pyx_RaiseClosureNameError("previous_handler"); __PYX_ERR(0, 89, __pyx_L1_error) }
+  if (unlikely(!__pyx_cur_scope->__pyx_v_previous_handler)) { __Pyx_RaiseClosureNameError("previous_handler"); __PYX_ERR(0, 95, __pyx_L1_error) }
   __pyx_t_2 = __pyx_cur_scope->__pyx_v_previous_handler;
   __Pyx_INCREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyCallable_Check(__pyx_t_2); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 89, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyCallable_Check(__pyx_t_2); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 95, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "fletplus/utils/responsive_manager.pyx":90
+    /* "fletplus/utils/responsive_manager.pyx":96
  *             self._handle_resize(event)
  *             if callable(previous_handler):
  *                 previous_handler(event)             # <<<<<<<<<<<<<<
@@ -3185,7 +3364,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
  *         self.page.on_resize = _combined_resize
 */
     __pyx_t_4 = NULL;
-    if (unlikely(!__pyx_cur_scope->__pyx_v_previous_handler)) { __Pyx_RaiseClosureNameError("previous_handler"); __PYX_ERR(0, 90, __pyx_L1_error) }
+    if (unlikely(!__pyx_cur_scope->__pyx_v_previous_handler)) { __Pyx_RaiseClosureNameError("previous_handler"); __PYX_ERR(0, 96, __pyx_L1_error) }
     __Pyx_INCREF(__pyx_cur_scope->__pyx_v_previous_handler);
     __pyx_t_5 = __pyx_cur_scope->__pyx_v_previous_handler; 
     __pyx_t_6 = 1;
@@ -3205,12 +3384,12 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_5, __pyx_callargs+__pyx_t_6, (2-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 90, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 96, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":89
+    /* "fletplus/utils/responsive_manager.pyx":95
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:
  *             self._handle_resize(event)
  *             if callable(previous_handler):             # <<<<<<<<<<<<<<
@@ -3219,7 +3398,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":87
+  /* "fletplus/utils/responsive_manager.pyx":93
  *         previous_handler = getattr(self.page, "on_resize", None)
  * 
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:             # <<<<<<<<<<<<<<
@@ -3242,15 +3421,15 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":51
- *     """
+/* "fletplus/utils/responsive_manager.pyx":57
+ *         return BreakpointRegistry.normalize(mapping)
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
  *         page: ft.Page,
 */
 
-static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___init__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_page, PyObject *__pyx_v_breakpoints, PyObject *__pyx_v_height_breakpoints, PyObject *__pyx_v_orientation_callbacks, PyObject *__pyx_v_device_callbacks, PyObject *__pyx_v_device_profiles) {
+static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2__init__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_page, PyObject *__pyx_v_breakpoints, PyObject *__pyx_v_height_breakpoints, PyObject *__pyx_v_orientation_callbacks, PyObject *__pyx_v_device_callbacks, PyObject *__pyx_v_device_profiles) {
   struct __pyx_obj_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__ *__pyx_cur_scope;
   PyObject *__pyx_v__combined_resize = 0;
   PyObject *__pyx_7genexpr__pyx_v_bp = NULL;
@@ -3279,7 +3458,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   if (unlikely(!__pyx_cur_scope)) {
     __pyx_cur_scope = ((struct __pyx_obj_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__ *)Py_None);
     __Pyx_INCREF(Py_None);
-    __PYX_ERR(0, 51, __pyx_L1_error)
+    __PYX_ERR(0, 57, __pyx_L1_error)
   } else {
     __Pyx_GOTREF((PyObject *)__pyx_cur_scope);
   }
@@ -3287,7 +3466,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __Pyx_INCREF((PyObject *)__pyx_cur_scope->__pyx_v_self);
   __Pyx_GIVEREF((PyObject *)__pyx_cur_scope->__pyx_v_self);
 
-  /* "fletplus/utils/responsive_manager.pyx":60
+  /* "fletplus/utils/responsive_manager.pyx":66
  *         device_profiles: Sequence[DeviceProfile] | None = None,
  *     ):
  *         self.page = page             # <<<<<<<<<<<<<<
@@ -3300,7 +3479,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->page);
   __pyx_cur_scope->__pyx_v_self->page = __pyx_v_page;
 
-  /* "fletplus/utils/responsive_manager.pyx":61
+  /* "fletplus/utils/responsive_manager.pyx":67
  *     ):
  *         self.page = page
  *         self.breakpoints = {             # <<<<<<<<<<<<<<
@@ -3308,10 +3487,10 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
  *             for bp, callback in (breakpoints or {}).items()
 */
   { /* enter inner scope */
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 61, __pyx_L5_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L5_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "fletplus/utils/responsive_manager.pyx":63
+    /* "fletplus/utils/responsive_manager.pyx":69
  *         self.breakpoints = {
  *             BreakpointRegistry.resolve(bp): callback
  *             for bp, callback in (breakpoints or {}).items()             # <<<<<<<<<<<<<<
@@ -3319,14 +3498,14 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
  *         self.height_breakpoints = {
 */
     __pyx_t_3 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_breakpoints); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 63, __pyx_L5_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_breakpoints); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 69, __pyx_L5_error)
     if (!__pyx_t_7) {
     } else {
       __Pyx_INCREF(__pyx_v_breakpoints);
       __pyx_t_6 = __pyx_v_breakpoints;
       goto __pyx_L6_bool_binop_done;
     }
-    __pyx_t_8 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 63, __pyx_L5_error)
+    __pyx_t_8 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 69, __pyx_L5_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_INCREF(__pyx_t_8);
     __pyx_t_6 = __pyx_t_8;
@@ -3334,9 +3513,9 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
     __pyx_L6_bool_binop_done:;
     if (unlikely(__pyx_t_6 == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "items");
-      __PYX_ERR(0, 63, __pyx_L5_error)
+      __PYX_ERR(0, 69, __pyx_L5_error)
     }
-    __pyx_t_8 = __Pyx_dict_iterator(__pyx_t_6, 0, __pyx_mstate_global->__pyx_n_u_items, (&__pyx_t_4), (&__pyx_t_5)); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 63, __pyx_L5_error)
+    __pyx_t_8 = __Pyx_dict_iterator(__pyx_t_6, 0, __pyx_mstate_global->__pyx_n_u_items, (&__pyx_t_4), (&__pyx_t_5)); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 69, __pyx_L5_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_2);
@@ -3345,7 +3524,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
     while (1) {
       __pyx_t_9 = __Pyx_dict_iter_next(__pyx_t_2, __pyx_t_4, &__pyx_t_3, &__pyx_t_8, &__pyx_t_6, NULL, __pyx_t_5);
       if (unlikely(__pyx_t_9 == 0)) break;
-      if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 63, __pyx_L5_error)
+      if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 69, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_XDECREF_SET(__pyx_7genexpr__pyx_v_bp, __pyx_t_8);
@@ -3353,7 +3532,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
       __Pyx_XDECREF_SET(__pyx_7genexpr__pyx_v_callback, __pyx_t_6);
       __pyx_t_6 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":62
+      /* "fletplus/utils/responsive_manager.pyx":68
  *         self.page = page
  *         self.breakpoints = {
  *             BreakpointRegistry.resolve(bp): callback             # <<<<<<<<<<<<<<
@@ -3361,9 +3540,9 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
  *         }
 */
       __pyx_t_8 = NULL;
-      __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_BreakpointRegistry); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 62, __pyx_L5_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_BreakpointRegistry); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 68, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_10);
-      __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_resolve); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 62, __pyx_L5_error)
+      __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_resolve); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 68, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
       __pyx_t_12 = 1;
@@ -3383,10 +3562,10 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
         __pyx_t_6 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_11, __pyx_callargs+__pyx_t_12, (2-__pyx_t_12) | (__pyx_t_12*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 62, __pyx_L5_error)
+        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 68, __pyx_L5_error)
         __Pyx_GOTREF(__pyx_t_6);
       }
-      if (unlikely(PyDict_SetItem(__pyx_t_1, (PyObject*)__pyx_t_6, (PyObject*)__pyx_7genexpr__pyx_v_callback))) __PYX_ERR(0, 62, __pyx_L5_error)
+      if (unlikely(PyDict_SetItem(__pyx_t_1, (PyObject*)__pyx_t_6, (PyObject*)__pyx_7genexpr__pyx_v_callback))) __PYX_ERR(0, 68, __pyx_L5_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3400,7 +3579,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
     __pyx_L10_exit_scope:;
   } /* exit inner scope */
 
-  /* "fletplus/utils/responsive_manager.pyx":61
+  /* "fletplus/utils/responsive_manager.pyx":67
  *     ):
  *         self.page = page
  *         self.breakpoints = {             # <<<<<<<<<<<<<<
@@ -3413,7 +3592,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->breakpoints = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":65
+  /* "fletplus/utils/responsive_manager.pyx":71
  *             for bp, callback in (breakpoints or {}).items()
  *         }
  *         self.height_breakpoints = {             # <<<<<<<<<<<<<<
@@ -3421,10 +3600,10 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
  *             for bp, callback in (height_breakpoints or {}).items()
 */
   { /* enter inner scope */
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L13_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 71, __pyx_L13_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "fletplus/utils/responsive_manager.pyx":67
+    /* "fletplus/utils/responsive_manager.pyx":73
  *         self.height_breakpoints = {
  *             BreakpointRegistry.resolve(bp): callback
  *             for bp, callback in (height_breakpoints or {}).items()             # <<<<<<<<<<<<<<
@@ -3432,14 +3611,14 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
  *         self.orientation_callbacks = orientation_callbacks or {}
 */
     __pyx_t_4 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_height_breakpoints); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 67, __pyx_L13_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_height_breakpoints); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 73, __pyx_L13_error)
     if (!__pyx_t_7) {
     } else {
       __Pyx_INCREF(__pyx_v_height_breakpoints);
       __pyx_t_6 = __pyx_v_height_breakpoints;
       goto __pyx_L14_bool_binop_done;
     }
-    __pyx_t_11 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 67, __pyx_L13_error)
+    __pyx_t_11 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 73, __pyx_L13_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_INCREF(__pyx_t_11);
     __pyx_t_6 = __pyx_t_11;
@@ -3447,9 +3626,9 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
     __pyx_L14_bool_binop_done:;
     if (unlikely(__pyx_t_6 == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "items");
-      __PYX_ERR(0, 67, __pyx_L13_error)
+      __PYX_ERR(0, 73, __pyx_L13_error)
     }
-    __pyx_t_11 = __Pyx_dict_iterator(__pyx_t_6, 0, __pyx_mstate_global->__pyx_n_u_items, (&__pyx_t_3), (&__pyx_t_5)); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 67, __pyx_L13_error)
+    __pyx_t_11 = __Pyx_dict_iterator(__pyx_t_6, 0, __pyx_mstate_global->__pyx_n_u_items, (&__pyx_t_3), (&__pyx_t_5)); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 73, __pyx_L13_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_2);
@@ -3458,7 +3637,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
     while (1) {
       __pyx_t_9 = __Pyx_dict_iter_next(__pyx_t_2, __pyx_t_3, &__pyx_t_4, &__pyx_t_11, &__pyx_t_6, NULL, __pyx_t_5);
       if (unlikely(__pyx_t_9 == 0)) break;
-      if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 67, __pyx_L13_error)
+      if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 73, __pyx_L13_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_XDECREF_SET(__pyx_8genexpr1__pyx_v_bp, __pyx_t_11);
@@ -3466,7 +3645,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
       __Pyx_XDECREF_SET(__pyx_8genexpr1__pyx_v_callback, __pyx_t_6);
       __pyx_t_6 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":66
+      /* "fletplus/utils/responsive_manager.pyx":72
  *         }
  *         self.height_breakpoints = {
  *             BreakpointRegistry.resolve(bp): callback             # <<<<<<<<<<<<<<
@@ -3474,9 +3653,9 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
  *         }
 */
       __pyx_t_11 = NULL;
-      __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_BreakpointRegistry); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 66, __pyx_L13_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_BreakpointRegistry); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 72, __pyx_L13_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_resolve); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 66, __pyx_L13_error)
+      __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_resolve); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 72, __pyx_L13_error)
       __Pyx_GOTREF(__pyx_t_10);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __pyx_t_12 = 1;
@@ -3496,10 +3675,10 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
         __pyx_t_6 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_10, __pyx_callargs+__pyx_t_12, (2-__pyx_t_12) | (__pyx_t_12*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
         __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 66, __pyx_L13_error)
+        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 72, __pyx_L13_error)
         __Pyx_GOTREF(__pyx_t_6);
       }
-      if (unlikely(PyDict_SetItem(__pyx_t_1, (PyObject*)__pyx_t_6, (PyObject*)__pyx_8genexpr1__pyx_v_callback))) __PYX_ERR(0, 66, __pyx_L13_error)
+      if (unlikely(PyDict_SetItem(__pyx_t_1, (PyObject*)__pyx_t_6, (PyObject*)__pyx_8genexpr1__pyx_v_callback))) __PYX_ERR(0, 72, __pyx_L13_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3513,7 +3692,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
     __pyx_L18_exit_scope:;
   } /* exit inner scope */
 
-  /* "fletplus/utils/responsive_manager.pyx":65
+  /* "fletplus/utils/responsive_manager.pyx":71
  *             for bp, callback in (breakpoints or {}).items()
  *         }
  *         self.height_breakpoints = {             # <<<<<<<<<<<<<<
@@ -3526,24 +3705,24 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->height_breakpoints = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":69
+  /* "fletplus/utils/responsive_manager.pyx":75
  *             for bp, callback in (height_breakpoints or {}).items()
  *         }
  *         self.orientation_callbacks = orientation_callbacks or {}             # <<<<<<<<<<<<<<
  *         self.device_callbacks = device_callbacks or {}
  *         self.device_profiles = tuple(device_profiles) if device_profiles else DEFAULT_DEVICE_PROFILES
 */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_orientation_callbacks); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 69, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_orientation_callbacks); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 75, __pyx_L1_error)
   if (!__pyx_t_7) {
   } else {
     __pyx_t_2 = __pyx_v_orientation_callbacks;
     __Pyx_INCREF(__pyx_t_2);
-    if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 69, __pyx_L1_error)
+    if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 75, __pyx_L1_error)
     __pyx_t_1 = __pyx_t_2;
     __pyx_t_2 = 0;
     goto __pyx_L19_bool_binop_done;
   }
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 75, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_t_2);
   __pyx_t_1 = __pyx_t_2;
@@ -3555,24 +3734,24 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->orientation_callbacks = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":70
+  /* "fletplus/utils/responsive_manager.pyx":76
  *         }
  *         self.orientation_callbacks = orientation_callbacks or {}
  *         self.device_callbacks = device_callbacks or {}             # <<<<<<<<<<<<<<
  *         self.device_profiles = tuple(device_profiles) if device_profiles else DEFAULT_DEVICE_PROFILES
  * 
 */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_device_callbacks); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_device_callbacks); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 76, __pyx_L1_error)
   if (!__pyx_t_7) {
   } else {
     __pyx_t_2 = __pyx_v_device_callbacks;
     __Pyx_INCREF(__pyx_t_2);
-    if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 70, __pyx_L1_error)
+    if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 76, __pyx_L1_error)
     __pyx_t_1 = __pyx_t_2;
     __pyx_t_2 = 0;
     goto __pyx_L21_bool_binop_done;
   }
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_t_2);
   __pyx_t_1 = __pyx_t_2;
@@ -3584,23 +3763,23 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->device_callbacks = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":71
+  /* "fletplus/utils/responsive_manager.pyx":77
  *         self.orientation_callbacks = orientation_callbacks or {}
  *         self.device_callbacks = device_callbacks or {}
  *         self.device_profiles = tuple(device_profiles) if device_profiles else DEFAULT_DEVICE_PROFILES             # <<<<<<<<<<<<<<
  * 
  *         self._width_bp_keys = tuple(sorted(self.breakpoints, reverse=True))
 */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_device_profiles); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_device_profiles); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 77, __pyx_L1_error)
   if (__pyx_t_7) {
-    __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_v_device_profiles); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 71, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_v_device_profiles); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 77, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_1 = __pyx_t_2;
     __pyx_t_2 = 0;
   } else {
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_DEFAULT_DEVICE_PROFILES); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 71, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_DEFAULT_DEVICE_PROFILES); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 77, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (!(likely(PyTuple_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("tuple", __pyx_t_2))) __PYX_ERR(0, 71, __pyx_L1_error)
+    if (!(likely(PyTuple_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("tuple", __pyx_t_2))) __PYX_ERR(0, 77, __pyx_L1_error)
     __pyx_t_1 = __pyx_t_2;
     __pyx_t_2 = 0;
   }
@@ -3610,7 +3789,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->device_profiles = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":73
+  /* "fletplus/utils/responsive_manager.pyx":79
  *         self.device_profiles = tuple(device_profiles) if device_profiles else DEFAULT_DEVICE_PROFILES
  * 
  *         self._width_bp_keys = tuple(sorted(self.breakpoints, reverse=True))             # <<<<<<<<<<<<<<
@@ -3621,16 +3800,16 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_t_12 = 1;
   {
     PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 1 : 0)] = {__pyx_t_2, __pyx_cur_scope->__pyx_v_self->breakpoints};
-    __pyx_t_6 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 73, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_reverse, Py_True, __pyx_t_6, __pyx_callargs+2, 0) < (0)) __PYX_ERR(0, 73, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_reverse, Py_True, __pyx_t_6, __pyx_callargs+2, 0) < (0)) __PYX_ERR(0, 79, __pyx_L1_error)
     __pyx_t_1 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_builtin_sorted, __pyx_callargs+__pyx_t_12, (2-__pyx_t_12) | (__pyx_t_12*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_6);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 73, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
-  __pyx_t_6 = __Pyx_PySequence_Tuple(__pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PySequence_Tuple(__pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 79, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_GIVEREF(__pyx_t_6);
@@ -3639,7 +3818,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->_width_bp_keys = ((PyObject*)__pyx_t_6);
   __pyx_t_6 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":74
+  /* "fletplus/utils/responsive_manager.pyx":80
  * 
  *         self._width_bp_keys = tuple(sorted(self.breakpoints, reverse=True))
  *         self._height_bp_keys = tuple(sorted(self.height_breakpoints, reverse=True))             # <<<<<<<<<<<<<<
@@ -3650,16 +3829,16 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_t_12 = 1;
   {
     PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 1 : 0)] = {__pyx_t_1, __pyx_cur_scope->__pyx_v_self->height_breakpoints};
-    __pyx_t_2 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_reverse, Py_True, __pyx_t_2, __pyx_callargs+2, 0) < (0)) __PYX_ERR(0, 74, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_reverse, Py_True, __pyx_t_2, __pyx_callargs+2, 0) < (0)) __PYX_ERR(0, 80, __pyx_L1_error)
     __pyx_t_6 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_builtin_sorted, __pyx_callargs+__pyx_t_12, (2-__pyx_t_12) | (__pyx_t_12*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_2);
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 74, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
   }
-  __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_GIVEREF(__pyx_t_2);
@@ -3668,7 +3847,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->_height_bp_keys = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":76
+  /* "fletplus/utils/responsive_manager.pyx":82
  *         self._height_bp_keys = tuple(sorted(self.height_breakpoints, reverse=True))
  * 
  *         self._current_width_bp = None             # <<<<<<<<<<<<<<
@@ -3681,7 +3860,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->_current_width_bp);
   __pyx_cur_scope->__pyx_v_self->_current_width_bp = Py_None;
 
-  /* "fletplus/utils/responsive_manager.pyx":77
+  /* "fletplus/utils/responsive_manager.pyx":83
  * 
  *         self._current_width_bp = None
  *         self._current_height_bp = None             # <<<<<<<<<<<<<<
@@ -3694,7 +3873,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->_current_height_bp);
   __pyx_cur_scope->__pyx_v_self->_current_height_bp = Py_None;
 
-  /* "fletplus/utils/responsive_manager.pyx":78
+  /* "fletplus/utils/responsive_manager.pyx":84
  *         self._current_width_bp = None
  *         self._current_height_bp = None
  *         self._current_orientation = None             # <<<<<<<<<<<<<<
@@ -3707,7 +3886,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->_current_orientation);
   __pyx_cur_scope->__pyx_v_self->_current_orientation = Py_None;
 
-  /* "fletplus/utils/responsive_manager.pyx":79
+  /* "fletplus/utils/responsive_manager.pyx":85
  *         self._current_height_bp = None
  *         self._current_orientation = None
  *         self._current_device = None             # <<<<<<<<<<<<<<
@@ -3720,14 +3899,14 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->_current_device);
   __pyx_cur_scope->__pyx_v_self->_current_device = Py_None;
 
-  /* "fletplus/utils/responsive_manager.pyx":82
+  /* "fletplus/utils/responsive_manager.pyx":88
  * 
  *         # Registro de estilos por control
  *         self._styles = {}             # <<<<<<<<<<<<<<
  *         self._style_state = {}
  * 
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_self->_styles);
@@ -3735,14 +3914,14 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->_styles = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":83
+  /* "fletplus/utils/responsive_manager.pyx":89
  *         # Registro de estilos por control
  *         self._styles = {}
  *         self._style_state = {}             # <<<<<<<<<<<<<<
  * 
  *         previous_handler = getattr(self.page, "on_resize", None)
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 89, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_self->_style_state);
@@ -3750,7 +3929,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_cur_scope->__pyx_v_self->_style_state = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":85
+  /* "fletplus/utils/responsive_manager.pyx":91
  *         self._style_state = {}
  * 
  *         previous_handler = getattr(self.page, "on_resize", None)             # <<<<<<<<<<<<<<
@@ -3759,25 +3938,25 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
 */
   __pyx_t_2 = __pyx_cur_scope->__pyx_v_self->page;
   __Pyx_INCREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_GetAttr3(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_on_resize, Py_None); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 85, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_GetAttr3(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_on_resize, Py_None); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_GIVEREF(__pyx_t_6);
   __pyx_cur_scope->__pyx_v_previous_handler = __pyx_t_6;
   __pyx_t_6 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":87
+  /* "fletplus/utils/responsive_manager.pyx":93
  *         previous_handler = getattr(self.page, "on_resize", None)
  * 
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:             # <<<<<<<<<<<<<<
  *             self._handle_resize(event)
  *             if callable(previous_handler):
 */
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 93, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_event, __pyx_mstate_global->__pyx_kp_u_ft_ControlEvent_None) < (0)) __PYX_ERR(0, 87, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_None) < (0)) __PYX_ERR(0, 87, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8__init___1_combined_resize, 0, __pyx_mstate_global->__pyx_n_u_init___locals__combined_resize, ((PyObject*)__pyx_cur_scope), __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 87, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_event, __pyx_mstate_global->__pyx_kp_u_ft_ControlEvent_None) < (0)) __PYX_ERR(0, 93, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_None) < (0)) __PYX_ERR(0, 93, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8__init___1_combined_resize, 0, __pyx_mstate_global->__pyx_n_u_init___locals__combined_resize, ((PyObject*)__pyx_cur_scope), __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_mstate_global->__pyx_tuple[0]);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_6);
@@ -3785,26 +3964,26 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   __pyx_v__combined_resize = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":92
+  /* "fletplus/utils/responsive_manager.pyx":98
  *                 previous_handler(event)
  * 
  *         self.page.on_resize = _combined_resize             # <<<<<<<<<<<<<<
  *         self._handle_resize()
  * 
 */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_cur_scope->__pyx_v_self->page, __pyx_mstate_global->__pyx_n_u_on_resize, __pyx_v__combined_resize) < (0)) __PYX_ERR(0, 92, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_cur_scope->__pyx_v_self->page, __pyx_mstate_global->__pyx_n_u_on_resize, __pyx_v__combined_resize) < (0)) __PYX_ERR(0, 98, __pyx_L1_error)
 
-  /* "fletplus/utils/responsive_manager.pyx":93
+  /* "fletplus/utils/responsive_manager.pyx":99
  * 
  *         self.page.on_resize = _combined_resize
  *         self._handle_resize()             # <<<<<<<<<<<<<<
  * 
  *     # ------------------------------------------------------------------
 */
-  ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_cur_scope->__pyx_v_self->__pyx_vtab)->_handle_resize(__pyx_cur_scope->__pyx_v_self, 0, NULL); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 93, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_cur_scope->__pyx_v_self->__pyx_vtab)->_handle_resize(__pyx_cur_scope->__pyx_v_self, 0, NULL); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 99, __pyx_L1_error)
 
-  /* "fletplus/utils/responsive_manager.pyx":51
- *     """
+  /* "fletplus/utils/responsive_manager.pyx":57
+ *         return BreakpointRegistry.normalize(mapping)
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
@@ -3834,7 +4013,7 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":96
+/* "fletplus/utils/responsive_manager.pyx":102
  * 
  *     # ------------------------------------------------------------------
  *     def register_styles(             # <<<<<<<<<<<<<<
@@ -3843,16 +4022,16 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager___
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3register_styles(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5register_styles(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2register_styles, "Registra ``styles`` para ``control``.\n\n        ``styles`` puede ser un diccionario ``{breakpoint: Style}`` (por\n        compatibilidad retroactiva) o una instancia de\n        :class:`ResponsiveStyle`.\n        ");
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3register_styles = {"register_styles", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3register_styles, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2register_styles};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3register_styles(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4register_styles, "Registra ``styles`` para ``control``.\n\n        ``styles`` puede ser un diccionario ``{breakpoint: Style}`` (por\n        compatibilidad retroactiva) o una instancia de\n        :class:`ResponsiveStyle`.\n        ");
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5register_styles = {"register_styles", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5register_styles, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4register_styles};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5register_styles(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -3883,39 +4062,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_control,&__pyx_mstate_global->__pyx_n_u_styles,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 96, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 102, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 96, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 102, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 96, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 102, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "register_styles", 0) < (0)) __PYX_ERR(0, 96, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "register_styles", 0) < (0)) __PYX_ERR(0, 102, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("register_styles", 1, 2, 2, i); __PYX_ERR(0, 96, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("register_styles", 1, 2, 2, i); __PYX_ERR(0, 102, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 96, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 102, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 96, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 102, __pyx_L3_error)
     }
     __pyx_v_control = values[0];
     __pyx_v_styles = values[1];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("register_styles", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 96, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("register_styles", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 102, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3926,7 +4105,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2register_styles(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control, __pyx_v_styles);
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4register_styles(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control, __pyx_v_styles);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -3936,7 +4115,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2register_styles(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_styles) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4register_styles(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_styles) {
   PyObject *__pyx_v_rstyle = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -3951,20 +4130,20 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("register_styles", 0);
 
-  /* "fletplus/utils/responsive_manager.pyx":108
+  /* "fletplus/utils/responsive_manager.pyx":114
  *         """
  * 
  *         if isinstance(styles, ResponsiveStyle):             # <<<<<<<<<<<<<<
  *             rstyle = styles
  *         else:
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_ResponsiveStyle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_ResponsiveStyle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_IsInstance(__pyx_v_styles, __pyx_t_1); if (unlikely(__pyx_t_2 == ((int)-1))) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_t_2 = PyObject_IsInstance(__pyx_v_styles, __pyx_t_1); if (unlikely(__pyx_t_2 == ((int)-1))) __PYX_ERR(0, 114, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
-    /* "fletplus/utils/responsive_manager.pyx":109
+    /* "fletplus/utils/responsive_manager.pyx":115
  * 
  *         if isinstance(styles, ResponsiveStyle):
  *             rstyle = styles             # <<<<<<<<<<<<<<
@@ -3974,7 +4153,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
     __Pyx_INCREF(__pyx_v_styles);
     __pyx_v_rstyle = __pyx_v_styles;
 
-    /* "fletplus/utils/responsive_manager.pyx":108
+    /* "fletplus/utils/responsive_manager.pyx":114
  *         """
  * 
  *         if isinstance(styles, ResponsiveStyle):             # <<<<<<<<<<<<<<
@@ -3984,7 +4163,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
     goto __pyx_L3;
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":111
+  /* "fletplus/utils/responsive_manager.pyx":117
  *             rstyle = styles
  *         else:
  *             rstyle = ResponsiveStyle(width=styles)             # <<<<<<<<<<<<<<
@@ -3993,7 +4172,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
 */
   /*else*/ {
     __pyx_t_3 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_ResponsiveStyle); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 111, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_ResponsiveStyle); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 117, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -4009,14 +4188,14 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
     #endif
     {
       PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 1 : 0)] = {__pyx_t_3, NULL};
-      __pyx_t_6 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 111, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 117, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_width, __pyx_v_styles, __pyx_t_6, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 111, __pyx_L1_error)
+      if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_width, __pyx_v_styles, __pyx_t_6, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 117, __pyx_L1_error)
       __pyx_t_1 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_6);
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
     __pyx_v_rstyle = __pyx_t_1;
@@ -4024,7 +4203,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   }
   __pyx_L3:;
 
-  /* "fletplus/utils/responsive_manager.pyx":112
+  /* "fletplus/utils/responsive_manager.pyx":118
  *         else:
  *             rstyle = ResponsiveStyle(width=styles)
  *         self._styles[control] = rstyle             # <<<<<<<<<<<<<<
@@ -4033,25 +4212,25 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
 */
   if (unlikely(__pyx_v_self->_styles == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 112, __pyx_L1_error)
+    __PYX_ERR(0, 118, __pyx_L1_error)
   }
-  if (unlikely((PyDict_SetItem(__pyx_v_self->_styles, __pyx_v_control, __pyx_v_rstyle) < 0))) __PYX_ERR(0, 112, __pyx_L1_error)
+  if (unlikely((PyDict_SetItem(__pyx_v_self->_styles, __pyx_v_control, __pyx_v_rstyle) < 0))) __PYX_ERR(0, 118, __pyx_L1_error)
 
-  /* "fletplus/utils/responsive_manager.pyx":114
+  /* "fletplus/utils/responsive_manager.pyx":120
  *         self._styles[control] = rstyle
  *         self._style_state[control] = {
  *             "base": self._capture_base_attributes(control),             # <<<<<<<<<<<<<<
  *         }
  *         self._apply_style(control)
 */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_capture_base_attributes(__pyx_v_self, __pyx_v_control, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __pyx_t_4 = ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_capture_base_attributes(__pyx_v_self, __pyx_v_control, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_base, __pyx_t_4) < (0)) __PYX_ERR(0, 114, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_base, __pyx_t_4) < (0)) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":113
+  /* "fletplus/utils/responsive_manager.pyx":119
  *             rstyle = ResponsiveStyle(width=styles)
  *         self._styles[control] = rstyle
  *         self._style_state[control] = {             # <<<<<<<<<<<<<<
@@ -4060,21 +4239,21 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
 */
   if (unlikely(__pyx_v_self->_style_state == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 113, __pyx_L1_error)
+    __PYX_ERR(0, 119, __pyx_L1_error)
   }
-  if (unlikely((PyDict_SetItem(__pyx_v_self->_style_state, __pyx_v_control, __pyx_t_1) < 0))) __PYX_ERR(0, 113, __pyx_L1_error)
+  if (unlikely((PyDict_SetItem(__pyx_v_self->_style_state, __pyx_v_control, __pyx_t_1) < 0))) __PYX_ERR(0, 119, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":116
+  /* "fletplus/utils/responsive_manager.pyx":122
  *             "base": self._capture_base_attributes(control),
  *         }
  *         self._apply_style(control)             # <<<<<<<<<<<<<<
  * 
  *     # ------------------------------------------------------------------
 */
-  ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_apply_style(__pyx_v_self, __pyx_v_control, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 116, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_apply_style(__pyx_v_self, __pyx_v_control, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 122, __pyx_L1_error)
 
-  /* "fletplus/utils/responsive_manager.pyx":96
+  /* "fletplus/utils/responsive_manager.pyx":102
  * 
  *     # ------------------------------------------------------------------
  *     def register_styles(             # <<<<<<<<<<<<<<
@@ -4099,7 +4278,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":119
+/* "fletplus/utils/responsive_manager.pyx":125
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _apply_style(self, object control):             # <<<<<<<<<<<<<<
@@ -4107,7 +4286,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
  *         cdef dict base
 */
 
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4152,9 +4331,9 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_apply_style); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_apply_style); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style)) {
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -4175,7 +4354,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
           __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 119, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 125, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -4195,7 +4374,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     #endif
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":120
+  /* "fletplus/utils/responsive_manager.pyx":126
  *     # ------------------------------------------------------------------
  *     cpdef void _apply_style(self, object control):
  *         cdef dict state = self._style_state.get(control)             # <<<<<<<<<<<<<<
@@ -4204,15 +4383,15 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   if (unlikely(__pyx_v_self->_style_state == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-    __PYX_ERR(0, 120, __pyx_L1_error)
+    __PYX_ERR(0, 126, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->_style_state, __pyx_v_control, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->_style_state, __pyx_v_control, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyDict_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_1))) __PYX_ERR(0, 120, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_1))) __PYX_ERR(0, 126, __pyx_L1_error)
   __pyx_v_state = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":122
+  /* "fletplus/utils/responsive_manager.pyx":128
  *         cdef dict state = self._style_state.get(control)
  *         cdef dict base
  *         cdef object rstyle = self._styles.get(control)             # <<<<<<<<<<<<<<
@@ -4221,14 +4400,14 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   if (unlikely(__pyx_v_self->_styles == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-    __PYX_ERR(0, 122, __pyx_L1_error)
+    __PYX_ERR(0, 128, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->_styles, __pyx_v_control, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->_styles, __pyx_v_control, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 128, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_rstyle = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":125
+  /* "fletplus/utils/responsive_manager.pyx":131
  *         cdef object style
  *         cdef object styled_container
  *         cdef tuple attrs = _STYLE_ATTRS             # <<<<<<<<<<<<<<
@@ -4238,7 +4417,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
   __Pyx_INCREF(__pyx_v_8fletplus_5utils_18responsive_manager__STYLE_ATTRS);
   __pyx_v_attrs = __pyx_v_8fletplus_5utils_18responsive_manager__STYLE_ATTRS;
 
-  /* "fletplus/utils/responsive_manager.pyx":129
+  /* "fletplus/utils/responsive_manager.pyx":135
  *         cdef object value
  * 
  *         if rstyle is None:             # <<<<<<<<<<<<<<
@@ -4248,7 +4427,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
   __pyx_t_6 = (__pyx_v_rstyle == Py_None);
   if (__pyx_t_6) {
 
-    /* "fletplus/utils/responsive_manager.pyx":130
+    /* "fletplus/utils/responsive_manager.pyx":136
  * 
  *         if rstyle is None:
  *             return             # <<<<<<<<<<<<<<
@@ -4257,7 +4436,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
     goto __pyx_L0;
 
-    /* "fletplus/utils/responsive_manager.pyx":129
+    /* "fletplus/utils/responsive_manager.pyx":135
  *         cdef object value
  * 
  *         if rstyle is None:             # <<<<<<<<<<<<<<
@@ -4266,7 +4445,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":132
+  /* "fletplus/utils/responsive_manager.pyx":138
  *             return
  * 
  *         if state is None:             # <<<<<<<<<<<<<<
@@ -4276,23 +4455,23 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
   __pyx_t_6 = (__pyx_v_state == ((PyObject*)Py_None));
   if (__pyx_t_6) {
 
-    /* "fletplus/utils/responsive_manager.pyx":133
+    /* "fletplus/utils/responsive_manager.pyx":139
  * 
  *         if state is None:
  *             state = {"base": self._capture_base_attributes(control)}             # <<<<<<<<<<<<<<
  *             self._style_state[control] = state
  * 
 */
-    __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 139, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_capture_base_attributes(__pyx_v_self, __pyx_v_control, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_2 = ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_capture_base_attributes(__pyx_v_self, __pyx_v_control, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_base, __pyx_t_2) < (0)) __PYX_ERR(0, 133, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_base, __pyx_t_2) < (0)) __PYX_ERR(0, 139, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_1));
     __pyx_t_1 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":134
+    /* "fletplus/utils/responsive_manager.pyx":140
  *         if state is None:
  *             state = {"base": self._capture_base_attributes(control)}
  *             self._style_state[control] = state             # <<<<<<<<<<<<<<
@@ -4301,11 +4480,11 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
     if (unlikely(__pyx_v_self->_style_state == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 134, __pyx_L1_error)
+      __PYX_ERR(0, 140, __pyx_L1_error)
     }
-    if (unlikely((PyDict_SetItem(__pyx_v_self->_style_state, __pyx_v_control, __pyx_v_state) < 0))) __PYX_ERR(0, 134, __pyx_L1_error)
+    if (unlikely((PyDict_SetItem(__pyx_v_self->_style_state, __pyx_v_control, __pyx_v_state) < 0))) __PYX_ERR(0, 140, __pyx_L1_error)
 
-    /* "fletplus/utils/responsive_manager.pyx":132
+    /* "fletplus/utils/responsive_manager.pyx":138
  *             return
  * 
  *         if state is None:             # <<<<<<<<<<<<<<
@@ -4314,7 +4493,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":136
+  /* "fletplus/utils/responsive_manager.pyx":142
  *             self._style_state[control] = state
  * 
  *         base = state["base"]             # <<<<<<<<<<<<<<
@@ -4323,15 +4502,15 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   if (unlikely(__pyx_v_state == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 136, __pyx_L1_error)
+    __PYX_ERR(0, 142, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_state, __pyx_mstate_global->__pyx_n_u_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 136, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_state, __pyx_mstate_global->__pyx_n_u_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyDict_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_1))) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_1))) __PYX_ERR(0, 142, __pyx_L1_error)
   __pyx_v_base = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":137
+  /* "fletplus/utils/responsive_manager.pyx":143
  * 
  *         base = state["base"]
  *         for attr in attrs:             # <<<<<<<<<<<<<<
@@ -4340,7 +4519,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   if (unlikely(__pyx_v_attrs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 137, __pyx_L1_error)
+    __PYX_ERR(0, 143, __pyx_L1_error)
   }
   __pyx_t_1 = __pyx_v_attrs; __Pyx_INCREF(__pyx_t_1);
   __pyx_t_7 = 0;
@@ -4348,7 +4527,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     {
       Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_1);
       #if !CYTHON_ASSUME_SAFE_SIZE
-      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 137, __pyx_L1_error)
+      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 143, __pyx_L1_error)
       #endif
       if (__pyx_t_7 >= __pyx_temp) break;
     }
@@ -4358,12 +4537,12 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     __pyx_t_2 = __Pyx_PySequence_ITEM(__pyx_t_1, __pyx_t_7);
     #endif
     ++__pyx_t_7;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 137, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_attr, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":138
+    /* "fletplus/utils/responsive_manager.pyx":144
  *         base = state["base"]
  *         for attr in attrs:
  *             value = base.get(attr, MISSING)             # <<<<<<<<<<<<<<
@@ -4372,30 +4551,30 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
     if (unlikely(__pyx_v_base == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-      __PYX_ERR(0, 138, __pyx_L1_error)
+      __PYX_ERR(0, 144, __pyx_L1_error)
     }
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyDict_GetItemDefault(__pyx_v_base, __pyx_v_attr, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 138, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyDict_GetItemDefault(__pyx_v_base, __pyx_v_attr, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 144, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF_SET(__pyx_v_value, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":139
+    /* "fletplus/utils/responsive_manager.pyx":145
  *         for attr in attrs:
  *             value = base.get(attr, MISSING)
  *             if value is not MISSING:             # <<<<<<<<<<<<<<
  *                 self._safe_setattr(control, attr, value)
  * 
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 139, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_6 = (__pyx_v_value != __pyx_t_4);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (__pyx_t_6) {
 
-      /* "fletplus/utils/responsive_manager.pyx":140
+      /* "fletplus/utils/responsive_manager.pyx":146
  *             value = base.get(attr, MISSING)
  *             if value is not MISSING:
  *                 self._safe_setattr(control, attr, value)             # <<<<<<<<<<<<<<
@@ -4404,11 +4583,11 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
       __pyx_t_4 = __pyx_v_attr;
       __Pyx_INCREF(__pyx_t_4);
-      if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_4))) __PYX_ERR(0, 140, __pyx_L1_error)
-      ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_safe_setattr(__pyx_v_self, __pyx_v_control, ((PyObject*)__pyx_t_4), __pyx_v_value, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 140, __pyx_L1_error)
+      if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_4))) __PYX_ERR(0, 146, __pyx_L1_error)
+      ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_safe_setattr(__pyx_v_self, __pyx_v_control, ((PyObject*)__pyx_t_4), __pyx_v_value, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 146, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":139
+      /* "fletplus/utils/responsive_manager.pyx":145
  *         for attr in attrs:
  *             value = base.get(attr, MISSING)
  *             if value is not MISSING:             # <<<<<<<<<<<<<<
@@ -4417,7 +4596,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":137
+    /* "fletplus/utils/responsive_manager.pyx":143
  * 
  *         base = state["base"]
  *         for attr in attrs:             # <<<<<<<<<<<<<<
@@ -4427,7 +4606,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":142
+  /* "fletplus/utils/responsive_manager.pyx":148
  *                 self._safe_setattr(control, attr, value)
  * 
  *         style = rstyle.get_style(self.page)             # <<<<<<<<<<<<<<
@@ -4441,24 +4620,24 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_v_self->page};
     __pyx_t_1 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_get_style, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 142, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
   __pyx_v_style = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":143
+  /* "fletplus/utils/responsive_manager.pyx":149
  * 
  *         style = rstyle.get_style(self.page)
  *         if not style:             # <<<<<<<<<<<<<<
  *             return
  * 
 */
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_style); if (unlikely((__pyx_t_6 < 0))) __PYX_ERR(0, 143, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_style); if (unlikely((__pyx_t_6 < 0))) __PYX_ERR(0, 149, __pyx_L1_error)
   __pyx_t_8 = (!__pyx_t_6);
   if (__pyx_t_8) {
 
-    /* "fletplus/utils/responsive_manager.pyx":144
+    /* "fletplus/utils/responsive_manager.pyx":150
  *         style = rstyle.get_style(self.page)
  *         if not style:
  *             return             # <<<<<<<<<<<<<<
@@ -4467,7 +4646,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
     goto __pyx_L0;
 
-    /* "fletplus/utils/responsive_manager.pyx":143
+    /* "fletplus/utils/responsive_manager.pyx":149
  * 
  *         style = rstyle.get_style(self.page)
  *         if not style:             # <<<<<<<<<<<<<<
@@ -4476,7 +4655,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":146
+  /* "fletplus/utils/responsive_manager.pyx":152
  *             return
  * 
  *         styled_container = style.apply(control)             # <<<<<<<<<<<<<<
@@ -4490,13 +4669,13 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_v_control};
     __pyx_t_1 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_apply, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 146, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 152, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
   __pyx_v_styled_container = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":148
+  /* "fletplus/utils/responsive_manager.pyx":154
  *         styled_container = style.apply(control)
  * 
  *         for attr in attrs:             # <<<<<<<<<<<<<<
@@ -4505,7 +4684,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
   if (unlikely(__pyx_v_attrs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 148, __pyx_L1_error)
+    __PYX_ERR(0, 154, __pyx_L1_error)
   }
   __pyx_t_1 = __pyx_v_attrs; __Pyx_INCREF(__pyx_t_1);
   __pyx_t_7 = 0;
@@ -4513,7 +4692,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     {
       Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_1);
       #if !CYTHON_ASSUME_SAFE_SIZE
-      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 148, __pyx_L1_error)
+      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 154, __pyx_L1_error)
       #endif
       if (__pyx_t_7 >= __pyx_temp) break;
     }
@@ -4523,34 +4702,34 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
     __pyx_t_4 = __Pyx_PySequence_ITEM(__pyx_t_1, __pyx_t_7);
     #endif
     ++__pyx_t_7;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_XDECREF_SET(__pyx_v_attr, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":149
+    /* "fletplus/utils/responsive_manager.pyx":155
  * 
  *         for attr in attrs:
  *             if hasattr(control, attr):             # <<<<<<<<<<<<<<
  *                 value = getattr(styled_container, attr, None)
  *                 if value is not None:
 */
-    __pyx_t_8 = __Pyx_HasAttr(__pyx_v_control, __pyx_v_attr); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 149, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_HasAttr(__pyx_v_control, __pyx_v_attr); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 155, __pyx_L1_error)
     if (__pyx_t_8) {
 
-      /* "fletplus/utils/responsive_manager.pyx":150
+      /* "fletplus/utils/responsive_manager.pyx":156
  *         for attr in attrs:
  *             if hasattr(control, attr):
  *                 value = getattr(styled_container, attr, None)             # <<<<<<<<<<<<<<
  *                 if value is not None:
  *                     self._safe_setattr(control, attr, value)
 */
-      __pyx_t_4 = __Pyx_GetAttr3(__pyx_v_styled_container, __pyx_v_attr, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 150, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_GetAttr3(__pyx_v_styled_container, __pyx_v_attr, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 156, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_XDECREF_SET(__pyx_v_value, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":151
+      /* "fletplus/utils/responsive_manager.pyx":157
  *             if hasattr(control, attr):
  *                 value = getattr(styled_container, attr, None)
  *                 if value is not None:             # <<<<<<<<<<<<<<
@@ -4560,7 +4739,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
       __pyx_t_8 = (__pyx_v_value != Py_None);
       if (__pyx_t_8) {
 
-        /* "fletplus/utils/responsive_manager.pyx":152
+        /* "fletplus/utils/responsive_manager.pyx":158
  *                 value = getattr(styled_container, attr, None)
  *                 if value is not None:
  *                     self._safe_setattr(control, attr, value)             # <<<<<<<<<<<<<<
@@ -4569,11 +4748,11 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
         __pyx_t_4 = __pyx_v_attr;
         __Pyx_INCREF(__pyx_t_4);
-        if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_4))) __PYX_ERR(0, 152, __pyx_L1_error)
-        ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_safe_setattr(__pyx_v_self, __pyx_v_control, ((PyObject*)__pyx_t_4), __pyx_v_value, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 152, __pyx_L1_error)
+        if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_4))) __PYX_ERR(0, 158, __pyx_L1_error)
+        ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_safe_setattr(__pyx_v_self, __pyx_v_control, ((PyObject*)__pyx_t_4), __pyx_v_value, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 158, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-        /* "fletplus/utils/responsive_manager.pyx":151
+        /* "fletplus/utils/responsive_manager.pyx":157
  *             if hasattr(control, attr):
  *                 value = getattr(styled_container, attr, None)
  *                 if value is not None:             # <<<<<<<<<<<<<<
@@ -4582,7 +4761,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
       }
 
-      /* "fletplus/utils/responsive_manager.pyx":149
+      /* "fletplus/utils/responsive_manager.pyx":155
  * 
  *         for attr in attrs:
  *             if hasattr(control, attr):             # <<<<<<<<<<<<<<
@@ -4591,7 +4770,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":148
+    /* "fletplus/utils/responsive_manager.pyx":154
  *         styled_container = style.apply(control)
  * 
  *         for attr in attrs:             # <<<<<<<<<<<<<<
@@ -4601,7 +4780,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":119
+  /* "fletplus/utils/responsive_manager.pyx":125
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _apply_style(self, object control):             # <<<<<<<<<<<<<<
@@ -4630,15 +4809,15 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__a
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style = {"_apply_style", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style = {"_apply_style", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4668,32 +4847,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_control,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 119, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 125, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 119, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 125, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_apply_style", 0) < (0)) __PYX_ERR(0, 119, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_apply_style", 0) < (0)) __PYX_ERR(0, 125, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_apply_style", 1, 1, 1, i); __PYX_ERR(0, 119, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_apply_style", 1, 1, 1, i); __PYX_ERR(0, 125, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 119, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 125, __pyx_L3_error)
     }
     __pyx_v_control = values[0];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_apply_style", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 119, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_apply_style", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 125, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4704,7 +4883,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4_apply_style(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control);
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_6_apply_style(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -4714,7 +4893,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4_apply_style(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_6_apply_style(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4723,8 +4902,8 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_apply_style", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__apply_style(__pyx_v_self, __pyx_v_control, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 119, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
+  __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__apply_style(__pyx_v_self, __pyx_v_control, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 125, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 125, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4741,7 +4920,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":155
+/* "fletplus/utils/responsive_manager.pyx":161
  * 
  *     # ------------------------------------------------------------------
  *     cpdef dict _capture_base_attributes(self, object control):             # <<<<<<<<<<<<<<
@@ -4749,7 +4928,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
  *         cdef tuple attrs = _STYLE_ATTRS
 */
 
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4790,9 +4969,9 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_capture_base_attributes); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_capture_base_attributes); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes)) {
         __Pyx_XDECREF(__pyx_r);
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
@@ -4814,10 +4993,10 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
           __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 155, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 161, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
-        if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 155, __pyx_L1_error)
+        if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 161, __pyx_L1_error)
         __pyx_r = ((PyObject*)__pyx_t_2);
         __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -4836,19 +5015,19 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
     #endif
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":156
+  /* "fletplus/utils/responsive_manager.pyx":162
  *     # ------------------------------------------------------------------
  *     cpdef dict _capture_base_attributes(self, object control):
  *         cdef dict base = {}             # <<<<<<<<<<<<<<
  *         cdef tuple attrs = _STYLE_ATTRS
  *         cdef object attr
 */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 156, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 162, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_base = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":157
+  /* "fletplus/utils/responsive_manager.pyx":163
  *     cpdef dict _capture_base_attributes(self, object control):
  *         cdef dict base = {}
  *         cdef tuple attrs = _STYLE_ATTRS             # <<<<<<<<<<<<<<
@@ -4858,7 +5037,7 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
   __Pyx_INCREF(__pyx_v_8fletplus_5utils_18responsive_manager__STYLE_ATTRS);
   __pyx_v_attrs = __pyx_v_8fletplus_5utils_18responsive_manager__STYLE_ATTRS;
 
-  /* "fletplus/utils/responsive_manager.pyx":161
+  /* "fletplus/utils/responsive_manager.pyx":167
  *         cdef object value
  * 
  *         for attr in attrs:             # <<<<<<<<<<<<<<
@@ -4867,7 +5046,7 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
 */
   if (unlikely(__pyx_v_attrs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 161, __pyx_L1_error)
+    __PYX_ERR(0, 167, __pyx_L1_error)
   }
   __pyx_t_1 = __pyx_v_attrs; __Pyx_INCREF(__pyx_t_1);
   __pyx_t_6 = 0;
@@ -4875,7 +5054,7 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
     {
       Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_1);
       #if !CYTHON_ASSUME_SAFE_SIZE
-      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 161, __pyx_L1_error)
+      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 167, __pyx_L1_error)
       #endif
       if (__pyx_t_6 >= __pyx_temp) break;
     }
@@ -4885,49 +5064,49 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
     __pyx_t_2 = __Pyx_PySequence_ITEM(__pyx_t_1, __pyx_t_6);
     #endif
     ++__pyx_t_6;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 161, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_attr, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":162
+    /* "fletplus/utils/responsive_manager.pyx":168
  * 
  *         for attr in attrs:
  *             value = getattr(control, attr, MISSING)             # <<<<<<<<<<<<<<
  *             if value is not MISSING:
  *                 base[attr] = value
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 162, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_GetAttr3(__pyx_v_control, __pyx_v_attr, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetAttr3(__pyx_v_control, __pyx_v_attr, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF_SET(__pyx_v_value, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":163
+    /* "fletplus/utils/responsive_manager.pyx":169
  *         for attr in attrs:
  *             value = getattr(control, attr, MISSING)
  *             if value is not MISSING:             # <<<<<<<<<<<<<<
  *                 base[attr] = value
  *         return base
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 163, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_MISSING); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_7 = (__pyx_v_value != __pyx_t_4);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":164
+      /* "fletplus/utils/responsive_manager.pyx":170
  *             value = getattr(control, attr, MISSING)
  *             if value is not MISSING:
  *                 base[attr] = value             # <<<<<<<<<<<<<<
  *         return base
  * 
 */
-      if (unlikely((PyDict_SetItem(__pyx_v_base, __pyx_v_attr, __pyx_v_value) < 0))) __PYX_ERR(0, 164, __pyx_L1_error)
+      if (unlikely((PyDict_SetItem(__pyx_v_base, __pyx_v_attr, __pyx_v_value) < 0))) __PYX_ERR(0, 170, __pyx_L1_error)
 
-      /* "fletplus/utils/responsive_manager.pyx":163
+      /* "fletplus/utils/responsive_manager.pyx":169
  *         for attr in attrs:
  *             value = getattr(control, attr, MISSING)
  *             if value is not MISSING:             # <<<<<<<<<<<<<<
@@ -4936,7 +5115,7 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":161
+    /* "fletplus/utils/responsive_manager.pyx":167
  *         cdef object value
  * 
  *         for attr in attrs:             # <<<<<<<<<<<<<<
@@ -4946,7 +5125,7 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":165
+  /* "fletplus/utils/responsive_manager.pyx":171
  *             if value is not MISSING:
  *                 base[attr] = value
  *         return base             # <<<<<<<<<<<<<<
@@ -4958,7 +5137,7 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
   __pyx_r = __pyx_v_base;
   goto __pyx_L0;
 
-  /* "fletplus/utils/responsive_manager.pyx":155
+  /* "fletplus/utils/responsive_manager.pyx":161
  * 
  *     # ------------------------------------------------------------------
  *     cpdef dict _capture_base_attributes(self, object control):             # <<<<<<<<<<<<<<
@@ -4985,15 +5164,15 @@ static PyObject *__pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManag
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes = {"_capture_base_attributes", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes = {"_capture_base_attributes", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -5023,32 +5202,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_control,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 155, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 161, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 155, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 161, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_capture_base_attributes", 0) < (0)) __PYX_ERR(0, 155, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_capture_base_attributes", 0) < (0)) __PYX_ERR(0, 161, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_capture_base_attributes", 1, 1, 1, i); __PYX_ERR(0, 155, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_capture_base_attributes", 1, 1, 1, i); __PYX_ERR(0, 161, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 155, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 161, __pyx_L3_error)
     }
     __pyx_v_control = values[0];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_capture_base_attributes", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 155, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_capture_base_attributes", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 161, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5059,7 +5238,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_6_capture_base_attributes(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control);
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8_capture_base_attributes(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -5069,7 +5248,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_6_capture_base_attributes(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8_capture_base_attributes(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -5078,7 +5257,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_capture_base_attributes", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__capture_base_attributes(__pyx_v_self, __pyx_v_control, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__capture_base_attributes(__pyx_v_self, __pyx_v_control, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -5095,7 +5274,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":168
+/* "fletplus/utils/responsive_manager.pyx":174
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _safe_setattr(self, object control, str attr, object value):             # <<<<<<<<<<<<<<
@@ -5103,7 +5282,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
  *             setattr(control, attr, value)
 */
 
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -5142,9 +5321,9 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_safe_setattr); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 168, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_safe_setattr); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 174, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr)) {
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -5165,7 +5344,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
           __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (4-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 174, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -5185,7 +5364,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
     #endif
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":169
+  /* "fletplus/utils/responsive_manager.pyx":175
  *     # ------------------------------------------------------------------
  *     cpdef void _safe_setattr(self, object control, str attr, object value):
  *         try:             # <<<<<<<<<<<<<<
@@ -5201,16 +5380,16 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
     __Pyx_XGOTREF(__pyx_t_8);
     /*try:*/ {
 
-      /* "fletplus/utils/responsive_manager.pyx":170
+      /* "fletplus/utils/responsive_manager.pyx":176
  *     cpdef void _safe_setattr(self, object control, str attr, object value):
  *         try:
  *             setattr(control, attr, value)             # <<<<<<<<<<<<<<
  *         except AttributeError:
  *             pass
 */
-      __pyx_t_9 = PyObject_SetAttr(__pyx_v_control, __pyx_v_attr, __pyx_v_value); if (unlikely(__pyx_t_9 == ((int)-1))) __PYX_ERR(0, 170, __pyx_L3_error)
+      __pyx_t_9 = PyObject_SetAttr(__pyx_v_control, __pyx_v_attr, __pyx_v_value); if (unlikely(__pyx_t_9 == ((int)-1))) __PYX_ERR(0, 176, __pyx_L3_error)
 
-      /* "fletplus/utils/responsive_manager.pyx":169
+      /* "fletplus/utils/responsive_manager.pyx":175
  *     # ------------------------------------------------------------------
  *     cpdef void _safe_setattr(self, object control, str attr, object value):
  *         try:             # <<<<<<<<<<<<<<
@@ -5228,7 +5407,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":171
+    /* "fletplus/utils/responsive_manager.pyx":177
  *         try:
  *             setattr(control, attr, value)
  *         except AttributeError:             # <<<<<<<<<<<<<<
@@ -5242,7 +5421,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
     }
     goto __pyx_L5_except_error;
 
-    /* "fletplus/utils/responsive_manager.pyx":169
+    /* "fletplus/utils/responsive_manager.pyx":175
  *     # ------------------------------------------------------------------
  *     cpdef void _safe_setattr(self, object control, str attr, object value):
  *         try:             # <<<<<<<<<<<<<<
@@ -5263,7 +5442,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
     __pyx_L8_try_end:;
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":168
+  /* "fletplus/utils/responsive_manager.pyx":174
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _safe_setattr(self, object control, str attr, object value):             # <<<<<<<<<<<<<<
@@ -5284,15 +5463,15 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__s
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr = {"_safe_setattr", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr = {"_safe_setattr", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -5324,38 +5503,38 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_control,&__pyx_mstate_global->__pyx_n_u_attr,&__pyx_mstate_global->__pyx_n_u_value,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 168, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 174, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 168, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 174, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 168, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 174, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 168, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 174, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_safe_setattr", 0) < (0)) __PYX_ERR(0, 168, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_safe_setattr", 0) < (0)) __PYX_ERR(0, 174, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 3; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_safe_setattr", 1, 3, 3, i); __PYX_ERR(0, 168, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_safe_setattr", 1, 3, 3, i); __PYX_ERR(0, 174, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 3)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 168, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 174, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 168, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 174, __pyx_L3_error)
       values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 168, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 174, __pyx_L3_error)
     }
     __pyx_v_control = values[0];
     __pyx_v_attr = ((PyObject*)values[1]);
@@ -5363,7 +5542,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_safe_setattr", 1, 3, 3, __pyx_nargs); __PYX_ERR(0, 168, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_safe_setattr", 1, 3, 3, __pyx_nargs); __PYX_ERR(0, 174, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5374,8 +5553,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyUnicode_Type), 1, "attr", 1))) __PYX_ERR(0, 168, __pyx_L1_error)
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8_safe_setattr(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control, __pyx_v_attr, __pyx_v_value);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyUnicode_Type), 1, "attr", 1))) __PYX_ERR(0, 174, __pyx_L1_error)
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_10_safe_setattr(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_control, __pyx_v_attr, __pyx_v_value);
 
   /* function exit code */
   goto __pyx_L0;
@@ -5394,7 +5573,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_8_safe_setattr(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_attr, PyObject *__pyx_v_value) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_10_safe_setattr(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_control, PyObject *__pyx_v_attr, PyObject *__pyx_v_value) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -5403,8 +5582,8 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_safe_setattr", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__safe_setattr(__pyx_v_self, __pyx_v_control, __pyx_v_attr, __pyx_v_value, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 168, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 168, __pyx_L1_error)
+  __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__safe_setattr(__pyx_v_self, __pyx_v_control, __pyx_v_attr, __pyx_v_value, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 174, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -5421,7 +5600,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   return __pyx_r;
 }
 
-/* "fletplus/utils/responsive_manager.pyx":175
+/* "fletplus/utils/responsive_manager.pyx":181
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _handle_resize(self, object e=None):             # <<<<<<<<<<<<<<
@@ -5429,7 +5608,7 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
  *         cdef double width = page.width if page.width is not None else 0
 */
 
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -5493,9 +5672,9 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_handle_resize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 175, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_handle_resize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 181, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize)) {
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -5516,7 +5695,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
           __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 175, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
         }
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -5536,7 +5715,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     #endif
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":176
+  /* "fletplus/utils/responsive_manager.pyx":182
  *     # ------------------------------------------------------------------
  *     cpdef void _handle_resize(self, object e=None):
  *         cdef object page = self.page             # <<<<<<<<<<<<<<
@@ -5548,21 +5727,21 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __pyx_v_page = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":177
+  /* "fletplus/utils/responsive_manager.pyx":183
  *     cpdef void _handle_resize(self, object e=None):
  *         cdef object page = self.page
  *         cdef double width = page.width if page.width is not None else 0             # <<<<<<<<<<<<<<
  *         cdef double height = page.height if page.height is not None else 0
  * 
 */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_width); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_width); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_7 = (__pyx_t_1 != Py_None);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_7) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_width); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_width); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_6 = __pyx_t_8;
   } else {
@@ -5570,21 +5749,21 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   }
   __pyx_v_width = __pyx_t_6;
 
-  /* "fletplus/utils/responsive_manager.pyx":178
+  /* "fletplus/utils/responsive_manager.pyx":184
  *         cdef object page = self.page
  *         cdef double width = page.width if page.width is not None else 0
  *         cdef double height = page.height if page.height is not None else 0             # <<<<<<<<<<<<<<
  * 
  *         cdef tuple width_keys = self._width_bp_keys
 */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_height); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_height); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_7 = (__pyx_t_1 != Py_None);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_7) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_height); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_page, __pyx_mstate_global->__pyx_n_u_height); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_6 = __pyx_t_8;
   } else {
@@ -5592,7 +5771,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   }
   __pyx_v_height = __pyx_t_6;
 
-  /* "fletplus/utils/responsive_manager.pyx":180
+  /* "fletplus/utils/responsive_manager.pyx":186
  *         cdef double height = page.height if page.height is not None else 0
  * 
  *         cdef tuple width_keys = self._width_bp_keys             # <<<<<<<<<<<<<<
@@ -5604,7 +5783,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __pyx_v_width_keys = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":181
+  /* "fletplus/utils/responsive_manager.pyx":187
  * 
  *         cdef tuple width_keys = self._width_bp_keys
  *         cdef tuple height_keys = self._height_bp_keys             # <<<<<<<<<<<<<<
@@ -5616,7 +5795,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __pyx_v_height_keys = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":183
+  /* "fletplus/utils/responsive_manager.pyx":189
  *         cdef tuple height_keys = self._height_bp_keys
  *         cdef object bp
  *         cdef object bp_w = None             # <<<<<<<<<<<<<<
@@ -5626,7 +5805,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __Pyx_INCREF(Py_None);
   __pyx_v_bp_w = Py_None;
 
-  /* "fletplus/utils/responsive_manager.pyx":184
+  /* "fletplus/utils/responsive_manager.pyx":190
  *         cdef object bp
  *         cdef object bp_w = None
  *         cdef object bp_h = None             # <<<<<<<<<<<<<<
@@ -5636,7 +5815,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __Pyx_INCREF(Py_None);
   __pyx_v_bp_h = Py_None;
 
-  /* "fletplus/utils/responsive_manager.pyx":187
+  /* "fletplus/utils/responsive_manager.pyx":193
  * 
  *         # Breakpoints por ancho
  *         for bp in width_keys:             # <<<<<<<<<<<<<<
@@ -5645,7 +5824,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   if (unlikely(__pyx_v_width_keys == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 187, __pyx_L1_error)
+    __PYX_ERR(0, 193, __pyx_L1_error)
   }
   __pyx_t_1 = __pyx_v_width_keys; __Pyx_INCREF(__pyx_t_1);
   __pyx_t_9 = 0;
@@ -5653,7 +5832,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     {
       Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_1);
       #if !CYTHON_ASSUME_SAFE_SIZE
-      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 187, __pyx_L1_error)
+      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 193, __pyx_L1_error)
       #endif
       if (__pyx_t_9 >= __pyx_temp) break;
     }
@@ -5663,27 +5842,27 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     __pyx_t_2 = __Pyx_PySequence_ITEM(__pyx_t_1, __pyx_t_9);
     #endif
     ++__pyx_t_9;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 193, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_bp, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":188
+    /* "fletplus/utils/responsive_manager.pyx":194
  *         # Breakpoints por ancho
  *         for bp in width_keys:
  *             if width >= bp:             # <<<<<<<<<<<<<<
  *                 bp_w = bp
  *                 break
 */
-    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_width); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 188, __pyx_L1_error)
+    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_width); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 194, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = PyObject_RichCompare(__pyx_t_2, __pyx_v_bp, Py_GE); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 188, __pyx_L1_error)
+    __pyx_t_4 = PyObject_RichCompare(__pyx_t_2, __pyx_v_bp, Py_GE); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 194, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 188, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 194, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":189
+      /* "fletplus/utils/responsive_manager.pyx":195
  *         for bp in width_keys:
  *             if width >= bp:
  *                 bp_w = bp             # <<<<<<<<<<<<<<
@@ -5693,7 +5872,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
       __Pyx_INCREF(__pyx_v_bp);
       __Pyx_DECREF_SET(__pyx_v_bp_w, __pyx_v_bp);
 
-      /* "fletplus/utils/responsive_manager.pyx":190
+      /* "fletplus/utils/responsive_manager.pyx":196
  *             if width >= bp:
  *                 bp_w = bp
  *                 break             # <<<<<<<<<<<<<<
@@ -5702,7 +5881,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
       goto __pyx_L4_break;
 
-      /* "fletplus/utils/responsive_manager.pyx":188
+      /* "fletplus/utils/responsive_manager.pyx":194
  *         # Breakpoints por ancho
  *         for bp in width_keys:
  *             if width >= bp:             # <<<<<<<<<<<<<<
@@ -5711,7 +5890,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":187
+    /* "fletplus/utils/responsive_manager.pyx":193
  * 
  *         # Breakpoints por ancho
  *         for bp in width_keys:             # <<<<<<<<<<<<<<
@@ -5726,19 +5905,19 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   goto __pyx_L6_for_end;
   __pyx_L6_for_end:;
 
-  /* "fletplus/utils/responsive_manager.pyx":192
+  /* "fletplus/utils/responsive_manager.pyx":198
  *                 break
  * 
  *         if bp_w != self._current_width_bp:             # <<<<<<<<<<<<<<
  *             self._current_width_bp = bp_w
  *             bp_callback = self.breakpoints.get(bp_w)
 */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_bp_w, __pyx_v_self->_current_width_bp, Py_NE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 192, __pyx_L1_error)
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_bp_w, __pyx_v_self->_current_width_bp, Py_NE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 198, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 198, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_7) {
 
-    /* "fletplus/utils/responsive_manager.pyx":193
+    /* "fletplus/utils/responsive_manager.pyx":199
  * 
  *         if bp_w != self._current_width_bp:
  *             self._current_width_bp = bp_w             # <<<<<<<<<<<<<<
@@ -5751,7 +5930,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     __Pyx_DECREF(__pyx_v_self->_current_width_bp);
     __pyx_v_self->_current_width_bp = __pyx_v_bp_w;
 
-    /* "fletplus/utils/responsive_manager.pyx":194
+    /* "fletplus/utils/responsive_manager.pyx":200
  *         if bp_w != self._current_width_bp:
  *             self._current_width_bp = bp_w
  *             bp_callback = self.breakpoints.get(bp_w)             # <<<<<<<<<<<<<<
@@ -5760,24 +5939,24 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     if (unlikely(__pyx_v_self->breakpoints == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-      __PYX_ERR(0, 194, __pyx_L1_error)
+      __PYX_ERR(0, 200, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->breakpoints, __pyx_v_bp_w, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 194, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->breakpoints, __pyx_v_bp_w, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_bp_callback = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":195
+    /* "fletplus/utils/responsive_manager.pyx":201
  *             self._current_width_bp = bp_w
  *             bp_callback = self.breakpoints.get(bp_w)
  *             if bp_callback:             # <<<<<<<<<<<<<<
  *                 bp_callback(width)
  * 
 */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_bp_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 195, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_bp_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 201, __pyx_L1_error)
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":196
+      /* "fletplus/utils/responsive_manager.pyx":202
  *             bp_callback = self.breakpoints.get(bp_w)
  *             if bp_callback:
  *                 bp_callback(width)             # <<<<<<<<<<<<<<
@@ -5787,7 +5966,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
       __pyx_t_4 = NULL;
       __Pyx_INCREF(__pyx_v_bp_callback);
       __pyx_t_2 = __pyx_v_bp_callback; 
-      __pyx_t_3 = PyFloat_FromDouble(__pyx_v_width); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 196, __pyx_L1_error)
+      __pyx_t_3 = PyFloat_FromDouble(__pyx_v_width); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 202, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_5 = 1;
       #if CYTHON_UNPACK_METHODS
@@ -5807,12 +5986,12 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
+        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 202, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
       }
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":195
+      /* "fletplus/utils/responsive_manager.pyx":201
  *             self._current_width_bp = bp_w
  *             bp_callback = self.breakpoints.get(bp_w)
  *             if bp_callback:             # <<<<<<<<<<<<<<
@@ -5821,7 +6000,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":192
+    /* "fletplus/utils/responsive_manager.pyx":198
  *                 break
  * 
  *         if bp_w != self._current_width_bp:             # <<<<<<<<<<<<<<
@@ -5830,7 +6009,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":199
+  /* "fletplus/utils/responsive_manager.pyx":205
  * 
  *         # Breakpoints por alto
  *         for bp in height_keys:             # <<<<<<<<<<<<<<
@@ -5839,7 +6018,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   if (unlikely(__pyx_v_height_keys == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 199, __pyx_L1_error)
+    __PYX_ERR(0, 205, __pyx_L1_error)
   }
   __pyx_t_1 = __pyx_v_height_keys; __Pyx_INCREF(__pyx_t_1);
   __pyx_t_9 = 0;
@@ -5847,7 +6026,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     {
       Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_1);
       #if !CYTHON_ASSUME_SAFE_SIZE
-      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 199, __pyx_L1_error)
+      if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 205, __pyx_L1_error)
       #endif
       if (__pyx_t_9 >= __pyx_temp) break;
     }
@@ -5857,27 +6036,27 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     __pyx_t_2 = __Pyx_PySequence_ITEM(__pyx_t_1, __pyx_t_9);
     #endif
     ++__pyx_t_9;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 205, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_bp, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":200
+    /* "fletplus/utils/responsive_manager.pyx":206
  *         # Breakpoints por alto
  *         for bp in height_keys:
  *             if height >= bp:             # <<<<<<<<<<<<<<
  *                 bp_h = bp
  *                 break
 */
-    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_height); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 200, __pyx_L1_error)
+    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_height); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 206, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_v_bp, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 200, __pyx_L1_error)
+    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_v_bp, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 206, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 200, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 206, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":201
+      /* "fletplus/utils/responsive_manager.pyx":207
  *         for bp in height_keys:
  *             if height >= bp:
  *                 bp_h = bp             # <<<<<<<<<<<<<<
@@ -5887,7 +6066,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
       __Pyx_INCREF(__pyx_v_bp);
       __Pyx_DECREF_SET(__pyx_v_bp_h, __pyx_v_bp);
 
-      /* "fletplus/utils/responsive_manager.pyx":202
+      /* "fletplus/utils/responsive_manager.pyx":208
  *             if height >= bp:
  *                 bp_h = bp
  *                 break             # <<<<<<<<<<<<<<
@@ -5896,7 +6075,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
       goto __pyx_L10_break;
 
-      /* "fletplus/utils/responsive_manager.pyx":200
+      /* "fletplus/utils/responsive_manager.pyx":206
  *         # Breakpoints por alto
  *         for bp in height_keys:
  *             if height >= bp:             # <<<<<<<<<<<<<<
@@ -5905,7 +6084,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":199
+    /* "fletplus/utils/responsive_manager.pyx":205
  * 
  *         # Breakpoints por alto
  *         for bp in height_keys:             # <<<<<<<<<<<<<<
@@ -5920,19 +6099,19 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   goto __pyx_L12_for_end;
   __pyx_L12_for_end:;
 
-  /* "fletplus/utils/responsive_manager.pyx":204
+  /* "fletplus/utils/responsive_manager.pyx":210
  *                 break
  * 
  *         if bp_h != self._current_height_bp:             # <<<<<<<<<<<<<<
  *             self._current_height_bp = bp_h
  *             bh_callback = self.height_breakpoints.get(bp_h)
 */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_bp_h, __pyx_v_self->_current_height_bp, Py_NE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 204, __pyx_L1_error)
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 204, __pyx_L1_error)
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_bp_h, __pyx_v_self->_current_height_bp, Py_NE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 210, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 210, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_7) {
 
-    /* "fletplus/utils/responsive_manager.pyx":205
+    /* "fletplus/utils/responsive_manager.pyx":211
  * 
  *         if bp_h != self._current_height_bp:
  *             self._current_height_bp = bp_h             # <<<<<<<<<<<<<<
@@ -5945,7 +6124,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     __Pyx_DECREF(__pyx_v_self->_current_height_bp);
     __pyx_v_self->_current_height_bp = __pyx_v_bp_h;
 
-    /* "fletplus/utils/responsive_manager.pyx":206
+    /* "fletplus/utils/responsive_manager.pyx":212
  *         if bp_h != self._current_height_bp:
  *             self._current_height_bp = bp_h
  *             bh_callback = self.height_breakpoints.get(bp_h)             # <<<<<<<<<<<<<<
@@ -5954,24 +6133,24 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     if (unlikely(__pyx_v_self->height_breakpoints == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-      __PYX_ERR(0, 206, __pyx_L1_error)
+      __PYX_ERR(0, 212, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->height_breakpoints, __pyx_v_bp_h, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 206, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->height_breakpoints, __pyx_v_bp_h, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 212, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_bh_callback = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":207
+    /* "fletplus/utils/responsive_manager.pyx":213
  *             self._current_height_bp = bp_h
  *             bh_callback = self.height_breakpoints.get(bp_h)
  *             if bh_callback:             # <<<<<<<<<<<<<<
  *                 bh_callback(height)
  * 
 */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_bh_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 207, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_bh_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 213, __pyx_L1_error)
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":208
+      /* "fletplus/utils/responsive_manager.pyx":214
  *             bh_callback = self.height_breakpoints.get(bp_h)
  *             if bh_callback:
  *                 bh_callback(height)             # <<<<<<<<<<<<<<
@@ -5981,7 +6160,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
       __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_bh_callback);
       __pyx_t_2 = __pyx_v_bh_callback; 
-      __pyx_t_4 = PyFloat_FromDouble(__pyx_v_height); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __pyx_t_4 = PyFloat_FromDouble(__pyx_v_height); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 214, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_5 = 1;
       #if CYTHON_UNPACK_METHODS
@@ -6001,12 +6180,12 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
+        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 214, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
       }
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":207
+      /* "fletplus/utils/responsive_manager.pyx":213
  *             self._current_height_bp = bp_h
  *             bh_callback = self.height_breakpoints.get(bp_h)
  *             if bh_callback:             # <<<<<<<<<<<<<<
@@ -6015,7 +6194,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":204
+    /* "fletplus/utils/responsive_manager.pyx":210
  *                 break
  * 
  *         if bp_h != self._current_height_bp:             # <<<<<<<<<<<<<<
@@ -6024,7 +6203,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":211
+  /* "fletplus/utils/responsive_manager.pyx":217
  * 
  *         # Orientacin
  *         orientation = "landscape" if width >= height else "portrait"             # <<<<<<<<<<<<<<
@@ -6042,17 +6221,17 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __pyx_v_orientation = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":212
+  /* "fletplus/utils/responsive_manager.pyx":218
  *         # Orientacin
  *         orientation = "landscape" if width >= height else "portrait"
  *         if orientation != self._current_orientation:             # <<<<<<<<<<<<<<
  *             self._current_orientation = orientation
  *             orientation_callback = self.orientation_callbacks.get(orientation)
 */
-  __pyx_t_7 = (__Pyx_PyUnicode_Equals(__pyx_v_orientation, __pyx_v_self->_current_orientation, Py_NE)); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_7 = (__Pyx_PyUnicode_Equals(__pyx_v_orientation, __pyx_v_self->_current_orientation, Py_NE)); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 218, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "fletplus/utils/responsive_manager.pyx":213
+    /* "fletplus/utils/responsive_manager.pyx":219
  *         orientation = "landscape" if width >= height else "portrait"
  *         if orientation != self._current_orientation:
  *             self._current_orientation = orientation             # <<<<<<<<<<<<<<
@@ -6065,7 +6244,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     __Pyx_DECREF(__pyx_v_self->_current_orientation);
     __pyx_v_self->_current_orientation = __pyx_v_orientation;
 
-    /* "fletplus/utils/responsive_manager.pyx":214
+    /* "fletplus/utils/responsive_manager.pyx":220
  *         if orientation != self._current_orientation:
  *             self._current_orientation = orientation
  *             orientation_callback = self.orientation_callbacks.get(orientation)             # <<<<<<<<<<<<<<
@@ -6074,24 +6253,24 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     if (unlikely(__pyx_v_self->orientation_callbacks == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-      __PYX_ERR(0, 214, __pyx_L1_error)
+      __PYX_ERR(0, 220, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->orientation_callbacks, __pyx_v_orientation, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 214, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->orientation_callbacks, __pyx_v_orientation, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 220, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_orientation_callback = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":215
+    /* "fletplus/utils/responsive_manager.pyx":221
  *             self._current_orientation = orientation
  *             orientation_callback = self.orientation_callbacks.get(orientation)
  *             if orientation_callback:             # <<<<<<<<<<<<<<
  *                 orientation_callback(orientation)
  * 
 */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_orientation_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 215, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_orientation_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 221, __pyx_L1_error)
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":216
+      /* "fletplus/utils/responsive_manager.pyx":222
  *             orientation_callback = self.orientation_callbacks.get(orientation)
  *             if orientation_callback:
  *                 orientation_callback(orientation)             # <<<<<<<<<<<<<<
@@ -6118,12 +6297,12 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
         __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 216, __pyx_L1_error)
+        if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 222, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
       }
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":215
+      /* "fletplus/utils/responsive_manager.pyx":221
  *             self._current_orientation = orientation
  *             orientation_callback = self.orientation_callbacks.get(orientation)
  *             if orientation_callback:             # <<<<<<<<<<<<<<
@@ -6132,7 +6311,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":212
+    /* "fletplus/utils/responsive_manager.pyx":218
  *         # Orientacin
  *         orientation = "landscape" if width >= height else "portrait"
  *         if orientation != self._current_orientation:             # <<<<<<<<<<<<<<
@@ -6141,14 +6320,14 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":219
+  /* "fletplus/utils/responsive_manager.pyx":225
  * 
  *         # Tipo de dispositivo (segn ancho)
  *         if self.device_callbacks and self.device_profiles:             # <<<<<<<<<<<<<<
  *             profile = get_device_profile(width, self.device_profiles)
  *             if profile.name != self._current_device:
 */
-  __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_self->device_callbacks); if (unlikely((__pyx_t_10 < 0))) __PYX_ERR(0, 219, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_self->device_callbacks); if (unlikely((__pyx_t_10 < 0))) __PYX_ERR(0, 225, __pyx_L1_error)
   if (__pyx_t_10) {
   } else {
     __pyx_t_7 = __pyx_t_10;
@@ -6158,7 +6337,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   else
   {
     Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_v_self->device_profiles);
-    if (unlikely(((!CYTHON_ASSUME_SAFE_SIZE) && __pyx_temp < 0))) __PYX_ERR(0, 219, __pyx_L1_error)
+    if (unlikely(((!CYTHON_ASSUME_SAFE_SIZE) && __pyx_temp < 0))) __PYX_ERR(0, 225, __pyx_L1_error)
     __pyx_t_10 = (__pyx_temp != 0);
   }
 
@@ -6166,7 +6345,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __pyx_L18_bool_binop_done:;
   if (__pyx_t_7) {
 
-    /* "fletplus/utils/responsive_manager.pyx":220
+    /* "fletplus/utils/responsive_manager.pyx":226
  *         # Tipo de dispositivo (segn ancho)
  *         if self.device_callbacks and self.device_profiles:
  *             profile = get_device_profile(width, self.device_profiles)             # <<<<<<<<<<<<<<
@@ -6174,9 +6353,9 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
  *                 self._current_device = profile.name
 */
     __pyx_t_4 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_get_device_profile); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 220, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_get_device_profile); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyFloat_FromDouble(__pyx_v_width); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 220, __pyx_L1_error)
+    __pyx_t_3 = PyFloat_FromDouble(__pyx_v_width); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_5 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -6196,35 +6375,35 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 220, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 226, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
     __pyx_v_profile = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":221
+    /* "fletplus/utils/responsive_manager.pyx":227
  *         if self.device_callbacks and self.device_profiles:
  *             profile = get_device_profile(width, self.device_profiles)
  *             if profile.name != self._current_device:             # <<<<<<<<<<<<<<
  *                 self._current_device = profile.name
  *                 device_callback = self.device_callbacks.get(profile.name)
 */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 221, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 227, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_v_self->_current_device, Py_NE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 221, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_v_self->_current_device, Py_NE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 227, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 221, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 227, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_7) {
 
-      /* "fletplus/utils/responsive_manager.pyx":222
+      /* "fletplus/utils/responsive_manager.pyx":228
  *             profile = get_device_profile(width, self.device_profiles)
  *             if profile.name != self._current_device:
  *                 self._current_device = profile.name             # <<<<<<<<<<<<<<
  *                 device_callback = self.device_callbacks.get(profile.name)
  *                 if device_callback:
 */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 222, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 228, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_GIVEREF(__pyx_t_2);
       __Pyx_GOTREF(__pyx_v_self->_current_device);
@@ -6232,7 +6411,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
       __pyx_v_self->_current_device = __pyx_t_2;
       __pyx_t_2 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":223
+      /* "fletplus/utils/responsive_manager.pyx":229
  *             if profile.name != self._current_device:
  *                 self._current_device = profile.name
  *                 device_callback = self.device_callbacks.get(profile.name)             # <<<<<<<<<<<<<<
@@ -6241,27 +6420,27 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
       if (unlikely(__pyx_v_self->device_callbacks == Py_None)) {
         PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-        __PYX_ERR(0, 223, __pyx_L1_error)
+        __PYX_ERR(0, 229, __pyx_L1_error)
       }
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 223, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 229, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->device_callbacks, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 223, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->device_callbacks, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_v_device_callback = __pyx_t_1;
       __pyx_t_1 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":224
+      /* "fletplus/utils/responsive_manager.pyx":230
  *                 self._current_device = profile.name
  *                 device_callback = self.device_callbacks.get(profile.name)
  *                 if device_callback:             # <<<<<<<<<<<<<<
  *                     device_callback(profile.name)
  * 
 */
-      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_device_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 224, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_device_callback); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 230, __pyx_L1_error)
       if (__pyx_t_7) {
 
-        /* "fletplus/utils/responsive_manager.pyx":225
+        /* "fletplus/utils/responsive_manager.pyx":231
  *                 device_callback = self.device_callbacks.get(profile.name)
  *                 if device_callback:
  *                     device_callback(profile.name)             # <<<<<<<<<<<<<<
@@ -6271,7 +6450,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
         __pyx_t_2 = NULL;
         __Pyx_INCREF(__pyx_v_device_callback);
         __pyx_t_3 = __pyx_v_device_callback; 
-        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 225, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_profile, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 231, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __pyx_t_5 = 1;
         #if CYTHON_UNPACK_METHODS
@@ -6291,12 +6470,12 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
           __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 225, __pyx_L1_error)
+          if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 231, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
         }
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-        /* "fletplus/utils/responsive_manager.pyx":224
+        /* "fletplus/utils/responsive_manager.pyx":230
  *                 self._current_device = profile.name
  *                 device_callback = self.device_callbacks.get(profile.name)
  *                 if device_callback:             # <<<<<<<<<<<<<<
@@ -6305,7 +6484,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
       }
 
-      /* "fletplus/utils/responsive_manager.pyx":221
+      /* "fletplus/utils/responsive_manager.pyx":227
  *         if self.device_callbacks and self.device_profiles:
  *             profile = get_device_profile(width, self.device_profiles)
  *             if profile.name != self._current_device:             # <<<<<<<<<<<<<<
@@ -6314,7 +6493,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
     }
 
-    /* "fletplus/utils/responsive_manager.pyx":219
+    /* "fletplus/utils/responsive_manager.pyx":225
  * 
  *         # Tipo de dispositivo (segn ancho)
  *         if self.device_callbacks and self.device_profiles:             # <<<<<<<<<<<<<<
@@ -6323,7 +6502,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":228
+  /* "fletplus/utils/responsive_manager.pyx":234
  * 
  *         # Aplicar estilos
  *         cdef dict styles = self._styles             # <<<<<<<<<<<<<<
@@ -6335,17 +6514,17 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
   __pyx_v_styles = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":230
+  /* "fletplus/utils/responsive_manager.pyx":236
  *         cdef dict styles = self._styles
  *         cdef object control
  *         if styles:             # <<<<<<<<<<<<<<
  *             for control in styles.keys():
  *                 self._apply_style(control)
 */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_styles); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 230, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_styles); if (unlikely((__pyx_t_7 < 0))) __PYX_ERR(0, 236, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "fletplus/utils/responsive_manager.pyx":231
+    /* "fletplus/utils/responsive_manager.pyx":237
  *         cdef object control
  *         if styles:
  *             for control in styles.keys():             # <<<<<<<<<<<<<<
@@ -6355,9 +6534,9 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     __pyx_t_9 = 0;
     if (unlikely(__pyx_v_styles == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "keys");
-      __PYX_ERR(0, 231, __pyx_L1_error)
+      __PYX_ERR(0, 237, __pyx_L1_error)
     }
-    __pyx_t_3 = __Pyx_dict_iterator(__pyx_v_styles, 1, __pyx_mstate_global->__pyx_n_u_keys, (&__pyx_t_11), (&__pyx_t_12)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 231, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_dict_iterator(__pyx_v_styles, 1, __pyx_mstate_global->__pyx_n_u_keys, (&__pyx_t_11), (&__pyx_t_12)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 237, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_XDECREF(__pyx_t_1);
     __pyx_t_1 = __pyx_t_3;
@@ -6365,23 +6544,23 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     while (1) {
       __pyx_t_13 = __Pyx_dict_iter_next(__pyx_t_1, __pyx_t_11, &__pyx_t_9, &__pyx_t_3, NULL, NULL, __pyx_t_12);
       if (unlikely(__pyx_t_13 == 0)) break;
-      if (unlikely(__pyx_t_13 == -1)) __PYX_ERR(0, 231, __pyx_L1_error)
+      if (unlikely(__pyx_t_13 == -1)) __PYX_ERR(0, 237, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_XDECREF_SET(__pyx_v_control, __pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "fletplus/utils/responsive_manager.pyx":232
+      /* "fletplus/utils/responsive_manager.pyx":238
  *         if styles:
  *             for control in styles.keys():
  *                 self._apply_style(control)             # <<<<<<<<<<<<<<
  * 
  *         page.update()
 */
-      ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_apply_style(__pyx_v_self, __pyx_v_control, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 232, __pyx_L1_error)
+      ((struct __pyx_vtabstruct_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self->__pyx_vtab)->_apply_style(__pyx_v_self, __pyx_v_control, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 238, __pyx_L1_error)
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "fletplus/utils/responsive_manager.pyx":230
+    /* "fletplus/utils/responsive_manager.pyx":236
  *         cdef dict styles = self._styles
  *         cdef object control
  *         if styles:             # <<<<<<<<<<<<<<
@@ -6390,7 +6569,7 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 */
   }
 
-  /* "fletplus/utils/responsive_manager.pyx":234
+  /* "fletplus/utils/responsive_manager.pyx":240
  *                 self._apply_style(control)
  * 
  *         page.update()             # <<<<<<<<<<<<<<
@@ -6402,12 +6581,12 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
     PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_update, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 234, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 240, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":175
+  /* "fletplus/utils/responsive_manager.pyx":181
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _handle_resize(self, object e=None):             # <<<<<<<<<<<<<<
@@ -6442,15 +6621,15 @@ static void __pyx_f_8fletplus_5utils_18responsive_manager_17ResponsiveManager__h
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize = {"_handle_resize", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize = {"_handle_resize", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -6480,24 +6659,24 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_e,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 175, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 181, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 175, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 181, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_handle_resize", 0) < (0)) __PYX_ERR(0, 175, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_handle_resize", 0) < (0)) __PYX_ERR(0, 181, __pyx_L3_error)
       if (!values[0]) values[0] = __Pyx_NewRef(((PyObject *)Py_None));
     } else {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 175, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 181, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
@@ -6508,7 +6687,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_handle_resize", 0, 0, 1, __pyx_nargs); __PYX_ERR(0, 175, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_handle_resize", 0, 0, 1, __pyx_nargs); __PYX_ERR(0, 181, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6519,7 +6698,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_10_handle_resize(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_e);
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_12_handle_resize(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v_e);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -6529,7 +6708,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_10_handle_resize(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_e) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_12_handle_resize(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v_e) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   struct __pyx_opt_args_8fletplus_5utils_18responsive_manager_17ResponsiveManager__handle_resize __pyx_t_1;
@@ -6541,8 +6720,8 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1.__pyx_n = 1;
   __pyx_t_1.e = __pyx_v_e;
-  __pyx_vtabptr_8fletplus_5utils_18responsive_manager_ResponsiveManager->_handle_resize(__pyx_v_self, 1, &__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 175, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 175, __pyx_L1_error)
+  __pyx_vtabptr_8fletplus_5utils_18responsive_manager_ResponsiveManager->_handle_resize(__pyx_v_self, 1, &__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 181, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -6667,15 +6846,15 @@ static int __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4p
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -6701,14 +6880,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return NULL;
   if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("__reduce_cython__", __pyx_kwds); return NULL;}
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_12__reduce_cython__(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self));
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_14__reduce_cython__(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_12__reduce_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_14__reduce_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -6976,15 +7155,15 @@ static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveMana
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_17__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_17__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_17__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_17__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -7050,7 +7229,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_14__setstate_cython__(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_16__setstate_cython__(((struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -7060,7 +7239,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_14__setstate_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_8fletplus_5utils_18responsive_manager_17ResponsiveManager_16__setstate_cython__(struct __pyx_obj_8fletplus_5utils_18responsive_manager_ResponsiveManager *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -7675,9 +7854,10 @@ static int __pyx_setprop_8fletplus_5utils_18responsive_manager_17ResponsiveManag
 }
 
 static PyMethodDef __pyx_methods_8fletplus_5utils_18responsive_manager_ResponsiveManager[] = {
-  {"register_styles", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3register_styles, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_2register_styles},
-  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"normalize_breakpoints", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1normalize_breakpoints, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_normalize_breakpoints},
+  {"register_styles", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5register_styles, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8fletplus_5utils_18responsive_manager_17ResponsiveManager_4register_styles},
+  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_17__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 
@@ -7693,7 +7873,7 @@ static PyType_Slot __pyx_type_8fletplus_5utils_18responsive_manager_ResponsiveMa
   {Py_tp_clear, (void *)__pyx_tp_clear_8fletplus_5utils_18responsive_manager_ResponsiveManager},
   {Py_tp_methods, (void *)__pyx_methods_8fletplus_5utils_18responsive_manager_ResponsiveManager},
   {Py_tp_getset, (void *)__pyx_getsets_8fletplus_5utils_18responsive_manager_ResponsiveManager},
-  {Py_tp_init, (void *)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1__init__},
+  {Py_tp_init, (void *)__pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3__init__},
   {Py_tp_new, (void *)__pyx_tp_new_8fletplus_5utils_18responsive_manager_ResponsiveManager},
   {0, 0},
 };
@@ -7744,7 +7924,7 @@ static PyTypeObject __pyx_type_8fletplus_5utils_18responsive_manager_ResponsiveM
   #if !CYTHON_USE_TYPE_SPECS
   0, /*tp_dictoffset*/
   #endif
-  __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1__init__, /*tp_init*/
+  __pyx_pw_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3__init__, /*tp_init*/
   0, /*tp_alloc*/
   __pyx_tp_new_8fletplus_5utils_18responsive_manager_ResponsiveManager, /*tp_new*/
   0, /*tp_free*/
@@ -8038,15 +8218,15 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
   if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_ResponsiveManager, (PyObject *) __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager) < (0)) __PYX_ERR(0, 44, __pyx_L1_error)
   if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager) < (0)) __PYX_ERR(0, 44, __pyx_L1_error)
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__ = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init___spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__)) __PYX_ERR(0, 51, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init___spec, __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__) < (0)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__ = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init___spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__)) __PYX_ERR(0, 57, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init___spec, __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__) < (0)) __PYX_ERR(0, 57, __pyx_L1_error)
   #else
   __pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__ = &__pyx_type_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__) < (0)) __PYX_ERR(0, 51, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__) < (0)) __PYX_ERR(0, 57, __pyx_L1_error)
   #endif
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_8fletplus_5utils_18responsive_manager___pyx_scope_struct____init__);
@@ -8273,6 +8453,7 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_responsive_manager(PyObject *__pyx
   Py_ssize_t __pyx_t_3;
   PyObject *__pyx_t_4 = NULL;
   size_t __pyx_t_5;
+  PyObject *__pyx_t_6 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -8523,101 +8704,130 @@ __Pyx_RefNannySetupContext("PyInit_responsive_manager", 0);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_MISSING, __pyx_t_2) < (0)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":96
+  /* "fletplus/utils/responsive_manager.pyx":51
+ *     """
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def normalize_breakpoints(mapping):
+ *         """Normaliza ``mapping`` resolviendo aliases simblicos."""
+*/
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_1normalize_breakpoints, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager_normalize_brea, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
+  #endif
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_normalize_breakpoints, __pyx_t_2) < (0)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_4 = NULL;
+  __Pyx_GetNameInClass(__pyx_t_6, (PyObject*)__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_normalize_breakpoints); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_5 = 1;
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_t_6};
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_staticmethod, __pyx_callargs+__pyx_t_5, (2-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 51, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  }
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_normalize_breakpoints, __pyx_t_2) < (0)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "fletplus/utils/responsive_manager.pyx":102
  * 
  *     # ------------------------------------------------------------------
  *     def register_styles(             # <<<<<<<<<<<<<<
  *         self,
  *         control: ft.Control,
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 96, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_control, __pyx_mstate_global->__pyx_kp_u_ft_Control) < (0)) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_styles, __pyx_mstate_global->__pyx_kp_u_Dict_int_Style_ResponsiveStyle) < (0)) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_None) < (0)) __PYX_ERR(0, 96, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_3register_styles, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager_register_style, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 96, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_control, __pyx_mstate_global->__pyx_kp_u_ft_Control) < (0)) __PYX_ERR(0, 102, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_styles, __pyx_mstate_global->__pyx_kp_u_Dict_int_Style_ResponsiveStyle) < (0)) __PYX_ERR(0, 102, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_None) < (0)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5register_styles, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager_register_style, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_6, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_register_styles, __pyx_t_4) < (0)) __PYX_ERR(0, 96, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_register_styles, __pyx_t_6) < (0)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":119
+  /* "fletplus/utils/responsive_manager.pyx":125
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _apply_style(self, object control):             # <<<<<<<<<<<<<<
  *         cdef dict state = self._style_state.get(control)
  *         cdef dict base
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_5_apply_style, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__apply_style, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_apply_style, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__apply_style, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_apply_style, __pyx_t_4) < (0)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_apply_style, __pyx_t_6) < (0)) __PYX_ERR(0, 125, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":155
+  /* "fletplus/utils/responsive_manager.pyx":161
  * 
  *     # ------------------------------------------------------------------
  *     cpdef dict _capture_base_attributes(self, object control):             # <<<<<<<<<<<<<<
  *         cdef dict base = {}
  *         cdef tuple attrs = _STYLE_ATTRS
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_7_capture_base_attributes, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__capture_base, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 155, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_capture_base_attributes, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__capture_base, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_capture_base_attributes, __pyx_t_4) < (0)) __PYX_ERR(0, 155, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_capture_base_attributes, __pyx_t_6) < (0)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":168
+  /* "fletplus/utils/responsive_manager.pyx":174
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _safe_setattr(self, object control, str attr, object value):             # <<<<<<<<<<<<<<
  *         try:
  *             setattr(control, attr, value)
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_9_safe_setattr, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__safe_setattr, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 168, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_safe_setattr, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__safe_setattr, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[5])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 174, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_safe_setattr, __pyx_t_4) < (0)) __PYX_ERR(0, 168, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_safe_setattr, __pyx_t_6) < (0)) __PYX_ERR(0, 174, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "fletplus/utils/responsive_manager.pyx":175
+  /* "fletplus/utils/responsive_manager.pyx":181
  * 
  *     # ------------------------------------------------------------------
  *     cpdef void _handle_resize(self, object e=None):             # <<<<<<<<<<<<<<
  *         cdef object page = self.page
  *         cdef double width = page.width if page.width is not None else 0
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_11_handle_resize, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__handle_resize, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[5])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 175, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13_handle_resize, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager__handle_resize, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[6])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 181, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_mstate_global->__pyx_tuple[0]);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_handle_resize, __pyx_t_4) < (0)) __PYX_ERR(0, 175, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_6, __pyx_mstate_global->__pyx_tuple[0]);
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_handle_resize, __pyx_t_6) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
   /* "(tree fragment)":1
  * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
  *     cdef tuple state
  *     cdef object _dict
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_13__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager___reduce_cytho, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[6])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager___reduce_cytho, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[7])); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_4) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_6) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
   /* "(tree fragment)":16
  *     else:
@@ -8625,13 +8835,13 @@ __Pyx_RefNannySetupContext("PyInit_responsive_manager", 0);
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_ResponsiveManager__set_state(self, __pyx_state)
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_15__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager___setstate_cyt, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[7])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 16, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_17ResponsiveManager_17__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_ResponsiveManager___setstate_cyt, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[8])); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_4) < (0)) __PYX_ERR(1, 16, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8fletplus_5utils_18responsive_manager_ResponsiveManager, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_6) < (0)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
   /* "(tree fragment)":4
  *     int __Pyx_CheckUnpickleChecksum(long, long, long, long, const char*) except -1
@@ -8640,23 +8850,23 @@ __Pyx_RefNannySetupContext("PyInit_responsive_manager", 0);
  *     cdef object __pyx_result
  *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0xb8f9b3c, 0x7c35544, 0xd363b81, b'_current_device, _current_height_bp, _current_orientation, _current_width_bp, _height_bp_keys, _style_state, _styles, _width_bp_keys, breakpoints, device_callbacks, device_profiles, height_breakpoints, orientation_callbacks, page')
 */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_1__pyx_unpickle_ResponsiveManager, 0, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_ResponsiveManager, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[8])); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_8fletplus_5utils_18responsive_manager_1__pyx_unpickle_ResponsiveManager, 0, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_ResponsiveManager, NULL, __pyx_mstate_global->__pyx_n_u_fletplus_utils_responsive_manage, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[9])); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
+  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_ResponsiveManager, __pyx_t_4) < (0)) __PYX_ERR(1, 4, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_ResponsiveManager, __pyx_t_6) < (0)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
   /* "fletplus/utils/responsive_manager.pyx":1
  * # cython: language_level=3             # <<<<<<<<<<<<<<
  * """Gestor de breakpoints para responder a cambios de tamao de la pgina."""
  * 
 */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_test, __pyx_t_4) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_test, __pyx_t_6) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -8664,6 +8874,7 @@ __Pyx_RefNannySetupContext("PyInit_responsive_manager", 0);
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_6);
   if (__pyx_m) {
     if (__pyx_mstate->__pyx_d && stringtab_initialized) {
       __Pyx_AddTraceback("init fletplus.utils.responsive_manager", __pyx_clineno, __pyx_lineno, __pyx_filename);
@@ -8696,7 +8907,8 @@ __Pyx_RefNannySetupContext("PyInit_responsive_manager", 0);
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   __pyx_builtin_object = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_object); if (!__pyx_builtin_object) __PYX_ERR(0, 41, __pyx_L1_error)
-  __pyx_builtin_sorted = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_sorted); if (!__pyx_builtin_sorted) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_builtin_staticmethod = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_staticmethod); if (!__pyx_builtin_staticmethod) __PYX_ERR(0, 51, __pyx_L1_error)
+  __pyx_builtin_sorted = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_sorted); if (!__pyx_builtin_sorted) __PYX_ERR(0, 79, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_get.type = (PyObject*)&PyDict_Type;
@@ -8718,14 +8930,14 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "fletplus/utils/responsive_manager.pyx":87
+  /* "fletplus/utils/responsive_manager.pyx":93
  *         previous_handler = getattr(self.page, "on_resize", None)
  * 
  *         def _combined_resize(event: ft.ControlEvent | None = None) -> None:             # <<<<<<<<<<<<<<
  *             self._handle_resize(event)
  *             if callable(previous_handler):
 */
-  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 93, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[0]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
 
@@ -8773,31 +8985,31 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 9; } index[] = {{1},{34},{179},{1},{8},{7},{6},{37},{10},{22},{2},{9},{493},{14},{18},{8},{23},{13},{4},{7},{4},{20},{17},{35},{37},{30},{42},{32},{31},{33},{15},{8},{5},{9},{7},{5},{12},{18},{4},{4},{7},{6},{13},{11},{24},{18},{16},{7},{16},{15},{8},{5},{1},{5},{4},{15},{30},{37},{33},{31},{2},{8},{3},{18},{9},{12},{8},{14},{6},{18},{9},{9},{34},{13},{5},{4},{9},{8},{6},{10},{9},{10},{9},{10},{4},{8},{7},{6},{6},{9},{7},{21},{7},{4},{3},{8},{14},{12},{11},{10},{32},{14},{12},{10},{17},{13},{15},{7},{6},{7},{6},{6},{13},{5},{4},{12},{10},{12},{19},{6},{6},{5},{6},{8},{6},{6},{12},{5},{6},{5},{19},{57},{81},{222},{395},{245},{35},{58},{11}};
-    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1912 bytes) */
-const char* const cstring = "BZh91AY&SYxA\222L\000\001\t\177\377\377\377\377\377\377\307\377\377\377\367\377\352\277\377\377\374\300@@@@@@@@@@@@\000@\000`\006\255\337{\335{\266\327\036n\3550\234\325\273j\355\340{\301\251\241OT\332\ni\350\236\004d\3154\022=M\221\036S\30524<(\314\223&\324\323\322\007\251\352z\236\240i\215&\324\332\236\005\036\247\2502\"4\006Q\242f\215\025<\321OOP\004z\003A\0310\000\000\000\000\214\000\000\010\304\032!\222z\223E?SS#\336\252z\237\241A\345\000\000\001\240\000\006\200\000\000\000\001\246\206\324\017(0\220A\001O\"\237\251\212h\336\224\030L\232z\201\202b\0001\006FF@\000\003L\206\2313Da\006\000\t\200\000\230&\000\000\000\000\t\200L\0040\000\004`\000\000$\2222\002hOJ==S\324z@i\265\001\352\000\000\000\000\000\000\000\000\000\000\014\3060\0133'\007\007#$\300\334dF\004a\313\204b\305\201\001\031\022\202$\344,5x,Y\372\376\021\021\021\027\237\331\303\336\365{p\376\304b\252\253\034@\261\343w\237\327\235nR\226|c\030\325\247\005\222\3140\033\367T8q\244RI$\020I\004\202E$\261\266*\256 i\273{|\005L\222\000\245`\202|\031\016P\324\030\252\377KiK\004\314\224\216*z\001\353\034q\203C_0G\376hn\253*\250VM\245,\361\210U\001\023b(&\244\317Kb-\215jhl\315\233|\344\262\226\262\026\"H9\202\026\007\001M\240\034;\301T\340\306c\001U\255\325\217\316\246\260\216I\204J\361\231%\220p\177\233d\032\377\364\021LP\351K\347\302\325\317\233]\351\321\344\017\026zXr\202\026L\005\365\03332\266\327\013\004\264d\242N\272\005F\276Eh\255q\207\323\264\224/?\002\336\230\007\" /\030\230\311\341\300\203h1\310\254\026W/2\253RSY\221\325\033*\230\270+>\357\213\265U\014%\016d\301\003\021\252\253\322\325\304\336t5\370\233\255\027\330\335\236\376\037\323\314)\026\267\245[Z\030\203Pjs\311n\036\262\317b\351\331)\242\233\235\317,n\203\363cS\275\333\227t\037\2057\261\346HK\356\272\000<+\317\336f\320\332,\213\324is\266\265\020\024\206\233\247\033\264\002,\323\232=\tB\374T\303\226\231_;P\200{\237\221\025!\006\333\032S\2122\2436-\204^\373xs%1\244\036\375\032\205\274\025\263\333M\366\010\312\3050\276\235+\265\367*\035rS\303\356\211f""\321\026d\324\342\201!\202\203\270\301\340\234\003\215\366\340\3540\006s\333c\275?\371@\335\355_\246S\225\270\"6\246\004^\222iQ)\322\307\361\303\002`Pb\014 \"\002\245g5\314\r\204\0059m\300\014\034(9\005J\331\023A\024\220\214\026M\311\330)Z\246\303\254\343Wc\315\2350\253p\367H\355\270\031h#0U$s\355\2134\333\027\007%\265\277\322P\243\\)\3316\236\"\355\335\274\366\257\216%\255]\224\204\323\n\027\\X\302\256\201\330 _\3145\226'o\234\330\210\210\312\255\205\005V\035g\322p\270h\200\210\027\216\311\2110\266\250\200L\347\004\201\245g\003#\001\222\034\347\210\030\024H2D5(p,,\000]\225\227\320`\234Wj\002Y\352Uz(t\316\231\223\204E\024\220\200e\336mk\354d\315i\005\370\231\"yD\210\t\256\372\201\014KCQXZ\222\210\210\260e\t\242Jfs\264\350 \004\345p4^\214\t\314qZ\031q\014\212\0031\240\017{\370\232\260$\246%e\244\316W\022k`\234[\257\206\272\210\345f/\311\350\336\301\030\030\330t\226\007<\202\006x\203\221\263\204\034\244\204\003\200\361\326\324\221\233l\024\321\224\346\2552}\342\0035\237\306\260\331\246\360L\310\230\303Au\001\346\230\354\223X\307d\315\375\255E[\3114\262Aa4\260\253\232\203B3\004hA\234\243A\2220)8\tHC>\247\214`\014v\033\003u\344*\232IudPF:\226\352^\311q$\254D!M*\353\277\214@\327 \022h\222\\\255q{\352\252(\345\266\001\020\216\272\361IHr\316\n\021\227Lj\252\274\350\302\200\312sx@l\303\327\314\030\020T\322IaMg'1&\325;\320=\331T\210\027\006\306\2602\2539t\326\2430\013F\213E\300F\366T\276\352TE\214\244RI1\004\217\255\211\343\270\360\221%\"\300\347\0260F\306\007<J\251\347\317L\222\242a\20499\025\r\013Xg|\250\310\023+\3261\\\354\014A\262\300$Ic\203U\024\3504`\017\321\275(|\233;\240\233h\364tm\030\262g\341\332@\n\344\205\2270\330\361\004\030\001\270s\205:K&)\0257\301\303\n\325\310m+\303\2241\300h\342\214\034\242\307\025\010R\010\266\200%\332\025\210\215\205\305\010>\367\210\316\265*\013k~\300\024\211\233\356@\3120%\350\030\024\307\312\320\004\032LL\010\201\001\343\326\222\215hn@\230\214Ln\300\260\204\223\002H+\207\2457\036\323X\nid\201+MXBp0\030\3118\212\356;$D\362\027\351v\267""\005L$\310\226\212,\241\020ZKA\371V!m\010u\365\2142d\232\313\325\014\215`&,\3038\361\3700\3065'\271\0327\200R\304\022K\200\244\r\3102\344oh\025\232\370\271\\\031`\270\246YE\363t\322\213\204\204\220\211\340\242P(\220H\026Rk\241\352^\036[b\210\320\213H\330\017\314\242\010\244N+\257Cg\316\360\263\367\354\031\300y\306\314K\032\311\243*k\312\360N+\231\024\230CE)\226\362\000\033WJ\310)\305\005\024AnX\326f`\375\034\227\020\204E\212lYT\334$\316\230P\007\035v`\016\306O\353\013\244l4t\223\367\244;Bo\372\212/\rF>\206\373\033\214\214@\276\340\346\004C\222O\026\361\030\303\020j\006>jc'\000\260\034\202\370\316\370f\001'\033\357ND2\326\303\322\344\3109\025\003W\374\335\242\370\034\324\346\333\244\306\372\007\020\375K\361B\221\004\247\365\032\035\340\301\017\331\002.\336\352\341q\270\243\311\351\211|\036\035tZ\230\301\306\306\t\221\007\217\277\356\257\023s\262\312t\177\234r\332\021l\217dl3-\n\207\014\336z\"\303B\370\211r%\370f\320\350\344\332\237l\261\207\2266t\3758\337\016\361Y\247;+\267|\357\251wO\227c\336\352T\222\225\255\375\210$m\3453m]\033Q\234\002\320\242\340E\273\275\013^U\032\235\212Y\240\017\014\207\261\377\332Y\243\353\\'L\342\320\025\314\332\264\033\361aG\nt\206\201\332\265s\346\347P\237/C\2015\237$\332&\242\303\240vN\010\022\324\022tTD\t\000\241\\qx\202\003\317E7\235\226E\226t\355\016+5\021U0\246\334\223\220\367m\205\026\270r\234\342\316\237\320\020\304\030i'\360\250\205;\3500;P\343\370\005\334\221N\024$\036\020d\223\000";
-    PyObject *data = __Pyx_DecompressString(cstring, 1912, 2);
+    const struct { const unsigned int length: 9; } index[] = {{1},{34},{179},{1},{8},{7},{6},{37},{10},{22},{2},{9},{493},{14},{18},{8},{23},{13},{4},{7},{4},{20},{17},{35},{37},{30},{42},{32},{31},{39},{33},{15},{8},{5},{9},{7},{5},{12},{18},{4},{4},{7},{6},{13},{11},{24},{18},{16},{7},{16},{15},{8},{5},{1},{5},{4},{15},{30},{37},{33},{31},{2},{8},{3},{18},{9},{12},{8},{14},{6},{18},{9},{9},{34},{13},{5},{4},{9},{8},{7},{6},{10},{9},{10},{9},{10},{4},{8},{7},{9},{21},{6},{6},{9},{7},{21},{7},{4},{3},{8},{14},{12},{11},{10},{32},{14},{12},{10},{17},{13},{15},{7},{6},{7},{6},{6},{13},{5},{4},{12},{10},{12},{19},{6},{6},{5},{12},{6},{8},{6},{6},{12},{5},{6},{5},{16},{19},{57},{81},{222},{395},{245},{35},{58},{11}};
+    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1941 bytes) */
+const char* const cstring = "BZh91AY&SY 1~\367\000\001\014\377\377\377\377\377\377\377\307\377\377\377\367\377\352\277\377\377\374\300@@@@@@@@@@@@\000@\000`\006\331\305k\355\347\275\352\020*\212\242\212\367A\203SI\212L\247\224\3656I\266\223M\032~\246&\222=O\324\364\243\312x\204mM<Q\232\200\320z\200\323OS\324\r\r\224zM=F\324=M\010\246\025<\232\217Sb\206\233\"bhz\200\321\2024\006\200\000\030\232bbh4di\211\210i\3524\001\203D\t4\231\0004\3654\000\000\000\000\000\000\320\320\0004\000\032\000\006jh4\030\210\010\010\023T\363\021\031&\032\232h\323\324\006\200\000\001\240\001\240\000\000\000\006\206\"\014\000\023\000\0010L\000\000\000\000\023\000\230\010`\000\010\300\000\000J\n4&\206A'\232\247\250\362G\250\r\r4\000\000\0004\0004\000\000\000\000\000\022H\200m\341\314  \031(\201m\231\2202\035\261\303\256\306HL\205$\315R\016<(q8\272b\255kZ\326\310[N\357\365Ev@i\2461\214k\370\024\231(\347\353\367\202\343\216Gi\246\232\241\246\0056\333c\224m\336\220\027\342\221I$\220A$\022\t\024\222\305\230MX\010\340\263\206\327\006\351\314\000h\200\221\214\221\014e\330\216\034:\324\274\nH\244L\330a\022\000\211\347\302F\304n\216\026\205\207Z\370p\362\331\203=\274U\266C&l\2020\211B\313\315\267\302&\014D\262\203\347\217\037\264\245\334\266\226\314\320\240\222\010l \006>\242@\201\032\022\001\025Dc\205\255\355\365\245+w\331A\321+\257bK\020n\375\272d\031\365$\036X;JV\307\237\247F}m\3006\371BbVptL\020Q\240\275\030yFV\302\304\020\210IQ!\366\005\276V\312\243\301\276\326uYJ\034R\300\275\260\006I\001\307B\211\320A\201\025\307\255\270p;Z|\256\216\356\344$\245H\266\352\254\244\206\022w\305\334\352hk\314LH\365\205\035bfl\354\250\342\350Q\227\240\213V^x\266\\*7\364\320\224\331\037d\307C$d\204\020-\036\007\242\t*\212\326\023\245P\225\020\374\337\234\354\007\372cT\215\273\370cK\n\211\273\331@\025\242D\000\033\225\333)]\003\357S\277B\371w\315\200\300H\017a\310s\204\000\303+\211\201\334j\225c\215\020\014\324\225XJ\024\240A\221\310\206$Q*`\372\340\020\304\021\006\374\250\221t\3322<\303D\213\026+]\002j\250\237W\360\022\030H[\321\001p\350\337""\3350\"\211\307\252\370Z\346g\210\264\236K\377(\226`\224\214\200\220H\001\223\353\203\177p\tG\246\303\253\037\3718\337\342\267\202\021\205nw\342\210\017jI\202BIc\204\255\234\354\021\204\013#\n\016\342\302H\343\\\321\230P\202\362\031\301\304\260\203@)N\217\024\021I\007\272\221h5\004\2474\314\032q};;X\312\365[\377\322}\331\313P\036\340\262\0024t\001\220\256\2337\016R\353\377\244\241>\301\022UE\3259j\326\346\264,^\034{\211jR\023L$-1R\242\\\234l\020/j\ruH\334\006]H\344E\232\002r\315GZ:\347\023\212\204\t\003%Kj\225L`\204q\204\254\304q,s\260\250\2414qf\271\022\205z\211\242\216B5\257\020\216\216\005\331\236\362\225N_\246\202i\355\263`\230N\311\330\366\204\230e\300\206\001\271\234Z\366d\317R\013q\262<r\210\002\023.\262p\354!\266\311\346\353j\016\356\364\033B\265T3IYd\" \005\207xVo\032\200\032\252r\272\262\352\214\267\n\325D\007w\350iq\005\021\nT\230\302\302L\350\"\365\327K\351\264\216V/\014\235\315\254H\271\206\306\224.h\344\0164;\234\214\306\360r\200P\014\341\261\235RF-\213\270)\321\214\244\262=\336\022\006\335}\3774\353\350`\t\261-\321\000gp\300\337-t\346\274\367\370\334\374\221\334\300\000/z\r\204\336\346n\240\207\"G\025\000\214\2261\274\2560\025\"-\024h\355\3310\201\206L\t\200\217-\006d\260\211-\364$Cw3hZw\263\252m\210\214E\367\264\364uv\0006\350\0059$\231\264&p\3036h\312\271H\nEEZd\277\177A5\222F\256\002\241\247\333\032\233\226$\200\300\3661f\0067l\027\006\001\312\212I+\323-\004\347$\325F\324@\377a2\034X\031\206\240a69x'1\237aGS\352\325h\270\007\303\2064\302\371\320=X\244RI0p\014v\220\276\031\242\004\3113;\031\206\264D\020\305\271\024\262\200\234\215n[@\002V\004\010b\310\224\013U\026\261W\204\310d\000\251vU$\231AH.\230\002@\014\310-\207\254A\273P\311\233Ns`\306\275\274\0019V\nr\200\331\277\301\253\270\304\r\272c\257>\255x\014Ve\270#&H\025\200/\274\201^\3600\242X\246\033k\230q\np\226'\210\031\0371\347 \314\221\212\001h\271\235(c\235\202\035M$\361\362U\014\255\327k\001\210\262\037\252\017v\342\323\211\304\244q\360v\300\201\224D@w\016\033\035PO\251\331\240\tw\301\206\370""\024!$\320ED^\03697\236\264\300IG1\006U\245\242\026\001\312CB\230\275\225\260\007CKLO\225U\267\000\225iEh\n\245*\364\226t\355\002\322\241%\346\201;\025\232\364\346\033\360pLs\215\003\223\331;\014\212\r\2706\371\200J\210$\2279@\033\021b\3206\262\005h\265\354i\207\3263\261\255F\321\320oL\372\210iP\213q`\340]QP\325'n\354\030\3400,\314$\210\221\025#`n\322H\"\2218Yj\030\3667\256\377\245.\203]1\274T-\371\361Mu.\205a)\267\\\302\030\3454\321\220@6\355D@\273\206E\334\014i\003\314\332\033\323Y\321\t4l\331\313c\234\223j\324\200\231\347m\001\002Y\214\324\\\300\003\315\321'\342\t\014#\027\214\253\356[j\177\270\337\003y\010\304\013\342\016`D7\36564L\210:\037\001\365\335\230$C\021\004\350>;\356\031 )\002\034\372\014\307\354\030\376s\204\224\031\344\025\317\256\033\031\300\346\265R\365\226\373\254\017\020\341\245_K\2370\253}\3157\2104C\360@\212\206\332\302\306\322\216\367\331\274@\363n1v\223G\024\1774\333\035m_E\306\366\264\323U\337k\245\256\034\3369y\247~\251\335\026\316 3\337rk\013\343%\221/r\247_\006\376\275k\305\2143\273\255\237\341\307VP\250[\314\332\255\222L\236\014\3734\217\223\243\351e\375B}\357\354aB\276CC\323\217u\334\260Q\254e\211\330{k\242\375\233y\226\2714\006\305\t.\377\245r:\365\362\315\312r\345\220F\207\340\231\211\315'B\263X\204$*|Z\260,j\323\216\342g\340K\351\233\313:\n1!!,\2410\222\244\306\"0\022\022e7\020\210_\324d\235R\217Jt\252\031\347\024\3575\020\242\315\004\320\035\032\272z\263\264#\027\247K\336\010`\0302I\275D\356\243l\205\315T\037\276\377\305\334\221N\024$\010\014_\275\300";
+    PyObject *data = __Pyx_DecompressString(cstring, 1941, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (1751 bytes) */
-const char* const cstring = "x\332\205UKs\333F\022\226D\256L\305\264EFt\244\254\263\033p\255\330{H\350e\302\330\331\2547kF\022e\271b\255()\226S.\327\324\020\030\222\010A\000\304\014$1qUt\344\021G\034q\304\021G\036u\364\021G\034\371\023\374\023\322\rP\n\365L\0259=\230\356\351\347\327=\245UU\026\257U]|.\355\210\276\306\336Ho\245m\306MC\347\352>\213\2176\r\301$\321\246BZ\351\213\266\241K*\227\024\246\251\rfQ\301\264\276\304\205\005J\230\205B\272\264\265\266\365E\345\233\212DuE\262\330\317L\026\\\342vC\326(\347\214KFSj\330\252&T]\022}\223\361\222\264\321\224\372\206-\351\214)\2220$\023\344&/\2106\323%\316\004n\244\007T\327\rA\205j\350\004\256\253z\353\201\244\250\026\030\001o\361v\215j\234\225\376G\025\205\200 STN\033\032c:\256M\215\tS\263\371C[\250\032\177h\235\206I\272T\247-f\225\314\376aS\224V\014]X\206\366\307nm\237\351\002\022\263i\350\254%\253<Q\247p\2465KD\266-\013\330Da\373\252\31409`8\026\225\014K:+\323fj\253-H\303\274^\314\260T q\224\327\013\036\250\212h_\251\356\324\032\351\260>\277\\\206c\205a\205J^#p\305\345\023\363W\353oX\214vL\003\360u9?I\032\221\251\2465\250\334\271V\310\264\214\246z\225/'\261\376\211\275\211\314\376\211Q\023\0001\311x\202(\327[\334\260-\231}\367\375\251\235m\326R\201\325_\001m\210\212\325\265Z\365\307\037v\311\352\332\313\215\2255\262\265\375\377\332\306\017k;\253q\014[I\010\330s/6vv66\327Q5![\375C\370\3431\331d\207\240\263\371G\017\276H\260y\341\240D\210\305\024\033\263\027\267%!\227\211@\343\304\305\275N\210\232\246\326O\n}\tW\246\246\260-F\032\2243B\005d\241a\013\306/\221\204\356W\000L\320W\352/\227i\342\264\311\320!Tr\221m\305\211d\326\030q\347\206\320\016\353\331L\227\223\017\252\251-\275\213\205\324\325.\004\227\0040\021\006\345}]V\215\222lX\0064\273\3168\332\304\010\032-\331\320\014\253aX\n\033\257\304\242\212j\363\t\350\\\025\263\254\201*\242\302\350\261\250\314\020;D6\272\r8T\306Q\313\311\3008\017\353s\010&D\301R'\2041\234.8\233N\346S)\311\300\351g<\256\316w\3019\356\3040\233\010\344j\241\361\304\273Z \366\241\tN6m]&\244\305\004\374\310Y'\360$\031 \310OpFZ""\230\316x\330M\302!\351\317\213]\n\365k1\322TE\262\341\026\330Ru\025\354\226\236h\006$\220\177W:\237d\242B\205N*\253\n\326\3458\17740\307\241p\340B\227B\215`\265Z\252\336\245\207\343A\210\273xbu\201;>\202]2\304H\327Pl\014D\247\335\323\025(; \304h\340+f4\233\200]h\241\304\t\303\244\262*\372\227\016\024\023\236\037\230\0258BL\3034\r\013\360\202!\301\363B\3446\003\t\273\233|\201.[\033s\306\371\303-\276\214\311\316\326MU\356\200c\027\032&\341\357\013\034:\350j\317\246\332\211\333\343\301@.\214\210\323\003v\210\3333\035\007\276\030\332>\263\030@_\267\000\225\026g\026>\266\260I^\211\211\376\205L\303\025\030\224\361\210\031\347\013v\nk\3228\242\323\301C.\031B\274M\025\343\200Cb\340\025EN\342\001!\270#\343\227\3356\025\340\330\234\235\336\337\247\232\235,<\256\332Q5\312\314E\331\005\247\354l\270/\275r4\237\303\243\217\335|\224\271\353\226\337g\246\346n\r\2369\325([p\326\335\262\273\341\275\364\313Qv~\260\357\354\271\325(Wp\252\316+\267\036e\346\007\275\243\352(\377a\224\313Gs\037\274\317M\315e\007\337:u\247\355\322({\307\251\217`!^5\276\236\311\242J\347\2657\215\333\027n\336-\242\376\325p\251\034\344\203\342\350\344\020=\371\253\273\354v\375\212\337\013\246G\231\277\271\273\336\222_\360\353>}?;5\367I\342`v\360\330\271\347\324\243\354\255Q\346\346\340\221\263\200\356\336\001\267v\303\342\267\303\342\020\374\3159\267\334\272\333\361\363#p\324\006\333\365\261\023\261]7\355V\343\340'\343\332\364\212\336\277\375\032\272\223sf\235\237\275i\257\340\301\265\233\203\312\240\027\333\272\353~\355\315z\324\353\215Nt\315\017\016\034\352\364!\256\334\222{\303\355\205\322\227\301\375!|-8\217\334E8.,\271\267\341F?\230\rh\230\376\302\257c\226+n/\312|\342\256z\037\370\313~+\330\033>?\246Q\034\353]\1775\310\014o\014\177y\007\216K^\332\203\204\024\321\r4^N*4\213\025\2529\305\304\371\035\027\254-:=(\003&\343k'\345T\340+\233\013s\237\201\367YL\247\006f\250\337\303\013 \007:\334\352\031-\007\216\014\345\277B\313}\217\306Z\302\277\227\203BP\017\350y5\213\216\001E\376\312\327\206EL\326\023\207\203I""\032\337\375\247?\035e\357y\225\360\301\177\207\273\307\371\343\342\370\3562\340\242\216w\263\203J8\217\001\356\372\371(\373Q\370\021\334\360\027\203t0\316m\323]q\005\324)W\010\013\017\274\003\237F\271\177x\313\341\375\307\201\030\226\207\353\307e\314t9*\334\363\312\336\272_N0\002\351\305 b\024\334t\037yw \002\250\357\013/\357\305P[w\312G\323\200\243\277\334\036\354\206\371\330\275'\303\325\360\351^\270\367:|m\204\006\177?5%\246k3@j3\317\221<\237\371\t\311O3o\220\274\231i!i\315t\220tf\336\"y;\3634\005\344ij\023\311fj\033\311v\212!a)\025\211\232\372\025\311\257\251\337\220\374\226\332M\003\331M\277B\362*m\"1\323\002\211H\333\351(\035\273\352\324\334\317!\200\364\215\243\375\301\236\263\346\026\260\371>\204\302e\240^\243\314\022\324\037x\000\250\371p\376\313`9\240\301\301\260\363n1\334\002\314\2349\312\207\000\261\275p\271v\214\305q\346\335\036\340\023\262|\350\364\020C\022\340=\1774=J\177\2120\376Wps\370\237\343NX\337\216\322\013\341\302\262\367\314\257\002x\301\322[\3471to\346\253\240\034V\236\275\273\035\276\334\213\322\220\354#p\343!4-\340\374wN\332\020<";
-    PyObject *data = __Pyx_DecompressString(cstring, 1751, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (1791 bytes) */
+const char* const cstring = "x\332\205V\275s\333F\026\227D\236L\305\264EFt\244\304\271;\360\254\263S$t\2300\366]\316I\314\223DY\236X'J\212\345\214\307\263\263\004\226$B\020\000\261\013IL<\023\225,Q\242D\211\022%K\225.Q\242\344\237\340?\341\336\003(\205\372\314\214\264o\261\373\276\337\357\275eiU\225\305kU\027\237K;\242\257\2617\322[i\233q\323\320\271\272\317\342\243MC0I\264\251\220V\372\242m\350\222\312%\205ij\203YT0\255/qa\201\022f!\223.m\255m}Q\371WE\242\272\"Y\354\027&\013.q\273!k\224s\306%\243)5lU\023\252.\211\276\311xI\332hJ}\303\226t\306\024I\030\222\t|\223\002\242\315t\2113\201\033\351\001\325uCP\241\032:\001qUo=\220\024\325\002#\340-J\327\250\306Y\351\007\252(\004\030\231\242r\332\320\030\323qmjL\230\232\315\037\332B\325\370C\3534L\322\245:m1\253d\366\017\233\242\264b\350\3022\264?vk\373L\027\220\230MCg-Y\345\211:\2053\255Y\"\262mYpM\024\266\257\312\014\223\003\206cV\311\260\244\263<m\246\266\332\2024\314\353\331\014K\005\022Gy=\343\201\252\210\366\225\352N\255\221\016\353\363\313y8V\030V\250\3445\014W\010\237\230\277Z\177\303b\264c\032\200\257\313\357\223\244\021\231jZ\203\312\235k\231L\313h\252W\371r\022\353\237\330\233\310\354\237\0305\001\020\223\027O\020\345z\213\033\266%\263\357\377{jg\233\265T\270\352\257\2006D\305\352Z\255\372\323\217\273du\355\345\306\312\032\331\332\376_m\343\307\265\235\3258\206\255$\004\354\271\027\033;;\033\233\353\250\232\220\255\376!\374\3431\331d\207\240\263\371G\017\276H\260y\341\240D\210\305\024\033\263\027\267%!\227\261@\343\304\305\275\216\211\232\246\326O\n}\311\255LMa[\2144(g\204\n\310B\303\026\214_\302\t\335\257\000\230\240\257\324_/\323\304i\223\241C\250\344\342\265nX]\252\201\344d\021/\262Yq\276\2315\006\346\271Y\265\303z6\323\345\344\003\264\265\364.\326[W\273\220\203$\316\211h)\357\353\262j\224d\3032`&\350\214\243k\030h\243%\033\232a5\014Ka\343\225XTQm>\341\334U\251\2215PET\230P\026\225\031B\214\310F\267\001\207\31289r2W\316\243\377\034\320\tQ\020\021\ta\014\207\020\216\260\2231VJ2p\372\031O\265\363\315r\356vb\346M\004r5\323x0^\315\020\373""\320\004'\233\266.\023\322b\002\376\310Y'\360$\2313x\237\300\221\2640\235\361L\234DM\322\306\027\233\031\352\327b\244\251\212d\303-\260\245\352*\330-=\321\014H \377\276t>\311D\205\n\235TV\025\254\313qLi`\216C\341\300\205.\205\032\301j\342;\322\245VK\325\273\364p<6q\027\317\267.0\215\217`\227\214<\3225\024\033\343\321i\367t\005\312\016`9\301\361\245\2006\032\370\"\032\315&\364\001\264c\342\251aRY\025\375K\207\223\tO\031\270\207\343\3104L\323\260\000T\0307<UDn3\340\260\273\311\027\350\262\265\361\3158\311\270\305W6\331\331\272\251\312\035p\373BW%\367\373\002\007\030\006\322\263\251v\022\324x\310\220\013\343\346\364\200\035\342\366L[\202/\206\266\317,\006\375\241[\000]\2133\013\037n\330$/\316\304,\200r\200\010\014\335x\\\215\263\t;\2055i\034\321\351\020#\227\0144\336\246\212q\300!1\360\"\343\r.\252\334ep\255$\336\020\202\247d\374\213\3016\025\340\2629;\325\265O5;Yx\\\337\243\352\373\314\324\\.\234/z\237\370e\277zT\2152sQv\301);\033\356K\257\034\315\347\360\350c7\037e\356\272ed\2765x\346T\243l\301Yw\313\356\206\367\322/G\331\371\301\276\263\347V\243\\\301\251:\257\334z\224\231\037\364\216\252\243\374\207Q.\037\315}\360>75\227\035|\353\324\235\266K\243\354\035\247>\202\205x\325X<\223E\225\316ko\032\267/\334\274[D\375\253\341R9\310\007\305\321\311!z\362\211\273\354v\375\212\337\013\246G\231\277\272\273\336\222_\360\353>}?;5\367i\342`v\360\330\271\347\324\243\354\255Q\346\346\340\221\263\200\356\336\001\267v\303\342\267\303\342\020\374\3159\267\334\272\333\361\363#p\324\006\333\365\261\023\261]7\355V\343\340'\343\332\364\212\336\277\375\032\272\223sf\235_\274i\257\340\201\330\315Ae\320\213m\335u\277\361f=\352\365F'\272\346\007\007\016u\372\020Wn\311\275\341\366B\351\253\340\376\020\276\026\234G\356\"\034\027\226\334\333 \321\017f\003\032\246\277\360\353\230\345\212\333\2132\237\272\253\336\007\376\262\337\n\366\206\317\217i\024\307z\327_\r2\303\033\303_\337\201\343\222\227\366 !Et\003\215\227\223\n\315b\205jN1q~\307\005k\213N\017\312\200\311\370\306I9\025\370\312\346\302""\334?\301\373,\246S\0033\324\357\241\000\360\201\016\267zF\313\201#C\371\257\320r\337\243\261\226\360o\345\240\020\324\003z^\315\242c@\221\277\366\265a\021\223\365\304\341`\222\306\262\237\371\323Q\366\236W\t\037|7\334=\316\037\027\307\262\313\200\213:\312f\007\025Df\301\333\365\363Q\366\243\360#\220\360\027\203t0\316m\323]q\005\324)W\010\013\017\274\003\237F\271\177x\313\341\375\307\201\030\226\207\353\307e\314t9*\334\363\312\336\272_N0\002\351\305 b\024\334t\037yw \002\250\357\013/\357\305P[w\312G\323\200\243\277\334\036\354\206\371\330\275'\303\325\360\351^\270\367:|m\204\006\177?5%\246k3@j3\317\221<\237\371\031\311\3173o\220\274\231i!i\315t\220tf\336\"y;\3634\005\344ij\023\311fj\033\311v\212!a)\025\211\232\372\r\311o\251\337\221\374\236\332M\003\331M\277B\362*m\"1\323\002\211H\333\351(\035\273\352\324\334\317!\200\364\215\243\375\301\236\263\346\026\260\371>\204\302e\240^\243\314\022\324\037\356\000P\363\341\374W\301r@\203\203a\347\335b\270\005\2309s\224\017\001b{\341r\355\030\213\343\314\273=\300'd\371\320\351!\206$\300{\376hz\224\376;\302\370\313\340\346\360?\307\235\260\276\035\245\027\302\205e\357\231_\005\360\202\245\267\316c\350\336\314\327A9\254<{w;|\271\027\245!\331G\340\306ChZ\300\371\377\001\304`:\013";
+    PyObject *data = __Pyx_DecompressString(cstring, 1791, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (3360 bytes) */
-const char* const bytes = ".Dict[int, Style] | ResponsiveStyleNote that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.?add_notedisableenablefletplus/utils/responsive_manager.pyxft.Controlft.ControlEvent | Nonegcisenabledself._current_device is not None or self._current_height_bp is not None or self._current_orientation is not None or self._current_width_bp is not None or self._height_bp_keys is not None or self._style_state is not None or self._styles is not None or self._width_bp_keys is not None or self.breakpoints is not None or self.device_callbacks is not None or self.device_profiles is not None or self.height_breakpoints is not None or self.orientation_callbacks is not None or self.page is not None<stringsource>BreakpointRegistryCallableDEFAULT_DEVICE_PROFILESDeviceProfileDictMISSINGNone__Pyx_PyDict_NextRefResponsiveManagerResponsiveManager.__reduce_cython__ResponsiveManager.__setstate_cython__ResponsiveManager._apply_styleResponsiveManager._capture_base_attributesResponsiveManager._handle_resizeResponsiveManager._safe_setattrResponsiveManager.register_stylesResponsiveStyleSequenceStylealignmentanimateapply_apply_styleasyncio.coroutinesattrbasebgcolorborderborder_radiusbreakpoints_capture_base_attributescline_in_traceback_combined_resizecontroldevice_callbacksdevice_profiles__dict___dicteeventfletfletplus.stylesfletplus.utils.device_profilesfletplus.utils.responsive_breakpointsfletplus.utils.responsive_managerfletplus.utils.responsive_styleft__func__getget_device_profileget_style__getstate__gradient_handle_resizeheightheight_breakpointsimage_fitimage_src__init__.<locals>._combined_resize_is_coroutineitemskeyslandscape__main__marginmax_heightmax_widthmin_heightmin_width__module__name__name____new__objectoffseton_resizeopacityorientation_callbackspaddingpagepopportrait__pyx_checksum__pyx_result__pyx_state__pyx_type__pyx_unpickle_ResponsiveManager__pyx_vtable____qualna""me____reduce____reduce_cython____reduce_ex__register_stylesresolvereturnreverserotaterstyle_safe_setattrscaleself__set_name__setdefault__setstate____setstate_cython__shadowsortedstatestyles__test__typingupdateuse_setstatevaluevalueswidth\200A\330\010\t\330\014\023\2201\220I\230V\2401\330\017\020\200A\330\010\031\230\021\330\010\033\2301\360\010\000\t\r\210H\220A\330\014\024\220G\2301\230I\240V\2501\330\014\017\210v\220W\230A\330\020\024\220A\220X\230Q\330\010\017\210q\200A\340\021\022\330\020\021\330\t\n\360\020\000\t\014\210:\220Q\220h\230a\330\014\025\220Q\340\014\025\220_\240A\240V\2501\330\010\014\210H\220A\220[\240\001\330\010\014\210M\230\021\230!\330\014\024\220D\320\0301\260\021\260!\340\010\014\210M\230\021\230!\200A\330\010\032\230$\230m\2504\250q\260\001\340\010\035\230T\240\030\250\024\250Q\250a\360\006\000\t\034\2301\360\010\000\t\014\2107\220#\220Q\330\014\r\340\010\013\2106\220\023\220A\330\014\025\220X\230T\320!:\270!\2701\330\014\020\220\r\230Q\230k\250\021\340\010\017\210u\220A\220Q\330\010\014\210H\220A\330\014\024\220D\230\004\230A\230V\2401\330\014\017\210v\220W\230A\330\020\024\220N\240!\2409\250F\260!\340\010\020\220\006\220j\240\001\240\024\240Q\330\010\013\2104\210q\330\014\r\340\010\033\2305\240\006\240a\240q\340\010\014\210H\220A\330\014\017\210w\220a\220y\240\001\330\020\030\230\007\230q\320 2\260&\270\001\330\020\023\2206\230\027\240\001\330\024\030\230\016\240a\240y\260\006\260a\320\004-\250Q\330\010\033\2304\230q\330\010\034\230D\240\n\250$\250g\260W\270J\300a\330\010\035\230T\240\033\250D\260\010\270\007\270z\310\021\340\010 \240\004\240A\330\010!\240\024\240Q\340\010\033\2301\330\010\033\2301\360\006\000\t\r\210F\220!\330\014\017\210v\220S\230\001\330\020\027\220q\330\020\021\340\010\013\2105\220\003\2204\220q\330\014\020\320\020%\240Q\330\014\032\230$\230l\250$\250a\250q\330\014\017\210q\330\020\033\2301\230A\360\006\000\t\r\210F\220!\330\014\017\210w\220c\230\021\330\020\027\220q\330\020\021\340\010\013\2105\220\003\2204\220q\330""\014\020\320\020&\240a\330\014\032\230$\320\0361\260\024\260Q\260a\330\014\017\210q\330\020\033\2301\230A\360\006\000\t\027\220o\240V\2503\250l\270!\330\010\013\210<\220s\230$\230a\330\014\020\320\020(\250\001\330\014#\2404\320'=\270T\300\021\300!\330\014\017\210q\330\020$\240A\240Q\360\006\000\t\014\2104\320\017!\240\024\240T\250\021\330\014\026\320\026(\250\001\250\027\260\004\260A\330\014\017\210w\220f\230C\230t\2401\330\020\024\320\024'\240w\250a\330\020\"\240$\320&7\260t\2701\270G\3001\330\020\023\2201\330\024#\2401\240G\2501\360\006\000\t\034\2304\230q\340\010\013\2101\330\014\020\220\013\2306\240\025\240a\330\020\024\220M\240\021\240!\340\010\014\210G\2201\200\001\360\010\000\005\016\210T\320\021#\2404\320'<\270D\320@W\320W[\320[o\320os\360\000\000t\001F\002\360\000\000F\002J\002\360\000\000J\002Y\002\360\000\000Y\002]\002\360\000\000]\002g\002\360\000\000g\002k\002\360\000\000k\002|\002\360\000\000|\002@\003\360\000\000@\003N\003\360\000\000N\003R\003\360\000\000R\003e\003\360\000\000e\003i\003\360\000\000i\003{\003\360\000\000{\003\177\003\360\000\000\177\003T\004\360\000\000T\004X\004\360\000\000X\004p\004\360\000\000p\004t\004\360\000\000t\004u\004\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\0172\260$\260a\260w\270k\310\027\320PQ\340\010\017\320\0172\260$\260a\260w\270k\310\021\320\010\035\230W\320$F\300a\330\014\020\220\017\230q\240\001\330\014\017\210x\220q\230\001\330\020 \240\001\240\021\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\320\023$\240H\250A\250Q\330\004\007\200|\2207\230!\330\0103\2601\3204H\310\016\320VW\330\004\013\2101\200\001\330\004/\250q\260\006\260a";
+    #else /* compression: none (3464 bytes) */
+const char* const bytes = ".Dict[int, Style] | ResponsiveStyleNote that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.?add_notedisableenablefletplus/utils/responsive_manager.pyxft.Controlft.ControlEvent | Nonegcisenabledself._current_device is not None or self._current_height_bp is not None or self._current_orientation is not None or self._current_width_bp is not None or self._height_bp_keys is not None or self._style_state is not None or self._styles is not None or self._width_bp_keys is not None or self.breakpoints is not None or self.device_callbacks is not None or self.device_profiles is not None or self.height_breakpoints is not None or self.orientation_callbacks is not None or self.page is not None<stringsource>BreakpointRegistryCallableDEFAULT_DEVICE_PROFILESDeviceProfileDictMISSINGNone__Pyx_PyDict_NextRefResponsiveManagerResponsiveManager.__reduce_cython__ResponsiveManager.__setstate_cython__ResponsiveManager._apply_styleResponsiveManager._capture_base_attributesResponsiveManager._handle_resizeResponsiveManager._safe_setattrResponsiveManager.normalize_breakpointsResponsiveManager.register_stylesResponsiveStyleSequenceStylealignmentanimateapply_apply_styleasyncio.coroutinesattrbasebgcolorborderborder_radiusbreakpoints_capture_base_attributescline_in_traceback_combined_resizecontroldevice_callbacksdevice_profiles__dict___dicteeventfletfletplus.stylesfletplus.utils.device_profilesfletplus.utils.responsive_breakpointsfletplus.utils.responsive_managerfletplus.utils.responsive_styleft__func__getget_device_profileget_style__getstate__gradient_handle_resizeheightheight_breakpointsimage_fitimage_src__init__.<locals>._combined_resize_is_coroutineitemskeyslandscape__main__mappingmarginmax_heightmax_widthmin_heightmin_width__module__name__name____new__normalizenormalize_breakpointsobjectoffseton_resizeopacityorientation_callbackspaddingpagepopportrait__pyx_checksum__pyx_resul""t__pyx_state__pyx_type__pyx_unpickle_ResponsiveManager__pyx_vtable____qualname____reduce____reduce_cython____reduce_ex__register_stylesresolvereturnreverserotaterstyle_safe_setattrscaleself__set_name__setdefault__setstate____setstate_cython__shadowsortedstatestaticmethodstyles__test__typingupdateuse_setstatevaluevalueswidth\200A\360\010\000\t\020\320\017!\240\032\2501\250A\200A\330\010\t\330\014\023\2201\220I\230V\2401\330\017\020\200A\330\010\031\230\021\330\010\033\2301\360\010\000\t\r\210H\220A\330\014\024\220G\2301\230I\240V\2501\330\014\017\210v\220W\230A\330\020\024\220A\220X\230Q\330\010\017\210q\200A\340\021\022\330\020\021\330\t\n\360\020\000\t\014\210:\220Q\220h\230a\330\014\025\220Q\340\014\025\220_\240A\240V\2501\330\010\014\210H\220A\220[\240\001\330\010\014\210M\230\021\230!\330\014\024\220D\320\0301\260\021\260!\340\010\014\210M\230\021\230!\200A\330\010\032\230$\230m\2504\250q\260\001\340\010\035\230T\240\030\250\024\250Q\250a\360\006\000\t\034\2301\360\010\000\t\014\2107\220#\220Q\330\014\r\340\010\013\2106\220\023\220A\330\014\025\220X\230T\320!:\270!\2701\330\014\020\220\r\230Q\230k\250\021\340\010\017\210u\220A\220Q\330\010\014\210H\220A\330\014\024\220D\230\004\230A\230V\2401\330\014\017\210v\220W\230A\330\020\024\220N\240!\2409\250F\260!\340\010\020\220\006\220j\240\001\240\024\240Q\330\010\013\2104\210q\330\014\r\340\010\033\2305\240\006\240a\240q\340\010\014\210H\220A\330\014\017\210w\220a\220y\240\001\330\020\030\230\007\230q\320 2\260&\270\001\330\020\023\2206\230\027\240\001\330\024\030\230\016\240a\240y\260\006\260a\320\004-\250Q\330\010\033\2304\230q\330\010\034\230D\240\n\250$\250g\260W\270J\300a\330\010\035\230T\240\033\250D\260\010\270\007\270z\310\021\340\010 \240\004\240A\330\010!\240\024\240Q\340\010\033\2301\330\010\033\2301\360\006\000\t\r\210F\220!\330\014\017\210v\220S\230\001\330\020\027\220q\330\020\021\340\010\013\2105\220\003\2204\220q\330\014\020\320\020%\240Q\330\014\032\230$\230l\250$\250a\250q\330\014\017\210q\330\020""\033\2301\230A\360\006\000\t\r\210F\220!\330\014\017\210w\220c\230\021\330\020\027\220q\330\020\021\340\010\013\2105\220\003\2204\220q\330\014\020\320\020&\240a\330\014\032\230$\320\0361\260\024\260Q\260a\330\014\017\210q\330\020\033\2301\230A\360\006\000\t\027\220o\240V\2503\250l\270!\330\010\013\210<\220s\230$\230a\330\014\020\320\020(\250\001\330\014#\2404\320'=\270T\300\021\300!\330\014\017\210q\330\020$\240A\240Q\360\006\000\t\014\2104\320\017!\240\024\240T\250\021\330\014\026\320\026(\250\001\250\027\260\004\260A\330\014\017\210w\220f\230C\230t\2401\330\020\024\320\024'\240w\250a\330\020\"\240$\320&7\260t\2701\270G\3001\330\020\023\2201\330\024#\2401\240G\2501\360\006\000\t\034\2304\230q\340\010\013\2101\330\014\020\220\013\2306\240\025\240a\330\020\024\220M\240\021\240!\340\010\014\210G\2201\200\001\360\010\000\005\016\210T\320\021#\2404\320'<\270D\320@W\320W[\320[o\320os\360\000\000t\001F\002\360\000\000F\002J\002\360\000\000J\002Y\002\360\000\000Y\002]\002\360\000\000]\002g\002\360\000\000g\002k\002\360\000\000k\002|\002\360\000\000|\002@\003\360\000\000@\003N\003\360\000\000N\003R\003\360\000\000R\003e\003\360\000\000e\003i\003\360\000\000i\003{\003\360\000\000{\003\177\003\360\000\000\177\003T\004\360\000\000T\004X\004\360\000\000X\004p\004\360\000\000p\004t\004\360\000\000t\004u\004\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\0172\260$\260a\260w\270k\310\027\320PQ\340\010\017\320\0172\260$\260a\260w\270k\310\021\320\010\035\230W\320$F\300a\330\014\020\220\017\230q\240\001\330\014\017\210x\220q\230\001\330\020 \240\001\240\021\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\320\023$\240H\250A\250Q\330\004\007\200|\2207\230!\330\0103\2601\3204H\310\016\320VW\330\004\013\2101\200\001\330\004/\250q\260\006\260a";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 130; i++) {
+    for (int i = 0; i < 135; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
       if (likely(string) && i >= 14) PyUnicode_InternInPlace(&string);
@@ -8808,7 +9020,7 @@ const char* const bytes = ".Dict[int, Style] | ResponsiveStyleNote that Cython i
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 130; i < 139; i++) {
+    for (int i = 135; i < 145; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -8819,15 +9031,15 @@ const char* const bytes = ".Dict[int, Style] | ResponsiveStyleNote that Cython i
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 139; i++) {
+    for (Py_ssize_t i = 0; i < 145; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 130;
-      for (Py_ssize_t i=0; i<9; ++i) {
+      PyObject **table = stringtab + 135;
+      for (Py_ssize_t i=0; i<10; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
         #else
@@ -8885,49 +9097,54 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 87};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 93};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_event};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_combined_resize, __pyx_mstate->__pyx_kp_b_iso88591_W_Fa_q_xq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 96};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 51};
+    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_mapping};
+    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_normalize_breakpoints, __pyx_mstate->__pyx_kp_b_iso88591_A_1A, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
+  }
+  {
+    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 102};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_control, __pyx_mstate->__pyx_n_u_styles, __pyx_mstate->__pyx_n_u_rstyle};
-    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_register_styles, __pyx_mstate->__pyx_kp_b_iso88591_A_Qha_Q__AV1_HA_M_D_1_M, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_register_styles, __pyx_mstate->__pyx_kp_b_iso88591_A_Qha_Q__AV1_HA_M_D_1_M, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 119};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 125};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_control};
-    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_apply_style, __pyx_mstate->__pyx_kp_b_iso88591_A_m4q_T_Qa_1_7_Q_6_A_XT_1_Qk_uAQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_apply_style, __pyx_mstate->__pyx_kp_b_iso88591_A_m4q_T_Qa_1_7_Q_6_A_XT_1_Qk_uAQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 155};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 161};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_control};
-    __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_capture_base_attributes, __pyx_mstate->__pyx_kp_b_iso88591_A_1_HA_G1IV1_vWA_AXQ_q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[4] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_capture_base_attributes, __pyx_mstate->__pyx_kp_b_iso88591_A_1_HA_G1IV1_vWA_AXQ_q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[4])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 168};
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 174};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_control, __pyx_mstate->__pyx_n_u_attr, __pyx_mstate->__pyx_n_u_value};
-    __pyx_mstate_global->__pyx_codeobj_tab[4] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_safe_setattr, __pyx_mstate->__pyx_kp_b_iso88591_A_1IV1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[4])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[5] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_safe_setattr, __pyx_mstate->__pyx_kp_b_iso88591_A_1IV1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[5])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 175};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 181};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_e};
-    __pyx_mstate_global->__pyx_codeobj_tab[5] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_handle_resize, __pyx_mstate->__pyx_kp_b_iso88591_Q_4q_D_gWJa_T_D_z_A_Q_1_1_F_vS, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[5])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[6] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_fletplus_utils_responsive_manage_2, __pyx_mstate->__pyx_n_u_handle_resize, __pyx_mstate->__pyx_kp_b_iso88591_Q_4q_D_gWJa_T_D_z_A_Q_1_1_F_vS, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[6])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 1};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_state, __pyx_mstate->__pyx_n_u_dict_2, __pyx_mstate->__pyx_n_u_use_setstate};
-    __pyx_mstate_global->__pyx_codeobj_tab[6] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_mstate->__pyx_kp_b_iso88591_T_4_D_WW_oos_t_F_F_J_J_Y_Y_g_g, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[6])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[7] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_reduce_cython, __pyx_mstate->__pyx_kp_b_iso88591_T_4_D_WW_oos_t_F_F_J_J_Y_Y_g_g, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[7])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 16};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_pyx_state};
-    __pyx_mstate_global->__pyx_codeobj_tab[7] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_mstate->__pyx_kp_b_iso88591_q_a, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[7])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[8] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_setstate_cython, __pyx_mstate->__pyx_kp_b_iso88591_q_a, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[8])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 4};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_pyx_type, __pyx_mstate->__pyx_n_u_pyx_checksum, __pyx_mstate->__pyx_n_u_pyx_state, __pyx_mstate->__pyx_n_u_pyx_result};
-    __pyx_mstate_global->__pyx_codeobj_tab[8] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_pyx_unpickle_ResponsiveManager, __pyx_mstate->__pyx_kp_b_iso88591_q_0_kQR_HAQ_7_314H_VW_1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[8])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[9] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_stringsource, __pyx_mstate->__pyx_n_u_pyx_unpickle_ResponsiveManager, __pyx_mstate->__pyx_kp_b_iso88591_q_0_kQR_HAQ_7_314H_VW_1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[9])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;
@@ -10184,6 +10401,68 @@ static void __Pyx_RaiseArgtupleInvalid(
                  (num_expected == 1) ? "" : "s", num_found);
 }
 
+/* PyDictVersioning (used by GetModuleGlobalName) */
+#if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj) {
+    PyObject *dict = Py_TYPE(obj)->tp_dict;
+    return likely(dict) ? __PYX_GET_DICT_VERSION(dict) : 0;
+}
+static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj) {
+    PyObject **dictptr = NULL;
+    Py_ssize_t offset = Py_TYPE(obj)->tp_dictoffset;
+    if (offset) {
+#if CYTHON_COMPILING_IN_CPYTHON
+        dictptr = (likely(offset > 0)) ? (PyObject **) ((char *)obj + offset) : _PyObject_GetDictPtr(obj);
+#else
+        dictptr = _PyObject_GetDictPtr(obj);
+#endif
+    }
+    return (dictptr && *dictptr) ? __PYX_GET_DICT_VERSION(*dictptr) : 0;
+}
+static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version) {
+    PyObject *dict = Py_TYPE(obj)->tp_dict;
+    if (unlikely(!dict) || unlikely(tp_dict_version != __PYX_GET_DICT_VERSION(dict)))
+        return 0;
+    return obj_dict_version == __Pyx_get_object_dict_version(obj);
+}
+#endif
+
+/* GetModuleGlobalName */
+#if CYTHON_USE_DICT_VERSIONS
+static PyObject *__Pyx__GetModuleGlobalName(PyObject *name, PY_UINT64_T *dict_version, PyObject **dict_cached_value)
+#else
+static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name)
+#endif
+{
+    PyObject *result;
+#if CYTHON_COMPILING_IN_LIMITED_API
+    if (unlikely(!__pyx_m)) {
+        if (!PyErr_Occurred())
+            PyErr_SetNone(PyExc_NameError);
+        return NULL;
+    }
+    result = PyObject_GetAttr(__pyx_m, name);
+    if (likely(result)) {
+        return result;
+    }
+    PyErr_Clear();
+#elif CYTHON_AVOID_BORROWED_REFS || CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS
+    if (unlikely(__Pyx_PyDict_GetItemRef(__pyx_mstate_global->__pyx_d, name, &result) == -1)) PyErr_Clear();
+    __PYX_UPDATE_DICT_CACHE(__pyx_mstate_global->__pyx_d, result, *dict_cached_value, *dict_version)
+    if (likely(result)) {
+        return result;
+    }
+#else
+    result = _PyDict_GetItem_KnownHash(__pyx_mstate_global->__pyx_d, name, ((PyASCIIObject *) name)->hash);
+    __PYX_UPDATE_DICT_CACHE(__pyx_mstate_global->__pyx_d, result, *dict_cached_value, *dict_version)
+    if (likely(result)) {
+        return __Pyx_NewRef(result);
+    }
+    PyErr_Clear();
+#endif
+    return __Pyx_GetBuiltinName(name);
+}
+
 /* RaiseClosureNameError */
 static void __Pyx_RaiseClosureNameError(const char *varname) {
     PyErr_Format(PyExc_NameError, "free variable '%s' referenced before assignment in enclosing scope", varname);
@@ -10595,68 +10874,6 @@ static CYTHON_INLINE int __Pyx_dict_iter_next(
         *pvalue = next_item;
     }
     return 1;
-}
-
-/* PyDictVersioning (used by GetModuleGlobalName) */
-#if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_TYPE_SLOTS
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_tp_dict_version(PyObject *obj) {
-    PyObject *dict = Py_TYPE(obj)->tp_dict;
-    return likely(dict) ? __PYX_GET_DICT_VERSION(dict) : 0;
-}
-static CYTHON_INLINE PY_UINT64_T __Pyx_get_object_dict_version(PyObject *obj) {
-    PyObject **dictptr = NULL;
-    Py_ssize_t offset = Py_TYPE(obj)->tp_dictoffset;
-    if (offset) {
-#if CYTHON_COMPILING_IN_CPYTHON
-        dictptr = (likely(offset > 0)) ? (PyObject **) ((char *)obj + offset) : _PyObject_GetDictPtr(obj);
-#else
-        dictptr = _PyObject_GetDictPtr(obj);
-#endif
-    }
-    return (dictptr && *dictptr) ? __PYX_GET_DICT_VERSION(*dictptr) : 0;
-}
-static CYTHON_INLINE int __Pyx_object_dict_version_matches(PyObject* obj, PY_UINT64_T tp_dict_version, PY_UINT64_T obj_dict_version) {
-    PyObject *dict = Py_TYPE(obj)->tp_dict;
-    if (unlikely(!dict) || unlikely(tp_dict_version != __PYX_GET_DICT_VERSION(dict)))
-        return 0;
-    return obj_dict_version == __Pyx_get_object_dict_version(obj);
-}
-#endif
-
-/* GetModuleGlobalName */
-#if CYTHON_USE_DICT_VERSIONS
-static PyObject *__Pyx__GetModuleGlobalName(PyObject *name, PY_UINT64_T *dict_version, PyObject **dict_cached_value)
-#else
-static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name)
-#endif
-{
-    PyObject *result;
-#if CYTHON_COMPILING_IN_LIMITED_API
-    if (unlikely(!__pyx_m)) {
-        if (!PyErr_Occurred())
-            PyErr_SetNone(PyExc_NameError);
-        return NULL;
-    }
-    result = PyObject_GetAttr(__pyx_m, name);
-    if (likely(result)) {
-        return result;
-    }
-    PyErr_Clear();
-#elif CYTHON_AVOID_BORROWED_REFS || CYTHON_AVOID_THREAD_UNSAFE_BORROWED_REFS
-    if (unlikely(__Pyx_PyDict_GetItemRef(__pyx_mstate_global->__pyx_d, name, &result) == -1)) PyErr_Clear();
-    __PYX_UPDATE_DICT_CACHE(__pyx_mstate_global->__pyx_d, result, *dict_cached_value, *dict_version)
-    if (likely(result)) {
-        return result;
-    }
-#else
-    result = _PyDict_GetItem_KnownHash(__pyx_mstate_global->__pyx_d, name, ((PyASCIIObject *) name)->hash);
-    __PYX_UPDATE_DICT_CACHE(__pyx_mstate_global->__pyx_d, result, *dict_cached_value, *dict_version)
-    if (likely(result)) {
-        return __Pyx_NewRef(result);
-    }
-    PyErr_Clear();
-#endif
-    return __Pyx_GetBuiltinName(name);
 }
 
 /* RaiseUnexpectedTypeError */
@@ -13287,6 +13504,29 @@ static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
         PyErr_Format(PyExc_ImportError, "cannot import name %S", name);
     }
     return value;
+}
+
+/* GetNameInClass */
+static PyObject *__Pyx__GetNameInClass(PyObject *nmspace, PyObject *name) {
+    PyObject *result;
+    PyObject *dict;
+    assert(PyType_Check(nmspace));
+#if CYTHON_USE_TYPE_SLOTS
+    dict = ((PyTypeObject*)nmspace)->tp_dict;
+    Py_XINCREF(dict);
+#else
+    dict = PyObject_GetAttr(nmspace, __pyx_mstate_global->__pyx_n_u_dict);
+#endif
+    if (likely(dict)) {
+        result = PyObject_GetItem(dict, name);
+        Py_DECREF(dict);
+        if (result) {
+            return result;
+        }
+    }
+    PyErr_Clear();
+    __Pyx_GetModuleGlobalNameUncached(result, name);
+    return result;
 }
 
 /* CLineInTraceback (used by AddTraceback) */
