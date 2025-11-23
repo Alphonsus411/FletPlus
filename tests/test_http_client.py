@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -81,6 +82,53 @@ async def test_http_client_interceptors(tmp_path: Path):
 
     assert captured_header["X-Test"] == "intercepted"
     assert respuesta.headers["X-Intercepted"] == "1"
+
+
+@pytest.mark.anyio
+async def test_http_client_websocket_interceptors():
+    captured_headers = {}
+
+    class DummyWebSocket:
+        def __init__(self, response: httpx.Response) -> None:
+            self.response = response
+            self.closed = False
+
+        async def aclose(self) -> None:
+            self.closed = True
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc_info):
+            await self.aclose()
+
+    async def fake_websocket_connect(url: str, **kwargs: Any):
+        captured_headers["request"] = dict(kwargs.get("headers") or {})
+        return DummyWebSocket(httpx.Response(101, headers={"X-Original": "1"}))
+
+    client = HttpClient()
+    client._client.websocket_connect = fake_websocket_connect  # type: ignore[attr-defined]
+
+    def before(request: httpx.Request) -> httpx.Request:
+        request.headers["X-Test"] = "intercepted"
+        return request
+
+    def after(response: httpx.Response) -> httpx.Response:
+        response.headers["X-Intercepted"] = "1"
+        return response
+
+    client.add_interceptor(HttpInterceptor(before_request=before, after_response=after))
+
+    websocket = await client.ws_connect(
+        "https://example.org/socket", headers={"X-Initial": "1"}
+    )
+    await websocket.aclose()
+    await client.aclose()
+
+    assert captured_headers["request"]["X-Test"] == "intercepted"
+    assert captured_headers["request"]["X-Initial"] == "1"
+    assert websocket.response.headers["X-Intercepted"] == "1"
+    assert websocket.response.headers["X-Original"] == "1"
 
 
 @pytest.mark.anyio
