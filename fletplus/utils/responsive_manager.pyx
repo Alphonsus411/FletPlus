@@ -48,6 +48,12 @@ cdef class ResponsiveManager:
     actual del ancho de la página.
     """
 
+    @staticmethod
+    def normalize_breakpoints(mapping):
+        """Normaliza ``mapping`` resolviendo aliases simbólicos."""
+
+        return BreakpointRegistry.normalize(mapping)
+
     def __init__(
         self,
         page: ft.Page,
