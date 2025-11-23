@@ -34,3 +34,4 @@ Documentation = "https://github.com/Alphonsus411/fletplus#readme"
 
 [tool.setuptools.package-data]
 "fletplus.router" = ["router_cy.c", "router_cy.pyx", "router_cy.pxd"]
+"fletplus.http" = ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"]

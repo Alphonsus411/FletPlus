@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-import base64
 import contextlib
-import hashlib
+import importlib
 import inspect
-import json
 import os
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Awaitable, Callable, Iterable, MutableMapping
 
 import httpx
+
+from .disk_cache_py import DiskCache as _PyDiskCache
 
 from fletplus.state import Signal
 
@@ -92,104 +91,18 @@ class HttpInterceptor:
         return result or response
 
 
-@dataclass(slots=True)
-class _CacheEntry:
-    status_code: int
-    headers: list[tuple[str, str]]
-    content: bytes
-    http_version: str | None
-    reason_phrase: str | None
-    timestamp: float
+def _load_disk_cache() -> type[_PyDiskCache]:
+    spec = importlib.util.find_spec("fletplus.http.disk_cache")
+    if spec is None:
+        return _PyDiskCache
+    module = importlib.import_module("fletplus.http.disk_cache")
+    cache_cls = getattr(module, "DiskCache", None)
+    if cache_cls is None:
+        return _PyDiskCache
+    return cache_cls
 
 
-class DiskCache:
-    """Caché persistente sencilla para respuestas HTTP."""
-
-    def __init__(self, directory: str | os.PathLike[str], *, max_entries: int = 128) -> None:
-        self.directory = Path(directory)
-        self.directory.mkdir(parents=True, exist_ok=True)
-        self.max_entries = max_entries
-
-    # ------------------------------------------------------------------
-    def build_key(self, request: httpx.Request) -> str:
-        body = request.content or b""
-        headers = sorted((k.lower(), v) for k, v in request.headers.items())
-        payload = json.dumps(
-            {
-                "method": request.method,
-                "url": str(request.url),
-                "headers": headers,
-                "body": base64.b64encode(body).decode("ascii"),
-            },
-            sort_keys=True,
-        )
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-    # ------------------------------------------------------------------
-    def _path_for(self, key: str) -> Path:
-        return self.directory / f"{key}.json"
-
-    # ------------------------------------------------------------------
-    def get(self, key: str, *, request: httpx.Request | None = None) -> httpx.Response | None:
-        path = self._path_for(key)
-        if not path.exists():
-            return None
-        try:
-            data = json.loads(path.read_text("utf-8"))
-            entry = _CacheEntry(
-                status_code=data["status_code"],
-                headers=[(item[0], item[1]) for item in data["headers"]],
-                content=base64.b64decode(data["content"]),
-                http_version=data.get("http_version"),
-                reason_phrase=data.get("reason_phrase"),
-                timestamp=data["timestamp"],
-            )
-        except Exception:
-            path.unlink(missing_ok=True)
-            return None
-
-        headers = [(name.encode("latin-1"), value.encode("latin-1")) for name, value in entry.headers]
-        response = httpx.Response(
-            entry.status_code,
-            headers=headers,
-            content=entry.content,
-            request=request,
-            extensions={},
-        )
-        if entry.http_version:
-            response.extensions["http_version"] = entry.http_version
-        if entry.reason_phrase:
-            response.extensions["reason_phrase"] = entry.reason_phrase
-        os.utime(path, None)
-        return response
-
-    # ------------------------------------------------------------------
-    def set(self, key: str, response: httpx.Response) -> None:
-        path = self._path_for(key)
-        headers = [(name.decode("latin-1"), value.decode("latin-1")) for name, value in response.headers.raw]
-        entry = {
-            "status_code": response.status_code,
-            "headers": headers,
-            "content": base64.b64encode(response.content).decode("ascii"),
-            "http_version": response.extensions.get("http_version"),
-            "reason_phrase": response.reason_phrase,
-            "timestamp": time.time(),
-        }
-        path.write_text(json.dumps(entry), "utf-8")
-        self._enforce_limit()
-
-    # ------------------------------------------------------------------
-    def _enforce_limit(self) -> None:
-        files = sorted(self.directory.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for extra in files[self.max_entries :]:
-            with contextlib.suppress(OSError):
-                extra.unlink()
-
-    # ------------------------------------------------------------------
-    def clear(self) -> None:
-        for file in self.directory.glob("*.json"):
-            with contextlib.suppress(OSError):
-                file.unlink()
+DiskCache = _load_disk_cache()
 
 
 class _HookManager:

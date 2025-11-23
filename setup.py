@@ -4,23 +4,22 @@ from setuptools import Extension, find_packages, setup
 
 
 def _build_extensions():
-    module_path = Path("fletplus/router/router_cy.pyx")
-    source = "router_cy.pyx"
-    sources = [str(module_path)]
+    modules = [
+        ("fletplus.router.router_cy", Path("fletplus/router/router_cy.pyx")),
+        ("fletplus.http.disk_cache", Path("fletplus/http/disk_cache.pyx")),
+    ]
     try:
         from Cython.Build import cythonize
 
-        return cythonize(
-            [Extension("fletplus.router.router_cy", sources=sources)],
-            language_level="3",
-            annotate=False,
-        )
+        extensions = [Extension(name, sources=[str(path)]) for name, path in modules]
+        return cythonize(extensions, language_level="3", annotate=False)
     except Exception:
-        c_path = module_path.with_suffix(".c")
-        if c_path.exists():
-            return [Extension("fletplus.router.router_cy", sources=[str(c_path)])]
-        # Sin Cython ni archivo C generado, no añadimos la extensión
-        return []
+        extensions: list[Extension] = []
+        for name, path in modules:
+            c_path = path.with_suffix(".c")
+            if c_path.exists():
+                extensions.append(Extension(name, sources=[str(c_path)]))
+        return extensions
 
 setup(
     name="fletplus",
@@ -39,6 +38,7 @@ setup(
     include_package_data=True,
     package_data={
         "fletplus.router": ["router_cy.c", "router_cy.pyx", "router_cy.pxd"],
+        "fletplus.http": ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"],
     },
     install_requires=[
         "flet>=0.27.0",
