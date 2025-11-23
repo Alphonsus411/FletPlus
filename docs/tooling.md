@@ -12,6 +12,36 @@ Para integrarlo en tu proyecto, arranca `DevToolsServer().listen()` dentro de un
 
 El comando `fletplus run` monitoriza el árbol del proyecto (ignorando carpetas temporales como `.git`, `__pycache__` o `build`) mediante `watchdog`. Cuando detecta cambios en archivos Python, JSON o YAML, detiene el proceso actual de `flet run` y lo reinicia, conservando las opciones de puerto y activando los DevTools salvo que se haya pasado `--no-devtools`. También admite seleccionar el archivo principal con `--app` y la carpeta a vigilar con `--watch`.【F:fletplus/cli/main.py†L83-L171】
 
+## Perfilado previo a releases
+
+Para decidir qué módulos compilar con Cython antes de publicar una nueva versión:
+
+1. Genera el perfil con cProfile y guarda el resultado en `build/profile.txt`:
+
+   ```bash
+   fletplus profile --output build/profile.txt --sort cumtime --limit 30
+   ```
+
+   Si tu entorno no tiene registrado el alias, ejecuta `make profile`, que usa cProfile sobre el árbol `fletplus` y deja el archivo en la misma ruta.【F:Makefile†L5-L15】
+
+2. Actualiza la lista de módulos a compilar con Cython leyendo el perfil anterior:
+
+   ```bash
+   python tools/select_cython_modules.py --profile build/profile.txt --config build_config.yaml --limit 4
+   ```
+
+   El script ordena los archivos del repositorio por tiempo acumulado en el perfil y rellena `build_config.yaml` con los módulos más costosos. Si el perfil no contiene datos del proyecto, recurre al listado por defecto usado en `setup.py`.【F:tools/select_cython_modules.py†L1-L95】
+
+3. Construye las extensiones C justo después de actualizar la configuración. El `Makefile` ya encadena este flujo al objetivo `build`:
+
+   ```bash
+   make build
+   ```
+
+   Este objetivo regenera `build_config.yaml` antes de invocar `setup.py`, de modo que la configuración que lee `_load_module_config` siempre está alineada con el último perfil.【F:Makefile†L1-L17】【F:setup.py†L7-L57】
+
+> ✅ Ejecuta los pasos 1 y 2 antes de cortar cada release. Así nos aseguramos de que los módulos más calientes se compilan con Cython y `setup.py` los detecta automáticamente al construir paquetes o instalar en editable.
+
 ## Gestores de escritorio
 
 ### Ventanas adicionales
