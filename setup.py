@@ -15,58 +15,67 @@ DEFAULT_CYTHON_MODULES = (
 
 def _load_module_config() -> list[tuple[str, Path]]:
     base_dir = Path(__file__).parent
+    modules = []
+
+    # Intento de config externa
     for filename in CONFIG_FILENAMES:
         config_path = base_dir / filename
-        if not config_path.exists():
-            continue
-
-        try:
-            if config_path.suffix in {".yaml", ".yml"}:
-                import yaml  # type: ignore
-
-                data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-            else:
-                data = json.loads(config_path.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-
-        if not isinstance(data, dict):
-            continue
-
-        modules = []
-        for entry in data.get("cython_modules", ()):  # type: ignore[arg-type]
-            if not isinstance(entry, dict):
+        if config_path.exists():
+            try:
+                if config_path.suffix in {".yaml", ".yml"}:
+                    import yaml
+                    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+                else:
+                    data = json.loads(config_path.read_text(encoding="utf-8"))
+            except Exception:
                 continue
-            name = entry.get("name")
-            path_str = entry.get("path")
-            if not name or not path_str:
-                continue
-            path = Path(str(path_str))
-            modules.append((str(name), path if path.is_absolute() else base_dir / path))
 
-        if modules:
-            return modules
+            if isinstance(data, dict):
+                for entry in data.get("cython_modules", []):
+                    if isinstance(entry, dict):
+                        name = entry.get("name")
+                        path_str = entry.get("path")
+                        if name and path_str:
+                            p = Path(path_str)
+                            if p.is_absolute():
+                                # Convertir a ruta relativa correcta
+                                p = p.relative_to(base_dir)
+                            modules.append((name, p))
 
-    modules = []
+                if modules:
+                    return modules
+
+    # Config por defecto
     for name, path in DEFAULT_CYTHON_MODULES:
-        modules.append((name, path if path.is_absolute() else base_dir / path))
+        if path.is_absolute():
+            path = path.relative_to(base_dir)
+        modules.append((name, path))
+
     return modules
 
 
-def _build_extensions(Cython=None):
+def _build_extensions():
     modules = _load_module_config()
     try:
         from Cython.Build import cythonize
 
-        extensions = [Extension(name, sources=[str(path)]) for name, path in modules]
+        extensions = [
+            Extension(name, sources=[str(path).replace("\\", "/")])
+            for name, path in modules
+        ]
         return cythonize(extensions, language_level="3", annotate=False)
+
     except Exception:
-        extensions: list[Extension] = []
+        # Fallback a archivos .c si Cython no está disponible
+        extensions = []
         for name, path in modules:
             c_path = path.with_suffix(".c")
             if c_path.exists():
-                extensions.append(Extension(name, sources=[str(c_path)]))
+                extensions.append(
+                    Extension(name, sources=[str(c_path).replace("\\", "/")])
+                )
         return extensions
+
 
 setup(
     name="fletplus",
@@ -76,7 +85,7 @@ setup(
     description="Componentes avanzados y utilidades para apps Flet en Python",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/Alphonsus411/fletplus",  # Cambia esto si lo subes a GitHub
+    url="https://github.com/Alphonsus411/fletplus",
     project_urls={
         "Bug Tracker": "https://github.com/Alphonsus411/fletplus/issues",
     },
@@ -98,9 +107,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            # Nuevo alias con guion para lanzar la demo desde la terminal.
             "fletplus-demo=fletplus_demo:main",
-            # Alias existente con guion bajo para mantener compatibilidad.
             "fletplus_demo=fletplus_demo:main",
         ]
     },

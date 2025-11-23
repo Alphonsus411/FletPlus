@@ -7,7 +7,7 @@ name = "fletplus"
 version = "0.2.6"
 description = "Componentes visuales avanzados para Flet en Python"
 authors = [
-  { name="Adolfo González", email="adolfogonzal@gmail.com" }
+  { name = "Adolfo González", email = "adolfogonzal@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
@@ -21,9 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-# Permite invocar la demo directamente con un comando con guion.
 fletplus-demo = "fletplus_demo:main"
-# Se conserva el comando histórico con guion bajo para compatibilidad.
 fletplus_demo = "fletplus_demo:main"
 fletplus = "fletplus.cli.main:app"
 
@@ -32,7 +30,22 @@ Homepage = "https://github.com/Alphonsus411/fletplus"
 Repository = "https://github.com/Alphonsus411/fletplus"
 Documentation = "https://github.com/Alphonsus411/fletplus#readme"
 
+# -------------------------------
+# INCLUSIÓN DE ARCHIVOS DE DATOS
+# -------------------------------
 [tool.setuptools.package-data]
 "fletplus.router" = ["router_cy.c", "router_cy.pyx", "router_cy.pxd"]
 "fletplus.http" = ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"]
 "fletplus.utils" = ["responsive_manager.c", "responsive_manager.pyx", "responsive_manager.pxd"]
+
+# ----------------------------------------------------
+# DEFINICIÓN DE EXTENSIONES CYTHON (¡LO QUE FALTABA!)
+# ----------------------------------------------------
+[tool.setuptools.extension."fletplus.router.router_cy"]
+sources = ["fletplus/router/router_cy.pyx"]
+
+[tool.setuptools.extension."fletplus.http.disk_cache"]
+sources = ["fletplus/http/disk_cache.pyx"]
+
+[tool.setuptools.extension."fletplus.utils.responsive_manager"]
+sour
