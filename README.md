@@ -32,6 +32,32 @@ pip install fletplus
 - [Catálogo de componentes](docs/components.md)
 - [Perfiles de dispositivo y breakpoints](docs/responsive.md)
 
+## 🧪 Perfilado de flujos clave
+
+La CLI incluye un comando de perfilado que ejecuta flujos representativos (navegación del router, generación de plantillas y utilidades de layouts) con `cProfile` y muestra un reporte ordenado por tiempo usando `pstats`:
+
+```bash
+fletplus profile --output build/profile.txt --sort cumtime --limit 30
+```
+
+- Sin filtros (`--flow`) se ejecutan todos los flujos; para limitar el análisis, indica los nombres disponibles: `--flow router --flow scaffold`.
+- El reporte se imprime en consola y se guarda en la ruta indicada por `--output`.
+- El ordenamiento admite `tottime`, `cumtime`, `ncalls` o `calls` para ayudarte a detectar cuellos de botella.
+
+## ⚙️ Configuración de módulos Cython
+
+La compilación detecta los módulos a convertir automáticamente a extensiones Cython leyendo `build_config.yaml` (o un archivo JSON equivalente). Cada entrada debe incluir el nombre totalmente cualificado y la ruta relativa al proyecto:
+
+```yaml
+cython_modules:
+  - name: fletplus.router.router_cy
+    path: fletplus/router/router_cy.pyx
+  - name: fletplus.http.disk_cache
+    path: fletplus/http/disk_cache.pyx
+```
+
+Modifica este archivo para añadir o quitar módulos sin tocar `setup.py` o `pyproject.toml`. Durante la construcción, los módulos listados se cythonizan si Cython está disponible; si no, se usan los artefactos `.c` existentes como respaldo.
+
 ### 🖥️ Utilidades de escritorio
 
 `fletplus.desktop.show_notification` intenta usar un backend nativo dependiendo de la plataforma, y actualmente recae en un *fallback* que escribe el mensaje en la salida estándar cuando aún no existen integraciones para Windows, macOS o Linux. Sirve para prototipos rápidos, pero si necesitas notificaciones reales deberás implementar los backends nativos.
