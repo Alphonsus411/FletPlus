@@ -36,16 +36,14 @@ Documentation = "https://github.com/Alphonsus411/fletplus#readme"
 [tool.setuptools.package-data]
 "fletplus.router" = ["router_cy.c", "router_cy.pyx", "router_cy.pxd"]
 "fletplus.http" = ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"]
+"fletplus.state" = ["state.c", "state.pyx", "state.pxd"]
 "fletplus.utils" = ["responsive_manager.c", "responsive_manager.pyx", "responsive_manager.pxd"]
 
 # ----------------------------------------------------
-# DEFINICIÓN DE EXTENSIONES CYTHON (¡LO QUE FALTABA!)
+# DEFINICIÓN DE EXTENSIONES CYTHON (FORMATO CORRECTO)
 # ----------------------------------------------------
-[tool.setuptools.extension."fletplus.router.router_cy"]
-sources = ["fletplus/router/router_cy.pyx"]
-
-[tool.setuptools.extension."fletplus.http.disk_cache"]
-sources = ["fletplus/http/disk_cache.pyx"]
-
-[tool.setuptools.extension."fletplus.utils.responsive_manager"]
-sour
+[tool.setuptools.ext_modules]
+"fletplus.router.router_cy" = { sources = ["fletplus/router/router_cy.pyx"] }
+"fletplus.http.disk_cache" = { sources = ["fletplus/http/disk_cache.pyx"] }
+"fletplus.state.state" = { sources = ["fletplus/state/state.pyx"] }
+"fletplus.utils.responsive_manager" = { sources = ["fletplus/utils/responsive_manager.pyx"] }
