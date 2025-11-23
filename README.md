@@ -61,7 +61,13 @@ Modifica este archivo para añadir o quitar módulos sin tocar `setup.py` o `pyp
 
 ### 🖥️ Utilidades de escritorio
 
-`fletplus.desktop.show_notification` intenta usar un backend nativo dependiendo de la plataforma, y actualmente recae en un *fallback* que escribe el mensaje en la salida estándar cuando aún no existen integraciones para Windows, macOS o Linux. Sirve para prototipos rápidos, pero si necesitas notificaciones reales deberás implementar los backends nativos.
+`fletplus.desktop.show_notification` invoca un backend nativo según la plataforma:
+
+- **Windows**: usa `win10toast` si está instalado; en su defecto intenta un script de PowerShell disponible en `powershell` o `pwsh`.
+- **macOS**: prefiere `pync` y, si falta, ejecuta `osascript` para mostrar la notificación.
+- **Linux**: intenta `gi.repository.Notify` (requiere PyGObject) y, de no contar con él, recurre a `notify-send` si está presente en el sistema.
+
+Si ninguno de los backends devuelve éxito, aplica un *fallback* integrado (`_notify_in_page`) que imprime el mensaje en la salida estándar de la sesión. Puedes reemplazar este fallback por una notificación visual propia (por ejemplo, un `SnackBar`) sobrescribiendo la función antes de llamar a `show_notification`.
 
 ```python
 import flet as ft
@@ -72,14 +78,14 @@ def main(page: ft.Page) -> None:
     page.add(ft.Text("Demo de notificaciones"))
     page.add(ft.ElevatedButton(
         "Probar notificación",
-        on_click=lambda _: show_notification("Hola", "Implementa el backend nativo cuando lo necesites"),
+        on_click=lambda _: show_notification("Hola", "Usa backends nativos si están disponibles"),
     ))
 
 
 ft.app(target=main)
 ```
 
-> 🔧 **Seguimiento**: TODO — Añadir soporte nativo para Windows, macOS y Linux en los helpers de notificaciones (consulta la sección [Herramientas de desarrollo y publicación](docs/tooling.md)).
+> 🔧 **Nota**: si quieres desactivar el fallback en página, sobrescribe `_notify_in_page` con tu propio control (por ejemplo, una `SnackBar`) o envuelve `show_notification` con tu lógica preferida antes de llamar al helper.
 
 ### 📱 Helpers de perfiles de dispositivo
 

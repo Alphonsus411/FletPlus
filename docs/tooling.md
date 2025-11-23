@@ -54,11 +54,13 @@ Para decidir qué módulos compilar con Cython antes de publicar una nueva versi
 
 ### Notificaciones
 
-`fletplus.desktop.show_notification` intenta llamar a un backend nativo según la plataforma (`_notify_windows`, `_notify_macos`, `_notify_linux`). Actualmente estas funciones lanzan `NotImplementedError`, por lo que el soporte real en Windows, macOS y Linux está pendiente de integración.
+`fletplus.desktop.show_notification` ya incluye backends nativos:
 
-Mientras llegan esas implementaciones, la función captura los errores y recurre a `_notify_in_page`, un *fallback* que imprime el mensaje en la salida estándar de la sesión de la app. Puedes reemplazarlo por una notificación visual propia (por ejemplo, un `SnackBar` o `Banner`) asignándola cuando detectes que la plataforma aún no dispone de backend.
+- **Windows** (`_notify_windows`): intenta `win10toast` si está instalado; si no, lanza un script de PowerShell usando `powershell`/`pwsh` para publicar el toast.
+- **macOS** (`_notify_macos`): prefiere `pync` y, en su ausencia, recurre a `osascript` con el comando `display notification`.
+- **Linux** (`_notify_linux`): usa `gi.repository.Notify` (requiere PyGObject). Si no está disponible, busca el binario `notify-send` y lo ejecuta.
 
-> 🔧 **Seguimiento**: TODO — Implementar las integraciones nativas de notificaciones para Windows, macOS y Linux en cuanto se asigne el issue correspondiente.
+Cuando ningún backend confirma la entrega o hay una excepción, el helper usa `_notify_in_page` como *fallback* y escribe `"Notificación: <titulo> - <cuerpo>"` en la salida estándar. Si quieres mostrar un `SnackBar` o un `Banner` en la propia app, sobrescribe `_notify_in_page` antes de llamar a `show_notification` o envuelve el helper con tu propio control para desactivar el fallback.
 
 ## Gestor de drop de archivos
 
