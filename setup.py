@@ -8,6 +8,7 @@ CONFIG_FILENAMES = ("build_config.yaml", "build_config.yml", "build_config.json"
 DEFAULT_CYTHON_MODULES = (
     ("fletplus.router.router_cy", Path("fletplus/router/router_cy.pyx")),
     ("fletplus.http.disk_cache", Path("fletplus/http/disk_cache.pyx")),
+    ("fletplus.state.state", Path("fletplus/state/state.pyx")),
 )
 
 
@@ -84,6 +85,7 @@ setup(
     package_data={
         "fletplus.router": ["router_cy.c", "router_cy.pyx", "router_cy.pxd"],
         "fletplus.http": ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"],
+        "fletplus.state": ["state.c", "state.pyx", "state.pxd"],
     },
     install_requires=[
         "flet>=0.27.0",
