@@ -29,11 +29,6 @@ cdef inline bytes _safe_bytes(object value):
 cdef class DiskCache:
     """Caché persistente sencilla para respuestas HTTP."""
 
-    cdef Path directory
-    cdef int max_entries
-    cdef double max_age
-    cdef bint has_ttl
-
     def __init__(self, directory: str | os.PathLike[str], *, int max_entries=128, max_age: float | None = None):
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -46,7 +41,7 @@ cdef class DiskCache:
             self.max_age = max_age
 
     # ------------------------------------------------------------------
-    cpdef str build_key(self, httpx.Request request):
+    cpdef str build_key(self, object request):
         cdef bytes body = _safe_bytes(request.content or b"")
         cdef list raw_headers = [(name.lower(), value) for name, value in request.headers.raw]
         raw_headers.sort()
@@ -64,7 +59,7 @@ cdef class DiskCache:
         return hasher.hexdigest()
 
     # ------------------------------------------------------------------
-    cdef Path _path_for(self, str key):
+    cdef object _path_for(self, str key):
         cdef str safe_key = key.replace("/", "_").replace("\\", "_")
         return self.directory / f"{safe_key}.json"
 
@@ -75,8 +70,8 @@ cdef class DiskCache:
         return (time.time() - timestamp) > self.max_age
 
     # ------------------------------------------------------------------
-    cpdef httpx.Response | None get(self, str key, *, httpx.Request | None request=None):
-        cdef Path path = self._path_for(key)
+    cpdef object get(self, str key, object request=None):
+        cdef object path = self._path_for(key)
         if not path.exists():
             return None
         try:
@@ -113,8 +108,8 @@ cdef class DiskCache:
         return response
 
     # ------------------------------------------------------------------
-    cpdef void set(self, str key, httpx.Response response):
-        cdef Path path = self._path_for(key)
+    cpdef void set(self, str key, object response):
+        cdef object path = self._path_for(key)
         cdef list headers = []
         cdef bytes name
         cdef bytes value
@@ -155,7 +150,7 @@ cdef class DiskCache:
 
     # ------------------------------------------------------------------
     cpdef void clear(self):
-        cdef Path file
+        cdef object file
         for file in self.directory.glob("*.json"):
             with contextlib.suppress(OSError):
                 file.unlink()

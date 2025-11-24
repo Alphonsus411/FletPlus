@@ -15,16 +15,11 @@ from typing import Callable, MutableMapping, TypeVar
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
-Subscriber = Callable[["_T"], None]
+SubscriberType = Callable[["_T"], None]
 
 
 cdef class _BaseSignal:
     """Implementación base compartida por señales mutables y derivadas."""
-
-    cdef object _value
-    cdef object _comparer
-    cdef dict _subscribers
-    cdef int _next_token
 
     def __init__(
         self,
@@ -61,7 +56,7 @@ cdef class _BaseSignal:
             callback(value)
 
     # ------------------------------------------------------------------
-    def subscribe(self, callback: Subscriber, *, immediate: bool = False):
+    def subscribe(self, callback: SubscriberType, *, immediate: bool = False):
         """Registra un *callback* que se ejecutará cuando cambie el valor.
 
         Args:
@@ -145,10 +140,6 @@ cdef class Signal(_BaseSignal):
 cdef class DerivedSignal(_BaseSignal):
     """Señal derivada de solo lectura."""
 
-    cdef _BaseSignal _source
-    cdef object _selector
-    cdef object _unsubscribe
-
     def __init__(
         self,
         source: _BaseSignal,
@@ -187,10 +178,6 @@ cdef class DerivedSignal(_BaseSignal):
 
 cdef class Store:
     """Contenedor de señales nombradas con helpers reactivos."""
-
-    cdef dict _signals
-    cdef dict _children
-    cdef Signal _root
     _MISSING = object()
 
     def __init__(self, initial: MutableMapping[str, object] | None = None) -> None:
