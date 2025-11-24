@@ -6,6 +6,8 @@ import flet as ft
 
 
 def main(page: ft.Page) -> None:
+    """Crea el contenido inicial de la aplicación."""
+
     page.title = "{{ project_name }}"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -13,14 +15,14 @@ def main(page: ft.Page) -> None:
     page.add(
         ft.Column(
             controls=[
-                ft.Text("¡Bienvenido a FletPlus!", style=ft.TextThemeStyle.TITLE_LARGE),
                 ft.Text(
-                    "Edita `src/main.py` y guarda el archivo para ver los cambios al instante.",
+                    "¡Hola desde FletPlus!",
+                    style=ft.TextThemeStyle.HEADLINE_MEDIUM,
                     text_align=ft.TextAlign.CENTER,
                 ),
-                ft.ElevatedButton(
-                    "Abrir documentación",
-                    on_click=lambda _: page.launch_url("https://flet.dev/docs/"),
+                ft.Text(
+                    "Edita `src/main.py` para personalizar tu aplicación.",
+                    text_align=ft.TextAlign.CENTER,
                 ),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
