@@ -11,9 +11,9 @@ Proporciona un conjunto de controles personalizables como tablas inteligentes, g
 pip install fletplus
 ```
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
-- **Requiere Python 3.9+ y flet>=0.27.0**
+ - **Requiere Python 3.9+, flet>=0.27.0 y httpx>=0.28**
 
-> ℹ️ Desde la versión 0.2.3, FletPlus adopta oficialmente Python 3.9 como versión mínima y depende de `flet` 0.27.0 o superior para garantizar compatibilidad con los nuevos componentes.
+> ℹ️ Desde la versión 0.2.3, FletPlus adopta oficialmente Python 3.9 como versión mínima, depende de `flet` 0.27.0 o superior para garantizar compatibilidad con los nuevos componentes y usa `httpx` (>=0.28) como cliente HTTP base.
 
 ## 📚 Documentación
 
