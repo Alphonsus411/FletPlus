@@ -104,7 +104,14 @@ setup(
     },
     install_requires=[
         "flet>=0.27.0",
+        "click>=8.1",
+        "watchdog>=3.0",
+        "websockets>=12.0",
+        "httpx>=0.28",
     ],
+    extras_require={
+        "build": ["Cython>=3.0"],
+    },
     entry_points={
         "console_scripts": [
             "fletplus-demo=fletplus_demo:main",
