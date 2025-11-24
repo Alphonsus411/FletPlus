@@ -13,7 +13,7 @@ pip install fletplus
 - Tras la instalación tendrás disponible el comando `fletplus` para crear, ejecutar
   y perfilar proyectos desde la terminal.
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
- - **Requiere Python 3.9+, flet>=0.27.0 y httpx>=0.28**
+- **Requiere Python 3.9+, flet>=0.27.0 y httpx>=0.28**
 
 > ℹ️ Desde la versión 0.2.3, FletPlus adopta oficialmente Python 3.9 como versión mínima, depende de `flet` 0.27.0 o superior para garantizar compatibilidad con los nuevos componentes y usa `httpx` (>=0.28) como cliente HTTP base.
 
