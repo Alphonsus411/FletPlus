@@ -95,7 +95,12 @@ def _load_disk_cache() -> type[_PyDiskCache]:
     spec = importlib.util.find_spec("fletplus.http.disk_cache")
     if spec is None:
         return _PyDiskCache
-    module = importlib.import_module("fletplus.http.disk_cache")
+    try:
+        module = importlib.import_module("fletplus.http.disk_cache")
+    except ImportError:
+        return _PyDiskCache
+    except Exception:
+        return _PyDiskCache
     cache_cls = getattr(module, "DiskCache", None)
     if cache_cls is None:
         return _PyDiskCache
