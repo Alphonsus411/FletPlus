@@ -4,6 +4,8 @@ El módulo `fletplus.http` proporciona un cliente asincrónico basado en
 `httpx` que facilita la integración entre solicitudes remotas y la UI de
 FletPlus. Las señales expuestas permiten mostrar estados de carga,
 notificaciones o errores en tiempo real sin escribir *boilerplate*.
+El paquete instala `httpx>=0.28` como dependencia base, por lo que no es
+necesario añadirlo manualmente en proyectos que usen FletPlus.
 
 ## Uso básico
 
