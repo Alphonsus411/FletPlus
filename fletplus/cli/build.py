@@ -171,6 +171,12 @@ def _run_command(command: List[str], cwd: Path | None = None) -> None:
     click.echo(f"Ejecutando: {' '.join(command)}")
     try:
         subprocess.run(command, cwd=str(cwd) if cwd else None, check=True)
+    except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
+        missing_tool = command[0]
+        raise PackagingError(
+            f"No se encontró la herramienta requerida: {missing_tool}. "
+            "Asegúrate de que esté instalada y disponible en el PATH."
+        ) from exc
     except subprocess.CalledProcessError as exc:  # pragma: no cover - manejado en adaptador
         raise PackagingError(f"El comando {' '.join(command)} falló con código {exc.returncode}") from exc
 
@@ -282,6 +288,12 @@ class MobileAdapter(_BaseAdapter):
         click.echo("Preparando paquete móvil (android)")
         try:
             subprocess.run(command, cwd=str(self.context.project_dir), check=True, env=env)
+        except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
+            missing_tool = command[0]
+            raise PackagingError(
+                f"No se encontró la herramienta requerida: {missing_tool}. "
+                "Asegúrate de que esté instalada y disponible en el PATH."
+            ) from exc
         except subprocess.CalledProcessError as exc:
             raise PackagingError(
                 f"El comando {' '.join(command)} falló con código {exc.returncode}"
