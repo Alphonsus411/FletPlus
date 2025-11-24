@@ -114,6 +114,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
+            "fletplus=fletplus.cli.main:app",
             "fletplus-demo=fletplus_demo:main",
             "fletplus_demo=fletplus_demo:main",
         ]

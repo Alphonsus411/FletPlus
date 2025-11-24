@@ -10,6 +10,8 @@ Proporciona un conjunto de controles personalizables como tablas inteligentes, g
 ```bash
 pip install fletplus
 ```
+- Tras la instalación tendrás disponible el comando `fletplus` para crear, ejecutar
+  y perfilar proyectos desde la terminal.
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
  - **Requiere Python 3.9+, flet>=0.27.0 y httpx>=0.28**
 
