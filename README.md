@@ -57,7 +57,9 @@ cython_modules:
     path: fletplus/http/disk_cache.pyx
 ```
 
-Modifica este archivo para añadir o quitar módulos sin tocar `setup.py` o `pyproject.toml`. Durante la construcción, los módulos listados se cythonizan si Cython está disponible; si no, se usan los artefactos `.c` existentes como respaldo.
+Modifica este archivo para añadir o quitar módulos sin tocar `setup.py` o `pyproject.toml`. Durante la construcción, los módulos listados se cythonizan si Cython está disponible; si no, se usan los artefactos `.c` existentes como respaldo. Los paquetes publicados incluyen estos `.c` precompilados para que `pip install fletplus` funcione sin dependencias adicionales.
+
+> 🧰 Si necesitas regenerar los artefactos C (por ejemplo, tras modificar un `.pyx`), instala el extra opcional `build` con `pip install .[build]` o `pip install "fletplus[build]"`.
 
 ### 🖥️ Utilidades de escritorio
 
