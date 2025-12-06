@@ -1,11 +1,15 @@
 [build-system]
-requires = ["setuptools>=61.0", "pyyaml>=6.0"]
+requires = [
+    "setuptools>=61",
+    "wheel",
+]
 build-backend = "setuptools.build_meta"
+
 
 [project]
 name = "fletplus"
-version = "0.2.7"
-description = "Componentes visuales avanzados para Flet en Python"
+version = "0.2.8"
+description = "Componentes visuales avanzados y herramientas mejoradas para Flet en Python."
 authors = [
   { name = "Adolfo González", email = "adolfogonzal@gmail.com" }
 ]
@@ -18,24 +22,38 @@ dependencies = [
   "click>=8.1",
   "watchdog>=3.0",
   "websockets>=12.0",
-  "httpx>=0.28"
+  "httpx>=0.28",
 ]
 
-[project.scripts]
-fletplus-demo = "fletplus_demo:main"
-fletplus_demo = "fletplus_demo:main"
-fletplus = "fletplus.cli.main:app"
 
+# ------------ ENTRYPOINTS CLI ------------
+[project.scripts]
+fletplus = "fletplus.cli.main:app"
+fletplus-demo = "fletplus_demo:main"
+
+
+# ------------ LINKS ------------
 [project.urls]
 Homepage = "https://github.com/Alphonsus411/fletplus"
-Repository = "https://github.com/Alphonsus411/fletplus"
+Source = "https://github.com/Alphonsus411/fletplus"
 Documentation = "https://github.com/Alphonsus411/fletplus#readme"
 
-[project.optional-dependencies]
-build = ["Cython>=3.0"]
 
+# ------------ OPTIONAL SPEEDUPS (Cython) ------------
+[project.optional-dependencies]
+speedups = ["cython>=3.0"]
+
+
+# ------------ PACKAGE DISCOVERY ------------
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fletplus*", "fletplus_demo*"]
+exclude = ["tests*", "tools*", "coverage*", "docs*"]
+
+
+# ------------ PACKAGE DATA ------------
 [tool.setuptools.package-data]
-"fletplus.router" = ["router_cy.c", "router_cy.pyx", "router_cy.pxd"]
-"fletplus.http" = ["disk_cache.c", "disk_cache.pyx", "disk_cache.pxd"]
-"fletplus.state" = ["state.c", "state.pyx", "state.pxd"]
-"fletplus.utils" = ["responsive_manager.c", "responsive_manager.pyx", "responsive_manager.pxd"]
+"fletplus.router" = ["router_cy.c"]
+"fletplus.http" = ["disk_cache.c"]
+"fletplus.state" = ["state.c"]
+"fletplus.utils" = ["responsive_manager.c"]
