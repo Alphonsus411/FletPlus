@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, Optional
+from typing import Callable, Dict, Iterable, Literal, Optional, Protocol
 import weakref
 
 import flet as ft
 
 from fletplus.context import Context
+
+try:  # pragma: no cover - la extensión puede no estar disponible
+    from . import listeners_rs as _listeners_rs
+except Exception:  # pragma: no cover - fallback limpio
+    _listeners_rs = None
 
 __all__ = ["AnimationController", "animation_controller_context"]
 
@@ -51,36 +56,7 @@ class _WeakCallback:
         return self.key == other_key
 
 
-animation_controller_context: Context["AnimationController | None"] = Context(
-    "animation_controller",
-    default=None,
-)
-
-
-class AnimationController:
-    """Coordina animaciones declarativas a través de eventos simbólicos."""
-
-    __slots__ = ("page", "_listeners", "_fired")
-
-    def __init__(self, page: ft.Page | None = None) -> None:
-        self.page = page
-        self._listeners: Dict[str, list[_WeakCallback]] = {}
-        self._fired: set[str] = set()
-
-    # ------------------------------------------------------------------
-    def bind_page(self, page: ft.Page) -> None:
-        """Actualiza la página asociada usada para solicitar repintados."""
-
-        self.page = page
-
-    # ------------------------------------------------------------------
-    def reset(self) -> None:
-        """Elimina todos los listeners registrados y limpia el historial."""
-
-        self._listeners.clear()
-        self._fired.clear()
-
-    # ------------------------------------------------------------------
+class _ListenerContainer(Protocol):
     def add_listener(
         self,
         trigger: str,
@@ -88,8 +64,43 @@ class AnimationController:
         *,
         replay_if_fired: bool = False,
     ) -> Callable[[], None]:
-        """Suscribe una función a un evento y devuelve un desuscriptor."""
+        ...
 
+    def remove_listener(self, trigger: str, callback: Callable[[str], None]) -> None:
+        ...
+
+    def trigger(self, name: str) -> None:
+        ...
+
+    def trigger_many(self, names: Iterable[str]) -> None:
+        ...
+
+    def has_fired(self, name: str) -> bool:
+        ...
+
+    def reset(self) -> None:
+        ...
+
+    def fired(self) -> set[str]:
+        ...
+
+
+class _PythonListenerContainer:
+    """Implementación de listeners en Python usando referencias débiles."""
+
+    __slots__ = ("_listeners", "_fired")
+
+    def __init__(self) -> None:
+        self._listeners: Dict[str, list[_WeakCallback]] = {}
+        self._fired: set[str] = set()
+
+    def add_listener(
+        self,
+        trigger: str,
+        callback: Callable[[str], None],
+        *,
+        replay_if_fired: bool = False,
+    ) -> Callable[[], None]:
         storage = self._listeners.setdefault(trigger, [])
         wrapper = _WeakCallback(callback)
         storage.append(wrapper)
@@ -109,7 +120,6 @@ class AnimationController:
 
         return _unsubscribe
 
-    # ------------------------------------------------------------------
     def remove_listener(self, trigger: str, callback: Callable[[str], None]) -> None:
         listeners = self._listeners.get(trigger)
         if not listeners:
@@ -118,10 +128,7 @@ class AnimationController:
         if not self._listeners[trigger]:
             self._listeners.pop(trigger, None)
 
-    # ------------------------------------------------------------------
     def trigger(self, name: str) -> None:
-        """Lanza un evento, notificando a todos los listeners registrados."""
-
         callbacks = list(self._listeners.get(name, ()))
         alive: list[_WeakCallback] = []
         for wrapper in callbacks:
@@ -140,14 +147,138 @@ class AnimationController:
             self._listeners.pop(name, None)
         self._fired.add(name)
 
-    # ------------------------------------------------------------------
     def trigger_many(self, names: Iterable[str]) -> None:
         for name in names:
             self.trigger(name)
 
+    def has_fired(self, name: str) -> bool:
+        return name in self._fired
+
+    def reset(self) -> None:
+        self._listeners.clear()
+        self._fired.clear()
+
+    def fired(self) -> set[str]:
+        return self._fired
+
+
+class _RustListenerContainer:
+    """Puente hacia la versión nativa compilada con PyO3."""
+
+    __slots__ = ("_native",)
+
+    def __init__(self, native_cls: type) -> None:
+        self._native = native_cls()
+
+    def add_listener(
+        self,
+        trigger: str,
+        callback: Callable[[str], None],
+        *,
+        replay_if_fired: bool = False,
+    ) -> Callable[[], None]:
+        return self._native.add_listener(trigger, callback, replay_if_fired)  # type: ignore[return-value]
+
+    def remove_listener(self, trigger: str, callback: Callable[[str], None]) -> None:
+        self._native.remove_listener(trigger, callback)
+
+    def trigger(self, name: str) -> None:
+        self._native.trigger(name)
+
+    def trigger_many(self, names: Iterable[str]) -> None:
+        self._native.trigger_many(list(names))
+
+    def has_fired(self, name: str) -> bool:
+        return self._native.has_fired(name)
+
+    def reset(self) -> None:
+        self._native.reset()
+
+    def fired(self) -> set[str]:
+        return set(self._native.fired())
+
+
+animation_controller_context: Context["AnimationController | None"] = Context(
+    "animation_controller",
+    default=None,
+)
+
+
+class AnimationController:
+    """Coordina animaciones declarativas a través de eventos simbólicos."""
+
+    __slots__ = ("page", "_backend", "_container", "_fired")
+
+    def __init__(
+        self,
+        page: ft.Page | None = None,
+        *,
+        backend: Literal["auto", "python", "rust"] = "auto",
+    ) -> None:
+        self.page = page
+        self._backend, self._container = self._create_container(backend)
+        self._fired: set[str] = set(self._container.fired())
+
+    # ------------------------------------------------------------------
+    def bind_page(self, page: ft.Page) -> None:
+        """Actualiza la página asociada usada para solicitar repintados."""
+
+        self.page = page
+
+    # ------------------------------------------------------------------
+    def reset(self) -> None:
+        """Elimina todos los listeners registrados y limpia el historial."""
+
+        self._container.reset()
+        self._fired.clear()
+
+    # ------------------------------------------------------------------
+    def add_listener(
+        self,
+        trigger: str,
+        callback: Callable[[str], None],
+        *,
+        replay_if_fired: bool = False,
+    ) -> Callable[[], None]:
+        """Suscribe una función a un evento y devuelve un desuscriptor."""
+
+        return self._container.add_listener(trigger, callback, replay_if_fired=replay_if_fired)
+
+    # ------------------------------------------------------------------
+    def remove_listener(self, trigger: str, callback: Callable[[str], None]) -> None:
+        self._container.remove_listener(trigger, callback)
+
+    # ------------------------------------------------------------------
+    def trigger(self, name: str) -> None:
+        """Lanza un evento, notificando a todos los listeners registrados."""
+
+        self._container.trigger(name)
+        self._fired.add(name)
+
+    # ------------------------------------------------------------------
+    def trigger_many(self, names: Iterable[str]) -> None:
+        names = list(names)
+        self._container.trigger_many(names)
+        self._fired.update(names)
+
     # ------------------------------------------------------------------
     def has_fired(self, name: str) -> bool:
         return name in self._fired
+
+    # ------------------------------------------------------------------
+    def backend(self) -> str:
+        """Backend actualmente activo (``python`` o ``rust``)."""
+
+        return self._backend
+
+    # ------------------------------------------------------------------
+    def _create_container(self, backend: Literal["auto", "python", "rust"]) -> tuple[str, _ListenerContainer]:
+        native_cls = getattr(_listeners_rs, "ListenerContainer", None) if _listeners_rs else None
+        wants_native = backend in ("auto", "rust") and native_cls is not None
+
+        if wants_native:
+            return "rust", _RustListenerContainer(native_cls)
+        return "python", _PythonListenerContainer()
 
     # ------------------------------------------------------------------
     def request_update(self, control: ft.Control | None = None) -> None:
