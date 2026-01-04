@@ -62,6 +62,14 @@ Modifica este archivo para añadir o quitar módulos sin tocar `setup.py` o `pyp
 
 > 🧰 Si necesitas regenerar los artefactos C (por ejemplo, tras modificar un `.pyx`), instala el extra opcional `build` con `pip install .[build]` o `pip install "fletplus[build]"`.
 
+## 🚀 Router acelerado con Rust
+
+El router incluye una variante nativa (`router_rs`) construida con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) y `maturin`. Si Rust está disponible, FletPlus cargará automáticamente esta versión antes de usar los backends de Cython o Python.
+
+- Requisitos: toolchain de Rust estable, `pyrust-native` y `maturin` (puedes instalarlos con el extra `rust`: `pip install .[rust]`).
+- Construcción local: `make build-rust` genera el wheel con `maturin build` y lo instala en el entorno activo.
+- Fallback seguro: si no se puede compilar el módulo, el router sigue funcionando con las implementaciones existentes.
+
 ### 🖥️ Utilidades de escritorio
 
 `fletplus.desktop.show_notification` invoca un backend nativo según la plataforma:

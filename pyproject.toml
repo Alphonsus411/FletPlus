@@ -2,6 +2,8 @@
 requires = [
     "setuptools>=61",
     "wheel",
+    "maturin>=1.7",
+    "pyrust-native>=0.0.2",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -42,6 +44,7 @@ Documentation = "https://github.com/Alphonsus411/fletplus#readme"
 # ------------ OPTIONAL SPEEDUPS (Cython) ------------
 [project.optional-dependencies]
 speedups = ["cython>=3.0"]
+rust = ["pyrust-native>=0.0.2", "maturin>=1.7"]
 
 
 # ------------ PACKAGE DISCOVERY ------------
