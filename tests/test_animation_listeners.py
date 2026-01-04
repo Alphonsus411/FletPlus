@@ -11,9 +11,15 @@ from fletplus.animation import AnimationController
 def _available_backends() -> Iterable[str]:
     backends = ["python"]
     try:
-        from fletplus.animation.listeners_rs import ListenerContainer  # type: ignore
+        from fletplus.animation.listeners_pr_rs import ListenerContainer  # type: ignore
     except Exception:
-        ListenerContainer = None
+        try:
+            from fletplus.animation.listeners_rs import ListenerContainer  # type: ignore
+        except Exception:
+            ListenerContainer = None
+    else:
+        # Pyright inference workaround
+        ListenerContainer = ListenerContainer
     if ListenerContainer is not None:
         backends.append("rust")
     return backends

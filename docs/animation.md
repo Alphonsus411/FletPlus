@@ -6,6 +6,12 @@ central es `AnimationController`, un gestor basado en eventos simbólicos que se
 apoya en contextos para que cualquier control registrado pueda reaccionar a los
 mismos disparadores.
 
+> ℹ️ El contenedor de listeners intenta cargar primero la extensión
+> `listeners_pr_rs` compilada con `pyrust-native` para acelerar las operaciones
+> (`trigger_many`, filtrado de callbacks muertos y `replay_if_fired`). Si no se
+> encuentra, utiliza `listeners_rs` o vuelve de forma transparente al backend
+> puro en Python.
+
 ## AnimationController y contextos
 
 `FletPlusApp` crea automáticamente una instancia de `AnimationController` y la

@@ -59,6 +59,7 @@ exclude = ["tests*", "tools*", "coverage*", "docs*"]
 "fletplus.router" = ["router_cy.c"]
 "fletplus.router.router_pr_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.router.router_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
+"fletplus.animation.listeners_pr_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.components.charts.line_chart_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.components.smart_table_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.http" = ["disk_cache.c"]
@@ -70,6 +71,7 @@ exclude = ["tests*", "tools*", "coverage*", "docs*"]
 modules = [
   { name = "fletplus.router.router_pr_rs", manifest-path = "fletplus/router/router_pr_rs/Cargo.toml" },
   { name = "fletplus.router.router_rs", manifest-path = "fletplus/router/router_rs/Cargo.toml" },
+  { name = "fletplus.animation.listeners_pr_rs", manifest-path = "fletplus/animation/listeners_pr_rs/Cargo.toml" },
   { name = "fletplus.animation.listeners_rs", manifest-path = "fletplus/animation/listeners_rs/Cargo.toml" },
   { name = "fletplus.components.smart_table_rs", manifest-path = "fletplus/components/smart_table_rs/Cargo.toml" },
   { name = "fletplus.components.charts.line_chart_rs", manifest-path = "fletplus/components/charts/line_chart_rs/Cargo.toml" },
