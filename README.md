@@ -70,6 +70,14 @@ El router incluye una variante nativa (`router_rs`) construida con [`pyrust-nati
 - Construcción local: `make build-rust` genera el wheel con `maturin build` y lo instala en el entorno activo.
 - Fallback seguro: si no se puede compilar el módulo, el router sigue funcionando con las implementaciones existentes.
 
+## 🎞️ Listeners de animación acelerados
+
+`AnimationController` aprovecha un contenedor nativo opcional (`listeners_rs`) que mantiene referencias débiles y claves estables desde Rust, respetando el mismo contrato que la versión Python. Con la build nativa activa, los eventos se recorren y depuran en Rust sin perder compatibilidad con los callbacks de Python.
+
+- Requisitos: los mismos extras `rust` comentados arriba. `make build-rust` compila y registra el módulo `listeners_rs` junto al router.
+- Fallback seguro: si el binario no está disponible, el controlador sigue usando el backend puro en Python.
+- Benchmarks: `tests/perf/test_animation_perf.py` dispara 10 000 eventos sobre 100 listeners para comparar ambos backends y validar la mejora de tiempos.
+
 ### 🖥️ Utilidades de escritorio
 
 `fletplus.desktop.show_notification` invoca un backend nativo según la plataforma:
