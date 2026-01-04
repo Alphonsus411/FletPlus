@@ -172,5 +172,11 @@ Cuando ya no necesites escuchar cambios, invoca `unsubscribe()`. El router segui
 
 ---
 
+## Backend nativo con PyO3
+
+- El orden de carga prioriza la extensión `router_pr` (compilada con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) y PyO3), seguida de `router_rs`, el backend de Cython y la versión pura en Python.
+- `pip install .[rust]` activa `pyrust-native` durante la instalación y compila los crates listados en `[tool.pyrust-native]` de `pyproject.toml` (incluye `fletplus/router/router_pr_rs/Cargo.toml`).
+- Para construir de forma manual puedes ejecutar `maturin develop -m fletplus/router/router_pr_rs/Cargo.toml` o el objetivo `make build-rust`, que compila y registra todas las extensiones Rust disponibles.
+
 - Archivos fuente principales: `fletplus/router/route.py`, `fletplus/router/router.py` y `fletplus/router/__init__.py`.
 - Revisa `examples/router_basic.py` para ver una aplicación mínima que pone en práctica la guía.

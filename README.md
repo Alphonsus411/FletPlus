@@ -64,11 +64,12 @@ Modifica este archivo para añadir o quitar módulos sin tocar `setup.py` o `pyp
 
 ## 🚀 Router acelerado con Rust
 
-El router incluye una variante nativa (`router_rs`) construida con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) y `maturin`. Si Rust está disponible, FletPlus cargará automáticamente esta versión antes de usar los backends de Cython o Python.
+El router cuenta ahora con un backend compilado con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) y PyO3 (`router_pr_rs`), además de la variante previa `router_rs`. Durante la importación se intenta cargar `router_pr` primero, luego `router_rs`, después el backend de Cython y, en último término, la versión pura en Python.
 
 - Requisitos: toolchain de Rust estable, `pyrust-native` y `maturin` (puedes instalarlos con el extra `rust`: `pip install .[rust]`).
-- Construcción local: `make build-rust` genera el wheel con `maturin build` y lo instala en el entorno activo.
-- Fallback seguro: si no se puede compilar el módulo, el router sigue funcionando con las implementaciones existentes.
+- Construcción local: `make build-rust` compila todos los manifests listados (incluyendo `fletplus/router/router_pr_rs/Cargo.toml`) y registra las ruedas resultantes en el entorno activo.
+- Instalación desde fuente: `pip install .[rust]` hace que `pyrust-native` lea la sección `[tool.pyrust-native]` de `pyproject.toml` y ejecute `maturin` para cada crate declarado, de modo que el backend nativo quede disponible sin pasos extra.
+- Fallback seguro: si ninguna variante nativa está disponible, el router sigue funcionando con las implementaciones existentes.
 
 ## 🎞️ Listeners de animación acelerados
 
