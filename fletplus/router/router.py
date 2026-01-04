@@ -6,6 +6,11 @@ from types import MappingProxyType
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
 
 try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
+    from . import router_pr as _router_pr
+except Exception:  # pragma: no cover - fallback cuando no hay compilación
+    _router_pr = None
+
+try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
     from . import router_rs as _router_rs
 except Exception:  # pragma: no cover - fallback cuando no hay compilación
     _router_rs = None
@@ -289,32 +294,38 @@ def _dfs_match_py(
 
 # Selección de la implementación optimizada
 _normalize_path = (
-    (_router_rs._normalize_path if _router_rs else None)
+    (_router_pr._normalize_path if _router_pr else None)
+    or (_router_rs._normalize_path if _router_rs else None)
     or (_router_cy._normalize_path if _router_cy else None)
     or _normalize_path_py
 )
 _normalize_path_string = (
-    (_router_rs._normalize_path_string if _router_rs else None)
+    (_router_pr._normalize_path_string if _router_pr else None)
+    or (_router_rs._normalize_path_string if _router_rs else None)
     or (_router_cy._normalize_path_string if _router_cy else None)
     or _normalize_path_string_py
 )
 _parse_segment = (
-    (_router_rs._parse_segment if _router_rs else None)
+    (_router_pr._parse_segment if _router_pr else None)
+    or (_router_rs._parse_segment if _router_rs else None)
     or (_router_cy._parse_segment if _router_cy else None)
     or _parse_segment_py
 )
 _join_paths = (
-    (_router_rs._join_paths if _router_rs else None)
+    (_router_pr._join_paths if _router_pr else None)
+    or (_router_rs._join_paths if _router_rs else None)
     or (_router_cy._join_paths if _router_cy else None)
     or _join_paths_py
 )
 _dfs_match = (
-    (_router_rs._dfs_match if _router_rs else None)
+    (_router_pr._dfs_match if _router_pr else None)
+    or (_router_rs._dfs_match if _router_rs else None)
     or (_router_cy._dfs_match if _router_cy else None)
     or _dfs_match_py
 )
 _match = (
-    (_router_rs._match if _router_rs else None)
+    (_router_pr._match if _router_pr else None)
+    or (_router_rs._match if _router_rs else None)
     or (_router_cy._match if _router_cy else None)
     or _match_py
 )
