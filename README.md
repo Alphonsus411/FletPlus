@@ -73,10 +73,10 @@ El router cuenta ahora con un backend compilado con [`pyrust-native`](https://gi
 
 ## 🎞️ Listeners de animación acelerados
 
-`AnimationController` aprovecha un contenedor nativo opcional (`listeners_rs`) que mantiene referencias débiles y claves estables desde Rust, respetando el mismo contrato que la versión Python. Con la build nativa activa, los eventos se recorren y depuran en Rust sin perder compatibilidad con los callbacks de Python.
+`AnimationController` prioriza ahora un contenedor nativo compilado con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) (`listeners_pr_rs`), con las mismas garantías de referencias débiles y las claves estables del backend puro en Python. Si la extensión no está disponible, intenta cargar el binario previo `listeners_rs` y, como último recurso, vuelve al contenedor en Python sin romper compatibilidad.
 
-- Requisitos: los mismos extras `rust` comentados arriba. `make build-rust` compila y registra el módulo `listeners_rs` junto al router.
-- Fallback seguro: si el binario no está disponible, el controlador sigue usando el backend puro en Python.
+- Requisitos: los mismos extras `rust` comentados arriba. `make build-rust` compila y registra `fletplus/animation/listeners_pr_rs` junto al resto de manifests.
+- Paridad de comportamiento: los tests `tests/test_animation_listeners_parity.py` comparan orden de disparo, limpieza de callbacks muertos y reenvío con `replay_if_fired` entre el backend Python y el nativo.
 - Benchmarks: `tests/perf/test_animation_perf.py` dispara 10 000 eventos sobre 100 listeners para comparar ambos backends y validar la mejora de tiempos.
 
 ### 🖥️ Utilidades de escritorio
