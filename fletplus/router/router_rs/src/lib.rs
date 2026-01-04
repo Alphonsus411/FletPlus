@@ -191,7 +191,7 @@ fn match_routes(
 }
 
 #[pymodule]
-fn router_rs(_py: Python, m: &PyModule) -> PyResult<()> {
+fn _native(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(normalize_path, m)?)?;
     m.add_function(wrap_pyfunction!(normalize_path_string, m)?)?;
     m.add_function(wrap_pyfunction!(parse_segment, m)?)?;

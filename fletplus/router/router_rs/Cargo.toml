@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "router_rs"
+name = "_native"
 crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.20", features = ["extension-module"] }
 
 [package.metadata.maturin]
-name = "fletplus.router.router_rs"
+name = "fletplus.router.router_rs._native"
+module-name = "_native"
