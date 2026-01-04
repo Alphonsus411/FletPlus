@@ -55,3 +55,34 @@ def test_rust_match_returns_empty_for_missing_routes():
     py_results = router_mod._match_py(router._root, "/missing/route")
 
     assert rust_results == py_results == []
+
+
+def test_rust_and_python_match_branching_params():
+    router = Router(
+        [
+            Route(path="/", view=lambda match: match.path),
+            Route(
+                path="/shop",
+                view=lambda match: match.path,
+                children=[
+                    Route(path="items/<item_id>", view=lambda match: match.path),
+                    Route(
+                        path="items/<item_id>/reviews/<review_id>",
+                        view=lambda match: match.path,
+                    ),
+                ],
+            ),
+            Route(path="/blog/<year>/<slug>", view=lambda match: match.path),
+        ]
+    )
+
+    paths = [
+        "/shop/items/42",
+        "/shop/items/42/reviews/7",
+        "/blog/2024/router-rs",
+    ]
+
+    rust_results = [_normalize(router_rs._match(router._root, path)) for path in paths]
+    py_results = [_normalize(router_mod._match_py(router._root, path)) for path in paths]
+
+    assert rust_results == py_results

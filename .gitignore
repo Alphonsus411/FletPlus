@@ -24,3 +24,6 @@ htmlcov/
 
 # PyInstaller
 *.spec
+
+# Rust
+fletplus/router/router_rs/target/
