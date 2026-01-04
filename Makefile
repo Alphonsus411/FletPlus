@@ -2,7 +2,7 @@ PROFILE=build/profile.txt
 CONFIG=build_config.yaml
 PROFILE_LIMIT=30
 CONFIG_LIMIT=4
-RUST_MANIFESTS=fletplus/router/router_rs/Cargo.toml fletplus/animation/listeners_rs/Cargo.toml
+RUST_MANIFESTS=fletplus/router/router_rs/Cargo.toml fletplus/animation/listeners_rs/Cargo.toml fletplus/components/smart_table_rs/Cargo.toml
 
 .PHONY: profile update-build-config build build-rust
 
