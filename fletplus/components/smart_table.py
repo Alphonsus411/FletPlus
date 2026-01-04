@@ -16,6 +16,8 @@ estas capacidades.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import importlib
+import importlib.util
 import asyncio
 import inspect
 from typing import (
@@ -222,6 +224,19 @@ def _run_async(awaitable: Awaitable[Any]) -> Any:
 # ---------------------------------------------------------------------------
 # Componente principal
 # ---------------------------------------------------------------------------
+
+
+def _load_rust_backend():
+    spec = importlib.util.find_spec("fletplus.components.smart_table_rs")
+    if spec is None:
+        return None
+    module = importlib.import_module("fletplus.components.smart_table_rs")
+    if getattr(module, "apply_query", None) is None:
+        return None
+    return module
+
+
+_SMART_TABLE_RS = _load_rust_backend()
 
 
 class SmartTable:
@@ -543,6 +558,37 @@ class SmartTable:
             _run_async(maybe)
 
     def _apply_query(
+        self, records: Sequence[_SmartTableRecord]
+    ) -> List[_SmartTableRecord]:
+        rust_filters = self._serialize_filters_for_rust()
+        if _SMART_TABLE_RS is not None and rust_filters is not None:
+            payload = [(record.row_id, record.values) for record in records]
+            rust_sorts = [
+                {"key": sort.key, "ascending": sort.ascending}
+                for sort in self._sorts
+            ]
+            try:
+                ordered_ids = _SMART_TABLE_RS.apply_query(
+                    payload, rust_filters, rust_sorts
+                )
+            except Exception:
+                ordered_ids = None
+            else:
+                if ordered_ids is not None:
+                    index = {record.row_id: record for record in records}
+                    return [index[row_id] for row_id in ordered_ids if row_id in index]
+
+        return self._apply_query_py(records)
+
+    def _serialize_filters_for_rust(self) -> Optional[List[Dict[str, Any]]]:
+        rust_filters: List[Dict[str, Any]] = []
+        for key, flt in self._filters.items():
+            if flt.predicate is not _default_filter_predicate:
+                return None
+            rust_filters.append({"key": key, "value": flt.value, "op": "contains_ci"})
+        return rust_filters
+
+    def _apply_query_py(
         self, records: Sequence[_SmartTableRecord]
     ) -> List[_SmartTableRecord]:
         filtered = [
