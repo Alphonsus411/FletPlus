@@ -1,8 +1,93 @@
-import flet as ft
-import flet.canvas as cv
 from typing import List, Tuple, Optional
 
+import flet as ft
+import flet.canvas as cv
+
 from fletplus.styles import Style
+from .line_chart_rs import nearest_point as rs_nearest_point
+from .line_chart_rs import screen_points as rs_screen_points
+
+
+def _screen_points_py(
+    data: List[Tuple[float, float]],
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    width: float,
+    height: float,
+    scale: float,
+) -> List[Tuple[float, float]]:
+    span_x = x_max - x_min
+    span_y = y_max - y_min
+    if span_x == 0:
+        span_x = 1
+    if span_y == 0:
+        span_y = 1
+    span_x *= scale
+    span_y *= scale
+    return [
+        (
+            (x - x_min) / span_x * width,
+            height - (y - y_min) / span_y * height,
+        )
+        for x, y in data
+    ]
+
+
+def _screen_points(
+    data: List[Tuple[float, float]],
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    width: float,
+    height: float,
+    scale: float,
+) -> List[Tuple[float, float]]:
+    if rs_screen_points is not None:
+        try:  # pragma: no cover - backend opcional
+            return list(
+                rs_screen_points(
+                    data,
+                    float(x_min),
+                    float(x_max),
+                    float(y_min),
+                    float(y_max),
+                    float(width),
+                    float(height),
+                    float(scale),
+                )
+            )
+        except Exception:
+            pass
+
+    return _screen_points_py(data, x_min, x_max, y_min, y_max, width, height, scale)
+
+
+def _nearest_point(points: List[Tuple[float, float]], x: float, y: float) -> Optional[Tuple[int, float]]:
+    if not points:
+        return None
+
+    if rs_nearest_point is not None:
+        try:  # pragma: no cover - backend opcional
+            return rs_nearest_point(points, float(x), float(y))
+        except Exception:
+            pass
+
+    return _nearest_point_py(points, x, y)
+
+
+def _nearest_point_py(
+    points: List[Tuple[float, float]], x: float, y: float
+) -> Optional[Tuple[int, float]]:
+    if not points:
+        return None
+
+    dist, index = min(
+        ((px - x) ** 2 + (py - y) ** 2, i) for i, (px, py) in enumerate(points)
+    )
+    return index, dist
 
 
 class LineChart:
@@ -81,9 +166,11 @@ class LineChart:
         if not points:
             return
 
-        dist, index = min(
-            ((px - x) ** 2 + (py - y) ** 2, i) for i, (px, py) in enumerate(points)
-        )
+        nearest = _nearest_point(points, x, y)
+        if nearest is None:
+            return
+
+        index, _ = nearest
         data_pt = self.data[index]
         self.tooltip.value = f"{data_pt[0]}, {data_pt[1]}"
         self.tooltip.visible = True
@@ -92,21 +179,16 @@ class LineChart:
 
     # ------------------------------------------------------------------
     def _screen_points(self) -> List[Tuple[float, float]]:
-        span_x = self.x_max - self.x_min
-        span_y = self.y_max - self.y_min
-        if span_x == 0:
-            span_x = 1
-        if span_y == 0:
-            span_y = 1
-        span_x *= self.scale
-        span_y *= self.scale
-        return [
-            (
-                (x - self.x_min) / span_x * self.width,
-                self.height - (y - self.y_min) / span_y * self.height,
-            )
-            for x, y in self.data
-        ]
+        return _screen_points(
+            self.data,
+            self.x_min,
+            self.x_max,
+            self.y_min,
+            self.y_max,
+            self.width,
+            self.height,
+            self.scale,
+        )
 
     # ------------------------------------------------------------------
     def _update_canvas(self) -> None:
