@@ -5,6 +5,9 @@ from fletplus.router import router as router_mod
 
 router_rs = pytest.importorskip("fletplus.router.router_rs")
 
+if router_rs._match is None:  # pragma: no cover - entorno sin compilación Rust
+    pytest.skip("backend Rust no disponible", allow_module_level=True)
+
 
 def _normalize(results):
     normalized = []
