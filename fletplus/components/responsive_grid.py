@@ -7,6 +7,7 @@ from typing import Dict, Mapping, Optional, Sequence
 
 import flet as ft
 
+from fletplus.components.responsive_grid_rs import plan_items as _plan_grid_items_native
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
@@ -880,6 +881,8 @@ class ResponsiveGrid:
         width: int,
         columns: int,
         device: DeviceName | None = None,
+        *,
+        resolved_span: int | None = None,
     ) -> ft.Container:
         device = device or self._resolve_device_name(width)
         content: ft.Control = item.control
@@ -890,7 +893,7 @@ class ResponsiveGrid:
 
         container = ft.Container(
             content=content,
-            col=item.resolve_span(width, columns, device),
+            col=resolved_span or item.resolve_span(width, columns, device),
             padding=self._resolve_spacing_values(width)[0],
         )
 
@@ -909,11 +912,73 @@ class ResponsiveGrid:
     def _build_row(self, width: int) -> ft.ResponsiveRow:
         columns = self._resolve_columns(width)
         device = self._resolve_device_name(width)
-        containers = [
-            self._build_item_container(item, width, columns, device)
-            for item in self._items
-            if item.is_visible(width, device)
-        ]
+        descriptors: list[dict[str, object]] | None = None
+
+        if _plan_grid_items_native is not None:
+            payload: list[dict[str, object]] = []
+            for index, item in enumerate(self._items):
+                payload.append(
+                    {
+                        "index": index,
+                        "span": item.span,
+                        "span_breakpoints": dict(item.span_breakpoints or {}),
+                        "span_devices": dict(item.span_devices or {}),
+                        "visible_devices": list(item.visible_devices)
+                        if item.visible_devices
+                        else None,
+                        "hidden_devices": list(item.hidden_devices)
+                        if item.hidden_devices
+                        else None,
+                        "min_width": item.min_width,
+                        "max_width": item.max_width,
+                        "has_responsive_style": isinstance(
+                            item.responsive_style, (ResponsiveStyle, dict)
+                        ),
+                    }
+                )
+
+            try:
+                native_result = _plan_grid_items_native(
+                    width, columns, device, payload
+                )
+            except Exception:
+                native_result = None
+
+            if native_result is not None:
+                descriptors = list(native_result)
+
+        if descriptors is None:
+            descriptors = []
+            for index, item in enumerate(self._items):
+                if not item.is_visible(width, device):
+                    continue
+                descriptors.append(
+                    {
+                        "index": index,
+                        "col": item.resolve_span(width, columns, device),
+                        "has_responsive_style": isinstance(
+                            item.responsive_style, (ResponsiveStyle, dict)
+                        ),
+                    }
+                )
+
+        containers = []
+        for descriptor in descriptors:
+            item = self._items[int(descriptor.get("index", 0))]
+            resolved_span = descriptor.get("col")
+            try:
+                span_value = int(resolved_span) if resolved_span is not None else None
+            except (TypeError, ValueError):
+                span_value = None
+            containers.append(
+                self._build_item_container(
+                    item,
+                    width,
+                    columns,
+                    device,
+                    resolved_span=span_value,
+                )
+            )
         row = ft.ResponsiveRow(
             controls=containers,
             alignment=self.alignment,
