@@ -26,6 +26,7 @@ from fletplus.themes.presets import (
     get_preset_definition,
     has_preset,
 )
+from fletplus.themes.token_merge_rs import merge_token_layers
 from fletplus.state import Signal
 
 logger = logging.getLogger(__name__)
@@ -743,28 +744,19 @@ class ThemeManager:
         orientation: str | None,
         width: int | None,
     ) -> None:
-        base = {group: dict(values) for group, values in self.tokens.items()}
-
         device_overrides = self._resolve_device_overrides(device)
-        for group, values in device_overrides.items():
-            target = base.setdefault(group, {})
-            target.update(values)
-
         orientation_overrides = self._resolve_orientation_overrides(orientation)
-        for group, values in orientation_overrides.items():
-            target = base.setdefault(group, {})
-            target.update(values)
-
         breakpoint_overrides = self._resolve_breakpoint_overrides(width)
-        for group, values in breakpoint_overrides.items():
-            target = base.setdefault(group, {})
-            target.update(values)
 
-        for group, values in self._persistent_overrides.items():
-            target = base.setdefault(group, {})
-            target.update(values)
-
-        self._effective_tokens = base
+        self._effective_tokens = merge_token_layers(
+            self.tokens,
+            [
+                device_overrides,
+                orientation_overrides,
+                breakpoint_overrides,
+                self._persistent_overrides,
+            ],
+        )
 
     # ------------------------------------------------------------------
     def _apply_preset_definition(
