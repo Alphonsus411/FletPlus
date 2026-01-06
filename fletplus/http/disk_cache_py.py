@@ -13,6 +13,12 @@ from typing import Any
 
 import httpx
 
+try:  # pragma: no cover - acelerador opcional
+    from .disk_cache_pr import build_key as _build_key_rs, cleanup as _cleanup_rs
+except Exception:  # pragma: no cover - fallback limpio
+    _build_key_rs = None
+    _cleanup_rs = None
+
 
 class DiskCache:
     """Caché persistente sencilla para respuestas HTTP."""
@@ -25,6 +31,12 @@ class DiskCache:
 
     # ------------------------------------------------------------------
     def build_key(self, request: httpx.Request) -> str:
+        if _build_key_rs is not None:
+            try:
+                return _build_key_rs(request)
+            except Exception:
+                pass
+
         body = request.content or b""
         if isinstance(body, str):
             body = body.encode()
@@ -114,6 +126,13 @@ class DiskCache:
 
     # ------------------------------------------------------------------
     def _cleanup(self) -> None:
+        if _cleanup_rs is not None:
+            try:
+                _cleanup_rs(str(self.directory), self.max_entries, self.max_age)
+                return
+            except Exception:
+                pass
+
         if self.max_age is not None:
             cutoff = time.time() - self.max_age
         else:
