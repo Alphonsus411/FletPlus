@@ -64,6 +64,7 @@ exclude = ["tests*", "tools*", "coverage*", "docs*"]
 "fletplus.components.responsive_grid_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.components.smart_table_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.themes.token_merge_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
+"fletplus.http.disk_cache_pr_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.http" = ["disk_cache.c"]
 "fletplus.state" = ["state.c"]
 "fletplus.utils" = ["responsive_manager.c"]
@@ -79,4 +80,5 @@ modules = [
   { name = "fletplus.components.responsive_grid_rs", manifest-path = "fletplus/components/responsive_grid_rs/Cargo.toml" },
   { name = "fletplus.components.charts.line_chart_rs", manifest-path = "fletplus/components/charts/line_chart_rs/Cargo.toml" },
   { name = "fletplus.themes.token_merge_rs", manifest-path = "fletplus/themes/token_merge_rs/Cargo.toml" },
+  { name = "fletplus.http.disk_cache_pr_rs", manifest-path = "fletplus/http/disk_cache_pr_rs/Cargo.toml" },
 ]
