@@ -11,6 +11,8 @@ the page theme.
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import json
 import logging
 from collections.abc import Callable, Mapping
@@ -30,6 +32,19 @@ from fletplus.themes.token_merge_rs import merge_token_layers
 from fletplus.state import Signal
 
 logger = logging.getLogger(__name__)
+
+
+def _load_palette_flatten_backend():
+    spec = importlib.util.find_spec("fletplus.themes.palette_flatten_rs")
+    if spec is None:
+        return None
+    module = importlib.import_module("fletplus.themes.palette_flatten_rs")
+    if getattr(module, "flatten_palette", None) is None:
+        return None
+    return module
+
+
+_PALETTE_FLATTEN_RS = _load_palette_flatten_backend()
 
 
 def _merge_token_groups(
@@ -145,16 +160,6 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
 
     palette = data.get(mode, {})
 
-    flat_palette: dict[str, object] = {}
-    for name, value in palette.items():
-        if isinstance(value, dict):
-            for shade, shade_value in value.items():
-                flat_palette[f"{name}_{shade}"] = shade_value
-        else:
-            flat_palette[name] = value
-
-    palette = data.get(mode, {})
-
     def _flatten(prefix: str, value: object) -> dict[str, object]:
         """Flatten nested dictionaries using underscore-separated keys."""
         if isinstance(value, dict):
@@ -165,9 +170,9 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
             return flattened
         return {prefix: value}
 
+    if _PALETTE_FLATTEN_RS is not None:
+        return _PALETTE_FLATTEN_RS.flatten_palette(palette)
     return _flatten("", palette)
-  
-    return flat_palette
 
 
 class ThemeManager:
@@ -1167,4 +1172,3 @@ def load_theme_from_json(file_path: str) -> dict[str, object]:
     """Carga un archivo JSON y devuelve la definición de tema normalizada."""
 
     return _parse_theme_json(file_path)
-
