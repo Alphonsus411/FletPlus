@@ -206,6 +206,39 @@ def test_responsive_style_updates_container_properties():
     assert box.width == 200
 
 
+def test_responsive_manager_updates_multiple_controls():
+    page = DummyPage(500, 800)
+    box_a = ft.Container(bgcolor="base-a", padding=5)
+    box_b = ft.Container(bgcolor="base-b", padding=8)
+    styles_a = ResponsiveStyle(
+        width={
+            0: Style(bgcolor="red"),
+            600: Style(bgcolor="blue"),
+        }
+    )
+    styles_b = ResponsiveStyle(
+        width={
+            0: Style(padding=12),
+            600: Style(padding=16),
+        }
+    )
+
+    manager = ResponsiveManager(page)
+    manager.register_styles(box_a, styles_a)
+    manager.register_styles(box_b, styles_b)
+
+    assert box_a.bgcolor == "red"
+    assert box_b.padding == 12
+
+    page.resize(650)
+    assert box_a.bgcolor == "blue"
+    assert box_b.padding == 16
+
+    page.resize(400)
+    assert box_a.bgcolor == "red"
+    assert box_b.padding == 12
+
+
 def test_responsive_manager_preserves_existing_resize_handler():
     page = DummyPage(500, 800)
     calls: list[str] = []
