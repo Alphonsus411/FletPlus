@@ -12,6 +12,10 @@ from fletplus.utils.device_profiles import (
     get_device_profile,
 )
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
+try:  # backend opcional en Rust
+    from fletplus.utils.responsive_manager_rs import apply_styles as _apply_styles_rs
+except Exception:  # pragma: no cover - fallback limpio
+    _apply_styles_rs = None
 
 
 cdef tuple _STYLE_ATTRS = (
@@ -110,9 +114,18 @@ cdef class ResponsiveManager:
         else:
             rstyle = ResponsiveStyle(width=styles)
         self._styles[control] = rstyle
+        base = self._capture_base_attributes(control)
         self._style_state[control] = {
-            "base": self._capture_base_attributes(control),
+            "base": base,
         }
+        try:
+            setattr(control, "__fletplus_base_attrs__", base)
+        except AttributeError:
+            pass
+        try:
+            setattr(rstyle, "_fletplus_page", self.page)
+        except AttributeError:
+            pass
         self._apply_style(control)
 
     # ------------------------------------------------------------------
@@ -228,7 +241,12 @@ cdef class ResponsiveManager:
         cdef dict styles = self._styles
         cdef object control
         if styles:
-            for control in styles.keys():
-                self._apply_style(control)
+            if _apply_styles_rs is not None:
+                updates = _apply_styles_rs(list(styles.items()), list(_STYLE_ATTRS))
+                for control, attr, value in updates:
+                    self._safe_setattr(control, attr, value)
+            else:
+                for control in styles.keys():
+                    self._apply_style(control)
 
         page.update()
