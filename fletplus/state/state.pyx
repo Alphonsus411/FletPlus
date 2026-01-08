@@ -12,6 +12,11 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Callable, MutableMapping, TypeVar
 
+try:  # pragma: no cover - extensión opcional
+    from .signal_pr_rs import _native as _signal_native
+except Exception:  # pragma: no cover - fallback limpio
+    _signal_native = None
+
 _T = TypeVar("_T")
 _S = TypeVar("_S")
 
@@ -29,7 +34,10 @@ cdef class _BaseSignal:
     ) -> None:
         self._value = value
         self._comparer = comparer or (lambda old, new: old == new)
-        self._subscribers = {}
+        if _signal_native is not None:
+            self._subscribers = _signal_native.SignalState()
+        else:
+            self._subscribers = {}
         self._next_token = 0
 
     # ------------------------------------------------------------------
@@ -49,6 +57,9 @@ cdef class _BaseSignal:
 
     # ------------------------------------------------------------------
     cdef void _notify(self):
+        if _signal_native is not None:
+            _signal_native.notify(self._subscribers, self._value)
+            return
         cdef dict subscribers = self._subscribers
         cdef object value = self._value
         cdef object callback
@@ -70,12 +81,18 @@ cdef class _BaseSignal:
 
         cdef int token = self._next_token
         self._next_token = token + 1
-        self._subscribers[token] = callback
+        if _signal_native is not None:
+            self._subscribers.add(token, callback)
+        else:
+            self._subscribers[token] = callback
         if immediate:
             callback(self._value)
 
         def unsubscribe() -> None:
-            self._subscribers.pop(token, None)
+            if _signal_native is not None:
+                self._subscribers.remove(token)
+            else:
+                self._subscribers.pop(token, None)
 
         return unsubscribe
 
@@ -194,6 +211,8 @@ cdef class Store:
 
     # ------------------------------------------------------------------
     cdef object _create_snapshot(self):
+        if _signal_native is not None:
+            return MappingProxyType(_signal_native.snapshot(self._signals))
         cdef dict signals = self._signals
         cdef dict data = {}
         cdef object name
