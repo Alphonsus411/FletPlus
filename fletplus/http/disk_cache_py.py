@@ -137,10 +137,17 @@ class DiskCache:
             cutoff = time.time() - self.max_age
         else:
             cutoff = None
-        files = sorted(self.directory.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        files: list[tuple[Path, float]] = []
+        for path in self.directory.glob("*.json"):
+            try:
+                mtime = path.stat().st_mtime
+            except (FileNotFoundError, OSError):
+                continue
+            files.append((path, mtime))
+        files.sort(key=lambda item: item[1], reverse=True)
         kept = 0
-        for file_path in files:
-            if cutoff is not None and file_path.stat().st_mtime < cutoff:
+        for file_path, mtime in files:
+            if cutoff is not None and mtime < cutoff:
                 with contextlib.suppress(OSError):
                     file_path.unlink()
                 continue
