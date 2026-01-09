@@ -147,8 +147,13 @@ class _ReactiveInstance:
             if not callable(trigger):
                 trigger = getattr(owner, "update", None)
         if callable(trigger):
-            trigger()
-        self._invalidated = False
+            try:
+                trigger()
+            finally:
+                # Restablece el flag incluso si el trigger falla.
+                self._invalidated = False
+        else:
+            self._invalidated = False
 
     # ------------------------------------------------------------------
     def add_cleanup(self, callback: Callable[[], None]) -> None:
@@ -226,4 +231,3 @@ def watch(signals: Signal | Iterable[Signal], callback: Callable[..., None], *, 
 
 
 __all__ = ["reactive", "use_state", "use_signal", "watch"]
-
