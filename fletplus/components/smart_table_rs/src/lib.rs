@@ -1,3 +1,4 @@
+use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyTuple};
 use std::cmp::Ordering;
@@ -87,21 +88,6 @@ impl ComparableValue {
     }
 }
 
-fn cmp_values(a: &ComparableValue, b: &ComparableValue) -> Ordering {
-    match (a, b) {
-        (ComparableValue::NoneValue, ComparableValue::NoneValue) => Ordering::Equal,
-        (ComparableValue::NoneValue, _) => Ordering::Greater,
-        (_, ComparableValue::NoneValue) => Ordering::Less,
-        (ComparableValue::Bool(left), ComparableValue::Bool(right)) => left.cmp(right),
-        (ComparableValue::Int(left), ComparableValue::Int(right)) => left.cmp(right),
-        (ComparableValue::Float(left), ComparableValue::Float(right)) => left
-            .partial_cmp(right)
-            .unwrap_or(Ordering::Equal),
-        (ComparableValue::String(left), ComparableValue::String(right)) => left.cmp(right),
-        _ => format!("{:?}", a).cmp(&format!("{:?}", b)),
-    }
-}
-
 fn normalize_str(py: Python<'_>, value: &PyAny) -> Option<String> {
     if value.is_none() {
         return None;
@@ -136,6 +122,10 @@ fn eq_values(left: &ComparableValue, right: &ComparableValue) -> bool {
         (ComparableValue::Bool(l), ComparableValue::Bool(r)) => l == r,
         (ComparableValue::Int(l), ComparableValue::Int(r)) => l == r,
         (ComparableValue::Float(l), ComparableValue::Float(r)) => l == r,
+        (ComparableValue::Bool(l), ComparableValue::Int(r)) => (*l as i64) == *r,
+        (ComparableValue::Bool(l), ComparableValue::Float(r)) => (*l as i64 as f64) == *r,
+        (ComparableValue::Int(l), ComparableValue::Bool(r)) => *l == (*r as i64),
+        (ComparableValue::Float(l), ComparableValue::Bool(r)) => *l == (*r as i64 as f64),
         (ComparableValue::Int(l), ComparableValue::Float(r)) => (*l as f64) == *r,
         (ComparableValue::Float(l), ComparableValue::Int(r)) => *l == (*r as f64),
         (ComparableValue::String(l), ComparableValue::String(r)) => l == r,
@@ -148,6 +138,10 @@ fn order_values(left: &ComparableValue, right: &ComparableValue) -> Option<Order
         (ComparableValue::Bool(l), ComparableValue::Bool(r)) => Some(l.cmp(r)),
         (ComparableValue::Int(l), ComparableValue::Int(r)) => Some(l.cmp(r)),
         (ComparableValue::Float(l), ComparableValue::Float(r)) => l.partial_cmp(r),
+        (ComparableValue::Bool(l), ComparableValue::Int(r)) => (*l as i64).partial_cmp(r),
+        (ComparableValue::Bool(l), ComparableValue::Float(r)) => (*l as i64 as f64).partial_cmp(r),
+        (ComparableValue::Int(l), ComparableValue::Bool(r)) => l.partial_cmp(&(*r as i64)),
+        (ComparableValue::Float(l), ComparableValue::Bool(r)) => l.partial_cmp(&(*r as i64 as f64)),
         (ComparableValue::Int(l), ComparableValue::Float(r)) => (*l as f64).partial_cmp(r),
         (ComparableValue::Float(l), ComparableValue::Int(r)) => l.partial_cmp(&(*r as f64)),
         (ComparableValue::String(l), ComparableValue::String(r)) => Some(l.cmp(r)),
@@ -208,27 +202,71 @@ fn matches_filter(py: Python<'_>, record: &Record, filter: &FilterSpec) -> PyRes
     }
 }
 
+fn fallback_str(value: &PyAny) -> String {
+    value
+        .str()
+        .and_then(|text| text.to_str())
+        .map(|text| text.to_string())
+        .unwrap_or_else(|_| format!("{:?}", value))
+}
+
+fn compare_python_values(py: Python<'_>, left: &PyAny, right: &PyAny) -> PyResult<Ordering> {
+    if left
+        .rich_compare(right, CompareOp::Lt)?
+        .is_true()?
+    {
+        return Ok(Ordering::Less);
+    }
+
+    if left
+        .rich_compare(right, CompareOp::Gt)?
+        .is_true()?
+    {
+        return Ok(Ordering::Greater);
+    }
+
+    Ok(Ordering::Equal)
+}
+
+fn compare_sort_values(
+    py: Python<'_>,
+    left: Option<&PyAny>,
+    right: Option<&PyAny>,
+) -> Ordering {
+    let left_is_none = left.map_or(true, |value| value.is_none());
+    let right_is_none = right.map_or(true, |value| value.is_none());
+
+    match (left_is_none, right_is_none) {
+        (true, true) => Ordering::Equal,
+        (true, false) => Ordering::Greater,
+        (false, true) => Ordering::Less,
+        (false, false) => {
+            let Some(left_value) = left else {
+                return Ordering::Equal;
+            };
+            let Some(right_value) = right else {
+                return Ordering::Equal;
+            };
+
+            if let Ok(ordering) = compare_python_values(py, left_value, right_value) {
+                return ordering;
+            }
+
+            fallback_str(left_value).cmp(&fallback_str(right_value))
+        }
+    }
+}
+
 fn compare_records(
     py: Python<'_>,
     left: &Record,
     right: &Record,
     sort: &SortSpec,
 ) -> PyResult<Ordering> {
-    let left_value = left
-        .values
-        .as_ref(py)
-        .get_item(&sort.key)
-        .map(|value| ComparableValue::from_py(py, value))
-        .unwrap_or(ComparableValue::NoneValue);
+    let left_value = left.values.as_ref(py).get_item(&sort.key);
+    let right_value = right.values.as_ref(py).get_item(&sort.key);
 
-    let right_value = right
-        .values
-        .as_ref(py)
-        .get_item(&sort.key)
-        .map(|value| ComparableValue::from_py(py, value))
-        .unwrap_or(ComparableValue::NoneValue);
-
-    let ordering = cmp_values(&left_value, &right_value);
+    let ordering = compare_sort_values(py, left_value, right_value);
 
     Ok(if sort.ascending {
         ordering
@@ -270,7 +308,7 @@ fn parse_records(py: Python<'_>, items: Vec<PyObject>) -> PyResult<Vec<Record>> 
 ///   distinguir mayúsculas/minúsculas.
 /// - Los operadores de comparación usan el valor original del registro y del
 ///   filtro. Si no son comparables, el filtro no aplica.
-fn apply_query(
+fn apply_query_inner(
     py: Python<'_>,
     records: Vec<PyObject>,
     filters: Vec<FilterSpec>,
@@ -301,8 +339,39 @@ fn apply_query(
     Ok(sorted.into_iter().map(|record| record.row_id).collect())
 }
 
+#[pyfunction]
+/// Aplica filtros y ordenamientos sobre los registros.
+///
+/// Contrato de filtros:
+/// - `filters` es una lista de dicts con claves `key`, `value` y `op`.
+/// - `op` soporta: `contains_ci`, `eq`, `neq`, `lt`, `lte`, `gt`, `gte`.
+/// - `contains_ci` convierte ambos valores a string y compara por inclusión sin
+///   distinguir mayúsculas/minúsculas.
+/// - Los operadores de comparación usan el valor original del registro y del
+///   filtro. Si no son comparables, el filtro no aplica.
+fn apply_query(
+    py: Python<'_>,
+    records: Vec<PyObject>,
+    filters: Vec<FilterSpec>,
+    sorts: Vec<SortSpec>,
+) -> PyResult<Vec<i64>> {
+    apply_query_inner(py, records, filters, sorts)
+}
+
+#[pyfunction]
+/// Devuelve los IDs ordenados finales para filtros/ordenamiento compatibles.
+fn apply_query_ids(
+    py: Python<'_>,
+    records: Vec<PyObject>,
+    filters: Vec<FilterSpec>,
+    sorts: Vec<SortSpec>,
+) -> PyResult<Vec<i64>> {
+    apply_query_inner(py, records, filters, sorts)
+}
+
 #[pymodule]
 fn _native(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(apply_query, m)?)?;
+    m.add_function(wrap_pyfunction!(apply_query_ids, m)?)?;
     Ok(())
 }

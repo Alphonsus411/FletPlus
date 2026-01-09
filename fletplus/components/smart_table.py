@@ -282,7 +282,10 @@ def _load_rust_backend():
     if spec is None:
         return None
     module = importlib.import_module("fletplus.components.smart_table_rs")
-    if getattr(module, "apply_query", None) is None:
+    if (
+        getattr(module, "apply_query", None) is None
+        and getattr(module, "apply_query_ids", None) is None
+    ):
         return None
     return module
 
@@ -612,16 +615,21 @@ class SmartTable:
         self, records: Sequence[_SmartTableRecord]
     ) -> List[_SmartTableRecord]:
         rust_filters, py_filters = self._serialize_filters_for_rust()
-        if _SMART_TABLE_RS is not None and rust_filters:
+        rust_sorts = [
+            {"key": sort.key, "ascending": sort.ascending}
+            for sort in self._sorts
+        ]
+        if _SMART_TABLE_RS is not None and (rust_filters or rust_sorts):
             payload = [(record.row_id, record.values) for record in records]
-            rust_sorts = [
-                {"key": sort.key, "ascending": sort.ascending}
-                for sort in self._sorts
-            ]
             try:
-                ordered_ids = _SMART_TABLE_RS.apply_query(
-                    payload, rust_filters, rust_sorts
-                )
+                if not py_filters and getattr(_SMART_TABLE_RS, "apply_query_ids", None):
+                    ordered_ids = _SMART_TABLE_RS.apply_query_ids(
+                        payload, rust_filters, rust_sorts
+                    )
+                else:
+                    ordered_ids = _SMART_TABLE_RS.apply_query(
+                        payload, rust_filters, rust_sorts
+                    )
             except Exception:
                 ordered_ids = None
             else:
@@ -630,11 +638,13 @@ class SmartTable:
                     ordered_records = [
                         index[row_id] for row_id in ordered_ids if row_id in index
                     ]
-                    # Filtrado híbrido: las reglas en Python preservan el orden ya
-                    # calculado por Rust.
-                    return self._apply_unsupported_filters_py(
-                        ordered_records, py_filters
-                    )
+                    if py_filters:
+                        # Filtrado híbrido: las reglas en Python preservan el orden ya
+                        # calculado por Rust.
+                        return self._apply_unsupported_filters_py(
+                            ordered_records, py_filters
+                        )
+                    return ordered_records
 
         return self._apply_query_py(records)
 
