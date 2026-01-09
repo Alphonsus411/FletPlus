@@ -79,6 +79,10 @@ El router cuenta ahora con un backend compilado con [`pyrust-native`](https://gi
 - Paridad de comportamiento: los tests `tests/test_animation_listeners_parity.py` comparan orden de disparo, limpieza de callbacks muertos y reenvío con `replay_if_fired` entre el backend Python y el nativo.
 - Benchmarks: `tests/perf/test_animation_perf.py` dispara 10 000 eventos sobre 100 listeners para comparar ambos backends y validar la mejora de tiempos.
 
+## 🎨 Merge de tokens de temas acelerado
+
+El gestor de temas incorpora un backend nativo (`theme_merge_rs`) que acelera el merge de grupos de tokens y la aplicación de overrides para las variantes `light`/`dark` al cargar temas desde JSON. Si la extensión no está disponible, se usa automáticamente el fallback en Python sin afectar al resultado.
+
 ### 🖥️ Utilidades de escritorio
 
 `fletplus.desktop.show_notification` invoca un backend nativo según la plataforma:

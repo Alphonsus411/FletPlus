@@ -47,10 +47,28 @@ def _load_palette_flatten_backend():
 _PALETTE_FLATTEN_RS = _load_palette_flatten_backend()
 
 
+def _load_theme_merge_backend():
+    spec = importlib.util.find_spec("fletplus.themes.theme_merge_rs")
+    if spec is None:
+        return None
+    module = importlib.import_module("fletplus.themes.theme_merge_rs")
+    if getattr(module, "merge_token_groups", None) is None:
+        return None
+    if getattr(module, "merge_variant_overrides", None) is None:
+        return None
+    return module
+
+
+_THEME_MERGE_RS = _load_theme_merge_backend()
+
+
 def _merge_token_groups(
     target: dict[str, dict[str, object]],
     updates: Mapping[str, object],
 ) -> None:
+    if _THEME_MERGE_RS is not None:
+        _THEME_MERGE_RS.merge_token_groups(target, updates)
+        return
     for group, values in updates.items():
         if not isinstance(values, Mapping):
             continue
@@ -91,16 +109,24 @@ def _parse_theme_json(file_path: str) -> dict[str, object]:
         definition = {"light": {}, "dark": {}}
 
     common_tokens = data.get("tokens")
-    if isinstance(common_tokens, Mapping):
-        for variant in ("light", "dark"):
-            variant_mapping = definition.setdefault(variant, {})
-            _merge_token_groups(variant_mapping, common_tokens)
+    if _THEME_MERGE_RS is not None:
+        overrides = {"light": data.get("light"), "dark": data.get("dark")}
+        _THEME_MERGE_RS.merge_variant_overrides(
+            definition,
+            common_tokens if isinstance(common_tokens, Mapping) else None,
+            overrides,
+        )
+    else:
+        if isinstance(common_tokens, Mapping):
+            for variant in ("light", "dark"):
+                variant_mapping = definition.setdefault(variant, {})
+                _merge_token_groups(variant_mapping, common_tokens)
 
-    for variant in ("light", "dark"):
-        overrides = data.get(variant)
-        if isinstance(overrides, Mapping):
-            variant_mapping = definition.setdefault(variant, {})
-            _merge_token_groups(variant_mapping, overrides)
+        for variant in ("light", "dark"):
+            overrides = data.get(variant)
+            if isinstance(overrides, Mapping):
+                variant_mapping = definition.setdefault(variant, {})
+                _merge_token_groups(variant_mapping, overrides)
 
     mode = data.get("mode")
     mode_value: str | None = None
