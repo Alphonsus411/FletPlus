@@ -12,6 +12,7 @@ from typing import Any, Callable, Optional
 
 _native: Optional[Any]
 apply_query: Optional[Callable[..., Any]]
+apply_query_ids: Optional[Callable[..., Any]]
 
 _spec = importlib.util.find_spec("fletplus.components.smart_table_rs._native")
 if _spec is None:
@@ -21,7 +22,9 @@ else:
 
 if _native is not None:
     apply_query = _native.apply_query
+    apply_query_ids = getattr(_native, "apply_query_ids", None)
 else:
     apply_query = None
+    apply_query_ids = None
 
-__all__ = ["apply_query"]
+__all__ = ["apply_query", "apply_query_ids"]
