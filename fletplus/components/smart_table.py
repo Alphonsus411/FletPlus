@@ -45,12 +45,63 @@ from fletplus.styles import Style
 # ---------------------------------------------------------------------------
 
 
-def _default_filter_predicate(cell_value: Any, filter_value: Any) -> bool:
+def filter_contains_ci(cell_value: Any, filter_value: Any) -> bool:
     if filter_value in ("", None):
         return True
     if cell_value is None:
         return False
     return str(filter_value).lower() in str(cell_value).lower()
+
+
+def filter_eq(cell_value: Any, filter_value: Any) -> bool:
+    return cell_value == filter_value
+
+
+def filter_neq(cell_value: Any, filter_value: Any) -> bool:
+    return cell_value != filter_value
+
+
+def _filter_compare(
+    comparator: Callable[[Any, Any], bool],
+    cell_value: Any,
+    filter_value: Any,
+) -> bool:
+    try:
+        return comparator(cell_value, filter_value)
+    except TypeError:
+        return False
+
+
+def filter_lt(cell_value: Any, filter_value: Any) -> bool:
+    return _filter_compare(lambda left, right: left < right, cell_value, filter_value)
+
+
+def filter_lte(cell_value: Any, filter_value: Any) -> bool:
+    return _filter_compare(lambda left, right: left <= right, cell_value, filter_value)
+
+
+def filter_gt(cell_value: Any, filter_value: Any) -> bool:
+    return _filter_compare(lambda left, right: left > right, cell_value, filter_value)
+
+
+def filter_gte(cell_value: Any, filter_value: Any) -> bool:
+    return _filter_compare(lambda left, right: left >= right, cell_value, filter_value)
+
+
+def _default_filter_predicate(cell_value: Any, filter_value: Any) -> bool:
+    return filter_contains_ci(cell_value, filter_value)
+
+
+_RUST_FILTER_OPERATORS: Dict[Callable[[Any, Any], bool], str] = {
+    _default_filter_predicate: "contains_ci",
+    filter_contains_ci: "contains_ci",
+    filter_eq: "eq",
+    filter_neq: "neq",
+    filter_lt: "lt",
+    filter_lte: "lte",
+    filter_gt: "gt",
+    filter_gte: "gte",
+}
 
 
 @dataclass(slots=True)
@@ -583,9 +634,10 @@ class SmartTable:
     def _serialize_filters_for_rust(self) -> Optional[List[Dict[str, Any]]]:
         rust_filters: List[Dict[str, Any]] = []
         for key, flt in self._filters.items():
-            if flt.predicate is not _default_filter_predicate:
+            op = _RUST_FILTER_OPERATORS.get(flt.predicate)
+            if op is None:
                 return None
-            rust_filters.append({"key": key, "value": flt.value, "op": "contains_ci"})
+            rust_filters.append({"key": key, "value": flt.value, "op": op})
         return rust_filters
 
     def _apply_query_py(
@@ -699,4 +751,3 @@ __all__ = [
     "SmartTableSort",
     "SmartTableQuery",
 ]
-
