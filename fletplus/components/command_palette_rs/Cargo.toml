@@ -1,0 +1,15 @@
+[package]
+name = "command_palette_rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module"] }
+
+[package.metadata.maturin]
+name = "fletplus.components.command_palette_rs._native"
+module-name = "_native"

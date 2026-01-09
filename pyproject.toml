@@ -61,6 +61,7 @@ exclude = ["tests*", "tools*", "coverage*", "docs*"]
 "fletplus.router.router_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.animation.listeners_pr_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.components.charts.line_chart_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
+"fletplus.components.command_palette_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.components.responsive_grid_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.components.smart_table_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.themes.token_merge_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
@@ -81,6 +82,7 @@ modules = [
   { name = "fletplus.animation.listeners_rs", manifest-path = "fletplus/animation/listeners_rs/Cargo.toml" },
   { name = "fletplus.components.smart_table_rs", manifest-path = "fletplus/components/smart_table_rs/Cargo.toml" },
   { name = "fletplus.components.responsive_grid_rs", manifest-path = "fletplus/components/responsive_grid_rs/Cargo.toml" },
+  { name = "fletplus.components.command_palette_rs", manifest-path = "fletplus/components/command_palette_rs/Cargo.toml" },
   { name = "fletplus.components.charts.line_chart_rs", manifest-path = "fletplus/components/charts/line_chart_rs/Cargo.toml" },
   { name = "fletplus.themes.token_merge_rs", manifest-path = "fletplus/themes/token_merge_rs/Cargo.toml" },
   { name = "fletplus.themes.palette_flatten_rs", manifest-path = "fletplus/themes/palette_flatten_rs/Cargo.toml" },
