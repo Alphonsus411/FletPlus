@@ -103,7 +103,8 @@ class DiskCache:
             response.extensions["http_version"] = http_version
         if reason_phrase:
             response.extensions["reason_phrase"] = str(reason_phrase).encode("ascii", "ignore")
-        os.utime(path, None)
+        if self.max_age is None:
+            os.utime(path, None)
         return response
 
     # ------------------------------------------------------------------
@@ -146,11 +147,19 @@ class DiskCache:
             files.append((path, mtime))
         files.sort(key=lambda item: item[1], reverse=True)
         kept = 0
-        for file_path, mtime in files:
-            if cutoff is not None and mtime < cutoff:
-                with contextlib.suppress(OSError):
-                    file_path.unlink()
-                continue
+        for file_path, _mtime in files:
+            if cutoff is not None:
+                try:
+                    data = json.loads(file_path.read_text("utf-8"))
+                    timestamp = float(data["timestamp"])
+                except Exception:
+                    with contextlib.suppress(OSError):
+                        file_path.unlink()
+                    continue
+                if timestamp < cutoff:
+                    with contextlib.suppress(OSError):
+                        file_path.unlink()
+                    continue
             kept += 1
             if kept > self.max_entries:
                 with contextlib.suppress(OSError):

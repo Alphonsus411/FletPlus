@@ -48,6 +48,22 @@ def test_disk_cache_expiration(tmp_path: Path):
     assert expired is None
 
 
+def test_disk_cache_expiration_not_extended_by_reads(tmp_path: Path):
+    cache = DiskCache(tmp_path, max_age=0.05)
+    request = _make_request("https://example.org/expire-read")
+    response = httpx.Response(200, content=b"expire-me", request=request)
+
+    key = cache.build_key(request)
+    cache.set(key, response)
+
+    time.sleep(0.04)
+    assert cache.get(key, request=request) is not None
+
+    time.sleep(0.04)
+    expired = cache.get(key, request=request)
+    assert expired is None
+
+
 def test_disk_cache_cleanup_limit(tmp_path: Path):
     cache = DiskCache(tmp_path, max_entries=3)
     requests = [_make_request(f"https://example.org/items/{idx}") for idx in range(6)]
