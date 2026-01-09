@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import tempfile
 from typing import Any, Dict
 
 from . import Deserializer, Serializer, StorageProvider
@@ -54,8 +56,33 @@ class FileStorageProvider(StorageProvider[Any]):
     # ------------------------------------------------------------------
     def _persist(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        with self._path.open("w", encoding=self._encoding) as fp:
-            json.dump(self._cache, fp, ensure_ascii=False, indent=2, sort_keys=True)
+        tmp_name: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                encoding=self._encoding,
+                dir=self._path.parent,
+                delete=False,
+            ) as fp:
+                json.dump(
+                    self._cache,
+                    fp,
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+                fp.flush()
+                os.fsync(fp.fileno())
+                tmp_name = fp.name
+            os.replace(tmp_name, self._path)
+        finally:
+            if tmp_name:
+                try:
+                    Path(tmp_name).unlink()
+                except FileNotFoundError:
+                    pass
+                except OSError:
+                    pass
 
     # ------------------------------------------------------------------
     def _iter_keys(self) -> list[str]:
@@ -79,4 +106,3 @@ class FileStorageProvider(StorageProvider[Any]):
     def _clear_raw(self) -> None:
         self._cache.clear()
         self._persist()
-
