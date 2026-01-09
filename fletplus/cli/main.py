@@ -6,6 +6,7 @@ import cProfile
 import io
 import os
 import pstats
+import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +26,7 @@ from .build import PackagingError, run_build
 
 EXCLUDED_DIRS = {".git", "__pycache__", "build", "dist", "node_modules", ".venv", "venv"}
 TEMPLATE_PACKAGE = "fletplus.cli"
+PACKAGE_NAME_REGEX = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 @click.group()
@@ -114,6 +116,23 @@ def _run_profile(flows: Iterable[Callable[[], None]], *, sort: str, limit: int) 
     return output.getvalue()
 
 
+def _normalize_package_name(nombre: str) -> str:
+    paquete = nombre.lower().replace("-", "_").replace(" ", "_")
+    if paquete and paquete[0].isdigit():
+        paquete = f"_{paquete}"
+    return paquete
+
+
+def _validate_package_name(paquete: str) -> None:
+    if not PACKAGE_NAME_REGEX.match(paquete):
+        raise click.ClickException(
+            "El nombre del paquete debe ser un identificador Python válido: "
+            "solo letras, números y guiones bajos, y debe iniciar con letra o '_'.\n"
+            "Ejemplos válidos: mi_app, app2, _demo.\n"
+            "Ejemplos inválidos: 1app, mi-app, app!."
+        )
+
+
 @app.command()
 @click.argument("nombre")
 @click.option(
@@ -135,7 +154,8 @@ def create(nombre: str, directorio_base: Path | None) -> None:
 
     proyecto.mkdir(parents=True, exist_ok=True)
 
-    paquete = nombre.lower().replace("-", "_").replace(" ", "_")
+    paquete = _normalize_package_name(nombre)
+    _validate_package_name(paquete)
     contexto = {"project_name": nombre, "package_name": paquete}
 
     plantilla_base = resources.files(TEMPLATE_PACKAGE).joinpath("templates", "app")
