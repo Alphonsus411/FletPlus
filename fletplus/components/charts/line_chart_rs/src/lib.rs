@@ -50,9 +50,26 @@ fn nearest_point(points: Vec<(f32, f32)>, x: f32, y: f32) -> Option<(usize, f32)
     best
 }
 
+#[pyfunction]
+fn line_segments(points: Vec<(f64, f64)>) -> Vec<(f64, f64, f64, f64)> {
+    if points.len() < 2 {
+        return Vec::new();
+    }
+
+    points
+        .windows(2)
+        .map(|pair| {
+            let (x1, y1) = pair[0];
+            let (x2, y2) = pair[1];
+            (x1, y1, x2, y2)
+        })
+        .collect()
+}
+
 #[pymodule]
 fn _native(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(screen_points, m)?)?;
     m.add_function(wrap_pyfunction!(nearest_point, m)?)?;
+    m.add_function(wrap_pyfunction!(line_segments, m)?)?;
     Ok(())
 }

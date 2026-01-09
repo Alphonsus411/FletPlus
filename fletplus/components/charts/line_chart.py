@@ -6,6 +6,7 @@ import flet.canvas as cv
 from fletplus.styles import Style
 from .line_chart_rs import nearest_point as rs_nearest_point
 from .line_chart_rs import screen_points as rs_screen_points
+from .line_chart_rs import line_segments as rs_line_segments
 
 
 def _screen_points_py(
@@ -76,6 +77,23 @@ def _nearest_point(points: List[Tuple[float, float]], x: float, y: float) -> Opt
             pass
 
     return _nearest_point_py(points, x, y)
+
+
+def _line_segments_py(points: List[Tuple[float, float]]) -> List[Tuple[float, float, float, float]]:
+    return [
+        (points[i][0], points[i][1], points[i + 1][0], points[i + 1][1])
+        for i in range(len(points) - 1)
+    ]
+
+
+def _line_segments(points: List[Tuple[float, float]]) -> List[Tuple[float, float, float, float]]:
+    if rs_line_segments is not None:
+        try:  # pragma: no cover - backend opcional
+            return list(rs_line_segments(points))
+        except Exception:
+            pass
+
+    return _line_segments_py(points)
 
 
 def _nearest_point_py(
@@ -201,9 +219,9 @@ class LineChart:
         shapes.append(cv.Line(0, self.height, self.width, self.height, paint=paint_axis))
         shapes.append(cv.Line(0, 0, 0, self.height, paint=paint_axis))
 
-        for i in range(len(points) - 1):
-            x1, y1 = points[i]
-            x2, y2 = points[i + 1]
-            shapes.append(cv.Line(x1, y1, x2, y2, paint=paint_line))
+        shapes.extend(
+            cv.Line(x1, y1, x2, y2, paint=paint_line)
+            for x1, y1, x2, y2 in _line_segments(points)
+        )
 
         self.canvas.shapes = shapes

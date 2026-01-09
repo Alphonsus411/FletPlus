@@ -15,8 +15,10 @@ except Exception:  # pragma: no cover - fallback limpio
 if _native is not None:
     screen_points = _native.screen_points
     nearest_point = _native.nearest_point
+    line_segments = _native.line_segments
 else:  # pragma: no cover - backend ausente
     screen_points = None
     nearest_point = None
+    line_segments = None
 
-__all__ = ["screen_points", "nearest_point"]
+__all__ = ["screen_points", "nearest_point", "line_segments"]
