@@ -7,7 +7,10 @@ from typing import Dict, Mapping, Optional, Sequence
 
 import flet as ft
 
-from fletplus.components.responsive_grid_rs import plan_items as _plan_grid_items_native
+from fletplus.components.responsive_grid_rs import (
+    plan_items as _plan_grid_items_native,
+    plan_items_from_objects as _plan_grid_items_native_from_objects,
+)
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
@@ -914,7 +917,18 @@ class ResponsiveGrid:
         device = self._resolve_device_name(width)
         descriptors: list[dict[str, object]] | None = None
 
-        if _plan_grid_items_native is not None:
+        if _plan_grid_items_native_from_objects is not None:
+            try:
+                native_result = _plan_grid_items_native_from_objects(
+                    width, columns, device, self._items
+                )
+            except Exception:
+                native_result = None
+
+            if native_result is not None:
+                descriptors = list(native_result)
+
+        if descriptors is None and _plan_grid_items_native is not None:
             payload: list[dict[str, object]] = []
             for index, item in enumerate(self._items):
                 payload.append(
