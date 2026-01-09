@@ -88,8 +88,23 @@ class _FileBackend(_BaseBackend):
         payload[self._key] = dict(data)
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self._path, "w", encoding="utf-8") as fh:
-                json.dump(payload, fh, ensure_ascii=False, indent=2)
+            tmp_path = self._path.with_name(f"{self._path.name}.tmp")
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            try:
+                fd = os.open(tmp_path, flags, 0o600)
+            except FileExistsError:
+                tmp_path.unlink(missing_ok=True)
+                fd = os.open(tmp_path, flags, 0o600)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                    json.dump(payload, fh, ensure_ascii=False, indent=2)
+                    fh.flush()
+                    os.fsync(fh.fileno())
+                os.replace(tmp_path, self._path)
+                os.chmod(self._path, 0o600)
+            finally:
+                if tmp_path.exists():
+                    tmp_path.unlink(missing_ok=True)
         except Exception:  # pragma: no cover - errores inesperados
             logger.exception("No se pudieron guardar preferencias en %s", self._path)
 
