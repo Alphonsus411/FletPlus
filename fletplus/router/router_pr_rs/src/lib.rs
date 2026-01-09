@@ -91,9 +91,10 @@ fn collect_result(
     log_lengths: &[usize],
     param_log: &[(String, String)],
     depth: usize,
+    base_params: &HashMap<String, String>,
     results: &mut Vec<Vec<(PyObject, HashMap<String, String>)>>,
 ) {
-    let mut current_params: HashMap<String, String> = HashMap::new();
+    let mut current_params: HashMap<String, String> = base_params.clone();
     let mut applied = 0_usize;
     let mut path: Vec<(PyObject, HashMap<String, String>)> = Vec::with_capacity(depth + 1);
 
@@ -118,17 +119,17 @@ fn dfs_match(
     node: &PyAny,
     segments: &[String],
     index: usize,
-    params: &mut HashMap<String, String>,
     param_log: &mut Vec<(String, String)>,
     stack_nodes: &mut Vec<Option<PyObject>>,
     log_lengths: &mut Vec<usize>,
     results: &mut Vec<Vec<(PyObject, HashMap<String, String>)>>,
+    base_params: &HashMap<String, String>,
 ) -> PyResult<()> {
     if index == segments.len() {
         stack_nodes[index] = Some(node.into_py(py));
         log_lengths[index] = param_log.len();
         if has_view_builder(node)? {
-            collect_result(stack_nodes, log_lengths, param_log, index, results);
+            collect_result(stack_nodes, log_lengths, param_log, index, base_params, results);
         }
         return Ok(());
     }
@@ -146,11 +147,11 @@ fn dfs_match(
                 child,
                 segments,
                 index + 1,
-                params,
                 param_log,
                 stack_nodes,
                 log_lengths,
                 results,
+                base_params,
             )?;
         }
     }
@@ -158,7 +159,6 @@ fn dfs_match(
     for child in dynamic_children {
         let parameter_name: Option<String> = child.getattr("parameter_name")?.extract()?;
         let key = parameter_name.unwrap_or_else(|| "param".to_string());
-        params.insert(key.clone(), segment.clone());
         param_log.push((key.clone(), segment.clone()));
         stack_nodes[index] = Some(child.into_py(py));
         log_lengths[index] = param_log.len();
@@ -167,13 +167,12 @@ fn dfs_match(
             child,
             segments,
             index + 1,
-            params,
             param_log,
             stack_nodes,
             log_lengths,
             results,
+            base_params,
         )?;
-        params.remove(&key);
         param_log.pop();
     }
 
@@ -190,9 +189,13 @@ fn dfs_match_public(
     stack: Vec<Option<(PyObject, HashMap<String, String>)>>,
     results: &PyAny,
 ) -> PyResult<()> {
-    let mut params = params;
-    let mut stack_nodes: Vec<Option<PyObject>> = vec![None; stack.len()];
-    let mut log_lengths: Vec<usize> = vec![0; stack.len()];
+    let stack_len = if stack.is_empty() {
+        segments.len() + 1
+    } else {
+        stack.len()
+    };
+    let mut stack_nodes: Vec<Option<PyObject>> = vec![None; stack_len];
+    let mut log_lengths: Vec<usize> = vec![0; stack_len];
     let mut param_log: Vec<(String, String)> = Vec::new();
     let mut collected: Vec<Vec<(PyObject, HashMap<String, String>)>> = Vec::new();
 
@@ -201,11 +204,11 @@ fn dfs_match_public(
         node,
         &segments,
         index,
-        &mut params,
         &mut param_log,
         &mut stack_nodes,
         &mut log_lengths,
         &mut collected,
+        &params,
     )?;
     for path in collected {
         results.call_method1("append", (path,))?;
@@ -238,11 +241,11 @@ fn match_routes(
         root,
         &segments,
         0,
-        &mut params,
         &mut param_log,
         &mut stack_nodes,
         &mut log_lengths,
         &mut results,
+        &params,
     )?;
     Ok(results)
 }

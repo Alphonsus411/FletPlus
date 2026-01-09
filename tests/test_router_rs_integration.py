@@ -86,3 +86,18 @@ def test_rust_and_python_match_branching_params():
     py_results = [_normalize(router_mod._match_py(router._root, path)) for path in paths]
 
     assert rust_results == py_results
+
+
+def test_rust_and_python_match_multiple_dynamic_matches():
+    router = Router(
+        [
+            Route(path="/items/<item_id>", view=lambda match: match.path),
+            Route(path="/items/<slug>", view=lambda match: match.path),
+            Route(path="/items/<item_id>/details", view=lambda match: match.path),
+        ]
+    )
+
+    rust_results = _normalize(router_rs._match(router._root, "/items/42"))
+    py_results = _normalize(router_mod._match_py(router._root, "/items/42"))
+
+    assert rust_results == py_results
