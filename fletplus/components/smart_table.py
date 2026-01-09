@@ -611,8 +611,8 @@ class SmartTable:
     def _apply_query(
         self, records: Sequence[_SmartTableRecord]
     ) -> List[_SmartTableRecord]:
-        rust_filters = self._serialize_filters_for_rust()
-        if _SMART_TABLE_RS is not None and rust_filters is not None:
+        rust_filters, py_filters = self._serialize_filters_for_rust()
+        if _SMART_TABLE_RS is not None and rust_filters:
             payload = [(record.row_id, record.values) for record in records]
             rust_sorts = [
                 {"key": sort.key, "ascending": sort.ascending}
@@ -627,18 +627,43 @@ class SmartTable:
             else:
                 if ordered_ids is not None:
                     index = {record.row_id: record for record in records}
-                    return [index[row_id] for row_id in ordered_ids if row_id in index]
+                    ordered_records = [
+                        index[row_id] for row_id in ordered_ids if row_id in index
+                    ]
+                    # Filtrado híbrido: las reglas en Python preservan el orden ya
+                    # calculado por Rust.
+                    return self._apply_unsupported_filters_py(
+                        ordered_records, py_filters
+                    )
 
         return self._apply_query_py(records)
 
-    def _serialize_filters_for_rust(self) -> Optional[List[Dict[str, Any]]]:
+    def _serialize_filters_for_rust(
+        self,
+    ) -> tuple[List[Dict[str, Any]], List[SmartTableFilter]]:
         rust_filters: List[Dict[str, Any]] = []
+        py_filters: List[SmartTableFilter] = []
         for key, flt in self._filters.items():
             op = _RUST_FILTER_OPERATORS.get(flt.predicate)
             if op is None:
-                return None
+                py_filters.append(flt)
+                continue
             rust_filters.append({"key": key, "value": flt.value, "op": op})
-        return rust_filters
+        return rust_filters, py_filters
+
+    def _apply_unsupported_filters_py(
+        self,
+        records: Sequence[_SmartTableRecord],
+        filters: Sequence[SmartTableFilter],
+    ) -> List[_SmartTableRecord]:
+        filtered_records = list(records)
+        for flt in filters:
+            filtered_records = [
+                record
+                for record in filtered_records
+                if flt.matches(record.values.get(flt.key))
+            ]
+        return filtered_records
 
     def _apply_query_py(
         self, records: Sequence[_SmartTableRecord]
