@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Tuple
 
 import flet as ft
 
+from fletplus.components.command_palette_rs import filter_commands
 from fletplus.context import locale_context, user_context
 
 
@@ -33,15 +34,11 @@ class CommandPalette:
 
     def refresh(self) -> None:
         """Reconstruye el listado de comandos visibles."""
-        query = (self.search.value or "").lower()
-        if query:
-            self.filtered = [
-                (name, cb)
-                for name, cb in self.commands.items()
-                if query in name.lower()
-            ]
-        else:
-            self.filtered = list(self.commands.items())
+        query = self.search.value or ""
+        items = list(self.commands.items())
+        names = [name for name, _ in items]
+        indices = filter_commands(names, query)
+        self.filtered = [items[index] for index in indices]
         self._refresh()
 
     def _refresh(self):
