@@ -86,6 +86,15 @@ la semántica existente.
 siguiente usamos la segunda opción para envolver cada tarjeta con
 `ResponsiveGridItem(control=...)`.
 
+Cuando la extensión nativa `responsive_grid_rs` está disponible, el
+backend utiliza una ruta optimizada que lee directamente los atributos de
+cada `ResponsiveGridItem` (o de estructuras simples con las mismas
+propiedades) para calcular los descriptores. Asegúrate de que los items
+expongan `span`, `span_breakpoints`, `span_devices`, `visible_devices`,
+`hidden_devices`, `min_width`, `max_width` y `responsive_style`. Si la
+extensión no está presente, el comportamiento vuelve automáticamente al
+fallback en Python.
+
 El siguiente fragmento actualiza el número de columnas y muestra el
 nombre del perfil activo cada vez que cambia el ancho de la ventana.
 
