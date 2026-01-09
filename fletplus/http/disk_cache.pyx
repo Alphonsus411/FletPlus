@@ -104,7 +104,8 @@ cdef class DiskCache:
             response.extensions["http_version"] = http_version
         if reason_phrase:
             response.extensions["reason_phrase"] = str(reason_phrase).encode("ascii", "ignore")
-        os.utime(path, None)
+        if not self.has_ttl:
+            os.utime(path, None)
         return response
 
     # ------------------------------------------------------------------
@@ -139,10 +140,18 @@ cdef class DiskCache:
         cdef int kept = 0
         cdef object file_path
         for file_path in files:
-            if check_expiry and file_path.stat().st_mtime < cutoff:
-                with contextlib.suppress(OSError):
-                    file_path.unlink()
-                continue
+            if check_expiry:
+                try:
+                    data = json.loads(file_path.read_text("utf-8"))
+                    timestamp = float(data["timestamp"])
+                except Exception:
+                    with contextlib.suppress(OSError):
+                        file_path.unlink()
+                    continue
+                if timestamp < cutoff:
+                    with contextlib.suppress(OSError):
+                        file_path.unlink()
+                    continue
             kept += 1
             if kept > self.max_entries:
                 with contextlib.suppress(OSError):
