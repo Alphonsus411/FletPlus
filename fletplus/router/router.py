@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
+import warnings
 
 try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
     from . import router_pr as _router_pr
@@ -19,6 +20,14 @@ try:  # pragma: no cover - la importación puede fallar en entornos sin compilac
     from . import router_cy as _router_cy
 except Exception:  # pragma: no cover - fallback cuando no hay compilación
     _router_cy = None
+
+if _router_pr is None and _router_rs is None:
+    warnings.warn(
+        "Backends nativos del router no disponibles; se usará la implementación "
+        "pura en Python (rendimiento reducido).",
+        RuntimeWarning,
+        stacklevel=2,
+    )
 
 import flet as ft
 
