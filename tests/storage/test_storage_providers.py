@@ -109,6 +109,17 @@ def test_file_storage_provider_persists_data(tmp_path: Path) -> None:
     assert json.loads(path.read_text("utf-8")) == {}
 
 
+def test_file_storage_provider_write_always_valid_json(tmp_path: Path) -> None:
+    path = tmp_path / "storage.json"
+    provider = FileStorageProvider(path)
+
+    for index in range(5):
+        provider.set("counter", index)
+        provider.set("payload", {"value": index, "items": [index, index + 1]})
+        raw = path.read_text("utf-8")
+        assert json.loads(raw)
+
+
 class DummyProvider(StorageProvider[int]):
     """Implementación mínima para probar utilidades del base class."""
 
@@ -141,4 +152,3 @@ def test_dummy_provider_len_and_contains() -> None:
     assert "a" in provider
     provider.remove("a")
     assert "a" not in provider
-
