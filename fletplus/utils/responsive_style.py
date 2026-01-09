@@ -8,6 +8,7 @@ import flet as ft
 
 from fletplus.styles import Style
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
+from fletplus.utils.breakpoint_rs import select_breakpoint
 
 try:  # soporte opcional para detección de dispositivo
     _device_module = __import__("fletplus.utils.device", fromlist=["device"])
@@ -100,13 +101,15 @@ class ResponsiveStyle:
     ) -> None:
         self.width = BreakpointRegistry.normalize(width) if width else {}
         self.height = BreakpointRegistry.normalize(height) if height else {}
+        self._width_keys = sorted(self.width)
+        self._height_keys = sorted(self.height)
         self.orientation = orientation or {}
         self.device = device or {}
         self.base = base
 
     # ------------------------------------------------------------------
-    def _select_bp(self, mapping: Dict[int, Style], value: int) -> Optional[Style]:
-        bp = max((bp for bp in mapping if value >= bp), default=None)
+    def _select_bp(self, mapping: Dict[int, Style], keys: list[int], value: int) -> Optional[Style]:
+        bp = select_breakpoint(keys, value)
         if bp is None:
             return None
         return mapping.get(bp)
@@ -146,12 +149,12 @@ class ResponsiveStyle:
 
         # Breakpoints por ancho
         if self.width:
-            w_style = self._select_bp(self.width, page.width or 0)
+            w_style = self._select_bp(self.width, self._width_keys, page.width or 0)
             style = self._merge(style, w_style)
 
         # Breakpoints por alto
         if self.height:
-            h_style = self._select_bp(self.height, page.height or 0)
+            h_style = self._select_bp(self.height, self._height_keys, page.height or 0)
             style = self._merge(style, h_style)
 
         # Orientación
