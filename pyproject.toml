@@ -87,6 +87,7 @@ modules = [
   { name = "fletplus.themes.token_merge_rs", manifest-path = "fletplus/themes/token_merge_rs/Cargo.toml" },
   { name = "fletplus.themes.palette_flatten_rs", manifest-path = "fletplus/themes/palette_flatten_rs/Cargo.toml" },
   { name = "fletplus.http.disk_cache_pr_rs", manifest-path = "fletplus/http/disk_cache_pr_rs/Cargo.toml" },
+  { name = "fletplus.utils.breakpoint_rs", manifest-path = "fletplus/utils/breakpoint_rs/Cargo.toml" },
   { name = "fletplus.utils.responsive_manager_rs", manifest-path = "fletplus/utils/responsive_manager_rs/Cargo.toml" },
   { name = "fletplus.state.signal_pr_rs", manifest-path = "fletplus/state/signal_pr_rs/Cargo.toml" },
 ]

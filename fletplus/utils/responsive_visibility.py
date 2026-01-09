@@ -5,6 +5,7 @@ from typing import Dict
 import flet as ft
 
 from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.utils.breakpoint_rs import select_breakpoint
 
 
 class ResponsiveVisibility:
@@ -23,6 +24,8 @@ class ResponsiveVisibility:
         self._width_vis = width_breakpoints or {}
         self._height_vis = height_breakpoints or {}
         self._orientation_vis = orientation_visibility or {}
+        self._width_keys = sorted(self._width_vis)
+        self._height_keys = sorted(self._height_vis)
 
         callbacks_w = {bp: self._update_width for bp in self._width_vis}
         callbacks_h = {bp: self._update_height for bp in self._height_vis}
@@ -42,20 +45,20 @@ class ResponsiveVisibility:
         self._update_orientation(orientation)
 
     # ------------------------------------------------------------------
-    def _select_visibility(self, mapping: Dict[int, bool], value: int) -> bool | None:
-        bp = max((bp for bp in mapping if value >= bp), default=None)
+    def _select_visibility(self, mapping: Dict[int, bool], keys: list[int], value: int) -> bool | None:
+        bp = select_breakpoint(keys, value)
         if bp is None:
             return None
         return mapping.get(bp)
 
     def _update_width(self, width: int) -> None:
-        vis = self._select_visibility(self._width_vis, width)
+        vis = self._select_visibility(self._width_vis, self._width_keys, width)
         if vis is not None:
             self.control.visible = vis
             self.page.update()
 
     def _update_height(self, height: int) -> None:
-        vis = self._select_visibility(self._height_vis, height)
+        vis = self._select_visibility(self._height_vis, self._height_keys, height)
         if vis is not None:
             self.control.visible = vis
             self.page.update()
