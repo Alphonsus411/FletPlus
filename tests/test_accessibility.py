@@ -85,3 +85,62 @@ def test_high_contrast_toggle_restores_base_colors():
     assert page.theme.scaffold_bgcolor == base_theme.scaffold_bgcolor
     assert page.theme.focus_color == ft.Colors.BLUE_300
     assert page.theme.highlight_color == ft.Colors.BLUE_100
+
+
+def test_reduce_motion_toggle_restores_transitions_and_preserves_theme_fields():
+    page = DummyPage()
+    base_theme = ft.Theme()
+
+    prefs_on = AccessibilityPreferences(reduce_motion=True)
+    prefs_on.apply(page)
+
+    prefs_off = AccessibilityPreferences(reduce_motion=False)
+    prefs_off.apply(page)
+
+    assert page.theme.page_transitions == base_theme.page_transitions
+
+    reference_page = DummyPage()
+    reference_page.theme = ft.Theme()
+    prefs_off.apply(reference_page)
+
+    assert (
+        page.theme.text_theme.body_small.size
+        == reference_page.theme.text_theme.body_small.size
+    )
+    assert (
+        page.theme.text_theme.body_medium.size
+        == reference_page.theme.text_theme.body_medium.size
+    )
+    assert (
+        page.theme.text_theme.body_large.size
+        == reference_page.theme.text_theme.body_large.size
+    )
+    assert (
+        page.theme.text_theme.title_medium.size
+        == reference_page.theme.text_theme.title_medium.size
+    )
+    assert (
+        page.theme.text_theme.title_large.size
+        == reference_page.theme.text_theme.title_large.size
+    )
+    assert page.theme.text_theme.body_medium.color == reference_page.theme.text_theme.body_medium.color
+    assert page.theme.color_scheme == reference_page.theme.color_scheme
+    assert page.theme.scaffold_bgcolor == reference_page.theme.scaffold_bgcolor
+    assert page.theme.focus_color == reference_page.theme.focus_color
+    assert page.theme.highlight_color == reference_page.theme.highlight_color
+    assert (
+        page.theme.tooltip_theme.wait_duration
+        == reference_page.theme.tooltip_theme.wait_duration
+    )
+    assert (
+        page.theme.tooltip_theme.show_duration
+        == reference_page.theme.tooltip_theme.show_duration
+    )
+    assert (
+        page.theme.tooltip_theme.text_style.size
+        == reference_page.theme.tooltip_theme.text_style.size
+    )
+    assert (
+        page.theme.tooltip_theme.text_style.color
+        == reference_page.theme.tooltip_theme.text_style.color
+    )
