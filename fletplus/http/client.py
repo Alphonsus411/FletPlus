@@ -212,7 +212,7 @@ class HttpClient:
         **kwargs: Any,
     ) -> httpx.Response:
         request = self._client.build_request(method, url, **kwargs)
-        request_context: MutableMapping[str, Any] = context or {}
+        request_context: MutableMapping[str, Any] = context if context is not None else {}
         use_cache = cache if cache is not None else True
         event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
@@ -308,7 +308,7 @@ class HttpClient:
     # ------------------------------------------------------------------
     async def ws_connect(self, url: str, *, context: MutableMapping[str, Any] | None = None, **kwargs: Any):
         request = self._client.build_request("GET", url, **{k: v for k, v in kwargs.items() if k in {"headers", "params"}})
-        request_context: MutableMapping[str, Any] = context or {}
+        request_context: MutableMapping[str, Any] = context if context is not None else {}
         request_context.setdefault("websocket", True)
         event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
