@@ -25,6 +25,7 @@ class _Missing:
 
 
 MISSING = _Missing()
+MISSING_VALUE = object()
 
 
 class StorageProvider(Generic[_T]):
@@ -75,7 +76,7 @@ class StorageProvider(Generic[_T]):
     def _iter_keys(self) -> Iterable[str]:  # pragma: no cover - abstracto
         raise NotImplementedError
 
-    def _read_raw(self, key: str) -> Any | None:  # pragma: no cover - abstracto
+    def _read_raw(self, key: str) -> Any:  # pragma: no cover - abstracto
         raise NotImplementedError
 
     def _write_raw(self, key: str, value: Any) -> None:  # pragma: no cover
@@ -94,8 +95,8 @@ class StorageProvider(Generic[_T]):
         try:
             raw = self._read_raw(key)
         except KeyError:
-            raw = None
-        if raw is None:
+            return default
+        if raw is MISSING_VALUE:
             return default
         return self._deserialize(raw)
 
@@ -196,9 +197,8 @@ class StorageProvider(Generic[_T]):
             raw = self._read_raw(key)
         except KeyError:
             return False
-        return raw is not None
+        return raw is not MISSING_VALUE
 
     # ------------------------------------------------------------------
     def __len__(self) -> int:
         return len(tuple(self._iter_keys()))
-

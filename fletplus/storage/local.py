@@ -29,7 +29,9 @@ class LocalStorageProvider(StorageProvider[Any]):
         return list(self._storage.get_keys(""))
 
     # ------------------------------------------------------------------
-    def _read_raw(self, key: str) -> Any | None:
+    def _read_raw(self, key: str) -> Any:
+        if key not in self._storage.get_keys(""):
+            raise KeyError(key)
         return self._storage.get(key)
 
     # ------------------------------------------------------------------
@@ -60,4 +62,3 @@ class LocalStorageProvider(StorageProvider[Any]):
             serializer=serializer,
             deserializer=deserializer,
         )
-
