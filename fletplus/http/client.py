@@ -220,11 +220,7 @@ class HttpClient:
         """
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context if context is not None else {}
-        credential_headers = {"authorization", "cookie", "x-api-key"}
-        has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
         use_cache = cache if cache is not None else True
-        if has_credentials and cache is not True:
-            use_cache = False
         event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
         request = event.request
@@ -237,6 +233,11 @@ class HttpClient:
             for interceptor in self._interceptors:
                 request = await interceptor.apply_request(request)
             event.request = request
+
+            credential_headers = {"authorization", "cookie", "x-api-key"}
+            has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
+            if has_credentials and cache is not True:
+                use_cache = False
 
             if self._cache and use_cache and request.method.upper() == "GET":
                 cache_key = self._cache.build_key(request)
