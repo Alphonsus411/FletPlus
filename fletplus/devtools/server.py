@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections import OrderedDict
 from collections.abc import Iterable
 
 from websockets.asyncio.server import ServerProtocol, serve
@@ -15,10 +16,19 @@ _LOGGER = logging.getLogger(__name__)
 class DevToolsServer:
     """Servidor WebSocket simple para reenviar eventos entre clientes."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        max_initial_payloads: int | None = 50,
+        max_payload_size: int | None = 256 * 1024,
+        allowed_snapshot_types: set[str] | None = None,
+    ) -> None:
         self._clients: set[ServerProtocol] = set()
         self._lock = asyncio.Lock()
-        self._initial_payloads: dict[str, str] = {}
+        self._initial_payloads: OrderedDict[str, str] = OrderedDict()
+        self._max_initial_payloads = max_initial_payloads
+        self._max_payload_size = max_payload_size
+        self._allowed_snapshot_types = allowed_snapshot_types
 
     def listen(self, host: str = "127.0.0.1", port: int = 0):
         """Crea el servidor y comienza a escuchar conexiones."""
@@ -93,6 +103,9 @@ class DevToolsServer:
             await self._safe_send(websocket, message)
 
     def _remember_initial_payload(self, message: str) -> None:
+        if self._max_payload_size is not None and len(message) > self._max_payload_size:
+            return
+
         try:
             payload = json.loads(message)
         except json.JSONDecodeError:
@@ -102,8 +115,25 @@ class DevToolsServer:
         if payload_type is None:
             return
 
-        if any(keyword in payload_type.lower() for keyword in {"snapshot"}):
-            self._initial_payloads[payload_type] = message
+        payload_type_lower = payload_type.lower()
+        if "snapshot" not in payload_type_lower:
+            return
+
+        if (
+            self._allowed_snapshot_types is not None
+            and payload_type not in self._allowed_snapshot_types
+        ):
+            return
+
+        if payload_type in self._initial_payloads:
+            self._initial_payloads.move_to_end(payload_type)
+
+        self._initial_payloads[payload_type] = message
+        if (
+            self._max_initial_payloads is not None
+            and len(self._initial_payloads) > self._max_initial_payloads
+        ):
+            self._initial_payloads.popitem(last=False)
 
     def _extract_payload_type(self, payload: object) -> str | None:
         if not isinstance(payload, dict):
@@ -120,4 +150,3 @@ class DevToolsServer:
                 return inner_type
 
         return None
-
