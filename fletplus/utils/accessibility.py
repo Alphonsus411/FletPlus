@@ -54,6 +54,7 @@ class AccessibilityPreferences:
             text_style=ft.TextStyle(size=max(12, int(12 * self.text_scale)), color=text_color),
         )
 
+        base_theme = ft.Theme()
         if self.high_contrast:
             theme_obj.focus_color = ft.Colors.AMBER_300
             theme_obj.highlight_color = ft.Colors.AMBER_200
@@ -72,7 +73,6 @@ class AccessibilityPreferences:
             theme_obj.scaffold_bgcolor = ft.Colors.BLACK
         else:
             # Reset a valores acordes a Material 3 pero conservando la escala
-            base_theme = ft.Theme()
             theme_obj.focus_color = ft.Colors.BLUE_300
             theme_obj.highlight_color = ft.Colors.BLUE_100
             theme_obj.color_scheme = base_theme.color_scheme
@@ -86,6 +86,8 @@ class AccessibilityPreferences:
                 macos=ft.PageTransitionTheme.NONE,
                 windows=ft.PageTransitionTheme.NONE,
             )
+        else:
+            theme_obj.page_transitions = base_theme.page_transitions
 
         page.theme = theme_obj
 
