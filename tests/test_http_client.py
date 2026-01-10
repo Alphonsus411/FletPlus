@@ -1,3 +1,4 @@
+import importlib
 from pathlib import Path
 from typing import Any
 
@@ -85,29 +86,26 @@ async def test_http_client_interceptors(tmp_path: Path):
 
 
 @pytest.mark.anyio
-async def test_http_client_websocket_interceptors():
+async def test_http_client_websocket_interceptors(monkeypatch: pytest.MonkeyPatch):
     captured_headers = {}
 
     class DummyWebSocket:
-        def __init__(self, response: httpx.Response) -> None:
-            self.response = response
+        response_headers = {"X-Original": "1"}
+        response_status = 101
+
+        def __init__(self) -> None:
             self.closed = False
 
-        async def aclose(self) -> None:
+        async def close(self) -> None:
             self.closed = True
 
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *exc_info):
-            await self.aclose()
-
     async def fake_websocket_connect(url: str, **kwargs: Any):
-        captured_headers["request"] = dict(kwargs.get("headers") or {})
-        return DummyWebSocket(httpx.Response(101, headers={"X-Original": "1"}))
+        headers = kwargs.get("extra_headers") or {}
+        captured_headers["request"] = {key.lower(): value for key, value in dict(headers).items()}
+        return DummyWebSocket()
 
     client = HttpClient()
-    client._client.websocket_connect = fake_websocket_connect  # type: ignore[attr-defined]
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: fake_websocket_connect)
 
     def before(request: httpx.Request) -> httpx.Request:
         request.headers["X-Test"] = "intercepted"
@@ -125,10 +123,26 @@ async def test_http_client_websocket_interceptors():
     await websocket.aclose()
     await client.aclose()
 
-    assert captured_headers["request"]["X-Test"] == "intercepted"
-    assert captured_headers["request"]["X-Initial"] == "1"
+    assert captured_headers["request"]["x-test"] == "intercepted"
+    assert captured_headers["request"]["x-initial"] == "1"
     assert websocket.response.headers["X-Intercepted"] == "1"
     assert websocket.response.headers["X-Original"] == "1"
+
+
+@pytest.mark.anyio
+async def test_http_client_websocket_missing_dependency(monkeypatch: pytest.MonkeyPatch):
+    client = HttpClient()
+
+    def fake_find_spec(name: str):
+        if name == "websockets":
+            return None
+        return importlib.util.find_spec(name)
+
+    monkeypatch.setattr("fletplus.http.client.importlib.util.find_spec", fake_find_spec)
+
+    with pytest.raises(RuntimeError, match="websockets"):
+        await client.ws_connect("https://example.org/socket")
+    await client.aclose()
 
 
 @pytest.mark.anyio

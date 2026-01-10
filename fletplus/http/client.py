@@ -110,6 +110,71 @@ def _load_disk_cache() -> type[_PyDiskCache]:
 DiskCache = _load_disk_cache()
 
 
+class _WebSocketConnection:
+    def __init__(self, websocket: Any, response: httpx.Response) -> None:
+        self._websocket = websocket
+        self.response = response
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._websocket, name)
+
+    async def aclose(self) -> None:
+        close = getattr(self._websocket, "close", None)
+        if close is None:
+            close = getattr(self._websocket, "aclose", None)
+        if close is None:
+            return
+        result = close()
+        if inspect.isawaitable(result):
+            await result
+
+    async def __aenter__(self) -> "_WebSocketConnection":
+        enter = getattr(self._websocket, "__aenter__", None)
+        if enter is not None:
+            result = enter()
+            if inspect.isawaitable(result):
+                await result
+        return self
+
+    async def __aexit__(self, *exc_info: Any) -> None:
+        exit_method = getattr(self._websocket, "__aexit__", None)
+        if exit_method is not None:
+            result = exit_method(*exc_info)
+            if inspect.isawaitable(result):
+                await result
+            return
+        await self.aclose()
+
+
+def _load_websocket_connect() -> Callable[..., Awaitable[Any]]:
+    spec = importlib.util.find_spec("websockets")
+    if spec is None:
+        raise RuntimeError(
+            "La dependencia 'websockets' no está disponible. Instala 'websockets' para usar ws_connect()."
+        )
+    try:
+        module = importlib.import_module("websockets")
+    except Exception as exc:  # pragma: no cover - import dependiente
+        raise RuntimeError(
+            "No se pudo importar 'websockets'. Instala la dependencia para usar ws_connect()."
+        ) from exc
+    connect = getattr(module, "connect", None)
+    if connect is None:
+        raise RuntimeError(
+            "No se encontró websockets.connect. Actualiza la dependencia 'websockets' para usar ws_connect()."
+        )
+    return connect
+
+
+def _build_websocket_response(request: httpx.Request, websocket: Any) -> httpx.Response:
+    status_code = getattr(websocket, "response_status", 101)
+    response_headers = getattr(websocket, "response_headers", None)
+    headers: dict[str, str] = {}
+    if response_headers:
+        headers = dict(response_headers)
+    return httpx.Response(status_code=status_code, headers=headers, request=request)
+
+
 class _HookManager:
     """Gestiona los hooks y señales asociados a las peticiones."""
 
@@ -333,13 +398,16 @@ class HttpClient:
             connect_kwargs = dict(kwargs)
             connect_kwargs.pop("headers", None)
             connect_kwargs.pop("params", None)
-            websocket = await self._client.websocket_connect(
-                str(request.url), headers=request.headers, **connect_kwargs
+            websocket_connect = _load_websocket_connect()
+            websocket = await websocket_connect(
+                str(request.url),
+                extra_headers=request.headers,
+                **connect_kwargs,
             )
-            response = websocket.response
+            response = _build_websocket_response(request, websocket)
             for interceptor in reversed(self._interceptors):
                 response = await interceptor.apply_response(response)
-            websocket.response = response
+            websocket = _WebSocketConnection(websocket, response)
         except Exception as exc:  # pragma: no cover - rutas excepcionales
             response_event = ResponseEvent(
                 request_event=event,
