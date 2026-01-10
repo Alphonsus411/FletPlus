@@ -260,7 +260,12 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
     if not watch_path.exists():
         raise click.ClickException(f"La ruta a monitorear no existe: {watch_path}")
 
-    app_path = (watch_path / app_path) if not app_path.is_absolute() else app_path
+    if not app_path.is_absolute():
+        resolved_path = Path.cwd() / app_path
+        if resolved_path.exists():
+            app_path = resolved_path
+        else:
+            app_path = watch_path / app_path
     if not app_path.exists():
         raise click.ClickException(f"No se encontró el archivo de la aplicación: {app_path}")
 
