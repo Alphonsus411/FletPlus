@@ -125,7 +125,7 @@ def _load_metadata(project_dir: Path) -> BuildMetadata:
 def _detect_assets(project_dir: Path) -> Path | None:
     candidates = [project_dir / "assets", project_dir / "static"]
     for candidate in candidates:
-        if candidate.exists():
+        if candidate.is_dir():
             return candidate
     return None
 
@@ -137,7 +137,7 @@ def _detect_icon(project_dir: Path, assets_dir: Path | None) -> Path | None:
         candidates.append(assets_dir / "icons" / "app.png")
     candidates.extend([project_dir / "icon.png", project_dir / "app.png"])
     for candidate in candidates:
-        if candidate.exists():
+        if candidate.is_file():
             return candidate
     return None
 
@@ -147,7 +147,10 @@ def _copy_assets(source: Path | None, destination: Path) -> None:
         return
     target = destination / source.name
     if target.exists():
-        shutil.rmtree(target)
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
     shutil.copytree(source, target)
 
 
@@ -348,4 +351,3 @@ def run_build(project_dir: Path, app_path: Path, target: str) -> List[BuildRepor
     targets = BuildTarget.parse_option(target)
     manager = BuildManager(context)
     return manager.build(targets)
-
