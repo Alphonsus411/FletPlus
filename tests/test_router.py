@@ -135,6 +135,14 @@ def test_router_invalid_route():
         router.go("/unknown")
 
 
+def test_router_dynamic_param_collision():
+    router = Router()
+    router.register(Route(path="/items/<item_id>", view=lambda match: ft.Text("Item")))
+
+    with pytest.raises(ValueError, match="Colisión de parámetros dinámicos"):
+        router.register(Route(path="/items/<other_id>", view=lambda match: ft.Text("Otro")))
+
+
 def test_router_match_consistency_between_impls():
     router = Router(
         [

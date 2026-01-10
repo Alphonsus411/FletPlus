@@ -220,6 +220,14 @@ class Router:
         dynamic, param = _parse_segment(segment)
         for child in node.children:
             if child.dynamic and dynamic:
+                if child.parameter_name != param:
+                    existing_path = child.full_path
+                    new_path = _join_paths(node.full_path, segment)
+                    raise ValueError(
+                        "Colisión de parámetros dinámicos: "
+                        f"'{existing_path}' usa '<{child.parameter_name}>' "
+                        f"pero se intentó registrar '{new_path}' con '<{param}>'"
+                    )
                 return child
             if not child.dynamic and child.segment == segment:
                 return child
