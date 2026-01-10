@@ -281,7 +281,9 @@ class HttpClient:
         Nota sobre caché: si los headers incluyen credenciales (`authorization`,
         `cookie` o `x-api-key`), la caché se desactiva automáticamente para evitar
         persistir respuestas sensibles. Puedes sobrescribir este comportamiento
-        pasando `cache=True` de forma explícita.
+        pasando `cache=True` de forma explícita. Además, se respetan las cabeceras
+        `Cache-Control`/`Pragma` con `no-store` o `private`, la presencia de
+        `Set-Cookie` y solo se cachean respuestas exitosas (2xx).
         """
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context if context is not None else {}
@@ -324,8 +326,17 @@ class HttpClient:
                 for interceptor in reversed(self._interceptors):
                     response = await interceptor.apply_response(response)
                 if cache_key and self._cache:
-                    await response.aread()
-                    self._cache.set(cache_key, response)
+                    cache_control = response.headers.get("cache-control", "")
+                    pragma = response.headers.get("pragma", "")
+                    combined_directives = f"{cache_control},{pragma}".lower()
+                    has_no_store = "no-store" in combined_directives
+                    has_private = "private" in combined_directives
+                    has_set_cookie = response.headers.get("set-cookie") is not None
+                    is_success = 200 <= response.status_code <= 299
+                    should_cache = not (has_no_store or has_private or has_set_cookie)
+                    if should_cache and is_success:
+                        await response.aread()
+                        self._cache.set(cache_key, response)
         except Exception as exc:  # pragma: no cover - rutas excepcionales
             error = exc
             raise
