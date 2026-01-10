@@ -211,9 +211,20 @@ class HttpClient:
         context: MutableMapping[str, Any] | None = None,
         **kwargs: Any,
     ) -> httpx.Response:
+        """Construye y envía una petición HTTP.
+
+        Nota sobre caché: si los headers incluyen credenciales (`authorization`,
+        `cookie` o `x-api-key`), la caché se desactiva automáticamente para evitar
+        persistir respuestas sensibles. Puedes sobrescribir este comportamiento
+        pasando `cache=True` de forma explícita.
+        """
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context if context is not None else {}
+        credential_headers = {"authorization", "cookie", "x-api-key"}
+        has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
         use_cache = cache if cache is not None else True
+        if has_credentials and cache is not True:
+            use_cache = False
         event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
         request = event.request
