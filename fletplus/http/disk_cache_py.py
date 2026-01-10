@@ -122,7 +122,24 @@ class DiskCache:
             "reason_phrase": response.reason_phrase,
             "timestamp": time.time(),
         }
-        path.write_text(json.dumps(entry, separators=(",", ":")), "utf-8")
+        payload = json.dumps(entry, separators=(",", ":"))
+        tmp_path = path.with_name(f"{path.name}.tmp")
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        try:
+            try:
+                fd = os.open(tmp_path, flags, 0o600)
+            except FileExistsError:
+                tmp_path.unlink(missing_ok=True)
+                fd = os.open(tmp_path, flags, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                fh.write(payload)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp_path, path)
+            os.chmod(path, 0o600)
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink(missing_ok=True)
         self._cleanup()
 
     # ------------------------------------------------------------------
