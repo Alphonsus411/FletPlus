@@ -33,7 +33,12 @@ class DevToolsServer:
     def listen(self, host: str = "127.0.0.1", port: int = 0):
         """Crea el servidor y comienza a escuchar conexiones."""
 
-        return serve(self._handle_client, host, port)
+        return serve(
+            self._handle_client,
+            host,
+            port,
+            max_size=self._max_payload_size,
+        )
 
     async def _register(self, websocket: ServerProtocol) -> None:
         async with self._lock:
@@ -86,6 +91,16 @@ class DevToolsServer:
                         "Se recibió un frame no textual: %s", type(frame).__name__
                     )
                     continue
+                if (
+                    self._max_payload_size is not None
+                    and len(frame) > self._max_payload_size
+                ):
+                    _LOGGER.warning(
+                        "Frame excede el tamaño máximo permitido (%s bytes)",
+                        self._max_payload_size,
+                    )
+                    await websocket.close(code=1009, reason="message too big")
+                    break
 
                 try:
                     await self._broadcast(frame, sender=websocket)
