@@ -134,7 +134,7 @@ def test_file_storage_provider_sets_permissions_posix(tmp_path: Path) -> None:
     assert mode == 0o600
 
 
-class DummyProvider(StorageProvider[int]):
+class DummyProvider(StorageProvider[Any]):
     """Implementación mínima para probar utilidades del base class."""
 
     def __init__(self) -> None:
@@ -144,8 +144,8 @@ class DummyProvider(StorageProvider[int]):
     def _iter_keys(self) -> list[str]:
         return list(self._store.keys())
 
-    def _read_raw(self, key: str) -> Any | None:
-        return self._store.get(key)
+    def _read_raw(self, key: str) -> Any:
+        return self._store[key]
 
     def _write_raw(self, key: str, value: Any) -> None:
         self._store[key] = value
@@ -166,3 +166,12 @@ def test_dummy_provider_len_and_contains() -> None:
     assert "a" in provider
     provider.remove("a")
     assert "a" not in provider
+
+
+def test_storage_provider_preserves_none_values() -> None:
+    provider = DummyProvider()
+
+    provider.set("k", None)
+
+    assert provider.get("k") is None
+    assert "k" in provider

@@ -91,8 +91,10 @@ class FileStorageProvider(StorageProvider[Any]):
         return list(self._cache.keys())
 
     # ------------------------------------------------------------------
-    def _read_raw(self, key: str) -> Any | None:
-        return self._cache.get(key)
+    def _read_raw(self, key: str) -> Any:
+        if key in self._cache:
+            return self._cache[key]
+        raise KeyError(key)
 
     # ------------------------------------------------------------------
     def _write_raw(self, key: str, value: Any) -> None:
