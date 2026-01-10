@@ -159,10 +159,11 @@ class Router:
         if not matches:
             raise RouteNotFoundError(f"Ruta no encontrada: {path}")
         path_nodes = matches[0]
-        params = MappingProxyType(path_nodes[-1][1])
+        params = MappingProxyType({})
         parent_match: Optional[RouteMatch] = None
         route_matches: List[RouteMatch] = []
         if self._root.layout_builder is not None:
+            # La raíz no hereda params del leaf para evitar confundir layouts globales.
             root_match = RouteMatch(
                 router=self,
                 node=self._root,
