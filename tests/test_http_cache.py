@@ -1,7 +1,10 @@
+import os
+import stat
 import time
 from pathlib import Path
 
 import httpx
+import pytest
 
 from fletplus.http import DiskCache
 
@@ -74,3 +77,19 @@ def test_disk_cache_cleanup_limit(tmp_path: Path):
 
     files = list(tmp_path.glob("*.json"))
     assert len(files) <= 3
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Los permisos POSIX no se aplican igual en Windows")
+def test_disk_cache_sets_permissions(tmp_path: Path):
+    cache = DiskCache(tmp_path)
+    request = _make_request("https://example.org/permissions")
+    response = httpx.Response(200, content=b"perms", request=request)
+
+    key = cache.build_key(request)
+    cache.set(key, response)
+
+    files = list(tmp_path.glob("*.json"))
+    assert len(files) == 1
+    mode = stat.S_IMODE(files[0].stat().st_mode)
+    assert mode == 0o600
+    assert not list(tmp_path.glob("*.tmp"))
