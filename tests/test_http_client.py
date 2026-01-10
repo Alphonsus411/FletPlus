@@ -221,6 +221,72 @@ async def test_http_client_cache_key_after_request_modifications(tmp_path: Path)
 
 
 @pytest.mark.anyio
+async def test_http_client_cache_respects_no_store(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, headers={"Cache-Control": "no-store"}, json={"count": call_count})
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/no-store")
+    second = await client.get("https://example.org/no-store")
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 2}
+    assert call_count == 2
+
+
+@pytest.mark.anyio
+async def test_http_client_cache_skips_set_cookie(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, headers={"Set-Cookie": "session=abc"}, json={"count": call_count})
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/set-cookie")
+    second = await client.get("https://example.org/set-cookie")
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 2}
+    assert call_count == 2
+
+
+@pytest.mark.anyio
+async def test_http_client_cache_success_response(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"count": call_count})
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/cache-ok")
+    second = await client.get("https://example.org/cache-ok")
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 1}
+    assert call_count == 1
+
+
+@pytest.mark.anyio
 async def test_http_client_disables_cache_when_interceptor_adds_auth(tmp_path: Path):
     call_count = 0
 
