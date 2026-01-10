@@ -171,14 +171,13 @@ def create(nombre: str, directorio_base: Path | None) -> None:
 
     _validate_project_name(nombre)
 
+    paquete = _normalize_package_name(nombre)
+    _validate_package_name(paquete)
     proyecto = directorio_base / nombre
     if proyecto.exists() and any(proyecto.iterdir()):
         raise click.ClickException(f"El directorio '{proyecto}' ya existe y no está vacío.")
 
     proyecto.mkdir(parents=True, exist_ok=True)
-
-    paquete = _normalize_package_name(nombre)
-    _validate_package_name(paquete)
     contexto = {"project_name": nombre, "package_name": paquete}
 
     plantilla_base = resources.files(TEMPLATE_PACKAGE).joinpath("templates", "app")
