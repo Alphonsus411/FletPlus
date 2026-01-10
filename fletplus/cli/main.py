@@ -133,6 +133,27 @@ def _validate_package_name(paquete: str) -> None:
         )
 
 
+def _validate_project_name(nombre: str) -> None:
+    separators = {os.sep}
+    if os.altsep:
+        separators.add(os.altsep)
+
+    if any(sep in nombre for sep in separators):
+        raise click.ClickException(
+            "El nombre del proyecto no puede incluir separadores de ruta."
+        )
+
+    if ".." in Path(nombre).parts:
+        raise click.ClickException(
+            "El nombre del proyecto no puede incluir segmentos '..'."
+        )
+
+    if Path(nombre).name != nombre:
+        raise click.ClickException(
+            "El nombre del proyecto debe ser un nombre simple sin rutas."
+        )
+
+
 @app.command()
 @click.argument("nombre")
 @click.option(
@@ -147,6 +168,8 @@ def create(nombre: str, directorio_base: Path | None) -> None:
 
     if directorio_base is None:
         directorio_base = Path.cwd()
+
+    _validate_project_name(nombre)
 
     proyecto = directorio_base / nombre
     if proyecto.exists() and any(proyecto.iterdir()):
