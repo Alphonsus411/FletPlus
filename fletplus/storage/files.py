@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import tempfile
 from typing import Any, Dict
 
 from . import Deserializer, Serializer, StorageProvider
@@ -56,14 +55,16 @@ class FileStorageProvider(StorageProvider[Any]):
     # ------------------------------------------------------------------
     def _persist(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self._path.with_name(f"{self._path.name}.tmp")
         tmp_name: str | None = None
         try:
-            with tempfile.NamedTemporaryFile(
-                "w",
-                encoding=self._encoding,
-                dir=self._path.parent,
-                delete=False,
-            ) as fp:
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            try:
+                fd = os.open(tmp_path, flags, 0o600)
+            except FileExistsError:
+                tmp_path.unlink(missing_ok=True)
+                fd = os.open(tmp_path, flags, 0o600)
+            with os.fdopen(fd, "w", encoding=self._encoding) as fp:
                 json.dump(
                     self._cache,
                     fp,
@@ -73,8 +74,9 @@ class FileStorageProvider(StorageProvider[Any]):
                 )
                 fp.flush()
                 os.fsync(fp.fileno())
-                tmp_name = fp.name
+                tmp_name = str(tmp_path)
             os.replace(tmp_name, self._path)
+            os.chmod(self._path, 0o600)
         finally:
             if tmp_name:
                 try:

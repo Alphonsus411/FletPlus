@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List
+
+import pytest
 
 from fletplus.storage import StorageProvider
 from fletplus.storage.files import FileStorageProvider
@@ -118,6 +121,17 @@ def test_file_storage_provider_write_always_valid_json(tmp_path: Path) -> None:
         provider.set("payload", {"value": index, "items": [index, index + 1]})
         raw = path.read_text("utf-8")
         assert json.loads(raw)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Permisos sólo en POSIX")
+def test_file_storage_provider_sets_permissions_posix(tmp_path: Path) -> None:
+    path = tmp_path / "storage.json"
+    provider = FileStorageProvider(path)
+
+    provider.set("token", "abc")
+
+    mode = path.stat().st_mode & 0o777
+    assert mode == 0o600
 
 
 class DummyProvider(StorageProvider[int]):
