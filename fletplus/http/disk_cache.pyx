@@ -78,12 +78,14 @@ cdef class DiskCache:
             data = json.loads(path.read_text("utf-8"))
             timestamp = float(data["timestamp"])
             if self._is_expired(timestamp):
-                path.unlink(missing_ok=True)
+                with contextlib.suppress(OSError):
+                    path.unlink(missing_ok=True)
                 return None
             headers_data = data["headers"]
             content = base64.b64decode(data["content"])
         except Exception:
-            path.unlink(missing_ok=True)
+            with contextlib.suppress(OSError):
+                path.unlink(missing_ok=True)
             return None
 
         cdef list header_items = []
