@@ -26,7 +26,18 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python - <<'PY'
+          from pathlib import Path
+
+          requirements_path = Path("requirements.txt")
+          requirements_bytes = requirements_path.read_bytes()
+          try:
+              requirements_text = requirements_bytes.decode("utf-8")
+          except UnicodeDecodeError:
+              requirements_text = requirements_bytes.decode("utf-16")
+          Path("requirements-utf8.txt").write_text(requirements_text, encoding="utf-8")
+          PY
+          pip install -r requirements-utf8.txt
           pip install ruff black mypy bandit pip-audit safety pytest
 
       - name: Run quality checks
