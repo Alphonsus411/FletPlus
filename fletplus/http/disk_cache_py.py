@@ -24,6 +24,11 @@ class DiskCache:
     """Caché persistente sencilla para respuestas HTTP."""
 
     def __init__(self, directory: str | os.PathLike[str], *, max_entries: int = 128, max_age: float | None = None) -> None:
+        if not isinstance(max_entries, int) or isinstance(max_entries, bool) or max_entries < 1:
+            raise ValueError("max_entries debe ser un entero mayor o igual a 1.")
+        if max_age is not None:
+            if not isinstance(max_age, (int, float)) or isinstance(max_age, bool) or max_age <= 0:
+                raise ValueError("max_age debe ser None o un número positivo.")
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.max_entries = max_entries

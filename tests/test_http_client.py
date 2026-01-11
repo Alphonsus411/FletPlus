@@ -334,3 +334,23 @@ async def test_http_client_disables_cache_when_interceptor_adds_auth(tmp_path: P
     assert primera.json() == {"count": 1}
     assert segunda.json() == {"count": 2}
     assert call_count == 2
+
+
+def test_disk_cache_rejects_invalid_max_entries(tmp_path: Path):
+    with pytest.raises(ValueError, match="max_entries debe ser un entero mayor o igual a 1"):
+        DiskCache(tmp_path, max_entries=0)
+    with pytest.raises(ValueError, match="max_entries debe ser un entero mayor o igual a 1"):
+        DiskCache(tmp_path, max_entries=-5)
+    with pytest.raises(ValueError, match="max_entries debe ser un entero mayor o igual a 1"):
+        DiskCache(tmp_path, max_entries=1.5)
+    with pytest.raises(ValueError, match="max_entries debe ser un entero mayor o igual a 1"):
+        DiskCache(tmp_path, max_entries="10")  # type: ignore[arg-type]
+
+
+def test_disk_cache_rejects_invalid_max_age(tmp_path: Path):
+    with pytest.raises(ValueError, match="max_age debe ser None o un número positivo"):
+        DiskCache(tmp_path, max_age=0)
+    with pytest.raises(ValueError, match="max_age debe ser None o un número positivo"):
+        DiskCache(tmp_path, max_age=-1)
+    with pytest.raises(ValueError, match="max_age debe ser None o un número positivo"):
+        DiskCache(tmp_path, max_age="30")  # type: ignore[arg-type]
