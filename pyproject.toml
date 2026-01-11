@@ -93,3 +93,24 @@ modules = [
   { name = "fletplus.utils.responsive_manager_rs", manifest-path = "fletplus/utils/responsive_manager_rs/Cargo.toml" },
   { name = "fletplus.state.signal_pr_rs", manifest-path = "fletplus/state/signal_pr_rs/Cargo.toml" },
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+skip-string-normalization = true
+
+[tool.mypy]
+python_version = "3.9"
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true
+
+[tool.bandit]
+# Excluir bindings nativos generados (.rs/.c) que no son código Python.
+exclude = ["fletplus/**/_rs", "fletplus/**/*.c"]
