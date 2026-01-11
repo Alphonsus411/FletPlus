@@ -1233,7 +1233,19 @@ Todos los componentes aceptan un argumento opcional `style` de tipo
 propiedades de margen, color de fondo y más. Los tests cubren estos
 comportamientos (ver carpeta tests/).
 
+## 🧪 Calidad local
+
+Para ejecutar las comprobaciones de calidad en local, instala las dependencias
+de desarrollo y lanza los comandos de cada herramienta:
+
 ```bash
+pip install -r requirements-dev.txt
+ruff check .
+black --check .
+mypy fletplus
+bandit -r fletplus
+pip-audit
+safety check
 pytest --cov=fletplus
 ```
 

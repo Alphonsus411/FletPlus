@@ -1,0 +1,8 @@
+-r requirements.txt
+pytest
+ruff
+black
+mypy
+bandit
+pip-audit
+safety
