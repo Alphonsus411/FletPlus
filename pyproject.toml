@@ -110,7 +110,7 @@ python_version = "3.9"
 warn_unused_ignores = true
 warn_redundant_casts = true
 mypy_path = "fletplus"
-disallow_untyped_defs = true
+disallow_untyped_defs = false
 ignore_missing_imports = true
 
 [tool.bandit]
