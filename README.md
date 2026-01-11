@@ -33,6 +33,28 @@ pip install fletplus
 - [Catálogo de componentes](docs/components.md)
 - [Perfiles de dispositivo y breakpoints](docs/responsive.md)
 
+## ✅ Calidad / QA
+
+Para preparar el entorno de desarrollo instala las dependencias de QA
+definidas en `requirements-dev.txt`:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Con el entorno listo, estos son los comandos estándar de calidad que se
+pueden ejecutar desde la raíz del repositorio:
+
+```bash
+python -m pytest
+python -m ruff check .
+python -m black --check .
+python -m mypy fletplus
+python -m bandit -r fletplus
+python -m pip_audit
+python -m safety check
+```
+
 ## 🧪 Perfilado de flujos clave
 
 La CLI incluye un comando de perfilado que ejecuta flujos representativos (navegación del router, generación de plantillas y utilidades responsivas) con `cProfile` y muestra un reporte ordenado por tiempo usando `pstats`:
