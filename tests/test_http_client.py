@@ -243,6 +243,28 @@ async def test_http_client_cache_respects_no_store(tmp_path: Path):
 
 
 @pytest.mark.anyio
+async def test_http_client_cache_respects_no_cache(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, headers={"Cache-Control": "no-cache"}, json={"count": call_count})
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/no-cache")
+    second = await client.get("https://example.org/no-cache")
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 2}
+    assert call_count == 2
+
+
+@pytest.mark.anyio
 async def test_http_client_cache_skips_set_cookie(tmp_path: Path):
     call_count = 0
 
