@@ -53,8 +53,8 @@ python -m ruff check .
 python -m black --check .
 python -m mypy fletplus
 python -m bandit -r fletplus
-python -m pip_audit
-python -m safety check
+python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
+python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 ./tools/qa.sh
 make qa-all
 ```
@@ -89,6 +89,13 @@ nox -s qa
 En los Pull Requests se ejecuta el workflow de CI en `.github/workflows/qa.yml`,
 que corre las mismas verificaciones para asegurar que el flujo de QA se valida
 automáticamente.
+
+### ✅ Criterios de aceptación de QA y seguridad
+
+- `bandit` debe ejecutarse con las exclusiones definidas en `pyproject.toml` para evitar falsos positivos en `tests/`, `venv/` y `.venv/`.
+- `pip-audit` debe usar `pip-audit.policy.json` como allowlist; cualquier excepción nueva necesita justificación y fecha de expiración en ese archivo.
+- `safety` debe leer `safety-policy.yml` como allowlist; cualquier excepción nueva necesita justificación y fecha de expiración en ese archivo.
+- El flujo de CI debe terminar en verde sin hallazgos de seguridad fuera de las allowlists.
 
 ## 🧪 Perfilado de flujos clave
 
@@ -1301,8 +1308,8 @@ ruff check .
 black --check .
 mypy fletplus
 bandit -r fletplus
-pip-audit -r requirements.txt -r requirements-dev.txt
-safety check -r requirements.txt -r requirements-dev.txt
+pip-audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
+safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 ./tools/qa.sh
 pytest --cov=fletplus
 ```
