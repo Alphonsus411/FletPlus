@@ -33,16 +33,25 @@ pip install fletplus
 - [Catálogo de componentes](docs/components.md)
 - [Perfiles de dispositivo y breakpoints](docs/responsive.md)
 
-## ✅ Calidad / QA
+## ✅ Quality Checks
 
-La fuente de verdad para auditorías de dependencias es `requirements.txt`
-junto con `requirements-dev.txt` (mientras que `pyproject.toml` se usa para
-empaquetado). Para preparar el entorno de desarrollo instala las dependencias
-de QA definidas en `requirements-dev.txt`:
+### ✅ Requisitos y cómo instalar dependencias de QA
+
+- **Python 3.9+** con `pip` actualizado.
+- La fuente de verdad para auditorías de dependencias es `requirements.txt`
+  junto con `requirements-dev.txt` (mientras que `pyproject.toml` se usa para
+  empaquetado).
+- Para desarrollo local puedes elegir una de estas opciones:
+
+```bash
+python -m pip install -e .[dev]
+```
 
 ```bash
 python -m pip install -r requirements-dev.txt
 ```
+
+### ✅ Comandos estándar de calidad
 
 Con el entorno listo, estos son los comandos estándar de calidad que se
 pueden ejecutar desde la raíz del repositorio:
@@ -89,6 +98,25 @@ nox -s qa
 En los Pull Requests se ejecuta el workflow de CI en `.github/workflows/qa.yml`,
 que corre las mismas verificaciones para asegurar que el flujo de QA se valida
 automáticamente.
+
+### ✅ Cómo interpretar fallos comunes y dónde ajustar configuración
+
+- **`ruff` / `black`**: revisa reglas y exclusiones en `pyproject.toml`
+  (secciones `[tool.ruff]` y `[tool.black]`). Ajusta las reglas o arregla el
+  código según el reporte.
+- **`mypy`**: los flags y overrides viven en `pyproject.toml` bajo
+  `[tool.mypy]`. Ajusta `ignore_missing_imports`, `strict` o los overrides por
+  módulo si el error corresponde a dependencias opcionales.
+- **`pytest`**: configuración en `pytest.ini`. Si fallan tests por plugins o
+  markers, actualiza `addopts`, `markers` o `testpaths`.
+- **`bandit`**: las exclusiones se definen en `pyproject.toml` para evitar
+  falsos positivos en `tests/`, `venv/` y `.venv/`. Ajusta `exclude` o revisa
+  el código señalado.
+- **`pip-audit`**: usa `pip-audit.policy.json` como allowlist. Si aparece una
+  nueva vulnerabilidad que se acepta temporalmente, añade la excepción con
+  justificación y fecha de expiración en ese archivo.
+- **`safety`**: usa `safety-policy.yml` como allowlist. Cualquier excepción
+  nueva debe documentarse con justificación y expiración allí.
 
 ### ✅ Criterios de aceptación de QA y seguridad
 
