@@ -4,7 +4,7 @@ PROFILE_LIMIT=30
 CONFIG_LIMIT=4
 RUST_MANIFESTS=fletplus/router/router_pr_rs/Cargo.toml fletplus/router/router_rs/Cargo.toml fletplus/animation/listeners_rs/Cargo.toml fletplus/animation/listeners_pr_rs/Cargo.toml fletplus/components/smart_table_rs/Cargo.toml
 
-.PHONY: profile update-build-config build build-rust qa pytest ruff black mypy bandit pip-audit safety qa-all
+.PHONY: profile update-build-config build build-rust rustify-auto qa pytest ruff black mypy bandit pip-audit safety qa-all
 
 profile:
 	@mkdir -p build
@@ -23,6 +23,9 @@ build-rust:
         else \
                 echo "maturin no está instalado; omitiendo build de extensiones Rust"; \
         fi
+
+rustify-auto:
+	tools/pyrust_native_auto.sh
 
 build: update-build-config build-rust
 	python setup.py build_ext --inplace
