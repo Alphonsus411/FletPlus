@@ -339,11 +339,13 @@ class HttpClient:
                     cache_control = response.headers.get("cache-control", "")
                     pragma = response.headers.get("pragma", "")
                     combined_directives = f"{cache_control},{pragma}".lower()
+                    has_no_cache = "no-cache" in combined_directives
                     has_no_store = "no-store" in combined_directives
                     has_private = "private" in combined_directives
                     has_set_cookie = response.headers.get("set-cookie") is not None
                     is_success = 200 <= response.status_code <= 299
-                    should_cache = not (has_no_store or has_private or has_set_cookie)
+                    # Respeta no-store/private/set-cookie y evita cachear contenido sensible/volátil.
+                    should_cache = not (has_no_cache or has_no_store or has_private or has_set_cookie)
                     if should_cache and is_success:
                         await response.aread()
                         self._cache.set(cache_key, response)
