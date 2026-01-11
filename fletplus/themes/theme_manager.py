@@ -184,16 +184,30 @@ def load_palette_from_file(file_path: str, mode: str = "light") -> dict[str, obj
         logger.error("Invalid JSON in palette file '%s': %s", file_path, exc)
         return {}
 
-    palette = data.get(mode, {})
+    if not isinstance(data, Mapping):
+        logger.error("Palette file '%s' must contain a JSON object", file_path)
+        return {}
+
+    palette = data.get(mode)
+    if not isinstance(palette, Mapping):
+        logger.error(
+            "Palette mode '%s' in '%s' must be a JSON object, got %s",
+            mode,
+            file_path,
+            type(palette).__name__,
+        )
+        return {}
 
     def _flatten(prefix: str, value: object) -> dict[str, object]:
         """Flatten nested dictionaries using underscore-separated keys."""
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
             flattened: dict[str, object] = {}
             for k, v in value.items():
                 new_prefix = f"{prefix}_{k}" if prefix else k
                 flattened.update(_flatten(new_prefix, v))
             return flattened
+        if not prefix:
+            return {}
         return {prefix: value}
 
     if _PALETTE_FLATTEN_RS is not None:

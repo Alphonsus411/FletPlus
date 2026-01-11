@@ -87,6 +87,26 @@ def test_load_palette_from_missing_file(caplog):
     assert "not found" in caplog.text
 
 
+def test_load_palette_from_file_requires_object_root(tmp_path, caplog):
+    file_path = tmp_path / "palette.json"
+    file_path.write_text(json.dumps(["not", "an", "object"]))
+
+    with caplog.at_level("ERROR"):
+        assert load_palette_from_file(str(file_path), "light") == {}
+
+    assert "must contain a JSON object" in caplog.text
+
+
+def test_load_palette_from_file_requires_object_mode(tmp_path, caplog):
+    file_path = tmp_path / "palette.json"
+    file_path.write_text(json.dumps({"light": "not-an-object"}))
+
+    with caplog.at_level("ERROR"):
+        assert load_palette_from_file(str(file_path), "light") == {}
+
+    assert "must be a JSON object" in caplog.text
+
+
 def test_apply_material3_preset_updates_tokens():
     page = DummyPage()
     theme = ThemeManager(page=page)
