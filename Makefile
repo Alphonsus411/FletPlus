@@ -46,9 +46,9 @@ bandit:
 	python -m bandit -r fletplus
 
 pip-audit:
-	python -m pip_audit
+	python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
 
 safety:
-	python -m safety check
+	python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 
 qa-all: pytest ruff black mypy bandit pip-audit safety

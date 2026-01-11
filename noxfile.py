@@ -49,13 +49,34 @@ def bandit(session: nox.Session) -> None:
 @nox.session(name="pip-audit")
 def pip_audit(session: nox.Session) -> None:
     _install_deps(session)
-    session.run("python", "-m", "pip_audit")
+    session.run(
+        "python",
+        "-m",
+        "pip_audit",
+        "-r",
+        "requirements.txt",
+        "-r",
+        "requirements-dev.txt",
+        "--policy",
+        "pip-audit.policy.json",
+    )
 
 
 @nox.session(name="safety")
 def safety_check(session: nox.Session) -> None:
     _install_deps(session)
-    session.run("python", "-m", "safety", "check")
+    session.run(
+        "python",
+        "-m",
+        "safety",
+        "check",
+        "-r",
+        "requirements.txt",
+        "-r",
+        "requirements-dev.txt",
+        "--policy-file",
+        "safety-policy.yml",
+    )
 
 
 @nox.session(name="qa")
@@ -66,5 +87,26 @@ def qa(session: nox.Session) -> None:
     session.run("python", "-m", "black", "--check", ".")
     session.run("python", "-m", "mypy", "fletplus")
     session.run("python", "-m", "bandit", "-r", "fletplus")
-    session.run("python", "-m", "pip_audit")
-    session.run("python", "-m", "safety", "check")
+    session.run(
+        "python",
+        "-m",
+        "pip_audit",
+        "-r",
+        "requirements.txt",
+        "-r",
+        "requirements-dev.txt",
+        "--policy",
+        "pip-audit.policy.json",
+    )
+    session.run(
+        "python",
+        "-m",
+        "safety",
+        "check",
+        "-r",
+        "requirements.txt",
+        "-r",
+        "requirements-dev.txt",
+        "--policy-file",
+        "safety-policy.yml",
+    )
