@@ -111,6 +111,7 @@ cdef class DiskCache:
     # ------------------------------------------------------------------
     cpdef void set(self, str key, object response):
         cdef object path = self._path_for(key)
+        cdef object tmp_path = f"{path}.tmp"
         cdef list headers = []
         cdef bytes name
         cdef bytes value
@@ -124,7 +125,22 @@ cdef class DiskCache:
             "reason_phrase": response.reason_phrase,
             "timestamp": time.time(),
         }
-        path.write_text(json.dumps(entry, separators=(",", ":")), "utf-8")
+        cdef bytes payload = json.dumps(entry, separators=(",", ":")).encode("utf-8")
+        cdef int fd = -1
+        try:
+            fd = os.open(os.fspath(tmp_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as temp_file:
+                fd = -1
+                temp_file.write(payload)
+                temp_file.flush()
+                os.fsync(temp_file.fileno())
+            os.replace(os.fspath(tmp_path), os.fspath(path))
+            os.chmod(os.fspath(path), 0o600)
+        finally:
+            if fd != -1:
+                os.close(fd)
+            with contextlib.suppress(OSError):
+                os.unlink(os.fspath(tmp_path))
         self._cleanup()
 
     # ------------------------------------------------------------------
