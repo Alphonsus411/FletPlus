@@ -281,13 +281,14 @@ class HttpClient:
         Nota sobre caché: si los headers incluyen credenciales (`authorization`,
         `cookie` o `x-api-key`), la caché se desactiva automáticamente para evitar
         persistir respuestas sensibles. Puedes sobrescribir este comportamiento
-        pasando `cache=True` de forma explícita. Además, se respetan las cabeceras
+        pasando `cache=True` de forma explícita. También se respetan las cabeceras
+        de la petición `Cache-Control`/`Pragma` con `no-store` o `no-cache`
+        (a menos que se pase `cache=True`), y en la respuesta se consideran
         `Cache-Control`/`Pragma` con `no-store` o `private`, la presencia de
         `Set-Cookie` y solo se cachean respuestas exitosas (2xx).
         """
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context if context is not None else {}
-        use_cache = cache if cache is not None else True
         event = RequestEvent(request=request, context=request_context, cache_key=None)
         await self._hooks.emit_before(event)
         request = event.request
@@ -300,6 +301,15 @@ class HttpClient:
             for interceptor in self._interceptors:
                 request = await interceptor.apply_request(request)
             event.request = request
+
+            use_cache = cache if cache is not None else True
+            cache_control = request.headers.get("cache-control", "")
+            pragma = request.headers.get("pragma", "")
+            combined_directives = f"{cache_control},{pragma}".lower()
+            has_no_cache = "no-cache" in combined_directives
+            has_no_store = "no-store" in combined_directives
+            if cache is not True and (has_no_cache or has_no_store):
+                use_cache = False
 
             credential_headers = {"authorization", "cookie", "x-api-key"}
             has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
