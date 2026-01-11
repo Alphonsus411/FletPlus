@@ -73,6 +73,23 @@ make safety
 make pytest
 ```
 
+También puedes ejecutar las mismas comprobaciones usando `noxfile.py`:
+
+```bash
+nox -s ruff
+nox -s black
+nox -s mypy
+nox -s bandit
+nox -s pip-audit
+nox -s safety
+nox -s pytest
+nox -s qa
+```
+
+En los Pull Requests se ejecuta el workflow de CI en `.github/workflows/qa.yml`,
+que corre las mismas verificaciones para asegurar que el flujo de QA se valida
+automáticamente.
+
 ## 🧪 Perfilado de flujos clave
 
 La CLI incluye un comando de perfilado que ejecuta flujos representativos (navegación del router, generación de plantillas y utilidades responsivas) con `cProfile` y muestra un reporte ordenado por tiempo usando `pstats`:
