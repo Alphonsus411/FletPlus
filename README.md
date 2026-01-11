@@ -35,8 +35,10 @@ pip install fletplus
 
 ## ✅ Calidad / QA
 
-Para preparar el entorno de desarrollo instala las dependencias de QA
-definidas en `requirements-dev.txt`:
+La fuente de verdad para auditorías de dependencias es `requirements.txt`
+junto con `requirements-dev.txt` (mientras que `pyproject.toml` se usa para
+empaquetado). Para preparar el entorno de desarrollo instala las dependencias
+de QA definidas en `requirements-dev.txt`:
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -51,8 +53,9 @@ python -m ruff check .
 python -m black --check .
 python -m mypy fletplus
 python -m bandit -r fletplus
-python -m pip_audit
-python -m safety check
+python -m pip_audit -r requirements.txt -r requirements-dev.txt
+python -m safety check -r requirements.txt -r requirements-dev.txt
+./tools/qa.sh
 ```
 
 ## 🧪 Perfilado de flujos clave
@@ -1266,8 +1269,9 @@ ruff check .
 black --check .
 mypy fletplus
 bandit -r fletplus
-pip-audit
-safety check
+pip-audit -r requirements.txt -r requirements-dev.txt
+safety check -r requirements.txt -r requirements-dev.txt
+./tools/qa.sh
 pytest --cov=fletplus
 ```
 

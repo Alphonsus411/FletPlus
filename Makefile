@@ -4,7 +4,7 @@ PROFILE_LIMIT=30
 CONFIG_LIMIT=4
 RUST_MANIFESTS=fletplus/router/router_pr_rs/Cargo.toml fletplus/router/router_rs/Cargo.toml fletplus/animation/listeners_rs/Cargo.toml fletplus/animation/listeners_pr_rs/Cargo.toml fletplus/components/smart_table_rs/Cargo.toml
 
-.PHONY: profile update-build-config build build-rust
+.PHONY: profile update-build-config build build-rust qa
 
 profile:
 	@mkdir -p build
@@ -26,3 +26,6 @@ build-rust:
 
 build: update-build-config build-rust
 	python setup.py build_ext --inplace
+
+qa:
+	./tools/qa.sh
