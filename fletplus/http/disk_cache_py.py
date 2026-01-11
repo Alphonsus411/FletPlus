@@ -103,8 +103,7 @@ class DiskCache:
             response.extensions["http_version"] = http_version
         if reason_phrase:
             response.extensions["reason_phrase"] = str(reason_phrase).encode("ascii", "ignore")
-        if self.max_age is None:
-            os.utime(path, None)
+        os.utime(path, None)
         return response
 
     # ------------------------------------------------------------------
@@ -156,23 +155,28 @@ class DiskCache:
         else:
             cutoff = None
         files: list[tuple[Path, float]] = []
+        # max_age None: usamos mtime actualizado en hits; con max_age, usamos timestamp persistido.
         for path in self.directory.glob("*.json"):
             try:
                 mtime = path.stat().st_mtime
             except (FileNotFoundError, OSError):
                 continue
-            files.append((path, mtime))
+            if self.max_age is None:
+                files.append((path, mtime))
+                continue
+            try:
+                data = json.loads(path.read_text("utf-8"))
+                timestamp = float(data["timestamp"])
+            except Exception:
+                with contextlib.suppress(OSError):
+                    path.unlink()
+                continue
+            files.append((path, timestamp))
         files.sort(key=lambda item: item[1], reverse=True)
         kept = 0
         for file_path, _mtime in files:
             if cutoff is not None:
-                try:
-                    data = json.loads(file_path.read_text("utf-8"))
-                    timestamp = float(data["timestamp"])
-                except Exception:
-                    with contextlib.suppress(OSError):
-                        file_path.unlink()
-                    continue
+                timestamp = _mtime
                 if timestamp < cutoff:
                     with contextlib.suppress(OSError):
                         file_path.unlink()
