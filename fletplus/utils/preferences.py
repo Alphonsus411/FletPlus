@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,16 @@ class _BaseBackend:
 
 
 class _ClientStorageBackend(_BaseBackend):
-    def __init__(self, storage, key: str) -> None:
+    def __init__(
+        self,
+        storage,
+        key: str,
+        *,
+        json_default: Callable[[Any], Any] | None = None,
+    ) -> None:
         self._storage = storage
         self._key = key
+        self._json_default = json_default
 
     def load(self) -> dict[str, Any] | None:
         try:
@@ -44,8 +51,23 @@ class _ClientStorageBackend(_BaseBackend):
         payload = dict(data)
         try:
             self._storage.set(self._key, payload)
+            return
         except TypeError:
-            self._storage.set(self._key, json.dumps(payload))
+            pass
+        except Exception:  # pragma: no cover - errores de Flet
+            logger.exception("No se pudieron guardar preferencias en client_storage")
+            return
+        try:
+            serialized = json.dumps(payload, default=self._json_default)
+        except TypeError:
+            logger.exception(
+                "No se pudieron serializar preferencias para client_storage: %s (tipo=%s)",
+                payload,
+                type(payload),
+            )
+            return
+        try:
+            self._storage.set(self._key, serialized)
         except Exception:  # pragma: no cover - errores de Flet
             logger.exception("No se pudieron guardar preferencias en client_storage")
 
@@ -114,11 +136,21 @@ class PreferenceStorage:
 
     DEFAULT_KEY = "fletplus.preferences"
 
-    def __init__(self, page, *, key: str | None = None) -> None:
+    def __init__(
+        self,
+        page,
+        *,
+        key: str | None = None,
+        json_default: Callable[[Any], Any] | None = None,
+    ) -> None:
         self._key = key or self.DEFAULT_KEY
         storage = getattr(page, "client_storage", None)
         if storage and hasattr(storage, "get") and hasattr(storage, "set"):
-            self._backend: _BaseBackend = _ClientStorageBackend(storage, self._key)
+            self._backend = _ClientStorageBackend(
+                storage,
+                self._key,
+                json_default=json_default,
+            )
         else:
             self._backend = _FileBackend(self._key)
 
