@@ -1,9 +1,9 @@
 -r requirements.txt
-pytest
-ruff
-black
-mypy
-bandit
-pip-audit
-safety
+pytest>=7.4,<9
+ruff>=0.5,<1
+black>=24.0,<25
+mypy>=1.7,<2
+bandit>=1.7.8,<2
+pip-audit>=2.7,<3
+safety>=2.3,<3
 nox
