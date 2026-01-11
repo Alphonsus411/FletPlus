@@ -62,6 +62,12 @@ class RouteNotFoundError(ValueError):
     """Se lanza cuando una ruta no existe."""
 
 
+@dataclass(slots=True)
+class _LayoutCache:
+    instance: LayoutInstance
+    params: Dict[str, str]
+
+
 class Router:
     """Gestor de rutas para aplicaciones FletPlus."""
 
@@ -70,7 +76,7 @@ class Router:
         self._history: List[str] = []
         self._index: int = -1
         self._observers: List[Callable[[RouteMatch, ft.Control], None]] = []
-        self._layouts: Dict[int, LayoutInstance] = {}
+        self._layouts: Dict[int, _LayoutCache] = {}
         self._active_match: Optional[RouteMatch] = None
         if routes:
             for route in routes:
@@ -200,14 +206,16 @@ class Router:
             if layout_builder is None:
                 continue
             node_key = id(match.node)
-            instance = self._layouts.get(node_key)
-            if instance is None:
+            cache = self._layouts.get(node_key)
+            params = dict(match.params)
+            if cache is None or cache.params != params:
                 instance = layout_builder(match)
                 if not isinstance(instance, LayoutInstance):
                     raise TypeError("El layout debe devolver una instancia de LayoutInstance")
-                self._layouts[node_key] = instance
-            instance.mount(content)
-            content = instance.root
+                cache = _LayoutCache(instance=instance, params=params)
+                self._layouts[node_key] = cache
+            cache.instance.mount(content)
+            content = cache.instance.root
         assert content is not None  # pragma: no cover - nunca debería ser None
         return content
 
