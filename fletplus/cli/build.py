@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -43,6 +44,13 @@ class BuildTarget(str, Enum):
 
 @dataclass(slots=True)
 class BuildMetadata:
+    """Metadatos del proyecto normalizados para compilación.
+
+    El nombre se normaliza en `_load_metadata` para usar solo letras, números,
+    guiones y guiones bajos; los separadores de ruta (`/`, `\\`) y espacios se
+    reemplazan por guiones, y el resto de caracteres inseguros se elimina.
+    """
+
     name: str
     version: str
     author: str | None = None
@@ -107,7 +115,8 @@ def _load_metadata(project_dir: Path) -> BuildMetadata:
     else:
         project_data = {}
 
-    name = project_data.get("name") or project_dir.name
+    raw_name = project_data.get("name") or project_dir.name
+    name = _normalize_build_name(raw_name)
     version = project_data.get("version", "0.0.0")
     author = None
     authors = project_data.get("authors")
@@ -120,6 +129,13 @@ def _load_metadata(project_dir: Path) -> BuildMetadata:
     description = project_data.get("description")
 
     return BuildMetadata(name=name, version=version, author=author, description=description)
+
+
+def _normalize_build_name(value: str) -> str:
+    normalized = re.sub(r"[\\/\s]+", "-", value)
+    normalized = re.sub(r"[^A-Za-z0-9_-]", "", normalized)
+    normalized = normalized.strip("-_")
+    return normalized or "app"
 
 
 def _detect_assets(project_dir: Path) -> Path | None:
