@@ -416,9 +416,19 @@ class HttpClient:
                 **connect_kwargs,
             )
             response = _build_websocket_response(request, websocket)
-            for interceptor in reversed(self._interceptors):
-                response = await interceptor.apply_response(response)
-            websocket = _WebSocketConnection(websocket, response)
+            try:
+                for interceptor in reversed(self._interceptors):
+                    response = await interceptor.apply_response(response)
+                websocket = _WebSocketConnection(websocket, response)
+            except Exception:
+                close = getattr(websocket, "close", None)
+                if close is None:
+                    close = getattr(websocket, "aclose", None)
+                if close is not None:
+                    result = close()
+                    if inspect.isawaitable(result):
+                        await result
+                raise
         except Exception as exc:  # pragma: no cover - rutas excepcionales
             response_event = ResponseEvent(
                 request_event=event,
