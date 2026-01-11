@@ -53,9 +53,24 @@ python -m ruff check .
 python -m black --check .
 python -m mypy fletplus
 python -m bandit -r fletplus
-python -m pip_audit -r requirements.txt -r requirements-dev.txt
-python -m safety check -r requirements.txt -r requirements-dev.txt
+python -m pip_audit
+python -m safety check
 ./tools/qa.sh
+make qa-all
+```
+
+El flujo esperado es ejecutar primero los linters y el chequeo de tipos,
+continuar con las auditorías de seguridad y finalizar con los tests. Si
+quieres correr un paso específico, puedes usar los targets del `Makefile`:
+
+```bash
+make ruff
+make black
+make mypy
+make bandit
+make pip-audit
+make safety
+make pytest
 ```
 
 ## 🧪 Perfilado de flujos clave
