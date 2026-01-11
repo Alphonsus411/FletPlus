@@ -163,6 +163,24 @@ El router cuenta ahora con un backend compilado con [`pyrust-native`](https://gi
 - Instalación desde fuente: `pip install .[rust]` hace que `pyrust-native` lea la sección `[tool.pyrust-native]` de `pyproject.toml` y ejecute `maturin` para cada crate declarado, de modo que el backend nativo quede disponible sin pasos extra.
 - Fallback seguro: si ninguna variante nativa está disponible, el router sigue funcionando con las implementaciones existentes.
 
+### 🤖 Auto-rustificación con pyrust-native
+
+La CLI oficial de `pyrust-native 0.0.3` expone el subcomando `pyrust auto`, que ejecuta el pipeline automático de perfilado, análisis y recarga de hotspots. Los flags principales son:
+
+- `pyrust auto [ruta]` (ruta del proyecto, por defecto el directorio actual).
+- `--entrypoint` para indicar el script de entrada a perfilar.
+- `--hotspot-limit`, `--min-runtime-pct` y `--profile-limit` para controlar los límites del perfilado.
+- `--include-stdlib`, `--include-partial`, `--force-recompile`, `--invalidate-cache`, `--no-use-cache` para ajustar la selección y recarga.
+- `--format` y `--output` para generar reportes en `table`, `json` o `markdown`.
+
+En este repositorio se ofrece un wrapper que apunta al `pyproject.toml` (donde vive la configuración `[tool.pyrust-native]`) y deja el reporte en `tools/`:
+
+```bash
+make rustify-auto
+```
+
+El comando anterior ejecuta `tools/pyrust_native_auto.sh`, que genera `tools/pyrust_auto_report.md`. Puedes pasar flags adicionales a la CLI añadiéndolos al final del script o exportando `PYRUST_AUTO_OUTPUT` para cambiar la ruta del reporte.
+
 ## 🎞️ Listeners de animación acelerados
 
 `AnimationController` prioriza ahora un contenedor nativo compilado con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) (`listeners_pr_rs`), con las mismas garantías de referencias débiles y las claves estables del backend puro en Python. Si la extensión no está disponible, intenta cargar el binario previo `listeners_rs` y, como último recurso, vuelve al contenedor en Python sin romper compatibilidad.
