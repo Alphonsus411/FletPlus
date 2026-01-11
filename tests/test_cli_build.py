@@ -21,11 +21,11 @@ sys.modules["watchdog.observers"] = observers_module
 from fletplus.cli.main import app
 
 
-def _setup_minimal_project(base: Path) -> None:
+def _setup_minimal_project(base: Path, *, name: str = "demo-app") -> None:
     (base / "src").mkdir()
     (base / "src" / "main.py").write_text("print('hi')\n", encoding="utf-8")
     (base / "pyproject.toml").write_text(
-        """[project]\nname = 'demo-app'\nversion = '1.2.3'\n""",
+        f"""[project]\nname = '{name}'\nversion = '1.2.3'\n""",
         encoding="utf-8",
     )
     assets = base / "assets"
@@ -80,3 +80,23 @@ def test_build_failure_reports_error() -> None:
         assert "❌ desktop" in result.output
         assert "La compilación terminó con errores" in result.output
 
+
+def test_build_normalizes_name_for_pyinstaller() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        _setup_minimal_project(base, name="demo/app name@2024")
+
+        calls: list[tuple[list[str], dict]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(([str(part) for part in command], kwargs))
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.cli.build.subprocess.run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", "desktop"])
+
+        assert result.exit_code == 0, result.output
+        desktop_command = next(command for command, _ in calls if "PyInstaller" in command)
+        name_index = desktop_command.index("--name")
+        assert desktop_command[name_index + 1] == "demo-app-name2024"
