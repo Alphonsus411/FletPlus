@@ -8,6 +8,8 @@ Esta guía reúne los apoyos disponibles durante el ciclo de vida de una app Fle
 
 Para integrarlo en tu proyecto, arranca `DevToolsServer().listen()` dentro de un `asyncio.Task` y comparte la URL en tus herramientas de depuración o paneles administrativos.
 
+Si necesitas restringir el acceso, puedes configurar `auth_token` (el cliente debe incluir `?token=...` en la URL de WebSocket) y/o `allowed_origins` (el header `Origin` debe coincidir con alguno de los orígenes permitidos). Las conexiones que no cumplan estos requisitos se rechazan con un cierre de política.
+
 ## Recarga en caliente desde la CLI
 
 El comando `fletplus run` monitoriza el árbol del proyecto (ignorando carpetas temporales como `.git`, `__pycache__` o `build`) mediante `watchdog`. Cuando detecta cambios en archivos Python, JSON o YAML, detiene el proceso actual de `flet run` y lo reinicia, conservando las opciones de puerto y activando los DevTools salvo que se haya pasado `--no-devtools`. También admite seleccionar el archivo principal con `--app` y la carpeta a vigilar con `--watch`.【F:fletplus/cli/main.py†L83-L171】
