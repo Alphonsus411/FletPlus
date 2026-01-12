@@ -6,10 +6,10 @@
 - Fallos de recarga: 0
 
 ## Métricas clave
-- Runtime total (s): 0.008459
-- Muestras de profiling: 50
-- Targets analizados: 2106
-- Targets transpilados: 2106
+- Runtime total (s): 0.005999
+- Muestras de profiling: 25
+- Targets analizados: 1304
+- Targets transpilados: 1304
 - Recargas exitosas: 0
 
 ## Hotspots seleccionados
