@@ -118,17 +118,11 @@ def _parse_main_axis_alignment(
     return None
 
 
-def _device_from_width(width: int) -> DeviceName:
-    """Clasifica ``width`` en *mobile*, *tablet* o *desktop*.
-
-    Los límites coinciden con los breakpoints por defecto de ``ResponsiveGrid``.
-    """
-
-    if width < 600:
-        return "mobile"
-    if width < 900:
-        return "tablet"
-    return "desktop"
+def _normalize_device_name(value: DeviceName | None) -> DeviceName | None:
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    return text or None
 
 
 @dataclass
@@ -188,9 +182,19 @@ class ResponsiveGridItem:
     def resolve_span(
         self, width: int, columns: int, device: DeviceName | None = None
     ) -> int:
-        device = device or _device_from_width(width)
-        if self.span_devices and device in self.span_devices:
-            return self._sanitize_span(self.span_devices[device])
+        """Determina el span considerando un dispositivo normalizado.
+
+        Si no se proporciona ``device``, se deriva a partir de ``width`` usando
+        :func:`get_device_profile`, que toma como referencia los perfiles por
+        defecto. El nombre se normaliza en minúsculas para facilitar coincidencias
+        con ``span_devices``.
+        """
+
+        normalized_device = _normalize_device_name(device)
+        if normalized_device is None:
+            normalized_device = get_device_profile(width).name
+        if self.span_devices and normalized_device in self.span_devices:
+            return self._sanitize_span(self.span_devices[normalized_device])
 
         if self.span_breakpoints:
             bp = max((bp for bp in self.span_breakpoints if width >= bp), default=None)
@@ -829,10 +833,8 @@ class ResponsiveGrid:
 
     # ------------------------------------------------------------------
     def _resolve_device_name(self, width: int) -> DeviceName:
-        if self.device_profiles:
-            profile = get_device_profile(width, self.device_profiles)
-            return profile.name
-        return _device_from_width(width)
+        profile = get_device_profile(width, self.device_profiles)
+        return profile.name
 
     # ------------------------------------------------------------------
     def _scale_padding(self, value: object, scale: float) -> object:
