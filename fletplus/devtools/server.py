@@ -5,6 +5,7 @@ import json
 import logging
 from collections import OrderedDict
 from collections.abc import Iterable
+from urllib.parse import parse_qs, urlparse
 
 from websockets.asyncio.server import ServerProtocol, serve
 from websockets.exceptions import ConnectionClosed
@@ -22,6 +23,8 @@ class DevToolsServer:
         max_initial_payloads: int | None = 50,
         max_payload_size: int | None = 256 * 1024,
         allowed_snapshot_types: set[str] | None = None,
+        auth_token: str | None = None,
+        allowed_origins: set[str] | None = None,
     ) -> None:
         self._clients: set[ServerProtocol] = set()
         self._lock = asyncio.Lock()
@@ -29,9 +32,17 @@ class DevToolsServer:
         self._max_initial_payloads = max_initial_payloads
         self._max_payload_size = max_payload_size
         self._allowed_snapshot_types = allowed_snapshot_types
+        self._auth_token = auth_token
+        self._allowed_origins = allowed_origins
 
     def listen(self, host: str = "127.0.0.1", port: int = 0):
-        """Crea el servidor y comienza a escuchar conexiones."""
+        """Crea el servidor y comienza a escuchar conexiones.
+
+        Si se configura ``auth_token`` o ``allowed_origins``, las conexiones
+        entrantes deben incluir el token en la query string (``?token=...``) y/o
+        un header ``Origin`` permitido; en caso contrario se rechazan con un
+        cierre de política.
+        """
 
         return serve(
             self._handle_client,
@@ -81,6 +92,9 @@ class DevToolsServer:
             _LOGGER.exception("Error enviando mensaje a un cliente")
 
     async def _handle_client(self, websocket: ServerProtocol) -> None:
+        if not self._is_authorized(websocket):
+            await websocket.close(code=1008, reason="unauthorized")
+            return
         await self._register(websocket)
         try:
             await self._safe_send(websocket, "server:ready")
@@ -112,6 +126,23 @@ class DevToolsServer:
             _LOGGER.exception("Error manejando cliente")
         finally:
             await self._unregister(websocket)
+
+    def _is_authorized(self, websocket: ServerProtocol) -> bool:
+        if self._auth_token is not None:
+            path = getattr(websocket, "path", "")
+            parsed = urlparse(path)
+            token = parse_qs(parsed.query).get("token", [None])[0]
+            if token != self._auth_token:
+                _LOGGER.warning("Token inválido o ausente al conectar DevTools")
+                return False
+
+        if self._allowed_origins is not None:
+            origin = websocket.request_headers.get("Origin")
+            if origin not in self._allowed_origins:
+                _LOGGER.warning("Origen no permitido al conectar DevTools: %s", origin)
+                return False
+
+        return True
 
     async def _send_initial_payloads(self, websocket: ServerProtocol) -> None:
         for message in self._initial_payloads.values():
