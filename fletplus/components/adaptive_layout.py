@@ -294,6 +294,10 @@ class AdaptiveNavigationLayout:
             return
 
         device_key = (device or self._current_device or "").lower()
+        container.gradient = None
+        container.bgcolor = None
+        gradient: ft.Gradient | None = None
+        bgcolor: str | None = None
 
         # Aplicar gradientes específicos por dispositivo primero
         if self.header_gradient_tokens_by_device:
@@ -302,45 +306,47 @@ class AdaptiveNavigationLayout:
                 start = self.theme.get_color(tokens[0])
                 end = self.theme.get_color(tokens[1])
                 if start and end:
-                    container.gradient = ft.LinearGradient(
+                    gradient = ft.LinearGradient(
                         colors=[start, end],
                         begin=ft.alignment.center_left,
                         end=ft.alignment.center_right,
                     )
-                    container.bgcolor = None
+                    bgcolor = None
 
-        if container.gradient is None and self.header_background_token:
+        if gradient is None and self.header_background_token:
             gradient = self.theme.get_gradient(self.header_background_token)
             if gradient:
-                container.gradient = gradient
-                container.bgcolor = None
+                bgcolor = None
             else:
                 color = self.theme.get_color(self.header_background_token)
                 if color:
-                    container.gradient = None
-                    container.bgcolor = color
+                    gradient = None
+                    bgcolor = color
 
-        if container.gradient is None and self.header_gradient_tokens:
+        if gradient is None and self.header_gradient_tokens:
             start = self.theme.get_color(self.header_gradient_tokens[0])
             end = None
             if len(self.header_gradient_tokens) > 1:
                 end = self.theme.get_color(self.header_gradient_tokens[1])
             if start and end:
-                container.gradient = ft.LinearGradient(
+                gradient = ft.LinearGradient(
                     colors=[start, end],
                     begin=ft.alignment.center_left,
                     end=ft.alignment.center_right,
                 )
-                container.bgcolor = None
+                bgcolor = None
 
         background_override = self.header_backgrounds.get(device_key)
         if background_override:
-            container.gradient = None
-            container.bgcolor = background_override
+            gradient = None
+            bgcolor = background_override
 
-        if container.gradient is None and container.bgcolor is None:
+        if gradient is None and bgcolor is None:
             fallback = self.theme.get_color("primary") or ft.Colors.BLUE_GREY_500
-            container.bgcolor = fallback
+            bgcolor = fallback
+
+        container.gradient = gradient
+        container.bgcolor = bgcolor
 
         tokens_source = getattr(self.theme, "effective_tokens", getattr(self.theme, "tokens", {}))
         shadows = tokens_source.get("shadows", {}) if isinstance(tokens_source, dict) else {}
