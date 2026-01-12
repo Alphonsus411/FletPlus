@@ -167,7 +167,24 @@ def _copy_assets(source: Path | None, destination: Path) -> None:
             shutil.rmtree(target)
         else:
             target.unlink()
-    shutil.copytree(source, target)
+    for root, dirs, files in os.walk(source, followlinks=False):
+        root_path = Path(root)
+        relative_root = root_path.relative_to(source)
+        target_root = target / relative_root
+        target_root.mkdir(parents=True, exist_ok=True)
+
+        for dirname in list(dirs):
+            source_dir = root_path / dirname
+            if source_dir.is_symlink():
+                click.echo(f"Advertencia: se omitió el enlace simbólico {source_dir}.")
+                dirs.remove(dirname)
+
+        for filename in files:
+            source_file = root_path / filename
+            if source_file.is_symlink():
+                click.echo(f"Advertencia: se omitió el enlace simbólico {source_file}.")
+                continue
+            shutil.copy2(source_file, target_root / filename)
 
 
 def _copy_icon(icon_path: Path | None, destination: Path) -> Path | None:
