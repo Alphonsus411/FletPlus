@@ -165,7 +165,7 @@ El router cuenta ahora con un backend compilado con [`pyrust-native`](https://gi
 
 ### 🤖 Auto-rustificación con pyrust-native
 
-La CLI oficial de `pyrust-native 0.0.3` expone el subcomando `pyrust auto`, que ejecuta el pipeline automático de perfilado, análisis y recarga de hotspots. Los flags principales son:
+La CLI oficial de `pyrust-native 0.0.4` expone el subcomando `pyrust auto`, que ejecuta el pipeline automático de perfilado, análisis y recarga de hotspots. Los flags principales son:
 
 - `pyrust auto [ruta]` (ruta del proyecto, por defecto el directorio actual).
 - `--entrypoint` para indicar el script de entrada a perfilar.
