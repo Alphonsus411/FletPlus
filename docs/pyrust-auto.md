@@ -44,6 +44,11 @@ puros (por ejemplo `fletplus/utils/device_profiles.py` y
 - Hotspots seleccionados: 0
 - Targets rustificados: 0
 - Fallos de recarga: 0
+- Runtime total (s): 0.008459
+- Muestras de profiling: 50
+- Targets analizados: 2106
+- Targets transpilados: 2106
+- Recargas exitosas: 0
 
 El reporte completo queda disponible en `tools/pyrust_auto_report.md`.
 
