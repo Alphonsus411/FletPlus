@@ -82,6 +82,10 @@ class DiskCache:
         try:
             data = json.loads(path.read_text("utf-8"))
             timestamp = float(data["timestamp"])
+            expires_at = data.get("expires_at")
+            if expires_at is not None and float(expires_at) <= time.time():
+                path.unlink(missing_ok=True)
+                return None
             if self._is_expired(timestamp):
                 path.unlink(missing_ok=True)
                 return None
@@ -112,7 +116,7 @@ class DiskCache:
         return response
 
     # ------------------------------------------------------------------
-    def set(self, key: str, response: httpx.Response) -> None:
+    def set(self, key: str, response: httpx.Response, *, expires_at: float | None = None) -> None:
         path = self._path_for(key)
         headers = [
             (name.decode("latin-1"), value.decode("latin-1"))
@@ -125,6 +129,7 @@ class DiskCache:
             "http_version": response.extensions.get("http_version"),
             "reason_phrase": response.reason_phrase,
             "timestamp": time.time(),
+            "expires_at": expires_at,
         }
         payload = json.dumps(entry, separators=(",", ":"))
         tmp_path = path.with_name(f"{path.name}.tmp")

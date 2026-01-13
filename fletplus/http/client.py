@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import contextlib
+import email.utils
 import importlib
 import inspect
 import os
 import time
 from dataclasses import dataclass, field
+from datetime import timezone
 from types import MappingProxyType
 from typing import Any, Awaitable, Callable, Iterable, MutableMapping
 
@@ -21,6 +23,38 @@ RequestHook = Callable[["RequestEvent"], Awaitable[None] | None]
 ResponseHook = Callable[["ResponseEvent"], Awaitable[None] | None]
 RequestInterceptor = Callable[[httpx.Request], Awaitable[httpx.Request | None] | httpx.Request | None]
 ResponseInterceptor = Callable[[httpx.Response], Awaitable[httpx.Response | None] | httpx.Response | None]
+
+
+def _parse_cache_control_max_age(cache_control: str) -> int | None:
+    if not cache_control:
+        return None
+    for directive in cache_control.split(","):
+        directive = directive.strip().lower()
+        if not directive.startswith("max-age"):
+            continue
+        parts = directive.split("=", 1)
+        if len(parts) != 2:
+            continue
+        value = parts[1].strip().strip('"')
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_expires_timestamp(expires: str) -> float | None:
+    if not expires:
+        return None
+    try:
+        parsed = email.utils.parsedate_to_datetime(expires)
+    except (TypeError, ValueError):
+        return None
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
 
 
 @dataclass(slots=True)
@@ -346,9 +380,21 @@ class HttpClient:
                     is_success = 200 <= response.status_code <= 299
                     # Respeta no-store/private/set-cookie y evita cachear contenido sensible/volátil.
                     should_cache = not (has_no_cache or has_no_store or has_private or has_set_cookie)
+                    max_age = _parse_cache_control_max_age(cache_control)
+                    now = time.time()
+                    expires_at: float | None = None
+                    if max_age is not None:
+                        if max_age <= 0:
+                            should_cache = False
+                        else:
+                            expires_at = now + max_age
+                    else:
+                        expires_at = _parse_expires_timestamp(response.headers.get("expires", ""))
+                        if expires_at is not None and expires_at <= now:
+                            should_cache = False
                     if should_cache and is_success:
                         await response.aread()
-                        self._cache.set(cache_key, response)
+                        self._cache.set(cache_key, response, expires_at=expires_at)
         except Exception as exc:  # pragma: no cover - rutas excepcionales
             error = exc
             raise
