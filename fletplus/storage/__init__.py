@@ -115,6 +115,8 @@ class StorageProvider(Generic[_T]):
     def remove(self, key: str) -> None:
         """Elimina una clave del almacenamiento."""
 
+        if key not in self:
+            return
         try:
             self._remove_raw(key)
         except KeyError:

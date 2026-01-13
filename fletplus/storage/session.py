@@ -40,6 +40,8 @@ class SessionStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _remove_raw(self, key: str) -> None:
+        if key not in self._storage.get_keys():
+            raise KeyError(key)
         self._storage.remove(key)
 
     # ------------------------------------------------------------------
