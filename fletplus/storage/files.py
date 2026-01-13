@@ -103,7 +103,9 @@ class FileStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _remove_raw(self, key: str) -> None:
-        self._cache.pop(key, None)
+        if key not in self._cache:
+            raise KeyError(key)
+        self._cache.pop(key)
         self._persist()
 
     # ------------------------------------------------------------------
