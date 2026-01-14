@@ -68,7 +68,8 @@ def _profile_router_navigation() -> None:
             Route(path="/", view=lambda _: ft.Text("inicio")),
             Route(path="/dashboard", view=lambda _: ft.Text("dashboard")),
             Route(
-                path="/usuarios/{user_id}",
+                # La sintaxis de parámetros del router usa <>.
+                path="/usuarios/<user_id>",
                 view=lambda match: ft.Text(
                     f"usuario {match.params.get('user_id')}",
                     key=match.params.get("user_id"),
