@@ -160,37 +160,30 @@ class DiskCache:
             except Exception:
                 pass
 
-        if self.max_age is not None:
-            cutoff = time.time() - self.max_age
-        else:
-            cutoff = None
+        cutoff = (time.time() - self.max_age) if self.max_age is not None else None
         files: list[tuple[Path, float]] = []
-        # max_age None: usamos mtime actualizado en hits; con max_age, usamos timestamp persistido.
+        # Orden por recencia: usamos mtime actualizado en hits.
         for path in self.directory.glob("*.json"):
             try:
                 mtime = path.stat().st_mtime
             except (FileNotFoundError, OSError):
                 continue
-            if self.max_age is None:
-                files.append((path, mtime))
-                continue
-            try:
-                data = json.loads(path.read_text("utf-8"))
-                timestamp = float(data["timestamp"])
-            except Exception:
-                with contextlib.suppress(OSError):
-                    path.unlink()
-                continue
-            files.append((path, timestamp))
+            if cutoff is not None:
+                try:
+                    data = json.loads(path.read_text("utf-8"))
+                    timestamp = float(data["timestamp"])
+                except Exception:
+                    with contextlib.suppress(OSError):
+                        path.unlink()
+                    continue
+                if timestamp < cutoff:
+                    with contextlib.suppress(OSError):
+                        path.unlink()
+                    continue
+            files.append((path, mtime))
         files.sort(key=lambda item: item[1], reverse=True)
         kept = 0
         for file_path, _mtime in files:
-            if cutoff is not None:
-                timestamp = _mtime
-                if timestamp < cutoff:
-                    with contextlib.suppress(OSError):
-                        file_path.unlink()
-                    continue
             kept += 1
             if kept > self.max_entries:
                 with contextlib.suppress(OSError):
