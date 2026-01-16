@@ -8,7 +8,9 @@ import contextlib
 import hashlib
 import json
 import os
+import stat
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -27,11 +29,43 @@ cdef inline bytes _safe_bytes(object value):
 
 
 cdef class DiskCache:
-    """Caché persistente sencilla para respuestas HTTP."""
+    """Caché persistente sencilla para respuestas HTTP.
 
-    def __init__(self, directory: str | os.PathLike[str], *, int max_entries=128, max_age: float | None = None):
+    Al crear el directorio, intenta aplicar permisos restrictivos (``0o700``)
+    y valida si es world-writable según ``world_writable_policy``.
+    """
+
+    def __init__(
+        self,
+        directory: str | os.PathLike[str],
+        *,
+        int max_entries=128,
+        max_age: float | None = None,
+        world_writable_policy: str = "warn",
+    ):
+        if world_writable_policy not in {"warn", "error", "ignore"}:
+            raise ValueError("world_writable_policy debe ser 'warn', 'error' o 'ignore'.")
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
+        if os.name == "posix":
+            try:
+                os.chmod(self.directory, 0o700)
+            except (PermissionError, NotImplementedError, OSError):
+                pass
+            if world_writable_policy != "ignore":
+                try:
+                    mode = self.directory.stat().st_mode
+                except OSError:
+                    mode = None
+                if mode is not None and mode & stat.S_IWOTH:
+                    message = (
+                        "El directorio de caché "
+                        f"'{self.directory}' es world-writable. "
+                        "Usa permisos restrictivos o ajusta world_writable_policy."
+                    )
+                    if world_writable_policy == "error":
+                        raise PermissionError(message)
+                    warnings.warn(message, RuntimeWarning, stacklevel=2)
         self.max_entries = max_entries
         if max_age is None:
             self.has_ttl = False

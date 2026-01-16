@@ -122,6 +122,10 @@ Cuando se proporciona un `DiskCache`, las respuestas `GET` se almacenan de
 forma persistente en disco. El contenido se recupera automáticamente en
 solicitudes posteriores, evitando la llamada remota.
 
+`DiskCache` intenta aplicar permisos restrictivos (``0o700``) al directorio y,
+si el sistema lo permite, advierte o falla cuando detecta permisos
+world-writable según `world_writable_policy`.
+
 ```python
 from pathlib import Path
 from fletplus import DiskCache, HttpClient
