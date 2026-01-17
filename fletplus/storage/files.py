@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import Any, Dict
 
@@ -56,16 +57,17 @@ class FileStorageProvider(StorageProvider[Any]):
     # ------------------------------------------------------------------
     def _persist(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = self._path.with_name(f"{self._path.name}.tmp")
-        tmp_name: str | None = None
+        tmp_path: Path | None = None
         try:
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-            try:
-                fd = os.open(tmp_path, flags, 0o600)
-            except FileExistsError:
-                tmp_path.unlink(missing_ok=True)
-                fd = os.open(tmp_path, flags, 0o600)
-            with os.fdopen(fd, "w", encoding=self._encoding) as fp:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                delete=False,
+                dir=self._path.parent,
+                prefix=self._path.name,
+                suffix=".tmp",
+                encoding=self._encoding,
+            ) as fp:
+                tmp_path = Path(fp.name)
                 json.dump(
                     self._cache,
                     fp,
@@ -75,13 +77,15 @@ class FileStorageProvider(StorageProvider[Any]):
                 )
                 fp.flush()
                 os.fsync(fp.fileno())
-                tmp_name = str(tmp_path)
-            os.replace(tmp_name, self._path)
+            if tmp_path is None:
+                return
+            os.chmod(tmp_path, 0o600)
+            os.replace(tmp_path, self._path)
             os.chmod(self._path, 0o600)
         finally:
-            if tmp_name:
+            if tmp_path is not None:
                 try:
-                    Path(tmp_name).unlink()
+                    tmp_path.unlink()
                 except FileNotFoundError:
                     pass
                 except OSError:
