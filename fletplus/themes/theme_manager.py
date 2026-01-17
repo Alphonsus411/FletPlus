@@ -11,8 +11,10 @@ the page theme.
 
 from __future__ import annotations
 
+import asyncio
 import importlib
 import importlib.util
+import inspect
 import json
 import logging
 from collections.abc import Callable, Mapping
@@ -998,14 +1000,35 @@ class ThemeManager:
         original = handler if callable(handler) else None
 
         def combined(event):
+            def schedule(awaitable: object, origin: str) -> None:
+                if not inspect.isawaitable(awaitable):
+                    return
+                try:
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = asyncio.get_event_loop()
+                    loop.create_task(awaitable)
+                except Exception:  # pragma: no cover - defensivo
+                    logger.exception(
+                        "No se pudo programar el manejador async %s de %s",
+                        origin,
+                        event_name,
+                    )
+
             if original:
                 try:
-                    original(event)
+                    schedule(original(event), "original")
                 except Exception:  # pragma: no cover - evitar romper callbacks ajenos
                     logger.exception(
                         "Error en el manejador original de %s", event_name
                     )
-            callback(event)
+            try:
+                schedule(callback(event), "callback")
+            except Exception:  # pragma: no cover - evitar romper callbacks ajenos
+                logger.exception(
+                    "Error en el manejador de %s", event_name
+                )
 
         try:
             setattr(self.page, event_name, combined)
