@@ -9,6 +9,7 @@ import json
 import os
 import stat
 import time
+import tempfile
 import warnings
 from pathlib import Path
 from typing import Any, Literal
@@ -151,6 +152,7 @@ class DiskCache:
 
     # ------------------------------------------------------------------
     def set(self, key: str, response: httpx.Response, *, expires_at: float | None = None) -> None:
+        """Guarda la respuesta en disco con escritura atómica segura para concurrencia."""
         path = self._path_for(key)
         headers = [
             (name.decode("latin-1"), value.decode("latin-1"))
@@ -166,23 +168,24 @@ class DiskCache:
             "expires_at": expires_at,
         }
         payload = json.dumps(entry, separators=(",", ":"))
-        tmp_path = path.with_name(f"{path.name}.tmp")
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        tmp_path: Path | None = None
         try:
-            try:
-                fd = os.open(tmp_path, flags, 0o600)
-            except FileExistsError:
-                tmp_path.unlink(missing_ok=True)
-                fd = os.open(tmp_path, flags, 0o600)
-            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                delete=False,
+                dir=self.directory,
+            ) as fh:
+                tmp_path = Path(fh.name)
                 fh.write(payload)
                 fh.flush()
                 os.fsync(fh.fileno())
             os.replace(tmp_path, path)
             os.chmod(path, 0o600)
         finally:
-            if tmp_path.exists():
-                tmp_path.unlink(missing_ok=True)
+            if tmp_path is not None:
+                with contextlib.suppress(OSError):
+                    tmp_path.unlink()
         self._cleanup()
 
     # ------------------------------------------------------------------
