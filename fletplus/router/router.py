@@ -147,6 +147,8 @@ class Router:
     # ------------------------------------------------------------------
     def _activate(self, path: str, *, push: bool) -> None:
         normalized = _normalize_path_string(path)
+        previous_history = list(self._history)
+        previous_index = self._index
         if push:
             if self._index < len(self._history) - 1:
                 self._history = self._history[: self._index + 1]
@@ -158,7 +160,12 @@ class Router:
                 self._index = 0
             else:
                 self._history[self._index] = normalized
-        self._render_path(normalized)
+        try:
+            self._render_path(normalized)
+        except Exception:
+            self._history = previous_history
+            self._index = previous_index
+            raise
 
     def _render_path(self, path: str) -> None:
         matches = _match(self._root, path)
