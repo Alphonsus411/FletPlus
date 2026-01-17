@@ -52,8 +52,12 @@ def _notify_windows(title: str, body: str) -> bool:
                 check=False,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                timeout=4,
             )
             return result.returncode == 0
+        except subprocess.TimeoutExpired as err:
+            logger.debug("PowerShell agotó el tiempo de espera: %s", err)
+            return False
         except OSError:
             logger.debug("PowerShell no está disponible")
         except Exception as err:  # pragma: no cover - dependiente de entorno
@@ -88,8 +92,12 @@ def _notify_macos(title: str, body: str) -> bool:
             check=False,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            timeout=4,
         )
         return result.returncode == 0
+    except subprocess.TimeoutExpired as err:
+        logger.debug("osascript agotó el tiempo de espera: %s", err)
+        return False
     except OSError:
         logger.debug("osascript no está disponible")
     except Exception as err:  # pragma: no cover - dependiente de entorno
@@ -123,8 +131,12 @@ def _notify_linux(title: str, body: str) -> bool:
                 check=False,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                timeout=4,
             )
             return result.returncode == 0
+        except subprocess.TimeoutExpired as err:
+            logger.debug("notify-send agotó el tiempo de espera: %s", err)
+            return False
         except OSError:
             logger.debug("notify-send no está disponible")
         except Exception as err:  # pragma: no cover - dependiente de entorno
