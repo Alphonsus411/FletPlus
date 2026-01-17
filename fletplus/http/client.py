@@ -39,7 +39,7 @@ def _parse_cache_control_max_age(cache_control: str) -> int | None:
         try:
             return int(value)
         except ValueError:
-            return None
+            continue
     return None
 
 
