@@ -170,7 +170,10 @@ class DiskCache:
             response.extensions["http_version"] = http_version
         if reason_phrase:
             response.extensions["reason_phrase"] = str(reason_phrase).encode("ascii", "ignore")
-        os.utime(path, None)
+        try:
+            os.utime(path, None)
+        except OSError:
+            pass
         return response
 
     # ------------------------------------------------------------------
