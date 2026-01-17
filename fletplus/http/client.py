@@ -36,10 +36,13 @@ def _parse_cache_control_max_age(cache_control: str) -> int | None:
         if len(parts) != 2:
             continue
         value = parts[1].strip().strip('"')
+        if not value:
+            continue
         try:
-            return int(value)
+            max_age = int(value)
         except ValueError:
             continue
+        return max_age
     return None
 
 
