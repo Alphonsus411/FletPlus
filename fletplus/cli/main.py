@@ -218,10 +218,17 @@ def _launch_flet_process(app_path: Path, port: int, devtools: bool) -> subproces
         command.append("--devtools")
 
     env = os.environ.copy()
+    devtools_env_removed = False
     if devtools:
         env.setdefault("FLET_DEVTOOLS", "1")
+    else:
+        if env.pop("FLET_DEVTOOLS", None) is not None:
+            devtools_env_removed = True
 
-    click.echo(f"Iniciando servidor: {' '.join(command)}")
+    mensaje_arranque = f"Iniciando servidor: {' '.join(command)}"
+    if devtools_env_removed:
+        mensaje_arranque += " (FLET_DEVTOOLS eliminado del entorno porque --no-devtools está activo)"
+    click.echo(mensaje_arranque)
     return subprocess.Popen(command, env=env, cwd=str(app_path.parent))
 
 
