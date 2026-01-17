@@ -188,6 +188,8 @@ class Router:
             )
             route_matches.append(root_match)
             parent_match = root_match
+            if path_nodes and path_nodes[0][0] is self._root:
+                path_nodes = path_nodes[1:]
         for node, node_params in path_nodes:
             match = RouteMatch(
                 router=self,
