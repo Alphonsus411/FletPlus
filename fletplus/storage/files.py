@@ -39,7 +39,7 @@ class FileStorageProvider(StorageProvider[Any]):
             return
         try:
             text = self._path.read_text(encoding=self._encoding)
-        except OSError:
+        except (OSError, UnicodeDecodeError):
             self._cache = {}
             return
         try:
