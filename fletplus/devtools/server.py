@@ -91,6 +91,10 @@ class DevToolsServer:
         except Exception:  # pragma: no cover - errores inesperados
             _LOGGER.exception("Error enviando mensaje a un cliente")
 
+    @staticmethod
+    def _payload_size_bytes(text: str) -> int:
+        return len(text.encode("utf-8"))
+
     async def _handle_client(self, websocket: ServerProtocol) -> None:
         if not self._is_authorized(websocket):
             await websocket.close(code=1008, reason="unauthorized")
@@ -107,7 +111,7 @@ class DevToolsServer:
                     continue
                 if (
                     self._max_payload_size is not None
-                    and len(frame) > self._max_payload_size
+                    and self._payload_size_bytes(frame) > self._max_payload_size
                 ):
                     _LOGGER.warning(
                         "Frame excede el tamaño máximo permitido (%s bytes)",
@@ -149,7 +153,10 @@ class DevToolsServer:
             await self._safe_send(websocket, message)
 
     def _remember_initial_payload(self, message: str) -> None:
-        if self._max_payload_size is not None and len(message) > self._max_payload_size:
+        if (
+            self._max_payload_size is not None
+            and self._payload_size_bytes(message) > self._max_payload_size
+        ):
             return
 
         try:
