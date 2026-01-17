@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import ipaddress
 from collections import OrderedDict
 from collections.abc import Iterable
 from urllib.parse import parse_qs, urlparse
@@ -42,7 +43,21 @@ class DevToolsServer:
         entrantes deben incluir el token en la query string (``?token=...``) y/o
         un header ``Origin`` permitido; en caso contrario se rechazan con un
         cierre de política.
+
+        Para exponer el servidor fuera de loopback (por ejemplo ``0.0.0.0``,
+        ``::`` o una IP pública) es obligatorio configurar ``auth_token`` o
+        ``allowed_origins``. Esta restricción evita exponer el canal de DevTools
+        sin control de acceso.
         """
+        if (
+            not self._is_loopback_host(host)
+            and self._auth_token is None
+            and self._allowed_origins is None
+        ):
+            raise RuntimeError(
+                "No se puede iniciar DevTools sin auth_token ni allowed_origins "
+                "cuando se expone fuera de loopback."
+            )
 
         return serve(
             self._handle_client,
@@ -203,3 +218,13 @@ class DevToolsServer:
                 return inner_type
 
         return None
+
+    @staticmethod
+    def _is_loopback_host(host: str) -> bool:
+        if host == "localhost":
+            return True
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError:
+            return False
+        return address.is_loopback
