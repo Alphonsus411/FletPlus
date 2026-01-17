@@ -318,6 +318,7 @@ class ThemeManager:
         self._palette_definition: dict[str, Mapping[str, object]] | None = None
         self._palette_name: str | None = None
         self._preset_name: str | None = None
+        self._palette_tokens: dict[str, dict[str, object]] = {}
         self._device_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._orientation_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._breakpoint_tokens: dict[int, dict[str, dict[str, object]]] = {}
@@ -745,6 +746,7 @@ class ThemeManager:
     # ------------------------------------------------------------------
     def _apply_current_palette_variant(self) -> None:
         if not self._palette_definition:
+            self._palette_tokens = {}
             return
 
         mode = "dark" if self.dark_mode else "light"
@@ -754,33 +756,33 @@ class ThemeManager:
             fallback = "light" if mode == "dark" else "dark"
             variant = self._palette_definition.get(fallback)
             if not isinstance(variant, Mapping):
+                self._palette_tokens = {}
                 return
 
-        self._merge_palette_tokens(variant)
+        self._palette_tokens = self._build_palette_tokens(variant)
         self._refresh_effective_tokens(
             self._active_device, self._active_orientation, self._active_width
         )
         self._emit_tokens_snapshot()
 
     # ------------------------------------------------------------------
-    def _merge_palette_tokens(self, palette_tokens: Mapping[str, object]) -> None:
+    def _build_palette_tokens(
+        self, palette_tokens: Mapping[str, object]
+    ) -> dict[str, dict[str, object]]:
+        palette_layer: dict[str, dict[str, object]] = {}
         for group, values in palette_tokens.items():
             if group == "description":
                 continue
             if group == "gradients" and isinstance(values, Mapping):
-                gradients = self.tokens.setdefault("gradients", {})
+                gradients: dict[str, object] = {}
                 for name, definition in values.items():
                     gradients[name] = self._build_gradient(definition)
+                palette_layer["gradients"] = gradients
                 continue
 
             if isinstance(values, Mapping):
-                target = self.tokens.setdefault(group, {})
-                target.update(values)
-
-        self._refresh_effective_tokens(
-            self._active_device, self._active_orientation, self._active_width
-        )
-        self._emit_tokens_snapshot()
+                palette_layer[group] = {key: value for key, value in values.items()}
+        return palette_layer
 
     # ------------------------------------------------------------------
     def _refresh_effective_tokens(
@@ -796,6 +798,7 @@ class ThemeManager:
         self._effective_tokens = merge_token_layers(
             self.tokens,
             [
+                self._palette_tokens,
                 device_overrides,
                 orientation_overrides,
                 breakpoint_overrides,
