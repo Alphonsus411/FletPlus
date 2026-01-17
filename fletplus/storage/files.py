@@ -40,6 +40,7 @@ class FileStorageProvider(StorageProvider[Any]):
         try:
             text = self._path.read_text(encoding=self._encoding)
         except (OSError, UnicodeDecodeError):
+            # Si hay problemas de lectura o decodificación, reinicia la caché.
             self._cache = {}
             return
         try:
