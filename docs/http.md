@@ -123,8 +123,10 @@ forma persistente en disco. El contenido se recupera automáticamente en
 solicitudes posteriores, evitando la llamada remota.
 
 `DiskCache` intenta aplicar permisos restrictivos (``0o700``) al directorio y,
-si el sistema lo permite, advierte o falla cuando detecta permisos
-world-writable según `world_writable_policy`.
+si el sistema lo permite, falla por defecto cuando detecta permisos
+world-writable. Puede ajustar el comportamiento con `world_writable_policy`:
+`"error"` falla explícitamente, `"warn"` crea un subdirectorio privado
+(``0700``) dentro del directorio indicado y `"ignore"` omite la validación.
 
 ```python
 from pathlib import Path

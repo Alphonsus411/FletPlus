@@ -27,7 +27,10 @@ class DiskCache:
     """Caché persistente sencilla para respuestas HTTP.
 
     Al crear el directorio, intenta aplicar permisos restrictivos (``0o700``)
-    y valida si es world-writable según ``world_writable_policy``.
+    y valida si es world-writable según ``world_writable_policy``. Con
+    ``warn`` se crea un subdirectorio privado (``0700``) para mantener la
+    compatibilidad, con ``error`` se falla de forma explícita y con ``ignore``
+    se omite la validación.
     """
 
     def __init__(
@@ -36,7 +39,7 @@ class DiskCache:
         *,
         max_entries: int = 128,
         max_age: float | None = None,
-        world_writable_policy: Literal["warn", "error", "ignore"] = "warn",
+        world_writable_policy: Literal["warn", "error", "ignore"] = "error",
     ) -> None:
         if not isinstance(max_entries, int) or isinstance(max_entries, bool) or max_entries < 1:
             raise ValueError("max_entries debe ser un entero mayor o igual a 1.")
@@ -58,14 +61,34 @@ class DiskCache:
                 except OSError:
                     mode = None
                 if mode is not None and mode & stat.S_IWOTH:
-                    message = (
-                        "El directorio de caché "
-                        f"'{self.directory}' es world-writable. "
-                        "Usa permisos restrictivos o ajusta world_writable_policy."
-                    )
-                    if world_writable_policy == "error":
-                        raise PermissionError(message)
-                    warnings.warn(message, RuntimeWarning, stacklevel=2)
+                    if world_writable_policy == "warn":
+                        private_dir = self.directory / ".fletplus-cache-private"
+                        private_dir.mkdir(parents=True, exist_ok=True)
+                        try:
+                            os.chmod(private_dir, 0o700)
+                        except (PermissionError, NotImplementedError, OSError):
+                            pass
+                        warnings.warn(
+                            "El directorio de caché "
+                            f"'{self.directory}' es world-writable. "
+                            f"Se usará el subdirectorio privado '{private_dir}'. "
+                            "Configura world_writable_policy='error' para fallar "
+                            "o 'ignore' para mantener el directorio original.",
+                            RuntimeWarning,
+                            stacklevel=2,
+                        )
+                        self.directory = private_dir
+                    else:
+                        message = (
+                            "El directorio de caché "
+                            f"'{self.directory}' es world-writable. "
+                            "Configura world_writable_policy='warn' para usar "
+                            "un subdirectorio privado o 'ignore' para "
+                            "mantenerlo bajo tu responsabilidad."
+                        )
+                        if world_writable_policy == "error":
+                            raise PermissionError(message)
+                        warnings.warn(message, RuntimeWarning, stacklevel=2)
         self.max_entries = max_entries
         self.max_age = max_age
 
