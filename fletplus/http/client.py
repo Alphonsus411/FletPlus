@@ -308,6 +308,7 @@ class HttpClient:
         *,
         cache: bool | None = None,
         context: MutableMapping[str, Any] | None = None,
+        stream: bool = False,
         **kwargs: Any,
     ) -> httpx.Response:
         """Construye y envía una petición HTTP.
@@ -319,8 +320,10 @@ class HttpClient:
         de la petición `Cache-Control`/`Pragma` con `no-store` o `no-cache`
         (a menos que se pase `cache=True`), y en la respuesta se consideran
         `Cache-Control`/`Pragma` con `no-store` o `private`, la presencia de
-        `Set-Cookie` y solo se cachean respuestas exitosas (2xx).
+        `Set-Cookie` y solo se cachean respuestas exitosas (2xx). Si `stream=True`,
+        se desactiva la caché para no cargar el cuerpo completo en memoria.
         """
+        stream = kwargs.pop("stream", stream)
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context if context is not None else {}
         event = RequestEvent(request=request, context=request_context, cache_key=None)
@@ -337,6 +340,8 @@ class HttpClient:
             event.request = request
 
             use_cache = cache if cache is not None else True
+            if stream:
+                use_cache = False
             cache_control = request.headers.get("cache-control", "")
             pragma = request.headers.get("pragma", "")
             combined_directives = f"{cache_control},{pragma}".lower()
@@ -366,10 +371,10 @@ class HttpClient:
                     response = cached
                     from_cache = True
             if response is None:
-                response = await self._client.send(request)
+                response = await self._client.send(request, stream=stream)
                 for interceptor in reversed(self._interceptors):
                     response = await interceptor.apply_response(response)
-                if cache_key and self._cache:
+                if cache_key and self._cache and not stream:
                     cache_control = response.headers.get("cache-control", "")
                     pragma = response.headers.get("pragma", "")
                     combined_directives = f"{cache_control},{pragma}".lower()
@@ -419,8 +424,10 @@ class HttpClient:
         headers: MutableMapping[str, str] | None = None,
         cache: bool | None = None,
         context: MutableMapping[str, Any] | None = None,
+        stream: bool = False,
         **kwargs: Any,
     ) -> httpx.Response:
+        """Atajo para peticiones GET con soporte opcional de streaming."""
         return await self.request(
             "GET",
             url,
@@ -428,6 +435,7 @@ class HttpClient:
             headers=headers,
             cache=cache,
             context=context,
+            stream=stream,
             **kwargs,
         )
 
@@ -440,8 +448,10 @@ class HttpClient:
         json_data: Any = None,
         headers: MutableMapping[str, str] | None = None,
         context: MutableMapping[str, Any] | None = None,
+        stream: bool = False,
         **kwargs: Any,
     ) -> httpx.Response:
+        """Atajo para peticiones POST con soporte opcional de streaming."""
         payload = dict(kwargs)
         if data is not None:
             payload["data"] = data
@@ -449,7 +459,7 @@ class HttpClient:
             payload["json"] = json_data
         if headers is not None:
             payload["headers"] = headers
-        return await self.request("POST", url, cache=False, context=context, **payload)
+        return await self.request("POST", url, cache=False, context=context, stream=stream, **payload)
 
     # ------------------------------------------------------------------
     async def ws_connect(self, url: str, *, context: MutableMapping[str, Any] | None = None, **kwargs: Any):
