@@ -147,6 +147,8 @@ class Router:
     # ------------------------------------------------------------------
     def _activate(self, path: str, *, push: bool) -> None:
         normalized = _normalize_path_string(path)
+        if not _match(self._root, normalized):
+            raise RouteNotFoundError(f"Ruta no encontrada: {normalized}")
         previous_history = list(self._history)
         previous_index = self._index
         if push:
