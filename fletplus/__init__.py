@@ -6,100 +6,209 @@ la estructura interna de submódulos. Esto evita errores de importación cuando
 se distribuye la librería y mejora la experiencia para los usuarios finales.
 """
 
-from fletplus.animation import (
-    AnimatedContainer,
-    AnimationController,
-    FadeIn,
-    Scale,
-    SlideTransition,
-    animation_controller_context,
-)
-from fletplus.core import FletPlusApp, FloatingMenuOptions, ResponsiveNavigationConfig
-from fletplus.context import (
-    Context,
-    ContextProvider,
-    locale_context,
-    theme_context,
-    user_context,
-)
-from fletplus.router import Router, Route, LayoutInstance, layout_from_attribute
-from fletplus.icons import (
-    DEFAULT_ICON_SET,
-    Icon,
-    available_icon_sets,
-    has_icon,
-    icon,
-    list_icons,
-    register_icon,
-    register_icon_set,
-    resolve_icon_name,
-)
-from fletplus.themes import (
-    ThemeManager,
-    load_palette_from_file,
-    load_theme_from_json,
-    list_palettes,
-    get_palette_tokens,
-    has_palette,
-    get_palette_definition,
-    list_presets,
-    has_preset,
-    get_preset_definition,
-)
-from fletplus.components import (
-    PrimaryButton,
-    SecondaryButton,
-    SuccessButton,
-    WarningButton,
-    DangerButton,
-    InfoButton,
-    IconButton,
-    OutlinedButton,
-    TextButton,
-    FloatingActionButton,
-    CommandPalette,
-    AccessibilityPanel,
-    AdaptiveDestination,
-    AdaptiveNavigationLayout,
-    FlexRow,
-    FlexColumn,
-    Grid,
-    GridItem,
-    ResponsiveContainer,
-    ResponsiveGrid,
-    Spacer,
-    Stack,
-    StackItem,
-    SidebarAdmin,
-    SmartTable,
-    LineChart,
-    Wrap,
-)
-from fletplus.utils import (
-    ResponsiveStyle,
-    ResponsiveTypography,
-    responsive_text,
-    responsive_spacing,
-    ResponsiveManager,
-    ShortcutManager,
-    FileDropZone,
-    ResponsiveVisibility,
-    is_mobile,
-    is_web,
-    is_desktop,
-)
-from fletplus.desktop import WindowManager, SystemTray, show_notification
-from fletplus.http import DiskCache, HttpClient, HttpInterceptor, RequestEvent, ResponseEvent
-from fletplus.web import (
-    generate_manifest,
-    generate_service_worker,
-    register_pwa,
-)
-from fletplus.state import DerivedSignal, Signal, Store, reactive, use_signal, use_state, watch
-from fletplus.storage import StorageProvider
-from fletplus.storage.files import FileStorageProvider
-from fletplus.storage.local import LocalStorageProvider
-from fletplus.storage.session import SessionStorageProvider
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING, Any
+
+LAZY_IMPORTS = {
+    "AdaptiveDestination": "fletplus.components",
+    "AdaptiveNavigationLayout": "fletplus.components",
+    "AccessibilityPanel": "fletplus.components",
+    "AnimatedContainer": "fletplus.animation",
+    "AnimationController": "fletplus.animation",
+    "CommandPalette": "fletplus.components",
+    "Context": "fletplus.context",
+    "ContextProvider": "fletplus.context",
+    "DangerButton": "fletplus.components",
+    "DEFAULT_ICON_SET": "fletplus.icons",
+    "DerivedSignal": "fletplus.state",
+    "DiskCache": "fletplus.http",
+    "FadeIn": "fletplus.animation",
+    "FileDropZone": "fletplus.utils",
+    "FileStorageProvider": "fletplus.storage.files",
+    "FlexColumn": "fletplus.components",
+    "FlexRow": "fletplus.components",
+    "FloatingActionButton": "fletplus.components",
+    "FloatingMenuOptions": "fletplus.core",
+    "FletPlusApp": "fletplus.core",
+    "Grid": "fletplus.components",
+    "GridItem": "fletplus.components",
+    "HttpClient": "fletplus.http",
+    "HttpInterceptor": "fletplus.http",
+    "Icon": "fletplus.icons",
+    "IconButton": "fletplus.components",
+    "InfoButton": "fletplus.components",
+    "LayoutInstance": "fletplus.router",
+    "LineChart": "fletplus.components",
+    "LocalStorageProvider": "fletplus.storage.local",
+    "OutlinedButton": "fletplus.components",
+    "PrimaryButton": "fletplus.components",
+    "RequestEvent": "fletplus.http",
+    "ResponsiveContainer": "fletplus.components",
+    "ResponsiveGrid": "fletplus.components",
+    "ResponsiveManager": "fletplus.utils",
+    "ResponsiveNavigationConfig": "fletplus.core",
+    "ResponsiveStyle": "fletplus.utils",
+    "ResponsiveTypography": "fletplus.utils",
+    "ResponsiveVisibility": "fletplus.utils",
+    "ResponseEvent": "fletplus.http",
+    "Route": "fletplus.router",
+    "Router": "fletplus.router",
+    "Scale": "fletplus.animation",
+    "SecondaryButton": "fletplus.components",
+    "SessionStorageProvider": "fletplus.storage.session",
+    "ShortcutManager": "fletplus.utils",
+    "SidebarAdmin": "fletplus.components",
+    "Signal": "fletplus.state",
+    "SlideTransition": "fletplus.animation",
+    "SmartTable": "fletplus.components",
+    "Spacer": "fletplus.components",
+    "Stack": "fletplus.components",
+    "StackItem": "fletplus.components",
+    "StorageProvider": "fletplus.storage",
+    "Store": "fletplus.state",
+    "SuccessButton": "fletplus.components",
+    "SystemTray": "fletplus.desktop",
+    "TextButton": "fletplus.components",
+    "ThemeManager": "fletplus.themes",
+    "WindowManager": "fletplus.desktop",
+    "Wrap": "fletplus.components",
+    "animation_controller_context": "fletplus.animation",
+    "available_icon_sets": "fletplus.icons",
+    "generate_manifest": "fletplus.web",
+    "generate_service_worker": "fletplus.web",
+    "get_palette_definition": "fletplus.themes",
+    "get_palette_tokens": "fletplus.themes",
+    "get_preset_definition": "fletplus.themes",
+    "has_icon": "fletplus.icons",
+    "has_palette": "fletplus.themes",
+    "has_preset": "fletplus.themes",
+    "icon": "fletplus.icons",
+    "is_desktop": "fletplus.utils",
+    "is_mobile": "fletplus.utils",
+    "is_web": "fletplus.utils",
+    "layout_from_attribute": "fletplus.router",
+    "list_icons": "fletplus.icons",
+    "list_palettes": "fletplus.themes",
+    "list_presets": "fletplus.themes",
+    "load_palette_from_file": "fletplus.themes",
+    "load_theme_from_json": "fletplus.themes",
+    "locale_context": "fletplus.context",
+    "reactive": "fletplus.state",
+    "register_icon": "fletplus.icons",
+    "register_icon_set": "fletplus.icons",
+    "register_pwa": "fletplus.web",
+    "resolve_icon_name": "fletplus.icons",
+    "responsive_spacing": "fletplus.utils",
+    "responsive_text": "fletplus.utils",
+    "show_notification": "fletplus.desktop",
+    "theme_context": "fletplus.context",
+    "use_signal": "fletplus.state",
+    "use_state": "fletplus.state",
+    "user_context": "fletplus.context",
+    "watch": "fletplus.state",
+    "WarningButton": "fletplus.components",
+}
+
+if TYPE_CHECKING:
+    from fletplus.animation import (
+        AnimatedContainer,
+        AnimationController,
+        FadeIn,
+        Scale,
+        SlideTransition,
+        animation_controller_context,
+    )
+    from fletplus.components import (
+        PrimaryButton,
+        SecondaryButton,
+        SuccessButton,
+        WarningButton,
+        DangerButton,
+        InfoButton,
+        IconButton,
+        OutlinedButton,
+        TextButton,
+        FloatingActionButton,
+        CommandPalette,
+        AccessibilityPanel,
+        AdaptiveDestination,
+        AdaptiveNavigationLayout,
+        FlexRow,
+        FlexColumn,
+        Grid,
+        GridItem,
+        ResponsiveContainer,
+        ResponsiveGrid,
+        Spacer,
+        Stack,
+        StackItem,
+        SidebarAdmin,
+        SmartTable,
+        LineChart,
+        Wrap,
+    )
+    from fletplus.context import (
+        Context,
+        ContextProvider,
+        locale_context,
+        theme_context,
+        user_context,
+    )
+    from fletplus.core import FletPlusApp, FloatingMenuOptions, ResponsiveNavigationConfig
+    from fletplus.desktop import WindowManager, SystemTray, show_notification
+    from fletplus.http import (
+        DiskCache,
+        HttpClient,
+        HttpInterceptor,
+        RequestEvent,
+        ResponseEvent,
+    )
+    from fletplus.icons import (
+        DEFAULT_ICON_SET,
+        Icon,
+        available_icon_sets,
+        has_icon,
+        icon,
+        list_icons,
+        register_icon,
+        register_icon_set,
+        resolve_icon_name,
+    )
+    from fletplus.router import Router, Route, LayoutInstance, layout_from_attribute
+    from fletplus.state import DerivedSignal, Signal, Store, reactive, use_signal, use_state, watch
+    from fletplus.storage import StorageProvider
+    from fletplus.storage.files import FileStorageProvider
+    from fletplus.storage.local import LocalStorageProvider
+    from fletplus.storage.session import SessionStorageProvider
+    from fletplus.themes import (
+        ThemeManager,
+        load_palette_from_file,
+        load_theme_from_json,
+        list_palettes,
+        get_palette_tokens,
+        has_palette,
+        get_palette_definition,
+        list_presets,
+        has_preset,
+        get_preset_definition,
+    )
+    from fletplus.utils import (
+        ResponsiveStyle,
+        ResponsiveTypography,
+        responsive_text,
+        responsive_spacing,
+        ResponsiveManager,
+        ShortcutManager,
+        FileDropZone,
+        ResponsiveVisibility,
+        is_mobile,
+        is_web,
+        is_desktop,
+    )
+    from fletplus.web import generate_manifest, generate_service_worker, register_pwa
+
 
 __all__ = [
     "FletPlusApp",
@@ -200,3 +309,16 @@ __all__ = [
     "user_context",
     "locale_context",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name in LAZY_IMPORTS:
+        module = importlib.import_module(LAZY_IMPORTS[name])
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__() -> list[str]:
+    return sorted(set(__all__))
