@@ -17,7 +17,7 @@ from fletplus.utils.device_profiles import (
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.dragdrop import FileDropZone
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
-from fletplus.utils.responsive_manager import ResponsiveManager
+from .responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.utils.responsive_typography import (
     ResponsiveTypography,
