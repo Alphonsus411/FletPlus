@@ -1,1 +1,3 @@
 recursive-include fletplus *.pyx *.pxd *.c
+recursive-include fletplus/cli/templates *
+recursive-include fletplus/icons *.json
