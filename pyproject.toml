@@ -70,6 +70,8 @@ include-package-data = true
 
 # ------------ PACKAGE DATA ------------
 [tool.setuptools.package-data]
+"fletplus.cli" = ["templates/**"]
+"fletplus.icons" = ["*.json"]
 "fletplus.router" = ["router_cy.c"]
 "fletplus.router.router_pr_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
 "fletplus.router.router_rs" = ["Cargo.toml", "Cargo.lock", "src/*.rs"]
