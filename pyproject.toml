@@ -64,6 +64,9 @@ where = ["."]
 include = ["fletplus*", "fletplus_demo*"]
 exclude = ["tests*", "tools*", "coverage*", "docs*"]
 
+[tool.setuptools]
+include-package-data = true
+
 
 # ------------ PACKAGE DATA ------------
 [tool.setuptools.package-data]
