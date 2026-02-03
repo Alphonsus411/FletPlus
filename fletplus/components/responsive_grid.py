@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Dict, Mapping, Optional, Sequence
 
 import flet as ft
 
@@ -12,7 +12,6 @@ from fletplus.components.responsive_grid_rs import (
     plan_items_from_objects as _plan_grid_items_native_from_objects,
 )
 from fletplus.styles import Style
-from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
@@ -23,6 +22,8 @@ from fletplus.utils.device_profiles import (
     iter_device_profiles,
 )
 
+if TYPE_CHECKING:
+    from fletplus.themes.theme_manager import ThemeManager
 
 DeviceName = str
 
@@ -269,7 +270,7 @@ class HeaderHighlight:
 
     def build_control(
         self,
-        theme: ThemeManager | None,
+        theme: "ThemeManager | None",
         accent: str,
         device: DeviceName,
     ) -> ft.Control:
@@ -381,7 +382,7 @@ class ResponsiveGrid:
         section_shadow: ft.BoxShadow | Sequence[ft.BoxShadow] | None = None,
         section_max_content_width: int | None = None,
         section_max_content_width_by_device: Dict[str, float | int | None] | None = None,
-        theme: ThemeManager | None = None,
+        theme: "ThemeManager | None" = None,
         device_profiles: Sequence[DeviceProfile] | None = None,
         device_columns: Dict[str, int] | None = None,
         adaptive_spacing: bool = False,
