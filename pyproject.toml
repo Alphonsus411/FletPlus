@@ -2,8 +2,6 @@
 requires = [
     "setuptools>=61",
     "wheel",
-    "maturin>=1.7",
-    "pyrust-native>=0.0.4",
 ]
 build-backend = "setuptools.build_meta"
 
