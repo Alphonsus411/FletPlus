@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
-from fletplus.themes.theme_manager import ThemeManager
+if TYPE_CHECKING:
+    from fletplus.themes.theme_manager import ThemeManager
 
 
 @dataclass
@@ -22,7 +24,7 @@ class AccessibilityPreferences:
     caption_duration_ms: int = 4000
     locale: str | None = None
 
-    def apply(self, page: ft.Page, theme: ThemeManager | None = None) -> None:
+    def apply(self, page: ft.Page, theme: "ThemeManager | None" = None) -> None:
         """Aplica las preferencias sobre ``page`` y actualiza el tema activo."""
 
         theme_obj = page.theme if page.theme else ft.Theme()
