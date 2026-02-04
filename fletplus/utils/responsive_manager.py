@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
-from typing import Callable, Dict, Sequence
+from typing import Callable, Dict, Mapping, Sequence
 
 import flet as ft
 
@@ -104,6 +104,15 @@ else:
 
             self.page.on_resize = _combined_resize
             self._handle_resize()
+
+        # ------------------------------------------------------------------
+        @staticmethod
+        def normalize_breakpoints(
+            mapping: Mapping[int | str, dict],
+        ) -> dict[int, dict]:
+            """Normaliza un ``mapping`` de breakpoints usando el registro."""
+
+            return BreakpointRegistry.normalize(mapping)
 
         # ------------------------------------------------------------------
         def register_styles(

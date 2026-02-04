@@ -2,7 +2,7 @@
 """Gestor de breakpoints para responder a cambios de tamaño de la página."""
 
 import flet as ft
-from typing import Callable, Dict, Sequence
+from typing import Callable, Dict, Mapping, Sequence
 
 from fletplus.styles import Style
 from fletplus.utils.responsive_style import ResponsiveStyle
@@ -95,6 +95,13 @@ cdef class ResponsiveManager:
 
         self.page.on_resize = _combined_resize
         self._handle_resize()
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def normalize_breakpoints(mapping: Mapping[int | str, dict]) -> dict[int, dict]:
+        """Normaliza un ``mapping`` de breakpoints usando el registro."""
+
+        return BreakpointRegistry.normalize(mapping)
 
     # ------------------------------------------------------------------
     def register_styles(
