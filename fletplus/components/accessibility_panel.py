@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import flet as ft
 
-from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.responsive_manager import ResponsiveManager
 
+if TYPE_CHECKING:
+    from fletplus.themes.theme_manager import ThemeManager
 
 _ACCESSIBLE_SURFACE = getattr(ft.Colors, "ON_SURFACE", ft.Colors.BLUE_GREY_900)
 
@@ -38,7 +39,7 @@ class AccessibilityPanel:
         self,
         *,
         preferences: AccessibilityPreferences | None = None,
-        theme: ThemeManager | None = None,
+        theme: "ThemeManager" | None = None,
         horizontal_breakpoint: int = 720,
         on_change: Callable[[AccessibilityPreferences], None] | None = None,
     ) -> None:
