@@ -23,9 +23,10 @@ from __future__ import annotations
 
 from contextlib import AbstractContextManager
 import contextvars
-from typing import Any, Callable, Generic, Optional, Tuple, TypeVar
+from typing import Any, Callable, Generic, Optional, Tuple, TypeVar, TYPE_CHECKING
 
-from fletplus.state import Signal
+if TYPE_CHECKING:
+    from fletplus.state import Signal
 
 __all__ = [
     "Context",
@@ -236,6 +237,8 @@ class ContextProvider(Generic[_T]):
             initial = self.context.default  # type: ignore[assignment]
         else:
             initial = None  # type: ignore[assignment]
+        from fletplus.state import Signal
+
         self._signal = Signal(initial, comparer=self.context._comparer)
         self._token = self.context._push_provider(self)
         return self
