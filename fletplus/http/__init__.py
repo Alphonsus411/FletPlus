@@ -1,12 +1,26 @@
 """Clientes HTTP reactivos para aplicaciones FletPlus."""
 
-from .client import (
-    DiskCache,
-    HttpClient,
-    HttpInterceptor,
-    RequestEvent,
-    ResponseEvent,
-)
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING, Any
+
+LAZY_IMPORTS = {
+    "DiskCache": "fletplus.http.client",
+    "HttpClient": "fletplus.http.client",
+    "HttpInterceptor": "fletplus.http.client",
+    "RequestEvent": "fletplus.http.client",
+    "ResponseEvent": "fletplus.http.client",
+}
+
+if TYPE_CHECKING:
+    from fletplus.http.client import (
+        DiskCache,
+        HttpClient,
+        HttpInterceptor,
+        RequestEvent,
+        ResponseEvent,
+    )
 
 __all__ = [
     "DiskCache",
@@ -15,3 +29,16 @@ __all__ = [
     "RequestEvent",
     "ResponseEvent",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name in LAZY_IMPORTS:
+        module = importlib.import_module(LAZY_IMPORTS[name])
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__() -> list[str]:
+    return sorted(set(__all__))
