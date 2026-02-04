@@ -25,6 +25,8 @@ cdef class ResponsiveManager:
     cdef dict _styles
     cdef dict _style_state
 
+    @staticmethod
+    cpdef dict normalize_breakpoints(object mapping)
     cpdef void _apply_style(self, object control)
     cpdef dict _capture_base_attributes(self, object control)
     cpdef void _safe_setattr(self, object control, str attr, object value)
