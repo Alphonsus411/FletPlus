@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 
 import flet as ft
 
 from fletplus.utils.responsive_manager import ResponsiveManager
-from fletplus.themes.theme_manager import ThemeManager
+
+if TYPE_CHECKING:
+    from fletplus.themes.theme_manager import ThemeManager
 
 # Registro global por página para reutilizar la instancia
 _INSTANCES: Dict[int, "ResponsiveTypography"] = {}
@@ -19,7 +21,7 @@ class ResponsiveTypography:
     def __init__(
         self,
         page: ft.Page,
-        theme: ThemeManager | None = None,
+        theme: "ThemeManager | None" = None,
         text_sizes: Dict[int, int] | None = None,
         spacings: Dict[int, int] | None = None,
     ) -> None:
