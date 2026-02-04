@@ -1,53 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import flet as ft
 
 from fletplus.styles import Style
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.components.responsive_container import (
+    ResponsiveContainer as _CanonicalResponsiveContainer,
+)
 
 
-class ResponsiveContainer:
-    """Contenedor que ajusta su estilo según el ancho de la página."""
-
-    def __init__(
-        self, content: ft.Control, breakpoints: Mapping[int | str, Style] | None = None
-    ):
-        self.content = content
-        mapping = dict(breakpoints) if breakpoints else {0: Style()}
-        self.breakpoints = ResponsiveManager.normalize_breakpoints(mapping)
-
-    def _get_style(self, width: int) -> Style:
-        style = Style()
-        for bp, st in sorted(self.breakpoints.items()):
-            if width >= bp:
-                style = st
-        return style
-
-    def init_responsive(self, page: ft.Page) -> ft.Container:
-        container = ft.Container(content=self.content)
-
-        def rebuild(width: int) -> None:
-            style = self._get_style(width)
-            if style.padding is not None:
-                container.padding = style.padding
-            if style.max_width is not None:
-                container.max_width = style.max_width
-            if style.max_height is not None:
-                container.max_height = style.max_height
-            if style.width is not None:
-                container.width = style.width
-            if style.height is not None:
-                container.height = style.height
-            page.update()
-
-        callbacks = {bp: rebuild for bp in self.breakpoints}
-        ResponsiveManager(page, callbacks)
-        rebuild(page.width or 0)
-        return container
+# Alias para mantener compatibilidad con la ruta histórica.
+ResponsiveContainer = _CanonicalResponsiveContainer
 
 
 class _FlexBase:

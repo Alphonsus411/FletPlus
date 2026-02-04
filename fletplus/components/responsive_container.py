@@ -1,4 +1,8 @@
-"""Contenedor responsive basado en :class:`ResponsiveStyle`."""
+"""Contenedor responsive basado en :class:`ResponsiveStyle`.
+
+Esta implementación es la fuente oficial de ``ResponsiveContainer`` dentro de
+FletPlus.
+"""
 
 from __future__ import annotations
 
