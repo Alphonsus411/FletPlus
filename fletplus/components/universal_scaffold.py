@@ -11,12 +11,11 @@ y :class:`~fletplus.components.accessibility_panel.AccessibilityPanel`.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, Sequence
+from typing import TYPE_CHECKING, Callable, Iterable, Sequence
 
 import flet as ft
 
 from fletplus.components.caption_overlay import CaptionOverlay, CaptionTone
-from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.device_profiles import (
     DeviceProfile,
@@ -27,6 +26,8 @@ from fletplus.utils.device_profiles import (
 )
 from fletplus.utils.responsive_manager import ResponsiveManager
 
+if TYPE_CHECKING:
+    from fletplus.themes.theme_manager import ThemeManager
 
 @dataclass(frozen=True, slots=True)
 class AdaptiveNavigationItem:
@@ -78,7 +79,7 @@ class UniversalAdaptiveScaffold:
         *,
         navigation_items: Sequence[AdaptiveNavigationItem],
         content_builder: Callable[[AdaptiveNavigationItem, int], ft.Control],
-        theme: ThemeManager | None = None,
+        theme: "ThemeManager" | None = None,
         accessibility: AccessibilityPreferences | None = None,
         accessibility_panel: "AccessibilityPanel" | None = None,
         caption_overlay: CaptionOverlay | None = None,
@@ -643,4 +644,3 @@ class UniversalAdaptiveScaffold:
 
 
 __all__ = ["AdaptiveNavigationItem", "UniversalAdaptiveScaffold"]
-

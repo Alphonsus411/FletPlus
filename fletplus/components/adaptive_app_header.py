@@ -12,13 +12,14 @@ activa.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Mapping, MutableMapping, Sequence
+from typing import TYPE_CHECKING, Dict, Mapping, MutableMapping, Sequence
 
 import flet as ft
 
-from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_manager import ResponsiveManager
 
+if TYPE_CHECKING:
+    from fletplus.themes.theme_manager import ThemeManager
 
 DeviceName = str
 
@@ -80,7 +81,7 @@ class AdaptiveAppHeader:
         breadcrumbs: Sequence[ft.Control] | None = None,
         metadata: Sequence[MetadataBadge] | None = None,
         actions: Sequence[ft.Control] | None = None,
-        theme: ThemeManager | None = None,
+        theme: "ThemeManager" | None = None,
         gradient_token: str | None = "app_header",
         background_color: str | None = None,
         padding: ft.Padding
@@ -532,4 +533,3 @@ class AdaptiveAppHeader:
         self._current_orientation = normalized
         if self._page is not None:
             self._update_layout(self._page.width or 0)
-

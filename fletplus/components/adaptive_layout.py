@@ -18,11 +18,10 @@ from fletplus.utils.device_profiles import (
 )
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
-from fletplus.themes.theme_manager import ThemeManager
-
 
 if TYPE_CHECKING:
     from fletplus.components.accessibility_panel import AccessibilityPanel
+    from fletplus.themes.theme_manager import ThemeManager
 
 
 @dataclass
@@ -59,7 +58,7 @@ class AdaptiveNavigationLayout:
         content_builder: Callable[[int, str], ft.Control],
         *,
         header: ft.Control | None = None,
-        theme: ThemeManager | None = None,
+        theme: "ThemeManager" | None = None,
         accessibility: AccessibilityPreferences | None = None,
         accessibility_panel: "AccessibilityPanel" | None = None,
         device_profiles: Sequence[DeviceProfile] | None = None,
