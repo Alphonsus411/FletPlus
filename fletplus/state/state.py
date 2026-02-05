@@ -26,12 +26,14 @@ if _spec is None:
 else:
     _native = importlib.import_module("fletplus.state._native")
 
-if _native is not None and all(
-    hasattr(_native, name) for name in ("Signal", "DerivedSignal", "Store")
-):
-    Signal = _native.Signal
-    DerivedSignal = _native.DerivedSignal
-    Store = _native.Store
+_native_signal = getattr(_native, "Signal", None) if _native else None
+_native_derived = getattr(_native, "DerivedSignal", None) if _native else None
+_native_store = getattr(_native, "Store", None) if _native else None
+
+if _native_signal is not None and _native_derived is not None and _native_store is not None:
+    Signal = _native_signal
+    DerivedSignal = _native_derived
+    Store = _native_store
 else:
     _signal_native = signal_pr_rs._native
 
