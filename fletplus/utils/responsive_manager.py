@@ -49,8 +49,9 @@ if _spec is None:
 else:
     _native = importlib.import_module("fletplus.utils._native")
 
-if _native is not None and hasattr(_native, "ResponsiveManager"):
-    ResponsiveManager = _native.ResponsiveManager
+_native_responsive = getattr(_native, "ResponsiveManager", None) if _native else None
+if _native_responsive is not None:
+    ResponsiveManager = _native_responsive
 else:
 
     class ResponsiveManager:
