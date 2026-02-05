@@ -23,6 +23,7 @@ dependencies = [
   "watchdog>=3.0",
   "websockets>=12.0",
   "httpx>=0.28",
+  "tomli>=2.0; python_version < \"3.11\"",
 ]
 
 
