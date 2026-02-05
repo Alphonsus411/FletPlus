@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import MappingProxyType
-from typing import Any, Dict, Generic, Iterable, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, Generic, Iterable, Mapping, TypeVar, cast
 
-from fletplus.state import Signal
+if TYPE_CHECKING:
+    from fletplus.state import Signal
 
 __all__ = [
     "StorageProvider",
@@ -53,12 +54,14 @@ class StorageProvider(Generic[_T]):
         serializer: Serializer | None = None,
         deserializer: Deserializer | None = None,
     ) -> None:
+        from fletplus.state import Signal
+
         self._serialize: Serializer = serializer or (lambda value: value)
         self._deserialize: Deserializer = deserializer or (lambda value: value)
         self._signals: Dict[str, Signal[Any]] = {}
         self._defaults: Dict[str, Any] = {}
-        self._snapshot_signal: Signal[Mapping[str, Any]] = Signal(
-            self._build_snapshot()
+        self._snapshot_signal = cast(
+            "Signal[Mapping[str, Any]]", Signal(self._build_snapshot())
         )
 
     # ------------------------------------------------------------------
@@ -156,6 +159,8 @@ class StorageProvider(Generic[_T]):
     # ------------------------------------------------------------------
     def signal(self, key: str, *, default: Any | _Missing = MISSING) -> Signal[Any]:
         """Obtiene una señal asociada a una clave concreta."""
+
+        from fletplus.state import Signal
 
         if key not in self._signals:
             if default is MISSING:
