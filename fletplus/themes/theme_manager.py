@@ -17,6 +17,7 @@ import importlib.util
 import inspect
 import json
 import logging
+from typing import TYPE_CHECKING
 from collections.abc import Callable, Mapping
 from copy import deepcopy
 import flet as ft
@@ -31,7 +32,9 @@ from fletplus.themes.presets import (
     has_preset,
 )
 from fletplus.themes.token_merge_rs import merge_token_layers
-from fletplus.state import Signal
+
+if TYPE_CHECKING:
+    from fletplus.state import Signal
 
 logger = logging.getLogger(__name__)
 
@@ -330,6 +333,8 @@ class ThemeManager:
         self._active_breakpoint: int | None = None
         self._effective_tokens: dict[str, dict[str, object]] = deepcopy(self.tokens)
         self._persistent_overrides: dict[str, dict[str, object]] = {}
+
+        from fletplus.state import Signal
 
         self.mode_signal: Signal[bool] = Signal(self.dark_mode)
         self.tokens_signal: Signal[dict[str, dict[str, object]]] = Signal(
