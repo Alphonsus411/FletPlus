@@ -275,6 +275,10 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
             app_path = watch_path / app_path
     if not app_path.exists():
         raise click.ClickException(f"No se encontró el archivo de la aplicación: {app_path}")
+    if not app_path.is_file():
+        raise click.ClickException(
+            f"La ruta de la aplicación debe ser un archivo: {app_path}"
+        )
 
     reinicio_evento = threading.Event()
 

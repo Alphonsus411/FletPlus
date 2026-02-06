@@ -86,6 +86,11 @@ class BuildContext:
         app_path = app_path if app_path.is_absolute() else project_dir / app_path
         if not app_path.exists():
             raise PackagingError(f"No se encontró la aplicación principal: {app_path}.")
+        if not app_path.is_file():
+            raise PackagingError(
+                "La ruta de la aplicación principal debe ser un archivo: "
+                f"{app_path}."
+            )
 
         dist_dir = project_dir / "dist"
         dist_dir.mkdir(parents=True, exist_ok=True)
