@@ -11,7 +11,7 @@ import flet as ft
 from fletplus.context import Context
 
 try:  # pragma: no cover - la extensión puede no estar disponible
-    from . import listeners_rs as _listeners_rs
+    from . import listeners_backend as _listeners_rs
 except Exception:  # pragma: no cover - fallback limpio
     _listeners_rs = None
 
