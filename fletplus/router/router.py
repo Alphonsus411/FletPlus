@@ -21,7 +21,7 @@ try:  # pragma: no cover - la importación puede fallar en entornos sin compilac
 except Exception:  # pragma: no cover - fallback cuando no hay compilación
     _router_cy = None
 
-if _router_pr is None and _router_rs is None:
+if _router_pr is None and _router_rs is None and _router_cy is None:
     warnings.warn(
         "Backends nativos del router no disponibles; se usará la implementación "
         "pura en Python (rendimiento reducido).",
