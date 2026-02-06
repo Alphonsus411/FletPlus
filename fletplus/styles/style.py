@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 from typing import Any, Optional
 
@@ -11,13 +11,18 @@ logger = logging.getLogger(__name__)
 import flet as ft
 
 
-@dataclass
+_NOT_SET = object()
+
+
+@dataclass(init=False)
 class Style:
     """Define estilos para un control de Flet.
 
     Los parámetros corresponden a propiedades de :class:`ft.Container` y se
     utilizan para envolver un control con dichos estilos. Cualquiera de ellos
-    puede omitirse.
+    puede omitirse. Si un campo se declara explícitamente con ``None``, se
+    considera intencional para permitir limpiar la propiedad en estilos
+    responsivos.
 
     Parámetros
     ----------
@@ -56,41 +61,164 @@ class Style:
         'https://example.com/bg.png'
     """
 
-    margin: Optional[Any] = None
-    margin_top: Optional[Any] = None
-    margin_right: Optional[Any] = None
-    margin_bottom: Optional[Any] = None
-    margin_left: Optional[Any] = None
+    margin: Optional[Any]
+    margin_top: Optional[Any]
+    margin_right: Optional[Any]
+    margin_bottom: Optional[Any]
+    margin_left: Optional[Any]
 
-    padding: Optional[Any] = None
-    padding_top: Optional[Any] = None
-    padding_right: Optional[Any] = None
-    padding_bottom: Optional[Any] = None
-    padding_left: Optional[Any] = None
+    padding: Optional[Any]
+    padding_top: Optional[Any]
+    padding_right: Optional[Any]
+    padding_bottom: Optional[Any]
+    padding_left: Optional[Any]
 
-    bgcolor: Optional[Any] = None
-    border_radius: Optional[Any] = None
-    border_color: Optional[Any] = None
-    border_top: Optional[Any] = None
-    border_right: Optional[Any] = None
-    border_bottom: Optional[Any] = None
-    border_left: Optional[Any] = None
-    border_style: Optional[str] = None
-    border_width: int | float = 1
-    text_style: Optional[Any] = None
-    background_image: Optional[str] = None
-    width: Optional[int | float] = None
-    height: Optional[int | float] = None
-    min_width: Optional[int | float] = None
-    max_width: Optional[int | float] = None
-    min_height: Optional[int | float] = None
-    max_height: Optional[int | float] = None
-    shadow: Optional[Any] = None
-    gradient: Optional[Any] = None
-    alignment: Optional[Any] = None
-    opacity: Optional[float] = None
-    transform: Optional[Any] = None
-    transition: Optional[Any] = None
+    bgcolor: Optional[Any]
+    border_radius: Optional[Any]
+    border_color: Optional[Any]
+    border_top: Optional[Any]
+    border_right: Optional[Any]
+    border_bottom: Optional[Any]
+    border_left: Optional[Any]
+    border_style: Optional[str]
+    border_width: int | float
+    text_style: Optional[Any]
+    background_image: Optional[str]
+    width: Optional[int | float]
+    height: Optional[int | float]
+    min_width: Optional[int | float]
+    max_width: Optional[int | float]
+    min_height: Optional[int | float]
+    max_height: Optional[int | float]
+    shadow: Optional[Any]
+    gradient: Optional[Any]
+    alignment: Optional[Any]
+    opacity: Optional[float]
+    transform: Optional[Any]
+    transition: Optional[Any]
+    _declared_fields: set[str] = field(init=False, repr=False)
+
+    def __init__(
+        self,
+        margin: Optional[Any] = _NOT_SET,
+        margin_top: Optional[Any] = _NOT_SET,
+        margin_right: Optional[Any] = _NOT_SET,
+        margin_bottom: Optional[Any] = _NOT_SET,
+        margin_left: Optional[Any] = _NOT_SET,
+        padding: Optional[Any] = _NOT_SET,
+        padding_top: Optional[Any] = _NOT_SET,
+        padding_right: Optional[Any] = _NOT_SET,
+        padding_bottom: Optional[Any] = _NOT_SET,
+        padding_left: Optional[Any] = _NOT_SET,
+        bgcolor: Optional[Any] = _NOT_SET,
+        border_radius: Optional[Any] = _NOT_SET,
+        border_color: Optional[Any] = _NOT_SET,
+        border_top: Optional[Any] = _NOT_SET,
+        border_right: Optional[Any] = _NOT_SET,
+        border_bottom: Optional[Any] = _NOT_SET,
+        border_left: Optional[Any] = _NOT_SET,
+        border_style: Optional[str] = _NOT_SET,
+        border_width: int | float = 1,
+        text_style: Optional[Any] = _NOT_SET,
+        background_image: Optional[str] = _NOT_SET,
+        width: Optional[int | float] = _NOT_SET,
+        height: Optional[int | float] = _NOT_SET,
+        min_width: Optional[int | float] = _NOT_SET,
+        max_width: Optional[int | float] = _NOT_SET,
+        min_height: Optional[int | float] = _NOT_SET,
+        max_height: Optional[int | float] = _NOT_SET,
+        shadow: Optional[Any] = _NOT_SET,
+        gradient: Optional[Any] = _NOT_SET,
+        alignment: Optional[Any] = _NOT_SET,
+        opacity: Optional[float] = _NOT_SET,
+        transform: Optional[Any] = _NOT_SET,
+        transition: Optional[Any] = _NOT_SET,
+    ) -> None:
+        declared: set[str] = set()
+
+        def set_value(name: str, value: Any) -> None:
+            if value is _NOT_SET:
+                setattr(self, name, None)
+                return
+            declared.add(name)
+            setattr(self, name, value)
+
+        set_value("margin", margin)
+        set_value("margin_top", margin_top)
+        set_value("margin_right", margin_right)
+        set_value("margin_bottom", margin_bottom)
+        set_value("margin_left", margin_left)
+        set_value("padding", padding)
+        set_value("padding_top", padding_top)
+        set_value("padding_right", padding_right)
+        set_value("padding_bottom", padding_bottom)
+        set_value("padding_left", padding_left)
+        set_value("bgcolor", bgcolor)
+        set_value("border_radius", border_radius)
+        set_value("border_color", border_color)
+        set_value("border_top", border_top)
+        set_value("border_right", border_right)
+        set_value("border_bottom", border_bottom)
+        set_value("border_left", border_left)
+        set_value("border_style", border_style)
+        set_value("text_style", text_style)
+        set_value("background_image", background_image)
+        set_value("width", width)
+        set_value("height", height)
+        set_value("min_width", min_width)
+        set_value("max_width", max_width)
+        set_value("min_height", min_height)
+        set_value("max_height", max_height)
+        set_value("shadow", shadow)
+        set_value("gradient", gradient)
+        set_value("alignment", alignment)
+        set_value("opacity", opacity)
+        set_value("transform", transform)
+        set_value("transition", transition)
+        self.border_width = border_width
+        self._declared_fields = declared
+
+    def declared_fields(self) -> set[str]:
+        """Devuelve los campos declarados explícitamente en el estilo."""
+
+        return set(self._declared_fields)
+
+    def declares_container_attr(self, attr: str) -> bool:
+        """Indica si ``attr`` fue declarado explícitamente en el estilo.
+
+        Esto permite distinguir entre un campo no definido y uno definido como
+        ``None`` cuando se aplican estilos responsivos.
+        """
+
+        declared = self._declared_fields
+        if attr == "margin":
+            return bool(
+                {"margin", "margin_top", "margin_right", "margin_bottom", "margin_left"} & declared
+            )
+        if attr == "padding":
+            return bool(
+                {"padding", "padding_top", "padding_right", "padding_bottom", "padding_left"}
+                & declared
+            )
+        if attr == "border":
+            return bool(
+                {
+                    "border_color",
+                    "border_top",
+                    "border_right",
+                    "border_bottom",
+                    "border_left",
+                    "border_style",
+                }
+                & declared
+            )
+        if attr in {"image_src", "image_fit"}:
+            return "background_image" in declared
+        if attr == "animate":
+            return "transition" in declared
+        if attr in {"scale", "rotate", "offset"}:
+            return "transform" in declared
+        return attr in declared
 
     def apply(self, control: ft.Control) -> ft.Container:
         """Envuelve ``control`` en un :class:`ft.Container` con los estilos.

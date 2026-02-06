@@ -35,7 +35,8 @@ def _py_apply_styles(styles: Iterable[tuple[Any, Any]], attrs: Sequence[str]) ->
         for attr in attrs:
             if hasattr(control, attr):
                 value = getattr(styled_container, attr, None)
-                if value is not None:
+                # Si el estilo declara el campo, se aplica aunque sea None.
+                if style.declares_container_attr(attr) or value is not None:
                     updates.append((control, attr, value))
     return updates
 

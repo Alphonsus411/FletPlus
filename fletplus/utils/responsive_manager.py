@@ -174,7 +174,8 @@ else:
             for attr in _STYLE_ATTRS:
                 if hasattr(control, attr):
                     value = getattr(styled_container, attr, None)
-                    if value is not None:
+                    # Si el Style declara el campo, se aplica incluso si es None.
+                    if style.declares_container_attr(attr) or value is not None:
                         self._safe_setattr(control, attr, value)
 
         # ------------------------------------------------------------------
