@@ -1,7 +1,9 @@
 import flet as ft
 
+from fletplus.animation import AnimationController
 from fletplus.context import locale_context, theme_context, user_context
 from fletplus.core import FletPlusApp
+from fletplus.router import Route
 from fletplus.state import Store
 
 
@@ -150,6 +152,27 @@ def test_fletplus_app_invalid_route_index():
     # Índice negativo
     app._on_nav(-1)
     assert app.content_container.content == original_content
+    app.dispose()
+
+
+def test_fletplus_app_route_view_triggers_unmount(monkeypatch):
+    def route_view(match):
+        return ft.Text(match.path)
+
+    page = DummyPage()
+    app = FletPlusApp(page, [Route(path="/home", view=route_view, name="Home")])
+    triggers: list[str] = []
+
+    def record_trigger(self, event):
+        triggers.append(event)
+
+    monkeypatch.setattr(AnimationController, "trigger", record_trigger)
+    app.build()
+
+    assert "unmount" in triggers
+    assert isinstance(app.content_container.content, ft.Text)
+    assert app.content_container.content.value == "/home"
+
     app.dispose()
 
 

@@ -897,10 +897,11 @@ class FletPlusApp:
         if isinstance(routes_input, dict):
             for key, target in routes_input.items():
                 if isinstance(target, Route):
-                    router.register(target)
+                    wrapped_route = self._wrap_route(target)
+                    router.register(wrapped_route)
                     nav_data.append({
-                        "path": self._normalize_path_value(target.path),
-                        "name": target.name or key,
+                        "path": self._normalize_path_value(wrapped_route.path),
+                        "name": wrapped_route.name or key,
                     })
                 else:
                     if not callable(target):
@@ -913,10 +914,11 @@ class FletPlusApp:
         for route in routes_input:
             if not isinstance(route, Route):
                 raise TypeError("Todos los elementos deben ser instancias de Route")
-            router.register(route)
+            wrapped_route = self._wrap_route(route)
+            router.register(wrapped_route)
             nav_data.append({
-                "path": self._normalize_path_value(route.path),
-                "name": route.name,
+                "path": self._normalize_path_value(wrapped_route.path),
+                "name": wrapped_route.name,
             })
 
         if not nav_data:
@@ -932,6 +934,27 @@ class FletPlusApp:
             self.animation_controller.trigger("unmount")
             self.animation_controller.reset()
             return builder()
+
+        return _view
+
+    # ------------------------------------------------------------------
+    def _wrap_route(self, route: Route) -> Route:
+        if route.view is None:
+            return route
+        return Route(
+            path=route.path,
+            view=self._wrap_route_view(route.view),
+            layout=route.layout,
+            name=route.name,
+            children=route.children,
+        )
+
+    # ------------------------------------------------------------------
+    def _wrap_route_view(self, builder: Callable[[RouteMatch], ft.Control]) -> Callable[[RouteMatch], ft.Control]:
+        def _view(match: RouteMatch) -> ft.Control:
+            self.animation_controller.trigger("unmount")
+            self.animation_controller.reset()
+            return builder(match)
 
         return _view
 
