@@ -13,12 +13,24 @@ def _ensure_state_stub() -> None:
     class _Dummy:
         def __init__(self, *args, **kwargs):  # noqa: ANN001, D401
             """Implementación mínima utilizada solo en tests."""
+            self._value = args[0] if args else None
 
         def __call__(self, *args, **kwargs):  # noqa: ANN001
-            return self
+            return self.get()
 
         def set(self, *args, **kwargs):  # noqa: ANN001
-            return None
+            if args:
+                self._value = args[0]
+            return self._value
+
+        def get(self, *args, **kwargs):  # noqa: ANN001
+            return self._value
+
+        def subscribe(self, *args, **kwargs):  # noqa: ANN001
+            def _unsubscribe():
+                return None
+
+            return _unsubscribe
 
     module.Signal = _Dummy
     module.DerivedSignal = _Dummy
