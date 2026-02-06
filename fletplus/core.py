@@ -1011,6 +1011,7 @@ class FletPlusApp:
         title: str = "FletPlus App",
         theme_config=None,
         use_window_manager: bool = False,
+        state: Store | None = None,
         responsive_navigation: ResponsiveNavigationConfig | None = None,
     ) -> None:
         logging.basicConfig(
@@ -1027,7 +1028,8 @@ class FletPlusApp:
                 title,
                 theme_config,
                 use_window_manager,
-                responsive_navigation,
+                state=state,
+                responsive_navigation=responsive_navigation,
             )
             app.build()
 
