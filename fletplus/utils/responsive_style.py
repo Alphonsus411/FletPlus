@@ -120,9 +120,12 @@ class ResponsiveStyle:
             return a
         if a is None:
             return b
-        data = a.__dict__.copy()
+        declared = b.declared_fields()
+        data = {field: value for field, value in a.__dict__.items() if field != "_declared_fields"}
         for field, value in b.__dict__.items():
-            if value is not None:
+            if field == "_declared_fields":
+                continue
+            if value is not None or field in declared:
                 data[field] = value
         return Style(**data)
 
