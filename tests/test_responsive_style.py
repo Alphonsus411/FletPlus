@@ -76,3 +76,15 @@ def test_responsive_style_accepts_symbolic_width_breakpoints():
 
     assert style is not None
     assert style.padding == 10
+
+
+def test_responsive_style_merge_respects_declared_none_fields():
+    rs = responsive_style_module.ResponsiveStyle()
+    base = Style(padding=10, bgcolor="red")
+    override = Style(padding=None)
+
+    merged = rs._merge(base, override)
+
+    assert merged is not None
+    assert merged.padding is None
+    assert merged.bgcolor == "red"
