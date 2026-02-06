@@ -330,9 +330,17 @@ class FletPlusApp:
     # ------------------------------------------------------------------
     def _cleanup_contexts(self) -> None:
         for provider in list(self._context_providers.values()):
-            provider.close()
+            try:
+                exit_handler = getattr(provider, "__exit__", None)
+                if callable(exit_handler):
+                    exit_handler(None, None, None)
+                else:
+                    provider.close()
+            except Exception:  # pragma: no cover - limpieza tolerante a fallos
+                logger.exception("Error al cerrar un proveedor de contexto")
         self._context_providers.clear()
-        setattr(self.page, "contexts", {})
+        if getattr(self.page, "contexts", None) is self.contexts:
+            setattr(self.page, "contexts", {})
 
     # ------------------------------------------------------------------
     def set_user(self, user: object) -> None:

@@ -34,6 +34,7 @@ class DummyStorage:
     def set(self, key: str, value):
         self._data[key] = value
 
+
 def test_fletplus_app_initialization_and_routing():
     # Definir dos pantallas de prueba
     def home_view():
@@ -92,6 +93,33 @@ def test_fletplus_app_initialization_and_routing():
     assert app.command_palette.search.hint_text == "Buscar comando..."
 
     app.dispose()
+
+
+def test_fletplus_app_context_lifecycle_multiple_instances():
+    def home_view():
+        return ft.Text("Inicio")
+
+    routes = {"Inicio": home_view}
+
+    page = DummyPage()
+    page.user = "Admin"
+    page.locale = "en-US"
+
+    app_first = FletPlusApp(page, routes, title="Primera")
+    app_first.build()
+    app_first.dispose()
+
+    page.user = "Maria"
+    page.locale = "es-MX"
+    app_second = FletPlusApp(page, routes, title="Segunda")
+    app_second.build()
+
+    assert page.contexts["theme"] is theme_context
+    assert theme_context.get() is app_second.theme
+    assert user_context.get() == "Maria"
+    assert locale_context.get() == "es-MX"
+
+    app_second.dispose()
 
 
 def test_fletplus_app_without_routes():
