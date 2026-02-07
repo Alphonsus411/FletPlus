@@ -58,8 +58,17 @@ class StateProtocol(Protocol):
 
 
 @dataclass
-class State(StateProtocol):
-    """Contenedor de estado observable e inyectable."""
+class AppState(StateProtocol):
+    """Contenedor de estado observable e inyectable.
+
+    Contrato de actualización y notificación:
+    - Las mutaciones (set, update, replace, clear) modifican el almacenamiento
+      interno por instancia y, si ``notify=True``, disparan ``notify()``.
+    - ``notify()`` ejecuta los callbacks suscritos pasando la instancia actual
+      de estado (sin depender de estado global).
+    - ``subscribe()`` registra listeners y devuelve una función de cancelación
+      equivalente a ``unsubscribe()``.
+    """
 
     _data: dict[str, Any] = field(default_factory=dict)
     _subscribers: list[Subscriber] = field(default_factory=list, init=False)
@@ -130,3 +139,6 @@ class State(StateProtocol):
             self._refresher()
         except Exception:
             logger.exception("Error al refrescar la UI")
+
+
+State = AppState
