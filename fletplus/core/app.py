@@ -5,12 +5,12 @@ from typing import Any
 
 import flet as ft
 
-from .layout import Layout
-from .state import State
+from .layout import Layout, LayoutComposition
+from .state import State, StateProtocol
 
 
-LifecycleHook = Callable[[ft.Page, State], None]
-UpdateHook = Callable[[State], None]
+LifecycleHook = Callable[[ft.Page, StateProtocol], None]
+UpdateHook = Callable[[StateProtocol], None]
 
 
 class FletPlusApp:
@@ -18,15 +18,15 @@ class FletPlusApp:
 
     def __init__(
         self,
-        layout: Layout | Callable[[State], ft.Control | list[ft.Control]],
+        layout: LayoutComposition | Callable[[StateProtocol], ft.Control | list[ft.Control]],
         *,
-        state: State | None = None,
+        state: StateProtocol | None = None,
         title: str | None = None,
         on_start: LifecycleHook | None = None,
         on_update: UpdateHook | None = None,
         on_shutdown: LifecycleHook | None = None,
     ) -> None:
-        self.layout = layout if isinstance(layout, Layout) else Layout.from_callable(layout)
+        self.layout = layout if isinstance(layout, LayoutComposition) else Layout.from_callable(layout)
         self.state = state or State()
         self.title = title
         self._on_start = on_start
@@ -44,6 +44,10 @@ class FletPlusApp:
         ft.app(target=self._main, **kwargs)
 
     def _main(self, page: ft.Page) -> None:
+        self.start(page)
+
+    def start(self, page: ft.Page) -> None:
+        """Inicializa el ciclo de vida y registra los observadores."""
         self._page = page
         if self.title is not None:
             page.title = self.title
@@ -51,33 +55,34 @@ class FletPlusApp:
         self._unsubscribe = self.state.subscribe(self._handle_state_update)
         if hasattr(page, "on_disconnect"):
             page.on_disconnect = lambda _: self.shutdown()
-        self._render(initial=True)
+        self.rebuild_layout(self.state, initial=True)
         self.on_start(page, self.state)
 
-    def _render(self, *, initial: bool = False) -> None:
+    def rebuild_layout(self, state: StateProtocol, *, initial: bool = False) -> None:
+        """Reconstruye el layout en función del estado actual."""
         if self._page is None:
             return
-        if not initial:
-            self._controls = self.layout.update(self.state, self._controls)
+        if initial:
+            self._controls = self.layout.build(state)
         else:
-            self._controls = self.layout.build(self.state)
+            self._controls = self.layout.update(state, self._controls)
         self._page.controls.clear()
         self._page.add(*self._controls)
         self._page.update()
 
-    def _handle_state_update(self, state: State) -> None:
+    def _handle_state_update(self, state: StateProtocol) -> None:
         self.on_update(state)
-        self._render()
+        self.rebuild_layout(state)
 
-    def on_start(self, page: ft.Page, state: State) -> None:
+    def on_start(self, page: ft.Page, state: StateProtocol) -> None:
         if self._on_start:
             self._on_start(page, state)
 
-    def on_update(self, state: State) -> None:
+    def on_update(self, state: StateProtocol) -> None:
         if self._on_update:
             self._on_update(state)
 
-    def on_shutdown(self, page: ft.Page, state: State) -> None:
+    def on_shutdown(self, page: ft.Page, state: StateProtocol) -> None:
         if self._on_shutdown:
             self._on_shutdown(page, state)
 
