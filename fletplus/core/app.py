@@ -69,17 +69,7 @@ class FletPlusApp:
         if self.title is not None:
             page.title = self.title
 
-        def _safe_page_update() -> None:
-            if hasattr(page, "run_task"):
-                try:
-                    page.run_task(page.update)
-                    return
-                except Exception:
-                    page.update()
-            else:
-                page.update()
-
-        self.state.bind_refresher(_safe_page_update)
+        self.state.bind_refresher(lambda: self._safe_page_update(page))
         self._unsubscribe = self.state.subscribe(self._handle_state_update)
         self.on_start(page, self.state)
         self.rebuild_layout(self.state, initial=True)
@@ -119,11 +109,29 @@ class FletPlusApp:
             self._on_shutdown(page, state)
 
     def shutdown(self) -> None:
-        """Finaliza el ciclo de vida, liberando recursos y observadores."""
+        """Finaliza el ciclo de vida, liberando recursos y observadores.
+
+        Tras ejecutar ``on_shutdown``, se limpian los controles de la página y se
+        fuerza un refresco seguro para dejar la UI en un estado consistente.
+        """
         if self._page is None:
             return
-        self.on_shutdown(self._page, self.state)
+        page = self._page
+        self.on_shutdown(page, self.state)
+        page.controls.clear()
+        self._safe_page_update(page)
         if self._unsubscribe:
             self._unsubscribe()
         self.state.bind_refresher(None)
         self._page = None
+
+    @staticmethod
+    def _safe_page_update(page: ft.Page) -> None:
+        if hasattr(page, "run_task"):
+            try:
+                page.run_task(page.update)
+                return
+            except Exception:
+                page.update()
+        else:
+            page.update()
