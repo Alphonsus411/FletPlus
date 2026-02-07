@@ -59,7 +59,7 @@ class FletPlusApp:
         self.start(page)
 
     def start(self, page: ft.Page) -> None:
-        """Inicializa el ciclo de vida y registra los observadores."""
+        """Inicializa el ciclo de vida, construye el layout y registra observadores."""
         self._page = page
         if self.title is not None:
             page.title = self.title
@@ -81,10 +81,9 @@ class FletPlusApp:
         self._page.add(*self._controls)
 
     def _handle_state_update(self, state: StateProtocol) -> None:
-        """Responde a cambios de estado actualizando layout y refrescando UI."""
+        """Responde a cambios de estado actualizando el layout."""
         self.on_update(state)
         self.rebuild_layout(state)
-        state.refresh_ui()
 
     def on_start(self, page: ft.Page, state: StateProtocol) -> None:
         """Dispara el hook de inicio si fue provisto."""
