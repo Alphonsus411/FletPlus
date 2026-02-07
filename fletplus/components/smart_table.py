@@ -370,6 +370,10 @@ class SmartTable:
             return
         self._table.columns = self._build_columns()
         self._table.rows = self._build_rows_view()
+        if self._container is not None and self._container.page is not None:
+            self._container.update()
+        elif self._table.page is not None:
+            self._table.update()
 
     def set_filter(self, key: str, value: Any, predicate: Optional[Callable[[Any, Any], bool]] = None) -> None:
         """Configura un filtro para la columna ``key``."""
