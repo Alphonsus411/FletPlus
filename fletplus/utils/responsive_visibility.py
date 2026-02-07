@@ -4,6 +4,7 @@ from typing import Dict
 
 import flet as ft
 
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.breakpoint_rs import select_breakpoint
 
@@ -21,14 +22,16 @@ class ResponsiveVisibility:
     ) -> None:
         self.control = control
         self.page = page
-        self._width_vis = width_breakpoints or {}
-        self._height_vis = height_breakpoints or {}
+        raw_width = width_breakpoints or {}
+        raw_height = height_breakpoints or {}
+        self._width_vis = BreakpointRegistry.normalize(raw_width)
+        self._height_vis = BreakpointRegistry.normalize(raw_height)
         self._orientation_vis = orientation_visibility or {}
-        self._width_keys = sorted(self._width_vis)
-        self._height_keys = sorted(self._height_vis)
+        self._width_keys = sorted(self._width_vis.keys())
+        self._height_keys = sorted(self._height_vis.keys())
 
-        callbacks_w = {bp: self._update_width for bp in self._width_vis}
-        callbacks_h = {bp: self._update_height for bp in self._height_vis}
+        callbacks_w = {bp: self._update_width for bp in self._width_keys}
+        callbacks_h = {bp: self._update_height for bp in self._height_keys}
         callbacks_o = {o: self._update_orientation for o in self._orientation_vis}
 
         self._manager = ResponsiveManager(
