@@ -11,12 +11,20 @@ from .state import StateProtocol
 
 @runtime_checkable
 class LayoutComposition(Protocol):
-    """Interfaz de composición de UI independiente del ciclo de vida."""
+    """Contrato declarativo para componer UI en función del estado.
+
+    Las implementaciones describen qué controles deben existir para un estado
+    dado. El runtime se encarga de montar o reemplazar los controles en la
+    página, por lo que este contrato no expone ``page`` ni eventos de ciclo de
+    vida.
+    """
 
     def build(self, state: StateProtocol) -> list[ft.Control]:
+        """Construye el árbol inicial de controles a partir del estado."""
         ...
 
     def update(self, state: StateProtocol, controls: list[ft.Control]) -> list[ft.Control]:
+        """Reconstruye o reutiliza controles cuando cambia el estado."""
         ...
 
 
@@ -26,7 +34,7 @@ LayoutUpdater = Callable[[StateProtocol, list[ft.Control]], ft.Control | list[ft
 
 @dataclass
 class Layout(LayoutComposition):
-    """Implementación concreta de ``LayoutComposition`` basada en callables."""
+    """Implementación declarativa basada en callables puros."""
 
     builder: LayoutBuilder
     updater: LayoutUpdater | None = None
@@ -44,6 +52,7 @@ class Layout(LayoutComposition):
 
     @classmethod
     def from_callable(cls, builder: LayoutBuilder) -> "Layout":
+        """Crea un layout declarativo sin updater explícito."""
         return cls(builder=builder)
 
 
