@@ -120,12 +120,23 @@ class ResponsiveStyle:
             return a
         if a is None:
             return b
-        declared = b.declared_fields()
-        data = {field: value for field, value in a.__dict__.items() if field != "_declared_fields"}
-        for field, value in b.__dict__.items():
-            if field == "_declared_fields":
+        data: dict[str, object] = {}
+        declared_a = a.declared_fields()
+        for field in declared_a:
+            data[field] = getattr(a, field)
+        for field, value in a.__dict__.items():
+            if field in declared_a or field == "_declared_fields":
                 continue
-            if value is not None or field in declared:
+            if value is not None:
+                data[field] = value
+
+        declared_b = b.declared_fields()
+        for field in declared_b:
+            data[field] = getattr(b, field)
+        for field, value in b.__dict__.items():
+            if field in declared_b or field == "_declared_fields":
+                continue
+            if value is not None:
                 data[field] = value
         return Style(**data)
 
