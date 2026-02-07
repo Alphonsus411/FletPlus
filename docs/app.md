@@ -1,12 +1,14 @@
 # FletPlusApp en detalle
 
-`FletPlusApp` centraliza la navegación, la gestión de temas, los atajos de teclado y la paleta de comandos sobre una página de Flet. Esta guía repasa el flujo interno tomando como referencia `fletplus/core.py` y muestra cómo sacarle partido en proyectos reales.
+`FletPlusApp` centraliza la navegación, la gestión de temas, los atajos de teclado y la paleta de comandos sobre una página de Flet. Esta guía repasa el flujo interno tomando como referencia la Core legacy (`fletplus/core_legacy.py`) y muestra cómo sacarle partido en proyectos reales.
+
+> ℹ️ La nueva Core desacoplada vive en el paquete `fletplus/core/`. Para nuevas integraciones, utiliza `fletplus.core`.
 
 ## Inicialización básica
 
 ```python
 import flet as ft
-from fletplus import FletPlusApp
+from fletplus.core_legacy import FletPlusApp
 from fletplus.router import Route
 
 
@@ -79,7 +81,7 @@ La paleta (`CommandPalette`) recibe un mapeo sencillo `dict[str, Callable]` al i
 
 ```python
 import flet as ft
-from fletplus import FletPlusApp
+from fletplus.core_legacy import FletPlusApp
 from fletplus.router import Route
 
 
@@ -160,7 +162,7 @@ with request_context.provide("abc-123"):
 
 Los proveedores actúan como gestores de contexto y exponen métodos para leer/escribir el valor actual (`provider.value`). También puedes suscribirte a cambios (`provider.subscribe(callback)`) o enlazarlos con controles Flet (`provider.bind_control(control, attr="value")`).
 
-Para ver ejemplos completos de cómo `FletPlusApp` configura estos proveedores, revisa `_activate_contexts()` en `fletplus/core.py`.
+Para ver ejemplos completos de cómo `FletPlusApp` configura estos proveedores, revisa `_activate_contexts()` en `fletplus/core_legacy.py`.
 
 ## Hooks reactivos en vistas {#hooks-reactivos}
 
