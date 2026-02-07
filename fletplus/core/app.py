@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from threading import current_thread, main_thread
 from typing import Any
 
 import flet as ft
@@ -129,11 +130,22 @@ class FletPlusApp:
 
     @staticmethod
     def _safe_page_update(page: ft.Page) -> None:
-        if hasattr(page, "run_task"):
+        if current_thread() is main_thread():
             try:
-                page.run_task(page.update)
+                page.update()
                 return
             except Exception:
-                page.update()
-        else:
+                pass
+        if hasattr(page, "run_task"):
+            try:
+                if hasattr(page, "update_async"):
+                    page.run_task(page.update_async)
+                else:
+                    page.run_task(page.update)
+                return
+            except Exception:
+                pass
+        try:
             page.update()
+        except Exception:
+            pass
