@@ -632,12 +632,15 @@ iniciar FletPlus:
 
 ```python
 import logging
-from fletplus.core import FletPlusApp
+from fletplus.core_legacy import FletPlusApp
 
 logging.basicConfig(level=logging.DEBUG)
 
 FletPlusApp.start(routes)
 ```
+
+> ℹ️ La Core legacy vive en `fletplus/core_legacy.py`. Para nuevas integraciones,
+> utiliza el paquete `fletplus.core` (por ejemplo, `from fletplus.core import FletPlusApp`).
 
 # 🎨 Sistema de estilos
 
@@ -1335,7 +1338,8 @@ fletplus/
 │   └── responsive_grid.py
 ├── themes/
 │   └── theme_manager.py
-├── core.py  ← Clase FletPlusApp
+├── core/  ← Nueva Core desacoplada (`FletPlusApp`, `Layout`, `State`)
+├── core_legacy.py  ← Core legacy (antes `core.py`)
 
 # 📋 Tests
 

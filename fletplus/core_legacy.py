@@ -1,3 +1,9 @@
+"""Core legacy de FletPlus.
+
+Esta implementación corresponde a la API clásica de `FletPlusApp`. La nueva
+Core desacoplada vive en el paquete `fletplus/core/`.
+"""
+
 import logging
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Mapping

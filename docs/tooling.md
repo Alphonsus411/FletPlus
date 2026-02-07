@@ -112,7 +112,7 @@ ft.app(target=main)
 
 `PreferenceStorage` determina el backend disponible en tiempo de ejecución: si la página cuenta con `client_storage` (p. ej. aplicaciones empaquetadas con Flet), se guarda bajo una clave JSON; de lo contrario utiliza un archivo local configurable vía `FLETPLUS_PREFS_FILE`. Los métodos `load()` y `save()` devuelven/reciben diccionarios con los valores a persistir.【F:fletplus/utils/preferences.py†L19-L107】
 
-`FletPlusApp` crea automáticamente una instancia de `PreferenceStorage` y observa los cambios de `ThemeManager`. Al iniciar la app se restauran el modo claro/oscuro y los *tokens* guardados; cada vez que el usuario cambia el tema, los nuevos valores se escriben otra vez en el almacenamiento elegido. Así garantizas que la preferencia visual permanece entre sesiones sin código adicional.【F:fletplus/core.py†L120-L175】
+`FletPlusApp` crea automáticamente una instancia de `PreferenceStorage` y observa los cambios de `ThemeManager`. Al iniciar la app se restauran el modo claro/oscuro y los *tokens* guardados; cada vez que el usuario cambia el tema, los nuevos valores se escriben otra vez en el almacenamiento elegido. Así garantizas que la preferencia visual permanece entre sesiones sin código adicional (Core legacy en `fletplus/core_legacy.py`).【F:fletplus/core_legacy.py†L120-L175】
 
 > 🧭 Si también deseas persistir preferencias de accesibilidad (escala de texto, contraste, movimiento), consulta cómo reutilizar `AccessibilityPreferences` junto al `ThemeManager` en [la guía de componentes](components.md#preferencias-accesibilidad).
 
