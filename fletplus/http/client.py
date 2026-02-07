@@ -480,10 +480,14 @@ class HttpClient:
             connect_kwargs = dict(kwargs)
             connect_kwargs.pop("headers", None)
             connect_kwargs.pop("params", None)
+            user_headers = connect_kwargs.pop("extra_headers", None)
+            merged_headers = dict(request.headers)
+            if user_headers:
+                merged_headers.update(dict(user_headers))
             websocket_connect = _load_websocket_connect()
             websocket = await websocket_connect(
                 str(request.url),
-                extra_headers=request.headers,
+                extra_headers=merged_headers,
                 **connect_kwargs,
             )
             response = _build_websocket_response(request, websocket)
