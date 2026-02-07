@@ -29,7 +29,8 @@ class LayoutComposition(Protocol):
         """Reconstruye o reutiliza controles cuando cambia el estado.
 
         Retorna la nueva lista de controles o ``None`` para mantener los
-        controles existentes sin reemplazarlos.
+        controles existentes sin reemplazarlos ni forzar un remount desde la
+        página (permitiendo únicamente un refresh seguro si aplica).
         """
         ...
 
