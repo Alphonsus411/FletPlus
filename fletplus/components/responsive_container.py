@@ -65,9 +65,8 @@ class ResponsiveContainer:
 
             styled = style.apply(self.content)
             for attr in container_attrs:
-                value = getattr(styled, attr, None)
-                if style.declares_container_attr(attr) or value is not None:
-                    setattr(target, attr, value)
+                if style.declares_container_attr(attr):
+                    setattr(target, attr, getattr(styled, attr, None))
 
         def run_width_callback(width: int) -> None:
             active_bp = max((bp for bp in self.breakpoints if width >= bp), default=None)
