@@ -13,8 +13,11 @@ class CommandPalette:
     def __init__(self, commands: Dict[str, Callable]):
         self.commands = commands
         self.filtered: List[Tuple[str, Callable]] = []
-
-        self.search = ft.TextField(on_change=self._on_search, autofocus=True)
+        self.search = ft.TextField(
+            on_change=self._on_search,
+            autofocus=True,
+            hint_text="Search command...",
+        )
         self.list_view = ft.ListView(expand=True, spacing=0)
         self.dialog = ft.AlertDialog(
             modal=False,

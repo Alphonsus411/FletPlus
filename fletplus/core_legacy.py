@@ -41,7 +41,7 @@ def _default_menu_padding() -> ft.Padding:
 class FloatingMenuOptions:
     """Opciones visuales y de comportamiento del menú flotante móvil."""
 
-    alignment: ft.alignment.Alignment = field(default_factory=lambda: ft.alignment.Alignment(1, 1))
+    alignment: object = field(default_factory=lambda: ft.alignment.center)
     horizontal_margin: float = 24
     vertical_margin: float = 28
     width: float = 320
@@ -137,6 +137,21 @@ class FletPlusApp:
             config.pop(key, None)
 
         self.theme = ThemeManager(page, **config)
+        _original_set_token = self.theme.set_token
+        _original_set_dark_mode = self.theme.set_dark_mode
+
+        def _set_token_and_persist(*args, **kwargs):
+            result = _original_set_token(*args, **kwargs)
+            self._persist_theme_preferences()
+            return result
+
+        def _set_dark_mode_and_persist(*args, **kwargs):
+            result = _original_set_dark_mode(*args, **kwargs)
+            self._persist_theme_preferences()
+            return result
+
+        self.theme.set_token = _set_token_and_persist
+        self.theme.set_dark_mode = _set_dark_mode_and_persist
         self.animation_controller = AnimationController(self.page)
         self.responsive_navigation = responsive_navigation or ResponsiveNavigationConfig()
         self.window_manager = WindowManager(page) if use_window_manager else None
@@ -174,12 +189,18 @@ class FletPlusApp:
             style=self._create_sidebar_style(),
         )
 
-        surface_color = self.theme.get_color("surface", ft.Colors.SURFACE) or ft.Colors.SURFACE
+        surface_color = self.theme.get_color("surface") or ft.Colors.WHITE
+
         self.content_container = ft.Container(
             expand=True,
             bgcolor=surface_color,
             padding=ft.Padding(32, 28, 32, 32),
-            border_radius=ft.border_radius.only(top_left=28, top_right=0, bottom_left=0, bottom_right=0),
+            border_radius=ft.border_radius.only(
+                top_left=28,
+                top_right=0,
+                bottom_left=0,
+                bottom_right=0,
+            ),
             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
         )
 
@@ -281,10 +302,10 @@ class FletPlusApp:
             self._persist_theme_preferences()
 
         self._preference_unsubscribers.append(
-            self.theme.mode_signal.subscribe(persist_on_change)
+            self.theme.mode_signal.subscribe(persist_on_change, immediate=True)
         )
         self._preference_unsubscribers.append(
-            self.theme.overrides_signal.subscribe(persist_on_change)
+            self.theme.overrides_signal.subscribe(persist_on_change, immediate=True)
         )
 
     # ------------------------------------------------------------------
@@ -308,6 +329,11 @@ class FletPlusApp:
 
     # ------------------------------------------------------------------
     def dispose(self) -> None:
+        if hasattr(self, "_preference_storage") and hasattr(self, "theme"):
+            try:
+                self._persist_theme_preferences()
+            except Exception:  # pragma: no cover - no debe bloquear el cierre
+                logger.exception("Error al persistir preferencias de tema en dispose")
         if hasattr(self, "_router_unsubscribe") and callable(self._router_unsubscribe):
             try:
                 self._router_unsubscribe()
@@ -360,8 +386,16 @@ class FletPlusApp:
         provider = self._context_providers.get("locale")
         if provider is not None and locale:
             provider.set(locale)
+
         if locale:
             setattr(self.page, "locale", locale)
+
+        # Actualizar textos dependientes del idioma (Command Palette)
+        if hasattr(self, "command_palette") and self.command_palette:
+            if locale.startswith("pt"):
+                self.command_palette.search.hint_text = "Buscar comando..."
+            else:
+                self.command_palette.search.hint_text = "Search command..."
 
     # ------------------------------------------------------------------
     def __del__(self):  # pragma: no cover - método defensivo
@@ -381,6 +415,10 @@ class FletPlusApp:
 
         self.theme.apply_theme()
         self._create_navigation_shell()
+
+        if self.command_palette and getattr(self.page, "user", None):
+            self.command_palette.dialog.title.value = f"Comandos para {self.page.user}"
+
         self._setup_navigation_components()
 
         initial_path: str | None = None
@@ -478,7 +516,7 @@ class FletPlusApp:
         self._sidebar_container = ft.Container(
             content=sidebar_control,
             padding=ft.Padding(12, 18, 12, 18),
-            alignment=ft.alignment.top_left,
+            alignment=ft.alignment.top_left
         )
 
         self._content_area_container = ft.Container(
@@ -594,7 +632,7 @@ class FletPlusApp:
             padding=options.padding,
             content=menu_column,
             opacity=0,
-            offset=ft.transform.Offset(0, options.hidden_offset),
+            offset=(0, options.hidden_offset),
             animate_opacity=ft.Animation(options.animation_duration, curve=options.animation_curve),
             animate_offset=ft.Animation(options.animation_duration, curve=options.animation_curve),
             shadow=ft.BoxShadow(
@@ -673,7 +711,7 @@ class FletPlusApp:
             self._floating_menu_host.visible = use_floating
         if self._floating_menu_control is not None:
             self._floating_menu_control.opacity = 1 if (use_floating and self._floating_menu_visible) else 0
-            self._floating_menu_control.offset = ft.transform.Offset(
+            self._floating_menu_control.offset = (
                 0, 0 if (use_floating and self._floating_menu_visible) else options.hidden_offset
             )
 
@@ -718,6 +756,7 @@ class FletPlusApp:
     # ------------------------------------------------------------------
     def _toggle_theme(self, _e: ft.ControlEvent | None = None) -> None:
         self.theme.toggle_dark_mode()
+        self._persist_theme_preferences()
         self._update_header_colors()
         self._build_floating_navigation()
         self._apply_layout_mode(self._layout_mode, force=True)

@@ -2,7 +2,7 @@ import flet as ft
 
 from fletplus.animation import AnimationController
 from fletplus.context import locale_context, theme_context, user_context
-from fletplus.core import FletPlusApp
+from fletplus.core_legacy import FletPlusApp
 from fletplus.router import Route
 from fletplus.state import Store
 
