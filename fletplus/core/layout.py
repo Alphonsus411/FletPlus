@@ -15,7 +15,9 @@ class LayoutBuilder(Protocol):
 
 
 class LayoutUpdater(Protocol):
-    def __call__(self, state: StateProtocol, controls: list[ft.Control]) -> None:
+    def __call__(
+        self, state: StateProtocol, controls: list[ft.Control]
+    ) -> list[ft.Control] | None:
         ...
 
 
@@ -46,8 +48,10 @@ class Layout:
     def update(self, state: StateProtocol, controls: list[ft.Control]) -> list[ft.Control]:
         if self.updater is None:
             return self.build(state)
-        self.updater(state, controls)
-        return controls
+        updated_controls = self.updater(state, controls)
+        if updated_controls is None:
+            return controls
+        return updated_controls
 
     @classmethod
     def from_callable(cls, builder: Callable[[StateProtocol], ft.Control | list[ft.Control]]) -> "Layout":
