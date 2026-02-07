@@ -17,6 +17,27 @@ class StateProtocol(Protocol):
     def get(self, key: str, default: Any = None) -> Any:
         ...
 
+    def set(self, key: str, value: Any, *, notify: bool = True) -> None:
+        """Asigna un valor y notifica si corresponde."""
+        ...
+
+    def update(
+        self,
+        values: Mapping[str, Any] | Iterable[tuple[str, Any]],
+        *,
+        notify: bool = True,
+    ) -> None:
+        """Actualiza varias claves y notifica si corresponde."""
+        ...
+
+    def replace(self, values: Mapping[str, Any], *, notify: bool = True) -> None:
+        """Reemplaza todo el estado y notifica si corresponde."""
+        ...
+
+    def clear(self, *, notify: bool = True) -> None:
+        """Limpia el estado y notifica si corresponde."""
+        ...
+
     def snapshot(self) -> dict[str, Any]:
         ...
 
