@@ -131,6 +131,7 @@ class AppState(StateProtocol):
                 callback(self)
             except Exception:
                 logger.exception("Error al notificar a un suscriptor del estado")
+        self.refresh_ui()
 
     def refresh_ui(self) -> None:
         if not self._refresher:
