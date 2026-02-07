@@ -83,8 +83,10 @@ class FletPlusApp:
             self._controls = self.layout.build(state)
         else:
             updated_controls = self.layout.update(state, self._controls)
-            if updated_controls is not None:
-                self._controls = updated_controls
+            if updated_controls is None:
+                state.refresh_ui()
+                return
+            self._controls = updated_controls
         self._page.controls.clear()
         self._page.add(*self._controls)
 
