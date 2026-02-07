@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict
+from weakref import WeakKeyDictionary
 
 import flet as ft
 
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from fletplus.themes.theme_manager import ThemeManager
 
 # Registro global por página para reutilizar la instancia
-_INSTANCES: Dict[int, "ResponsiveTypography"] = {}
+_INSTANCES: "WeakKeyDictionary[ft.Page, ResponsiveTypography]" = WeakKeyDictionary()
 
 
 class ResponsiveTypography:
@@ -33,10 +34,26 @@ class ResponsiveTypography:
         self._spacing_controls: list[ft.Control] = []
         callbacks = {bp: self._update for bp in set(self._text_sizes) | set(self._spacings)}
         self._manager = ResponsiveManager(page, breakpoints=callbacks)
-        _INSTANCES[id(page)] = self
+        _INSTANCES[page] = self
         self.current_text_size: int = 0
         self.current_spacing: int = 0
         self._update(page.width or 0)
+        self._register_cleanup()
+
+    def _register_cleanup(self) -> None:
+        def _cleanup(_: ft.ControlEvent) -> None:
+            _INSTANCES.pop(self.page, None)
+
+        for attr in ("on_close", "on_disconnect"):
+            existing = getattr(self.page, attr, None)
+            if existing is None:
+                setattr(self.page, attr, _cleanup)
+            else:
+                def _combined(event: ft.ControlEvent, *, _existing=existing) -> None:
+                    _existing(event)
+                    _cleanup(event)
+
+                setattr(self.page, attr, _combined)
 
     def register_text(self, text: ft.Text) -> ft.Text:
         """Registra ``text`` para actualizar su tamaño automáticamente."""
@@ -73,7 +90,7 @@ class ResponsiveTypography:
 
 
 def _get_instance(page: ft.Page) -> ResponsiveTypography:
-    inst = _INSTANCES.get(id(page))
+    inst = _INSTANCES.get(page)
     if inst is None:
         inst = ResponsiveTypography(page)
     return inst
