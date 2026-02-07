@@ -44,6 +44,9 @@ class FletPlusApp:
         ft.app(target=self._main, **kwargs)
 
     def _main(self, page: ft.Page) -> None:
+        page.on_close = lambda _: self.shutdown()
+        if hasattr(page, "on_disconnect"):
+            page.on_disconnect = lambda _: self.shutdown()
         self.start(page)
 
     def start(self, page: ft.Page) -> None:
@@ -53,8 +56,6 @@ class FletPlusApp:
             page.title = self.title
         self.state.bind_refresher(page.update)
         self._unsubscribe = self.state.subscribe(self._handle_state_update)
-        if hasattr(page, "on_disconnect"):
-            page.on_disconnect = lambda _: self.shutdown()
         self.rebuild_layout(self.state, initial=True)
         self.state.refresh_ui()
         self.on_start(page, self.state)
