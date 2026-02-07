@@ -134,13 +134,15 @@ else:
                 rstyle = ResponsiveStyle(width=styles)
             self._styles[control] = rstyle
             base = self._capture_base_attributes(control)
-            self._style_state[control] = {
+            state = {
                 "base": base,
+                "dynamic_attrs": True,
             }
+            self._style_state[control] = state
             try:
                 setattr(control, "__fletplus_base_attrs__", base)
             except AttributeError:
-                pass
+                state["dynamic_attrs"] = False
             try:
                 setattr(rstyle, "_fletplus_page", self.page)
             except AttributeError:
@@ -247,7 +249,16 @@ else:
 
             # Aplicar estilos
             if self._styles:
-                updates = _apply_styles_rs(list(self._styles.items()), list(_STYLE_ATTRS))
+                base_attrs_map = {
+                    control: state["base"]
+                    for control, state in self._style_state.items()
+                    if not state.get("dynamic_attrs", True)
+                }
+                updates = _apply_styles_rs(
+                    list(self._styles.items()),
+                    list(_STYLE_ATTRS),
+                    base_attrs_map=base_attrs_map or None,
+                )
                 for control, attr, value in updates:
                     self._safe_setattr(control, attr, value)
 
