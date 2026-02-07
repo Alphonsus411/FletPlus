@@ -56,6 +56,7 @@ class FletPlusApp:
         if hasattr(page, "on_disconnect"):
             page.on_disconnect = lambda _: self.shutdown()
         self.rebuild_layout(self.state, initial=True)
+        self.state.refresh_ui()
         self.on_start(page, self.state)
 
     def rebuild_layout(self, state: StateProtocol, *, initial: bool = False) -> None:
@@ -68,11 +69,11 @@ class FletPlusApp:
             self._controls = self.layout.update(state, self._controls)
         self._page.controls.clear()
         self._page.add(*self._controls)
-        self._page.update()
 
     def _handle_state_update(self, state: StateProtocol) -> None:
         self.on_update(state)
         self.rebuild_layout(state)
+        state.refresh_ui()
 
     def on_start(self, page: ft.Page, state: StateProtocol) -> None:
         if self._on_start:

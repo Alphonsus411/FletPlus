@@ -32,6 +32,9 @@ class StateProtocol(Protocol):
     def bind_refresher(self, refresher: Refresher | None) -> None:
         ...
 
+    def refresh_ui(self) -> None:
+        ...
+
 
 @dataclass
 class State(StateProtocol):
