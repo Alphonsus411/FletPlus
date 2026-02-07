@@ -23,13 +23,19 @@ class LayoutComposition(Protocol):
         """Construye el árbol inicial de controles a partir del estado."""
         ...
 
-    def update(self, state: StateProtocol, controls: list[ft.Control]) -> list[ft.Control]:
-        """Reconstruye o reutiliza controles cuando cambia el estado."""
+    def update(
+        self, state: StateProtocol, controls: list[ft.Control]
+    ) -> list[ft.Control] | None:
+        """Reconstruye o reutiliza controles cuando cambia el estado.
+
+        Retorna la nueva lista de controles o ``None`` para mantener los
+        controles existentes sin reemplazarlos.
+        """
         ...
 
 
 LayoutBuilder = Callable[[StateProtocol], ft.Control | list[ft.Control]]
-LayoutUpdater = Callable[[StateProtocol, list[ft.Control]], ft.Control | list[ft.Control] | None]
+LayoutUpdater = Callable[[StateProtocol, list[ft.Control]], list[ft.Control] | None]
 
 
 @dataclass
@@ -42,12 +48,12 @@ class Layout(LayoutComposition):
     def build(self, state: StateProtocol) -> list[ft.Control]:
         return _normalize_controls(self.builder(state))
 
-    def update(self, state: StateProtocol, controls: list[ft.Control]) -> list[ft.Control]:
+    def update(self, state: StateProtocol, controls: list[ft.Control]) -> list[ft.Control] | None:
         if self.updater is None:
             return self.build(state)
         updated_controls = self.updater(state, controls)
         if updated_controls is None:
-            return controls
+            return None
         return _normalize_controls(updated_controls)
 
     @classmethod
