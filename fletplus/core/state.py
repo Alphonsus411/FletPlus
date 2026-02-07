@@ -134,6 +134,12 @@ class AppState(StateProtocol):
         self.refresh_ui()
 
     def refresh_ui(self) -> None:
+        """Dispara el refresco de UI usando un refresher thread-safe.
+
+        Se espera que el ``App`` configure el refresher (por ejemplo, al enlazar
+        la página), garantizando que la actualización sea segura desde otros
+        hilos o tareas.
+        """
         if not self._refresher:
             return
         try:

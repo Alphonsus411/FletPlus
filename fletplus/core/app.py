@@ -59,11 +59,27 @@ class FletPlusApp:
         self.start(page)
 
     def start(self, page: ft.Page) -> None:
-        """Inicializa el ciclo de vida, construye el layout y registra observadores."""
+        """Inicializa el ciclo de vida, construye el layout y registra observadores.
+
+        Nota: el refresco de UI se envuelve para ejecutarse en el loop de la página
+        (priorizando ``page.run_task`` cuando existe) y hacer fallback a
+        ``page.update()`` directo si el mecanismo seguro no está disponible.
+        """
         self._page = page
         if self.title is not None:
             page.title = self.title
-        self.state.bind_refresher(page.update)
+
+        def _safe_page_update() -> None:
+            if hasattr(page, "run_task"):
+                try:
+                    page.run_task(page.update)
+                    return
+                except Exception:
+                    page.update()
+            else:
+                page.update()
+
+        self.state.bind_refresher(_safe_page_update)
         self._unsubscribe = self.state.subscribe(self._handle_state_update)
         self.on_start(page, self.state)
         self.rebuild_layout(self.state, initial=True)
