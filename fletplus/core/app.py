@@ -14,18 +14,24 @@ UpdateHook = Callable[[StateProtocol], None]
 
 
 class FletPlusApp:
-    """Aplicación FletPlus con ciclo de vida explícito."""
+    """Aplicación FletPlus con ciclo de vida explícito y hooks configurables.
+
+    Permite construir una interfaz a partir de un layout y mantenerla
+    sincronizada con el estado, disparando callbacks de inicio, actualización y
+    cierre cuando corresponde.
+    """
 
     def __init__(
         self,
         layout: LayoutComposition | Callable[[StateProtocol], ft.Control | list[ft.Control]],
-        *,
         state: StateProtocol | None = None,
-        title: str | None = None,
         on_start: LifecycleHook | None = None,
         on_update: UpdateHook | None = None,
         on_shutdown: LifecycleHook | None = None,
+        *,
+        title: str | None = None,
     ) -> None:
+        """Inicializa la aplicación con layout, estado y callbacks de ciclo de vida."""
         self.layout = layout if isinstance(layout, LayoutComposition) else Layout.from_callable(layout)
         self.state = state or State()
         self.title = title
@@ -38,12 +44,15 @@ class FletPlusApp:
 
     @property
     def page(self) -> ft.Page | None:
+        """Página Flet actual, útil para inspección o pruebas."""
         return self._page
 
     def run(self, **kwargs: Any) -> None:
-        ft.app(target=self._main, **kwargs)
+        """Ejecuta la aplicación y delega el control al runtime de Flet."""
+        ft.app(target=self._on_page_ready, **kwargs)
 
-    def _main(self, page: ft.Page) -> None:
+    def _on_page_ready(self, page: ft.Page) -> None:
+        """Configura la página cuando Flet la crea y arranca el ciclo de vida."""
         page.on_close = lambda _: self.shutdown()
         if hasattr(page, "on_disconnect"):
             page.on_disconnect = lambda _: self.shutdown()
@@ -72,23 +81,28 @@ class FletPlusApp:
         self._page.add(*self._controls)
 
     def _handle_state_update(self, state: StateProtocol) -> None:
+        """Responde a cambios de estado actualizando layout y refrescando UI."""
         self.on_update(state)
         self.rebuild_layout(state)
         state.refresh_ui()
 
     def on_start(self, page: ft.Page, state: StateProtocol) -> None:
+        """Dispara el hook de inicio si fue provisto."""
         if self._on_start:
             self._on_start(page, state)
 
     def on_update(self, state: StateProtocol) -> None:
+        """Dispara el hook de actualización si fue provisto."""
         if self._on_update:
             self._on_update(state)
 
     def on_shutdown(self, page: ft.Page, state: StateProtocol) -> None:
+        """Dispara el hook de cierre si fue provisto."""
         if self._on_shutdown:
             self._on_shutdown(page, state)
 
     def shutdown(self) -> None:
+        """Finaliza el ciclo de vida, liberando recursos y observadores."""
         if self._page is None:
             return
         self.on_shutdown(self._page, self.state)
