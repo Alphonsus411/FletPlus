@@ -30,7 +30,6 @@ LAZY_IMPORTS = {
     "FlexColumn": "fletplus.components",
     "FlexRow": "fletplus.components",
     "FloatingActionButton": "fletplus.components",
-    "FloatingMenuOptions": "fletplus.core",
     "FletPlusApp": "fletplus.core",
     "Grid": "fletplus.components",
     "GridItem": "fletplus.components",
@@ -48,7 +47,8 @@ LAZY_IMPORTS = {
     "ResponsiveContainer": "fletplus.components",
     "ResponsiveGrid": "fletplus.components",
     "ResponsiveManager": "fletplus.utils",
-    "ResponsiveNavigationConfig": "fletplus.core",
+    "Layout": "fletplus.core",
+    "State": "fletplus.core",
     "ResponsiveStyle": "fletplus.utils",
     "ResponsiveTypography": "fletplus.utils",
     "ResponsiveVisibility": "fletplus.utils",
@@ -156,7 +156,7 @@ if TYPE_CHECKING:
         theme_context,
         user_context,
     )
-    from fletplus.core import FletPlusApp, FloatingMenuOptions, ResponsiveNavigationConfig
+    from fletplus.core import FletPlusApp, Layout, State
     from fletplus.desktop import WindowManager, SystemTray, show_notification
     from fletplus.http import (
         DiskCache,
@@ -212,8 +212,8 @@ if TYPE_CHECKING:
 
 __all__ = [
     "FletPlusApp",
-    "FloatingMenuOptions",
-    "ResponsiveNavigationConfig",
+    "Layout",
+    "State",
     "AnimationController",
     "animation_controller_context",
     "FadeIn",
