@@ -56,9 +56,9 @@ class FletPlusApp:
             page.title = self.title
         self.state.bind_refresher(page.update)
         self._unsubscribe = self.state.subscribe(self._handle_state_update)
+        self.on_start(page, self.state)
         self.rebuild_layout(self.state, initial=True)
         self.state.refresh_ui()
-        self.on_start(page, self.state)
 
     def rebuild_layout(self, state: StateProtocol, *, initial: bool = False) -> None:
         """Reconstruye el layout en función del estado actual."""
