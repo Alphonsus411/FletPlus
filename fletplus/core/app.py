@@ -5,7 +5,7 @@ from typing import Any
 
 import flet as ft
 
-from .layout import Layout, LayoutComposition
+from .layout import Layout, LayoutBuilder, LayoutComposition
 from .state import State, StateProtocol
 
 
@@ -23,7 +23,7 @@ class FletPlusApp:
 
     def __init__(
         self,
-        layout: LayoutComposition | Callable[[StateProtocol], ft.Control | list[ft.Control]],
+        layout: LayoutComposition | LayoutBuilder,
         state: StateProtocol | None = None,
         on_start: LifecycleHook | None = None,
         on_update: UpdateHook | None = None,

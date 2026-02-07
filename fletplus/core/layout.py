@@ -20,16 +20,16 @@ class LayoutComposition(Protocol):
         ...
 
 
-_LayoutBuilder = Callable[[StateProtocol], ft.Control | list[ft.Control]]
-_LayoutUpdater = Callable[[StateProtocol, list[ft.Control]], ft.Control | list[ft.Control] | None]
+LayoutBuilder = Callable[[StateProtocol], ft.Control | list[ft.Control]]
+LayoutUpdater = Callable[[StateProtocol, list[ft.Control]], ft.Control | list[ft.Control] | None]
 
 
 @dataclass
 class Layout(LayoutComposition):
     """Implementación concreta de ``LayoutComposition`` basada en callables."""
 
-    builder: _LayoutBuilder
-    updater: _LayoutUpdater | None = None
+    builder: LayoutBuilder
+    updater: LayoutUpdater | None = None
 
     def build(self, state: StateProtocol) -> list[ft.Control]:
         return _normalize_controls(self.builder(state))
@@ -43,7 +43,7 @@ class Layout(LayoutComposition):
         return _normalize_controls(updated_controls)
 
     @classmethod
-    def from_callable(cls, builder: _LayoutBuilder) -> "Layout":
+    def from_callable(cls, builder: LayoutBuilder) -> "Layout":
         return cls(builder=builder)
 
 
