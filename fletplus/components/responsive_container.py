@@ -66,7 +66,7 @@ class ResponsiveContainer:
             styled = style.apply(self.content)
             for attr in container_attrs:
                 value = getattr(styled, attr, None)
-                if value is not None:
+                if style.declares_container_attr(attr) or value is not None:
                     setattr(target, attr, value)
 
         def run_width_callback(width: int) -> None:
