@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
-from typing import Any, Iterable, List, Sequence, Tuple
+from typing import Any, Iterable, List, Mapping, Sequence, Tuple
 
 ApplyStyleResult = List[Tuple[Any, str, Any]]
 
@@ -14,10 +14,16 @@ else:
     _native = importlib.import_module("fletplus.utils.responsive_manager_rs._native")
 
 
-def _py_apply_styles(styles: Iterable[tuple[Any, Any]], attrs: Sequence[str]) -> ApplyStyleResult:
+def _py_apply_styles(
+    styles: Iterable[tuple[Any, Any]],
+    attrs: Sequence[str],
+    base_attrs_map: Mapping[Any, Mapping[str, Any]] | None = None,
+) -> ApplyStyleResult:
     updates: ApplyStyleResult = []
     for control, rstyle in styles:
         base = getattr(control, "__fletplus_base_attrs__", None)
+        if base is None and base_attrs_map is not None:
+            base = base_attrs_map.get(control)
         if isinstance(base, dict):
             for attr in attrs:
                 if attr in base:
@@ -41,9 +47,13 @@ def _py_apply_styles(styles: Iterable[tuple[Any, Any]], attrs: Sequence[str]) ->
     return updates
 
 
-if _native is None:
-    apply_styles = _py_apply_styles
-else:
-    apply_styles = _native.apply_styles
+def apply_styles(
+    styles: Iterable[tuple[Any, Any]],
+    attrs: Sequence[str],
+    base_attrs_map: Mapping[Any, Mapping[str, Any]] | None = None,
+) -> ApplyStyleResult:
+    if _native is not None and base_attrs_map is None:
+        return _native.apply_styles(styles, attrs)
+    return _py_apply_styles(styles, attrs, base_attrs_map=base_attrs_map)
 
 __all__ = ["apply_styles"]
