@@ -1,7 +1,7 @@
 """Núcleo desacoplado de FletPlus."""
 
 from .app import FletPlusApp
-from .layout import Layout, LayoutComposition, SimpleLayout
+from .layout import Layout, LayoutComposition
 from .state import AppState, StateProtocol
 
 __all__ = [
@@ -9,6 +9,5 @@ __all__ = [
     "FletPlusApp",
     "Layout",
     "LayoutComposition",
-    "SimpleLayout",
     "StateProtocol",
 ]
