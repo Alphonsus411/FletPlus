@@ -3,13 +3,16 @@ from __future__ import annotations
 import sys
 import types
 
+import pytest
 
-def _ensure_state_stub() -> None:
+
+@pytest.fixture(autouse=True)
+def state_stub(monkeypatch):
     if "fletplus.state.state" in sys.modules:
+        yield
         return
 
     module = types.ModuleType("fletplus.state.state")
-
     class _Dummy:
         def __init__(self, *args, **kwargs):  # noqa: ANN001, D401
             """Implementación mínima utilizada solo en tests."""
@@ -35,11 +38,14 @@ def _ensure_state_stub() -> None:
     module.Signal = _Dummy
     module.DerivedSignal = _Dummy
     module.Store = _Dummy
-    sys.modules["fletplus.state.state"] = module
+    monkeypatch.setitem(sys.modules, "fletplus.state.state", module)
+    yield
 
 
-def _ensure_responsive_manager_stub() -> None:
+@pytest.fixture(autouse=True)
+def responsive_manager_stub(monkeypatch):
     if "fletplus.utils.responsive_manager" in sys.modules:
+        yield
         return
 
     module = types.ModuleType("fletplus.utils.responsive_manager")
@@ -65,8 +71,19 @@ def _ensure_responsive_manager_stub() -> None:
             return None
 
     module.ResponsiveManager = ResponsiveManager
-    sys.modules["fletplus.utils.responsive_manager"] = module
+    monkeypatch.setitem(sys.modules, "fletplus.utils.responsive_manager", module)
+    yield
 
 
-_ensure_state_stub()
-_ensure_responsive_manager_stub()
+@pytest.fixture
+def watchdog_stub(monkeypatch):
+    watchdog_module = types.ModuleType("watchdog")
+    events_module = types.ModuleType("watchdog.events")
+    events_module.FileSystemEvent = object
+    events_module.FileSystemEventHandler = object
+    observers_module = types.ModuleType("watchdog.observers")
+    observers_module.Observer = object
+    monkeypatch.setitem(sys.modules, "watchdog", watchdog_module)
+    monkeypatch.setitem(sys.modules, "watchdog.events", events_module)
+    monkeypatch.setitem(sys.modules, "watchdog.observers", observers_module)
+    return watchdog_module
