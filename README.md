@@ -111,8 +111,9 @@ automáticamente.
   instalado (está en `requirements-dev.txt` y en el extra `dev` de
   `pyproject.toml`) y, si ejecutas pruebas ligadas a la CLI o a la recarga
   automática, también necesitas `watchdog` para evitar fallos de importación en
-  `fletplus/cli/main.py`. Si fallan tests por plugins o markers, actualiza
-  `addopts`, `markers` o `testpaths`.
+  `fletplus/cli/main.py`. Puedes instalarlo directamente con
+  `pip install -e .[cli]` o con `pip install -e .[dev,cli]`. Si fallan tests por
+  plugins o markers, actualiza `addopts`, `markers` o `testpaths`.
 - **`bandit`**: las exclusiones se definen en `pyproject.toml` para evitar
   falsos positivos en `tests/`, `venv/` y `.venv/`. Ajusta `exclude` o revisa
   el código señalado.

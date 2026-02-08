@@ -38,8 +38,9 @@ Opciones relevantes:
 El comando mantiene un observador de archivos usando `watchdog`; cada vez que se
 detecta un cambio se reinicia el proceso `flet run` con la opción `--devtools`.
 > **Nota:** para ejecutar la CLI (y especialmente sus pruebas de recarga) es
-> necesario tener `watchdog` instalado; inclúyelo en tus dependencias de
-> desarrollo para evitar errores de importación.
+> necesario tener `watchdog` instalado; puedes añadir el extra `cli` con
+> `pip install -e .[cli]` o combinarlo con el extra de desarrollo para pruebas
+> (`pip install -e .[dev,cli]`).
 
 ### `fletplus profile`
 
