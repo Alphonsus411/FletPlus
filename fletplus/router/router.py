@@ -173,6 +173,16 @@ class Router:
         matches = _match(self._root, path)
         if not matches:
             raise RouteNotFoundError(f"Ruta no encontrada: {path}")
+        if len(matches) > 1:
+            ambiguous_paths = ", ".join(
+                match[-1][0].full_path for match in matches if match
+            )
+            raise ValueError(
+                "Ambigüedad al resolver la ruta "
+                f"'{path}': se encontraron {len(matches)} coincidencias "
+                f"({ambiguous_paths}). Esta implementación no selecciona "
+                "automáticamente entre rutas ambiguas; defina rutas más específicas."
+            )
         path_nodes = matches[0]
         params = MappingProxyType({})
         parent_match: Optional[RouteMatch] = None
