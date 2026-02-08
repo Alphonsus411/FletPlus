@@ -330,7 +330,18 @@ class HttpClient:
         request = self._client.build_request(method, url, **kwargs)
         request_context: MutableMapping[str, Any] = context if context is not None else {}
         event = RequestEvent(request=request, context=request_context, cache_key=None)
-        await self._hooks.emit_before(event)
+        try:
+            await self._hooks.emit_before(event)
+        except Exception as exc:  # pragma: no cover - rutas excepcionales
+            response_event = ResponseEvent(
+                request_event=event,
+                response=None,
+                context=request_context,
+                from_cache=False,
+                error=exc,
+            )
+            await self._hooks.emit_after(response_event)
+            raise
         request = event.request
         cache_key: str | None = None
         response: httpx.Response | None = None
@@ -470,7 +481,18 @@ class HttpClient:
         request_context: MutableMapping[str, Any] = context if context is not None else {}
         request_context.setdefault("websocket", True)
         event = RequestEvent(request=request, context=request_context, cache_key=None)
-        await self._hooks.emit_before(event)
+        try:
+            await self._hooks.emit_before(event)
+        except Exception as exc:  # pragma: no cover - rutas excepcionales
+            response_event = ResponseEvent(
+                request_event=event,
+                response=None,
+                context=request_context,
+                from_cache=False,
+                error=exc,
+            )
+            await self._hooks.emit_after(response_event)
+            raise
         request = event.request
         try:
             for interceptor in self._interceptors:
