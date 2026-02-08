@@ -1,5 +1,6 @@
 -r requirements.txt
 pytest>=7.4,<9
+websockets>=12,<13
 ruff>=0.5,<1
 black>=24.0,<25
 mypy>=1.7,<2
