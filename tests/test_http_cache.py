@@ -13,6 +13,17 @@ def _make_request(url: str, *, body: bytes | str = b"", headers: dict[str, str] 
     return httpx.Request("GET", url, headers=headers or {}, content=body)
 
 
+class _ControlledClock:
+    def __init__(self, start: float = 0.0) -> None:
+        self._now = start
+
+    def time(self) -> float:
+        return self._now
+
+    def advance(self, seconds: float) -> None:
+        self._now += seconds
+
+
 def test_disk_cache_preserves_headers_and_reason(tmp_path: Path):
     cache = DiskCache(tmp_path)
     request = _make_request("https://example.org/data", headers={"X-Test": "1"})
@@ -36,7 +47,9 @@ def test_disk_cache_preserves_headers_and_reason(tmp_path: Path):
     assert loaded.read() == b"payload"
 
 
-def test_disk_cache_expiration(tmp_path: Path):
+def test_disk_cache_expiration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    clock = _ControlledClock()
+    monkeypatch.setattr(time, "time", clock.time)
     cache = DiskCache(tmp_path, max_age=0.05)
     request = _make_request("https://example.org/expire")
     response = httpx.Response(200, content=b"expire-me", request=request)
@@ -45,13 +58,15 @@ def test_disk_cache_expiration(tmp_path: Path):
     cache.set(key, response)
     assert cache.get(key, request=request) is not None
 
-    time.sleep(0.06)
+    clock.advance(0.06)
 
     expired = cache.get(key, request=request)
     assert expired is None
 
 
-def test_disk_cache_expiration_not_extended_by_reads(tmp_path: Path):
+def test_disk_cache_expiration_not_extended_by_reads(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    clock = _ControlledClock()
+    monkeypatch.setattr(time, "time", clock.time)
     cache = DiskCache(tmp_path, max_age=0.05)
     request = _make_request("https://example.org/expire-read")
     response = httpx.Response(200, content=b"expire-me", request=request)
@@ -59,10 +74,10 @@ def test_disk_cache_expiration_not_extended_by_reads(tmp_path: Path):
     key = cache.build_key(request)
     cache.set(key, response)
 
-    time.sleep(0.04)
+    clock.advance(0.04)
     assert cache.get(key, request=request) is not None
 
-    time.sleep(0.04)
+    clock.advance(0.04)
     expired = cache.get(key, request=request)
     assert expired is None
 
