@@ -1,25 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-import sys
-import types
 
 from click.testing import CliRunner
-
-watchdog_module = types.ModuleType("watchdog")
-events_module = types.ModuleType("watchdog.events")
-events_module.FileSystemEvent = object
-events_module.FileSystemEventHandler = object
-observers_module = types.ModuleType("watchdog.observers")
-observers_module.Observer = object
-sys.modules.setdefault("watchdog", watchdog_module)
-sys.modules["watchdog.events"] = events_module
-sys.modules["watchdog.observers"] = observers_module
 
 from fletplus.cli.main import app
 
 
-def test_create_generates_project_with_valid_package_name() -> None:
+def test_create_generates_project_with_valid_package_name(watchdog_stub) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
@@ -32,7 +20,7 @@ def test_create_generates_project_with_valid_package_name() -> None:
         assert "mi_app" in init_path.read_text(encoding="utf-8")
 
 
-def test_create_prefixes_numeric_package_name() -> None:
+def test_create_prefixes_numeric_package_name(watchdog_stub) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
@@ -44,7 +32,7 @@ def test_create_prefixes_numeric_package_name() -> None:
         assert "_123app" in init_path.read_text(encoding="utf-8")
 
 
-def test_create_rejects_invalid_package_name() -> None:
+def test_create_rejects_invalid_package_name(watchdog_stub) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(app, ["create", "mi-app!"])

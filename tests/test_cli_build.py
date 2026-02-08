@@ -2,21 +2,9 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-import sys
-import types
 from unittest.mock import patch
 
 from click.testing import CliRunner
-
-watchdog_module = types.ModuleType("watchdog")
-events_module = types.ModuleType("watchdog.events")
-events_module.FileSystemEvent = object
-events_module.FileSystemEventHandler = object
-observers_module = types.ModuleType("watchdog.observers")
-observers_module.Observer = object
-sys.modules.setdefault("watchdog", watchdog_module)
-sys.modules["watchdog.events"] = events_module
-sys.modules["watchdog.observers"] = observers_module
 
 from fletplus.cli.main import app
 
@@ -33,7 +21,7 @@ def _setup_minimal_project(base: Path, *, name: str = "demo-app") -> None:
     (assets / "icon.png").write_bytes(b"fake")
 
 
-def test_build_all_targets_success() -> None:
+def test_build_all_targets_success(watchdog_stub) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
@@ -62,7 +50,7 @@ def test_build_all_targets_success() -> None:
         assert "✅ mobile" in result.output
 
 
-def test_build_failure_reports_error() -> None:
+def test_build_failure_reports_error(watchdog_stub) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
@@ -81,7 +69,7 @@ def test_build_failure_reports_error() -> None:
         assert "La compilación terminó con errores" in result.output
 
 
-def test_build_normalizes_name_for_pyinstaller() -> None:
+def test_build_normalizes_name_for_pyinstaller(watchdog_stub) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
