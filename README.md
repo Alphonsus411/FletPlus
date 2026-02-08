@@ -108,8 +108,10 @@ automáticamente.
   `[tool.mypy]`. Ajusta `ignore_missing_imports`, `strict` o los overrides por
   módulo si el error corresponde a dependencias opcionales.
 - **`pytest`**: configuración en `pytest.ini`. Los tests requieren `websockets`
-  instalado (está en `requirements-dev.txt`). Si fallan tests por plugins o
-  markers, actualiza `addopts`, `markers` o `testpaths`.
+  instalado (está en `requirements-dev.txt`) y, si ejecutas pruebas ligadas a
+  la CLI o a la recarga automática, también necesitas `watchdog` para evitar
+  fallos de importación en `fletplus/cli/main.py`. Si fallan tests por plugins
+  o markers, actualiza `addopts`, `markers` o `testpaths`.
 - **`bandit`**: las exclusiones se definen en `pyproject.toml` para evitar
   falsos positivos en `tests/`, `venv/` y `.venv/`. Ajusta `exclude` o revisa
   el código señalado.

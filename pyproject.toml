@@ -46,6 +46,7 @@ speedups = ["cython>=3.0"]
 rust = ["pyrust-native>=0.0.4", "maturin>=1.7"]
 dev = [
   "pytest>=7.4,<9",
+  "watchdog>=3.0",
   "ruff>=0.5,<1",
   "black>=24.0,<25",
   "mypy>=1.7,<2",
