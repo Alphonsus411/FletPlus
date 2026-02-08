@@ -107,7 +107,8 @@ automáticamente.
 - **`mypy`**: los flags y overrides viven en `pyproject.toml` bajo
   `[tool.mypy]`. Ajusta `ignore_missing_imports`, `strict` o los overrides por
   módulo si el error corresponde a dependencias opcionales.
-- **`pytest`**: configuración en `pytest.ini`. Si fallan tests por plugins o
+- **`pytest`**: configuración en `pytest.ini`. Los tests requieren `websockets`
+  instalado (está en `requirements-dev.txt`). Si fallan tests por plugins o
   markers, actualiza `addopts`, `markers` o `testpaths`.
 - **`bandit`**: las exclusiones se definen en `pyproject.toml` para evitar
   falsos positivos en `tests/`, `venv/` y `.venv/`. Ajusta `exclude` o revisa
