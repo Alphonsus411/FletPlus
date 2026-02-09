@@ -51,6 +51,10 @@ python -m pip install -e .[dev]
 python -m pip install -r requirements-dev.txt
 ```
 
+> **Nota**: las dependencias de desarrollo incluyen `websockets` y `watchdog`,
+> necesarias para los tests de herramientas/CLI, así que asegúrate de instalarlas
+> antes de ejecutar la batería de pruebas.
+
 ### ✅ Comandos estándar de calidad
 
 Con el entorno listo, estos son los comandos estándar de calidad que se
