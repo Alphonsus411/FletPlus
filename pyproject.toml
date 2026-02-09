@@ -21,7 +21,7 @@ dependencies = [
   "flet>=0.27.0",
   "click>=8.1",
   "watchdog>=3.0",
-  "websockets>=12.0",
+  "websockets>=13.0",
   "httpx>=0.28",
   "tomli>=2.0; python_version < \"3.11\"",
 ]
@@ -47,7 +47,7 @@ rust = ["pyrust-native>=0.0.4", "maturin>=1.7"]
 cli = ["watchdog>=3.0"]
 dev = [
   "pytest>=7.4,<9",
-  "websockets>=12.0",
+  "websockets>=13.0",
   "watchdog>=3.0",
   "ruff>=0.5,<1",
   "black>=24.0,<25",

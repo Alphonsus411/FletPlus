@@ -1,6 +1,6 @@
 -r requirements.txt
 pytest>=7.4,<9
-websockets>=12,<13
+websockets>=13,<14
 watchdog>=3.0
 ruff>=0.5,<1
 black>=24.0,<25
