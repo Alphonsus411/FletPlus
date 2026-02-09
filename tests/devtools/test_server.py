@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import pytest
+pytest.importorskip("websockets")
 import websockets
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -82,4 +83,3 @@ async def test_late_client_receives_last_snapshot_immediately():
                 received_snapshot = json.loads(snapshot_raw)
                 assert received_snapshot["type"].lower().startswith("snapshot")
                 assert received_snapshot["data"] == {"value": 123}
-
