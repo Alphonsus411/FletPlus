@@ -12,14 +12,24 @@ import subprocess
 import sys
 import tempfile
 import threading
-from importlib import resources
+from importlib import resources, util
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Callable, Dict, Iterable
 
 import click
-from watchdog.events import FileSystemEvent, FileSystemEventHandler
-from watchdog.observers import Observer
+
+WATCHDOG_AVAILABLE = util.find_spec("watchdog") is not None
+if WATCHDOG_AVAILABLE:
+    from watchdog.events import FileSystemEvent, FileSystemEventHandler
+    from watchdog.observers import Observer
+else:  # pragma: no cover - depende de watchdog opcional
+    FileSystemEvent = object  # type: ignore[assignment]
+
+    class FileSystemEventHandler:  # type: ignore[no-redef]
+        """Fallback cuando watchdog no está instalado."""
+
+    Observer = None  # type: ignore[assignment]
 
 from .build import PackagingError, run_build
 
@@ -286,6 +296,26 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
         if not reinicio_evento.is_set():
             click.echo("Cambios detectados, reiniciando servidor...")
         reinicio_evento.set()
+
+    if not WATCHDOG_AVAILABLE:
+        click.echo(
+            "watchdog no está instalado; se ejecuta sin recarga automática. "
+            "Instala 'watchdog' para habilitarla."
+        )
+        proceso = _launch_flet_process(app_path.resolve(), port, devtools)
+        try:
+            while True:
+                try:
+                    proceso.wait(timeout=0.5)
+                except subprocess.TimeoutExpired:
+                    continue
+                click.echo("El servidor se detuvo.")
+                break
+        except KeyboardInterrupt:  # pragma: no cover - interactivo
+            click.echo("Deteniendo servidor...")
+        finally:
+            _stop_process(proceso)
+        return
 
     observer = Observer()
     handler = _ReloadHandler(solicitar_reinicio, patterns={".py", ".json", ".yaml", ".yml"})
