@@ -1374,8 +1374,9 @@ safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-po
 pytest --cov=fletplus
 ```
 
-> **Nota**: `requirements-dev.txt` incluye `websockets`, necesario para los tests
-> de DevTools (`tests/devtools/test_server.py`).
+> **Nota**: `requirements-dev.txt` incluye `websockets` (tests de DevTools,
+> `tests/devtools/test_server.py`) y `watchdog` (pruebas de CLI con recarga y
+> `fletplus run`).
 
 # 📱 Modo móvil
 
