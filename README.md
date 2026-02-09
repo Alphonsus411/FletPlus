@@ -1374,6 +1374,9 @@ safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-po
 pytest --cov=fletplus
 ```
 
+> **Nota**: `requirements-dev.txt` incluye `websockets`, necesario para los tests
+> de DevTools (`tests/devtools/test_server.py`).
+
 # 📱 Modo móvil
 
 > **Nota**: Para compilar y ejecutar en Android o iOS, es necesario tener configurado el entorno de Flet para cada plataforma. Consulta la [documentación oficial de instalación](https://flet.dev/docs/install/) y los [requisitos de despliegue móvil](https://flet.dev/docs/guides/mobile/) antes de generar tu app.
