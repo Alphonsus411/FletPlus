@@ -1,12 +1,36 @@
 from __future__ import annotations
 
 import subprocess
+import importlib
+import sys
+import types
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
 
-from fletplus.cli.main import app
+def _configure_watchdog(monkeypatch, *, available: bool) -> None:
+    if available:
+        watchdog_module = types.ModuleType("watchdog")
+        events_module = types.ModuleType("watchdog.events")
+        events_module.FileSystemEvent = object
+        events_module.FileSystemEventHandler = object
+        observers_module = types.ModuleType("watchdog.observers")
+        observers_module.Observer = object
+        monkeypatch.setitem(sys.modules, "watchdog", watchdog_module)
+        monkeypatch.setitem(sys.modules, "watchdog.events", events_module)
+        monkeypatch.setitem(sys.modules, "watchdog.observers", observers_module)
+    else:
+        monkeypatch.setitem(sys.modules, "watchdog", None)
+        monkeypatch.setitem(sys.modules, "watchdog.events", None)
+        monkeypatch.setitem(sys.modules, "watchdog.observers", None)
+
+
+def _load_cli_app():
+    import fletplus.cli.main as cli_main
+
+    return importlib.reload(cli_main).app
 
 
 def _setup_minimal_project(base: Path, *, name: str = "demo-app") -> None:
@@ -21,7 +45,10 @@ def _setup_minimal_project(base: Path, *, name: str = "demo-app") -> None:
     (assets / "icon.png").write_bytes(b"fake")
 
 
-def test_build_all_targets_success(watchdog_stub) -> None:
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
@@ -50,7 +77,10 @@ def test_build_all_targets_success(watchdog_stub) -> None:
         assert "✅ mobile" in result.output
 
 
-def test_build_failure_reports_error(watchdog_stub) -> None:
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
@@ -69,7 +99,10 @@ def test_build_failure_reports_error(watchdog_stub) -> None:
         assert "La compilación terminó con errores" in result.output
 
 
-def test_build_normalizes_name_for_pyinstaller(watchdog_stub) -> None:
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_build_normalizes_name_for_pyinstaller(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
     runner = CliRunner()
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
