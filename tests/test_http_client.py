@@ -99,8 +99,8 @@ async def test_http_client_websocket_interceptors(monkeypatch: pytest.MonkeyPatc
         async def close(self) -> None:
             self.closed = True
 
-    async def fake_websocket_connect(url: str, **kwargs: Any):
-        headers = kwargs.get("extra_headers") or {}
+    async def fake_websocket_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        headers = additional_headers or {}
         captured_headers["request"] = {key.lower(): value for key, value in dict(headers).items()}
         return DummyWebSocket()
 
@@ -127,6 +127,68 @@ async def test_http_client_websocket_interceptors(monkeypatch: pytest.MonkeyPatc
     assert captured_headers["request"]["x-initial"] == "1"
     assert websocket.response.headers["X-Intercepted"] == "1"
     assert websocket.response.headers["X-Original"] == "1"
+
+
+@pytest.mark.anyio
+async def test_http_client_websocket_headers_use_additional_headers(monkeypatch: pytest.MonkeyPatch):
+    captured_headers = {}
+
+    class DummyWebSocket:
+        response_headers = {}
+        response_status = 101
+
+        async def close(self) -> None:
+            return None
+
+    async def modern_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        assert "extra_headers" not in kwargs
+        captured_headers["request"] = {k.lower(): v for k, v in dict(additional_headers or []).items()}
+        return DummyWebSocket()
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: modern_connect)
+
+    ws = await client.ws_connect(
+        "https://example.org/ws",
+        headers={"X-From-Request": "1"},
+        additional_headers={"X-From-Arg": "2"},
+    )
+    await ws.aclose()
+    await client.aclose()
+
+    assert captured_headers["request"]["x-from-request"] == "1"
+    assert captured_headers["request"]["x-from-arg"] == "2"
+
+
+@pytest.mark.anyio
+async def test_http_client_websocket_headers_use_extra_headers_fallback(monkeypatch: pytest.MonkeyPatch):
+    captured_headers = {}
+
+    class DummyWebSocket:
+        response_headers = {}
+        response_status = 101
+
+        async def close(self) -> None:
+            return None
+
+    async def legacy_connect(url: str, extra_headers: Any = None, **kwargs: Any):
+        assert "additional_headers" not in kwargs
+        captured_headers["request"] = {k.lower(): v for k, v in dict(extra_headers or []).items()}
+        return DummyWebSocket()
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: legacy_connect)
+
+    ws = await client.ws_connect(
+        "https://example.org/ws",
+        headers={"X-From-Request": "1"},
+        additional_headers={"X-From-Arg": "2"},
+    )
+    await ws.aclose()
+    await client.aclose()
+
+    assert captured_headers["request"]["x-from-request"] == "1"
+    assert captured_headers["request"]["x-from-arg"] == "2"
 
 
 @pytest.mark.anyio

@@ -229,6 +229,27 @@ def _build_websocket_response(request: httpx.Request, websocket: Any) -> httpx.R
     return httpx.Response(status_code=status_code, headers=headers, request=request)
 
 
+def _resolve_websocket_headers_arg(connect: Callable[..., Awaitable[Any]]) -> str:
+    """Devuelve el nombre del argumento de headers para websockets.connect.
+
+    Compatibilidad soportada:
+    - websockets modernos (v14+): `additional_headers`
+    - websockets anteriores: `extra_headers`
+
+    Si la firma no puede inspeccionarse, se prioriza `additional_headers`.
+    """
+
+    preferred_arg = "additional_headers"
+    fallback_arg = "extra_headers"
+    with contextlib.suppress(TypeError, ValueError):
+        parameters = inspect.signature(connect).parameters
+        if preferred_arg in parameters:
+            return preferred_arg
+        if fallback_arg in parameters:
+            return fallback_arg
+    return preferred_arg
+
+
 class _HookManager:
     """Gestiona los hooks y señales asociados a las peticiones."""
 
@@ -519,14 +540,18 @@ class HttpClient:
             connect_kwargs = dict(kwargs)
             connect_kwargs.pop("headers", None)
             connect_kwargs.pop("params", None)
-            user_headers = connect_kwargs.pop("extra_headers", None)
+            user_headers = connect_kwargs.pop("additional_headers", None)
+            legacy_headers = connect_kwargs.pop("extra_headers", None)
             extra_headers = list(request.headers.multi_items())
             if user_headers:
                 extra_headers.extend(httpx.Headers(user_headers).multi_items())
+            if legacy_headers:
+                extra_headers.extend(httpx.Headers(legacy_headers).multi_items())
             websocket_connect = _load_websocket_connect()
+            headers_arg = _resolve_websocket_headers_arg(websocket_connect)
             websocket = await websocket_connect(
                 str(request.url),
-                extra_headers=extra_headers,
+                **{headers_arg: extra_headers},
                 **connect_kwargs,
             )
             response = _build_websocket_response(request, websocket)
