@@ -44,7 +44,7 @@ pip install fletplus
 - Para desarrollo local puedes elegir una de estas opciones:
 
 ```bash
-python -m pip install -e .[dev]
+python -m pip install -e .[dev,qa,cli]
 ```
 
 ```bash
@@ -54,6 +54,28 @@ python -m pip install -r requirements-dev.txt
 > **Nota**: las dependencias de desarrollo incluyen `websockets` y `watchdog`,
 > necesarias para los tests de herramientas/CLI, así que asegúrate de instalarlas
 > antes de ejecutar la batería de pruebas.
+
+### 🔁 Secuencia recomendada para tests (local y CI)
+
+1. **Instalar dependencias de test/QA**:
+
+```bash
+python -m pip install -e .[dev,qa,cli]
+```
+
+2. **Validar imports críticos antes de `pytest`**:
+
+```bash
+python tools/check_test_dependencies.py
+```
+
+3. **Ejecutar la suite completa**:
+
+```bash
+python -m pytest
+```
+
+El script `tools/check_test_dependencies.py` falla de forma temprana y explícita si faltan `websockets` o `watchdog`, mostrando un mensaje de instalación para corregir el entorno antes de correr tests.
 
 ### ✅ Comandos estándar de calidad
 

@@ -30,6 +30,7 @@ jobs:
 
       - name: Run quality checks
         run: |
+          python tools/check_test_dependencies.py
           python -m ruff check .
           python -m black --check .
           python -m mypy fletplus
