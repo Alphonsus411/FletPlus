@@ -46,6 +46,23 @@ def _parse_cache_control_max_age(cache_control: str) -> int | None:
     return None
 
 
+def _parse_cache_control_tokens(*header_values: str) -> set[str]:
+    """Parsea directivas Cache-Control/Pragma en un set normalizado de tokens."""
+    tokens: set[str] = set()
+    for header_value in header_values:
+        if not header_value:
+            continue
+        for directive in header_value.split(","):
+            normalized = directive.strip().lower()
+            if not normalized:
+                continue
+            token, _, _value = normalized.partition("=")
+            token = token.strip()
+            if token:
+                tokens.add(token)
+    return tokens
+
+
 def _parse_expires_timestamp(expires: str) -> float | None:
     if not expires:
         return None
@@ -358,9 +375,9 @@ class HttpClient:
                 use_cache = False
             cache_control = request.headers.get("cache-control", "")
             pragma = request.headers.get("pragma", "")
-            combined_directives = f"{cache_control},{pragma}".lower()
-            has_no_cache = "no-cache" in combined_directives
-            has_no_store = "no-store" in combined_directives
+            request_directives = _parse_cache_control_tokens(cache_control, pragma)
+            has_no_cache = "no-cache" in request_directives
+            has_no_store = "no-store" in request_directives
             if cache is not True and (has_no_cache or has_no_store):
                 use_cache = False
 
@@ -391,10 +408,10 @@ class HttpClient:
                 if cache_key and self._cache and not stream:
                     cache_control = response.headers.get("cache-control", "")
                     pragma = response.headers.get("pragma", "")
-                    combined_directives = f"{cache_control},{pragma}".lower()
-                    has_no_cache = "no-cache" in combined_directives
-                    has_no_store = "no-store" in combined_directives
-                    has_private = "private" in combined_directives
+                    response_directives = _parse_cache_control_tokens(cache_control, pragma)
+                    has_no_cache = "no-cache" in response_directives
+                    has_no_store = "no-store" in response_directives
+                    has_private = "private" in response_directives
                     has_set_cookie = response.headers.get("set-cookie") is not None
                     is_success = 200 <= response.status_code <= 299
                     # Respeta no-store/private/set-cookie y evita cachear contenido sensible/volátil.
