@@ -140,9 +140,16 @@ class Router:
     def back(self) -> None:
         if self._index <= 0:
             return
+        previous_index = self._index
+        previous_match = self._active_match
         self._index -= 1
         path = self._history[self._index]
-        self._render_path(path)
+        try:
+            self._render_path(path)
+        except Exception:
+            self._index = previous_index
+            self._active_match = previous_match
+            raise
 
     # ------------------------------------------------------------------
     def _activate(self, path: str, *, push: bool) -> None:
