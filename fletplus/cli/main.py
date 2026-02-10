@@ -19,7 +19,14 @@ from typing import Callable, Dict, Iterable
 
 import click
 
-WATCHDOG_AVAILABLE = util.find_spec("watchdog") is not None
+def _watchdog_available() -> bool:
+    try:
+        return util.find_spec("watchdog") is not None
+    except (ImportError, ValueError):
+        return sys.modules.get("watchdog") is not None
+
+
+WATCHDOG_AVAILABLE = _watchdog_available()
 if WATCHDOG_AVAILABLE:
     from watchdog.events import FileSystemEvent, FileSystemEventHandler
     from watchdog.observers import Observer
@@ -300,7 +307,7 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
     if not WATCHDOG_AVAILABLE:
         click.echo(
             "watchdog no está instalado; se ejecuta sin recarga automática. "
-            "Instala 'watchdog' para habilitarla."
+            "Instálalo con 'pip install fletplus[cli]' (o 'pip install watchdog') para habilitarla."
         )
         proceso = _launch_flet_process(app_path.resolve(), port, devtools)
         try:
