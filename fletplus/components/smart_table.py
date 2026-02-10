@@ -264,10 +264,12 @@ def _run_async(awaitable: Awaitable[Any]) -> Any:
         return asyncio.run(awaitable)
 
     if loop.is_running():
-        future = asyncio.ensure_future(awaitable)
-        # Para entornos donde no podemos bloquear, se devuelve la tarea.
-        # Flet actualizará la vista cuando la tarea finalice.
-        return future
+        if inspect.iscoroutine(awaitable):
+            awaitable.close()
+        raise RuntimeError(
+            "No se puede ejecutar sync=True con un event loop activo; "
+            "usa sync=False y gestiona/espera la tarea resultante."
+        )
 
     return loop.run_until_complete(awaitable)
 
@@ -331,11 +333,17 @@ class SmartTable:
         self._edit_buffers: Dict[int, Dict[str, Any]] = {}
         self._table: Optional[ft.DataTable] = None
         self._container: Optional[ft.Control] = None
+        self._background_tasks: set[asyncio.Task[Any]] = set()
 
         if rows:
             self._ingest_rows(rows)
         if self.virtualized and self.auto_load:
-            self.load_more(sync=True)
+            try:
+                self.load_more(sync=True)
+            except RuntimeError:
+                pending = self.load_more(sync=False)
+                if pending is not None and not isinstance(pending, asyncio.Task):
+                    self._resolve_async_result(pending, context="carga inicial")
 
     # ------------------------------------------------------------------
     # API pública
@@ -422,8 +430,19 @@ class SmartTable:
             self._sorts.clear()
             self.refresh()
 
-    def load_more(self, *, sync: bool = False) -> Optional[Awaitable[Any]]:
-        """Solicita el siguiente bloque de datos al proveedor."""
+    def load_more(
+        self,
+        *,
+        sync: bool = False,
+    ) -> Optional[Union[Awaitable[None], asyncio.Task[None]]]:
+        """Solicita el siguiente bloque de datos al proveedor.
+
+        Retorno:
+            * ``None`` cuando no hay carga pendiente o cuando ``sync=True`` en un
+              entorno sin loop activo.
+            * ``asyncio.Task`` cuando ``sync=False`` y existe un loop activo.
+            * ``Awaitable`` (corutina) cuando ``sync=False`` sin loop activo.
+        """
 
         if not self.virtualized or self._exhausted or self.data_provider is None:
             return None
@@ -445,9 +464,22 @@ class SmartTable:
                 self.refresh()
 
             if sync:
-                _run_async(consume_async())
+                try:
+                    _run_async(consume_async())
+                except RuntimeError:
+                    if inspect.iscoroutine(awaitable):
+                        awaitable.close()
+                    raise
                 return None
-            return consume_async()
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return consume_async()
+
+            task = loop.create_task(consume_async())
+            self._attach_background_task(task, context="load_more")
+            return task
 
         batch = list(result) if isinstance(result, Iterable) else []
         self._ingest_rows(batch)
@@ -612,8 +644,69 @@ class SmartTable:
 
     def _resolve_save(self, row_id: int) -> None:
         maybe = self.save_row(row_id)
-        if inspect.isawaitable(maybe):
+        self._resolve_async_result(maybe, context=f"save_row({row_id})")
+
+    def _resolve_async_result(
+        self,
+        maybe: Optional[Awaitable[Any]],
+        *,
+        context: str,
+    ) -> None:
+        if maybe is None:
+            return
+
+        if isinstance(maybe, asyncio.Task):
+            self._attach_background_task(maybe, context=context)
+            return
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
             _run_async(maybe)
+            return
+
+        if loop.is_running():
+            task = loop.create_task(maybe)
+            self._attach_background_task(task, context=context)
+            return
+
+        _run_async(maybe)
+
+    def _attach_background_task(
+        self,
+        task: asyncio.Task[Any],
+        *,
+        context: str,
+    ) -> None:
+        if task.done():
+            try:
+                task.result()
+            except Exception as exc:
+                task.get_loop().call_exception_handler(
+                    {
+                        "message": f"Excepción en tarea de SmartTable ({context})",
+                        "exception": exc,
+                        "task": task,
+                    }
+                )
+            return
+
+        self._background_tasks.add(task)
+
+        def _on_done(done_task: asyncio.Task[Any]) -> None:
+            self._background_tasks.discard(done_task)
+            try:
+                done_task.result()
+            except Exception as exc:
+                done_task.get_loop().call_exception_handler(
+                    {
+                        "message": f"Excepción en tarea de SmartTable ({context})",
+                        "exception": exc,
+                        "task": done_task,
+                    }
+                )
+
+        task.add_done_callback(_on_done)
 
     def _apply_query(
         self, records: Sequence[_SmartTableRecord]
