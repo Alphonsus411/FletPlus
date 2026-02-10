@@ -6,6 +6,7 @@ import logging
 import ipaddress
 from collections import OrderedDict
 from collections.abc import Iterable
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from websockets.asyncio.server import ServerProtocol, serve
@@ -147,8 +148,13 @@ class DevToolsServer:
             await self._unregister(websocket)
 
     def _is_authorized(self, websocket: ServerProtocol) -> bool:
+        path, headers = self._get_request_path_and_headers(websocket)
+
         if self._auth_token is not None:
-            path = getattr(websocket, "path", "")
+            if path is None:
+                _LOGGER.warning("No se pudo leer path del request para validar token")
+                return False
+
             parsed = urlparse(path)
             token = parse_qs(parsed.query).get("token", [None])[0]
             if token != self._auth_token:
@@ -156,12 +162,32 @@ class DevToolsServer:
                 return False
 
         if self._allowed_origins is not None:
-            origin = websocket.request_headers.get("Origin")
+            if headers is None:
+                _LOGGER.warning("No se pudieron leer headers del request para validar Origin")
+                return False
+
+            origin = headers.get("Origin")
             if origin not in self._allowed_origins:
                 _LOGGER.warning("Origen no permitido al conectar DevTools: %s", origin)
                 return False
 
         return True
+
+    @staticmethod
+    def _get_request_path_and_headers(
+        websocket: ServerProtocol,
+    ) -> tuple[str | None, Any | None]:
+        request = getattr(websocket, "request", None)
+
+        path = getattr(request, "path", None)
+        if path is None:
+            path = getattr(websocket, "path", None)
+
+        headers = getattr(request, "headers", None)
+        if headers is None:
+            headers = getattr(websocket, "request_headers", None)
+
+        return path, headers
 
     async def _send_initial_payloads(self, websocket: ServerProtocol) -> None:
         for message in self._initial_payloads.values():

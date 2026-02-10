@@ -83,3 +83,60 @@ async def test_late_client_receives_last_snapshot_immediately():
                 received_snapshot = json.loads(snapshot_raw)
                 assert received_snapshot["type"].lower().startswith("snapshot")
                 assert received_snapshot["data"] == {"value": 123}
+
+
+@pytest.mark.anyio
+async def test_authorizes_connection_with_token_in_query_string():
+    server = DevToolsServer(auth_token="secret")
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        allowed_uri = f"ws://127.0.0.1:{port}?token=secret"
+        denied_uri = f"ws://127.0.0.1:{port}?token=invalid"
+
+        async with websockets.connect(allowed_uri) as allowed_client:
+            ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
+            assert ready == "server:ready"
+
+        with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
+            async with websockets.connect(denied_uri) as denied_client:
+                await denied_client.recv()
+
+        assert denied.value.rcvd.code == 1008
+
+
+@pytest.mark.anyio
+async def test_authorizes_connection_with_allowed_origin():
+    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}"
+
+        async with websockets.connect(
+            uri,
+            additional_headers={"Origin": "https://trusted.example"},
+        ) as allowed_client:
+            ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
+            assert ready == "server:ready"
+
+        with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
+            async with websockets.connect(
+                uri,
+                additional_headers={"Origin": "https://blocked.example"},
+            ) as denied_client:
+                await denied_client.recv()
+
+        assert denied.value.rcvd.code == 1008
+
+
+def test_is_authorized_rejects_when_request_metadata_is_missing():
+    server = DevToolsServer(
+        auth_token="secret",
+        allowed_origins={"https://trusted.example"},
+    )
+
+    class WebSocketWithoutMetadata:
+        pass
+
+    assert server._is_authorized(WebSocketWithoutMetadata()) is False
