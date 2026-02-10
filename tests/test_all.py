@@ -18,6 +18,14 @@ import sys
 from typing import Protocol, cast
 
 
+def test_public_state_imports() -> None:
+    from fletplus import State as PublicState
+    from fletplus.core import AppState, State as CoreState
+
+    assert PublicState is AppState
+    assert CoreState is AppState
+
+
 class _SmartTableModule(Protocol):
     def test_smart_table_builds_with_filters_and_multi_sort(self) -> None: ...
 
