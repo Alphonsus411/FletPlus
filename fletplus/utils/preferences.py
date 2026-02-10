@@ -145,7 +145,7 @@ class PreferenceStorage:
     ) -> None:
         self._key = key or self.DEFAULT_KEY
         storage = getattr(page, "client_storage", None)
-        if storage and hasattr(storage, "get") and hasattr(storage, "set"):
+        if storage is not None and hasattr(storage, "get") and hasattr(storage, "set"):
             self._backend = _ClientStorageBackend(
                 storage,
                 self._key,
