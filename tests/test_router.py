@@ -86,6 +86,29 @@ def test_router_back_restores_index_when_render_fails():
     assert router.active_match is previous_match
 
 
+def test_router_observer_failure_restores_active_match():
+    router = Router(
+        [
+            Route(path="/home", view=lambda match: ft.Text("Home")),
+            Route(path="/about", view=lambda match: ft.Text("About")),
+        ]
+    )
+
+    router.go("/home")
+    previous_match = router.active_match
+
+    def failing_observer(_match, _control):
+        raise RuntimeError("observer error")
+
+    router.observe(failing_observer)
+
+    with pytest.raises(RuntimeError, match="observer error"):
+        router.go("/about")
+
+    assert router.active_match is previous_match
+    assert router.current_path == "/home"
+
+
 def test_router_prefers_static_over_dynamic():
     static_view = ft.Text("Static settings")
 
