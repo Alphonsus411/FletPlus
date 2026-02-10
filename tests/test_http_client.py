@@ -265,6 +265,60 @@ async def test_http_client_cache_respects_no_cache(tmp_path: Path):
 
 
 @pytest.mark.anyio
+async def test_http_client_request_cache_control_substring_does_not_disable_cache(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"count": call_count})
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get(
+        "https://example.org/request-substring",
+        headers={"Cache-Control": "x-no-cache, x-no-store"},
+    )
+    second = await client.get(
+        "https://example.org/request-substring",
+        headers={"Cache-Control": "x-no-cache, x-no-store"},
+    )
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 1}
+    assert call_count == 1
+
+
+@pytest.mark.anyio
+async def test_http_client_response_cache_control_substring_does_not_disable_cache(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(
+            200,
+            headers={"Cache-Control": "x-no-cache, x-no-store, nonprivate"},
+            json={"count": call_count},
+        )
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/response-substring")
+    second = await client.get("https://example.org/response-substring")
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 1}
+    assert call_count == 1
+
+
+@pytest.mark.anyio
 async def test_http_client_cache_skips_set_cookie(tmp_path: Path):
     call_count = 0
 
