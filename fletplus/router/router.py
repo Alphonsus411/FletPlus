@@ -111,6 +111,11 @@ class Router:
 
     # ------------------------------------------------------------------
     def observe(self, callback: Callable[[RouteMatch, ft.Control], None]) -> Callable[[], None]:
+        """Registra un observer para cambios de ruta.
+
+        Nota: los observers deberían evitar lanzar excepciones para no interrumpir
+        la navegación activa.
+        """
         self._observers.append(callback)
 
         def unsubscribe() -> None:
@@ -222,9 +227,14 @@ class Router:
             raise RouteNotFoundError(f"La ruta '{path}' no tiene vista asociada")
         view = final.node.view_builder(final)
         composed = self._compose_with_layouts(route_matches, view)
-        self._active_match = final
-        for callback in list(self._observers):
-            callback(final, composed)
+        previous_active_match = self._active_match
+        try:
+            self._active_match = final
+            for callback in list(self._observers):
+                callback(final, composed)
+        except Exception:
+            self._active_match = previous_active_match
+            raise
 
     # ------------------------------------------------------------------
     def _compose_with_layouts(self, matches: Sequence[RouteMatch], leaf: ft.Control) -> ft.Control:
