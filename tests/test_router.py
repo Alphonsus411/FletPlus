@@ -58,6 +58,34 @@ def test_router_dynamic_params():
     assert captured[-1].value == "Usuario 42"
 
 
+def test_router_back_restores_index_when_render_fails():
+    home_view_state = {"calls": 0}
+
+    def home_view(match):
+        home_view_state["calls"] += 1
+        if home_view_state["calls"] > 1:
+            raise RuntimeError("error al renderizar home")
+        return ft.Text("Home")
+
+    router = Router(
+        [
+            Route(path="/home", view=home_view),
+            Route(path="/about", view=lambda match: ft.Text("About")),
+        ]
+    )
+
+    router.go("/home")
+    router.go("/about")
+    previous_match = router.active_match
+
+    with pytest.raises(RuntimeError, match="error al renderizar home"):
+        router.back()
+
+    assert router.current_path == "/about"
+    assert router._index == 1
+    assert router.active_match is previous_match
+
+
 def test_router_prefers_static_over_dynamic():
     static_view = ft.Text("Static settings")
 
