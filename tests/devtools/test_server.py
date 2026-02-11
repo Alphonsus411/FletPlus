@@ -86,23 +86,54 @@ async def test_late_client_receives_last_snapshot_immediately():
 
 
 @pytest.mark.anyio
-async def test_authorizes_connection_with_token_in_query_string():
+async def test_authorizes_connection_with_token_in_authorization_header():
     server = DevToolsServer(auth_token="secret")
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
-        allowed_uri = f"ws://127.0.0.1:{port}?token=secret"
-        denied_uri = f"ws://127.0.0.1:{port}?token=invalid"
+        uri = f"ws://127.0.0.1:{port}"
 
-        async with websockets.connect(allowed_uri) as allowed_client:
+        async with websockets.connect(
+            uri,
+            additional_headers={"Authorization": "Bearer secret"},
+        ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
 
+
+@pytest.mark.anyio
+async def test_rejects_connection_with_invalid_header_token():
+    server = DevToolsServer(auth_token="secret")
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}"
+
         with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
-            async with websockets.connect(denied_uri) as denied_client:
+            async with websockets.connect(
+                uri,
+                additional_headers={"X-DevTools-Token": "invalid"},
+            ) as denied_client:
                 await denied_client.recv()
 
         assert denied.value.rcvd.code == 1008
+
+
+@pytest.mark.anyio
+async def test_authorizes_connection_with_token_in_query_string_as_deprecated_fallback(caplog):
+    server = DevToolsServer(auth_token="secret")
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}?token=secret"
+
+        caplog.clear()
+        with caplog.at_level("WARNING"):
+            async with websockets.connect(uri) as allowed_client:
+                ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
+                assert ready == "server:ready"
+
+        assert "método deprecado" in caplog.text
 
 
 @pytest.mark.anyio

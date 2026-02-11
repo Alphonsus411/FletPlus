@@ -8,7 +8,7 @@ Esta guía reúne los apoyos disponibles durante el ciclo de vida de una app Fle
 
 Para integrarlo en tu proyecto, arranca `DevToolsServer().listen()` dentro de un `asyncio.Task` y comparte la URL en tus herramientas de depuración o paneles administrativos.
 
-Si necesitas restringir el acceso, puedes configurar `auth_token` (el cliente debe incluir `?token=...` en la URL de WebSocket) y/o `allowed_origins` (el header `Origin` debe coincidir con alguno de los orígenes permitidos). Las conexiones que no cumplan estos requisitos se rechazan con un cierre de política.
+Si necesitas restringir el acceso, puedes configurar `auth_token` y/o `allowed_origins`. Con `auth_token`, el cliente debe enviar el secreto en un header dedicado (`Authorization: Bearer <token>` o `X-DevTools-Token: <token>`). La query string `?token=...` sigue disponible solo como fallback temporal deprecado y emite un warning en logs. Además, el header `Origin` debe coincidir con alguno de los orígenes permitidos cuando se configure `allowed_origins`. Las conexiones que no cumplan estos requisitos se rechazan con un cierre de política.
 
 ## Recarga en caliente desde la CLI
 

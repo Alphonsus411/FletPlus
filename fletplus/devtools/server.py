@@ -46,9 +46,11 @@ class DevToolsServer:
         """Crea el servidor y comienza a escuchar conexiones.
 
         Si se configura ``auth_token`` o ``allowed_origins``, las conexiones
-        entrantes deben incluir el token en la query string (``?token=...``) y/o
+        entrantes deben incluir el token en un header dedicado
+        (``Authorization: Bearer <token>`` o ``X-DevTools-Token: <token>``) y/o
         un header ``Origin`` permitido; en caso contrario se rechazan con un
-        cierre de política.
+        cierre de política. Durante una ventana de deprecación, también se
+        admite ``?token=...`` como fallback legacy.
 
         Para exponer el servidor fuera de loopback (por ejemplo ``0.0.0.0``,
         ``::`` o una IP pública) es obligatorio configurar ``auth_token`` o
@@ -156,12 +158,29 @@ class DevToolsServer:
         path, headers = self._get_request_path_and_headers(websocket)
 
         if self._auth_token is not None:
-            if path is None:
-                _LOGGER.warning("No se pudo leer path del request para validar token")
+            if headers is None:
+                _LOGGER.warning(
+                    "No se pudieron leer headers del request para validar token"
+                )
                 return False
 
-            parsed = urlparse(path)
-            token = parse_qs(parsed.query).get("token", [None])[0]
+            token = self._extract_token_from_headers(headers)
+
+            if token is None:
+                if path is None:
+                    _LOGGER.warning(
+                        "No se pudo leer path del request para validar token legacy"
+                    )
+                    return False
+
+                parsed = urlparse(path)
+                token = parse_qs(parsed.query).get("token", [None])[0]
+                if token is not None:
+                    _LOGGER.warning(
+                        "Se usó token por query string (?token=...): método deprecado; "
+                        "usa Authorization Bearer o X-DevTools-Token"
+                    )
+
             if token != self._auth_token:
                 _LOGGER.warning("Token inválido o ausente al conectar DevTools")
                 return False
@@ -193,6 +212,20 @@ class DevToolsServer:
             headers = getattr(websocket, "request_headers", None)
 
         return path, headers
+
+    @staticmethod
+    def _extract_token_from_headers(headers: Any) -> str | None:
+        auth_header = headers.get("Authorization")
+        if auth_header:
+            scheme, _, value = auth_header.partition(" ")
+            if scheme.lower() == "bearer" and value:
+                return value.strip()
+
+        token_header = headers.get("X-DevTools-Token")
+        if token_header:
+            return token_header.strip()
+
+        return None
 
     async def _send_initial_payloads(self, websocket: ServerProtocol) -> None:
         for message in self._initial_payloads.values():
