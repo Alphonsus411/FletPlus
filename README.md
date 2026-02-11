@@ -33,6 +33,16 @@ pip install fletplus
 - [Catálogo de componentes](docs/components.md)
 - [Perfiles de dispositivo y breakpoints](docs/responsive.md)
 
+## 🤝 Guía rápida de colaboración (paso a paso)
+
+Si quieres contribuir al proyecto con un flujo simple y repetible, sigue esta secuencia:
+
+1. Crea una rama para tu cambio y describe el objetivo en una frase.
+2. Implementa el cambio en incrementos pequeños para facilitar la revisión.
+3. Ejecuta los checks de calidad (linters, tipos y tests) antes de abrir el PR.
+4. Resume en el PR qué se cambió, por qué y cómo se validó.
+5. Si el cambio afecta al comportamiento visual, adjunta una captura o demo corta.
+
 ## ✅ Quality Checks
 
 ### ✅ Requisitos y cómo instalar dependencias de QA
