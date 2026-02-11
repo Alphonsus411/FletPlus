@@ -6,6 +6,7 @@ import contextlib
 import email.utils
 import importlib
 import inspect
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -23,6 +24,8 @@ RequestHook = Callable[["RequestEvent"], Awaitable[None] | None]
 ResponseHook = Callable[["ResponseEvent"], Awaitable[None] | None]
 RequestInterceptor = Callable[[httpx.Request], Awaitable[httpx.Request | None] | httpx.Request | None]
 ResponseInterceptor = Callable[[httpx.Response], Awaitable[httpx.Response | None] | httpx.Response | None]
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_cache_control_max_age(cache_control: str) -> int | None:
@@ -354,6 +357,11 @@ class HttpClient:
     ) -> httpx.Response:
         """Construye y envía una petición HTTP.
 
+        Contrato de errores de hooks:
+        - Si `emit_after` falla y ya existe un error principal de la petición,
+          se conserva ese error principal y el fallo del hook solo se registra en logs.
+        - Si `emit_after` falla y no existe error principal, el error del hook se propaga.
+
         Nota sobre caché: si los headers incluyen credenciales (`authorization`,
         `cookie` o `x-api-key`), la caché se desactiva automáticamente para evitar
         persistir respuestas sensibles. Puedes sobrescribir este comportamiento
@@ -378,7 +386,7 @@ class HttpClient:
                 from_cache=False,
                 error=exc,
             )
-            await self._hooks.emit_after(response_event)
+            await self._emit_after_with_guard(response_event, primary_error=exc)
             raise
         request = event.request
         cache_key: str | None = None
@@ -463,9 +471,23 @@ class HttpClient:
                 from_cache=from_cache,
                 error=error,
             )
-            await self._hooks.emit_after(response_event)
+            await self._emit_after_with_guard(response_event, primary_error=error)
         assert response is not None
         return response
+
+    # ------------------------------------------------------------------
+    async def _emit_after_with_guard(
+        self,
+        response_event: ResponseEvent,
+        *,
+        primary_error: Exception | None,
+    ) -> None:
+        try:
+            await self._hooks.emit_after(response_event)
+        except Exception:
+            logger.exception("Fallo al ejecutar hooks 'after' de HttpClient.")
+            if primary_error is None:
+                raise
 
     # ------------------------------------------------------------------
     async def get(
@@ -529,7 +551,7 @@ class HttpClient:
                 from_cache=False,
                 error=exc,
             )
-            await self._hooks.emit_after(response_event)
+            await self._emit_after_with_guard(response_event, primary_error=exc)
             raise
         request = event.request
         try:
@@ -576,7 +598,7 @@ class HttpClient:
                 from_cache=False,
                 error=exc,
             )
-            await self._hooks.emit_after(response_event)
+            await self._emit_after_with_guard(response_event, primary_error=exc)
             raise
         response_event = ResponseEvent(
             request_event=event,
@@ -585,7 +607,7 @@ class HttpClient:
             from_cache=False,
             error=None,
         )
-        await self._hooks.emit_after(response_event)
+        await self._emit_after_with_guard(response_event, primary_error=None)
         return websocket
 
     # ------------------------------------------------------------------

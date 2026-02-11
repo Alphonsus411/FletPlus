@@ -327,6 +327,67 @@ async def test_http_client_cache_respects_no_cache(tmp_path: Path):
 
 
 @pytest.mark.anyio
+async def test_http_client_preserves_network_error_when_after_hook_fails(caplog: pytest.LogCaptureFixture):
+    async def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("network down", request=request)
+
+    client = HttpClient(transport=httpx.MockTransport(handler))
+
+    async def broken_after(_event):
+        raise RuntimeError("after-hook-boom")
+
+    client.add_after_hook(broken_after)
+
+    with pytest.raises(httpx.ConnectError, match="network down"):
+        await client.get("https://example.org/fail")
+
+    await client.aclose()
+
+    assert "Fallo al ejecutar hooks 'after' de HttpClient." in caplog.text
+
+
+@pytest.mark.anyio
+async def test_http_client_raises_after_hook_error_when_request_succeeds(caplog: pytest.LogCaptureFixture):
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"ok": True})
+
+    client = HttpClient(transport=httpx.MockTransport(handler))
+
+    async def broken_after(_event):
+        raise RuntimeError("after-hook-boom")
+
+    client.add_after_hook(broken_after)
+
+    with pytest.raises(RuntimeError, match="after-hook-boom"):
+        await client.get("https://example.org/ok")
+
+    await client.aclose()
+
+    assert "Fallo al ejecutar hooks 'after' de HttpClient." in caplog.text
+
+
+@pytest.mark.anyio
+async def test_http_client_preserves_before_hook_error_when_after_hook_fails(caplog: pytest.LogCaptureFixture):
+    client = HttpClient(transport=httpx.MockTransport(lambda _request: httpx.Response(200)))
+
+    def broken_before(_event):
+        raise ValueError("before-hook-boom")
+
+    async def broken_after(_event):
+        raise RuntimeError("after-hook-boom")
+
+    client.add_before_hook(broken_before)
+    client.add_after_hook(broken_after)
+
+    with pytest.raises(ValueError, match="before-hook-boom"):
+        await client.get("https://example.org/fail-before")
+
+    await client.aclose()
+
+    assert "Fallo al ejecutar hooks 'after' de HttpClient." in caplog.text
+
+
+@pytest.mark.anyio
 async def test_http_client_request_cache_control_substring_does_not_disable_cache(tmp_path: Path):
     call_count = 0
 
