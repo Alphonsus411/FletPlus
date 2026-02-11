@@ -140,3 +140,25 @@ def test_is_authorized_rejects_when_request_metadata_is_missing():
         pass
 
     assert server._is_authorized(WebSocketWithoutMetadata()) is False
+
+
+def test_remember_initial_payload_handles_case_insensitive_allowed_snapshot_types():
+    server = DevToolsServer(
+        allowed_snapshot_types={"SNAPSHOT", "Snapshot:Node"},
+    )
+
+    server._remember_initial_payload(
+        json.dumps({"type": "snapshot", "data": {"value": 1}})
+    )
+    server._remember_initial_payload(
+        json.dumps({"type": "SNAPSHOT:NODE", "data": {"id": "n1"}})
+    )
+
+    assert "snapshot" in server._initial_payloads
+    assert "SNAPSHOT:NODE" in server._initial_payloads
+
+    server._remember_initial_payload(
+        json.dumps({"type": "sNaPsHoT:Edge", "data": {"id": "e1"}})
+    )
+
+    assert "sNaPsHoT:Edge" not in server._initial_payloads
