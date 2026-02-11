@@ -59,6 +59,11 @@ else:
 
         También permite aplicar estilos diferentes a controles según el breakpoint
         actual del ancho de la página.
+
+        Nota:
+            Cuando una vista se desmonta o deja de usar esta instancia, se debe
+            llamar a :meth:`dispose` para restaurar el handler previo de
+            ``page.on_resize`` y liberar estado interno.
         """
 
         def __init__(
@@ -95,16 +100,41 @@ else:
 
             self._styles: dict[ft.Control, ResponsiveStyle] = {}
             self._style_state: dict[ft.Control, dict[str, dict[str, object]]] = {}
+            self._disposed = False
 
-            previous_handler = getattr(self.page, "on_resize", None)
+            self._previous_on_resize = getattr(self.page, "on_resize", None)
 
             def _combined_resize(event: ft.ControlEvent | None = None) -> None:
+                if self._disposed:
+                    return
                 self._handle_resize(event)
-                if callable(previous_handler):
-                    previous_handler(event)
+                if callable(self._previous_on_resize):
+                    self._previous_on_resize(event)
 
-            self.page.on_resize = _combined_resize
+            self._on_resize_wrapper = _combined_resize
+            self.page.on_resize = self._on_resize_wrapper
             self._handle_resize()
+
+        # ------------------------------------------------------------------
+        def dispose(self) -> None:
+            """Libera recursos internos y restaura ``page.on_resize`` si aplica."""
+
+            if self._disposed:
+                return
+
+            if getattr(self.page, "on_resize", None) is self._on_resize_wrapper:
+                self.page.on_resize = self._previous_on_resize
+
+            self._styles.clear()
+            self._style_state.clear()
+            self.breakpoints.clear()
+            self.height_breakpoints.clear()
+            self.orientation_callbacks.clear()
+            self.device_callbacks.clear()
+            self._width_bp_keys = ()
+            self._height_bp_keys = ()
+
+            self._disposed = True
 
         # ------------------------------------------------------------------
         @staticmethod

@@ -253,3 +253,34 @@ def test_responsive_manager_preserves_existing_resize_handler():
     page.resize(600)
 
     assert calls == ["manager", "previous"]
+
+
+def test_responsive_manager_dispose_with_sequential_managers():
+    page = DummyPage(500, 800)
+    calls: list[str] = []
+
+    manager_a = ResponsiveManager(page, {0: lambda _w: calls.append("a")})
+    manager_b = ResponsiveManager(
+        page,
+        {
+            0: lambda _w: calls.append("b-small"),
+            600: lambda _w: calls.append("b-large"),
+        },
+    )
+
+    assert page.on_resize is manager_b._on_resize_wrapper
+
+    manager_a.dispose()
+
+    # El primer manager quedó encadenado como previous del segundo,
+    # pero al estar dispuesto no debe volver a disparar callbacks.
+    page.resize(600)
+    assert calls == ["a", "b-small", "b-large"]
+
+    manager_b.dispose()
+    assert page.on_resize is manager_a._on_resize_wrapper
+
+    # El wrapper restaurado pertenece a un manager dispuesto, por lo que
+    # no debe ejecutar callbacks adicionales.
+    page.resize(700)
+    assert calls == ["a", "b-small", "b-large"]
