@@ -41,7 +41,28 @@ class CommandPalette:
         items = list(self.commands.items())
         names = [name for name, _ in items]
         indices = filter_commands(names, query)
-        self.filtered = [items[index] for index in indices]
+        valid_indices: list[int] = []
+        seen: set[int] = set()
+
+        for index in indices:
+            if not isinstance(index, int):
+                logging.warning("filter_commands devolvió un índice no entero: %r", index)
+                continue
+            if index < 0 or index >= len(items):
+                logging.warning(
+                    "filter_commands devolvió un índice fuera de rango: %s (total: %s)",
+                    index,
+                    len(items),
+                )
+                continue
+            if index in seen:
+                logging.debug("Índice duplicado ignorado en command palette: %s", index)
+                continue
+
+            valid_indices.append(index)
+            seen.add(index)
+
+        self.filtered = [items[index] for index in valid_indices]
         self._refresh()
 
     def _refresh(self):
