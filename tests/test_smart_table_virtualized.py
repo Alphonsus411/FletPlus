@@ -121,6 +121,34 @@ def test_autoload_and_resolve_save_capture_async_exceptions_without_orphans():
     asyncio.run(scenario())
 
 
+def test_autoload_with_running_loop_does_not_duplicate_provider_calls_for_tasks():
+    async def scenario():
+        calls = 0
+        call_done = asyncio.Event()
+
+        async def provider(query, start, end):
+            nonlocal calls
+            calls += 1
+            await asyncio.sleep(0)
+            call_done.set()
+            return [{"id": idx} for idx in range(start, end)]
+
+        table = SmartTable(
+            [SmartTableColumn("id", "ID")],
+            virtualized=True,
+            page_size=1,
+            data_provider=lambda q, s, e: asyncio.create_task(provider(q, s, e)),
+        )
+
+        await asyncio.wait_for(call_done.wait(), timeout=1)
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        assert calls == 1
+        assert len(table._records) == 1
+
+    asyncio.run(scenario())
+
+
 def test_refresh_consistency_after_sync_load_more():
     columns = [SmartTableColumn("id", "ID"), SmartTableColumn("name", "Nombre")]
 
