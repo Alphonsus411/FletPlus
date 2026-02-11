@@ -34,6 +34,11 @@ class DevToolsServer:
         self._max_initial_payloads = max_initial_payloads
         self._max_payload_size = max_payload_size
         self._allowed_snapshot_types = allowed_snapshot_types
+        self._normalized_allowed_snapshot_types = (
+            {snapshot_type.lower() for snapshot_type in allowed_snapshot_types}
+            if allowed_snapshot_types is not None
+            else None
+        )
         self._auth_token = auth_token
         self._allowed_origins = allowed_origins
 
@@ -214,8 +219,8 @@ class DevToolsServer:
             return
 
         if (
-            self._allowed_snapshot_types is not None
-            and payload_type not in self._allowed_snapshot_types
+            self._normalized_allowed_snapshot_types is not None
+            and payload_type_lower not in self._normalized_allowed_snapshot_types
         ):
             return
 
