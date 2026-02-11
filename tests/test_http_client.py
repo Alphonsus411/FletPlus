@@ -6,6 +6,7 @@ import httpx
 import pytest
 
 from fletplus.http import DiskCache, HttpClient, HttpInterceptor
+from fletplus.http.client import _build_websocket_response
 
 
 @pytest.fixture
@@ -127,6 +128,71 @@ async def test_http_client_websocket_interceptors(monkeypatch: pytest.MonkeyPatc
     assert captured_headers["request"]["x-initial"] == "1"
     assert websocket.response.headers["X-Intercepted"] == "1"
     assert websocket.response.headers["X-Original"] == "1"
+
+
+def test_build_websocket_response_with_legacy_metadata():
+    class LegacyWebSocket:
+        response_status = 204
+        response_headers = [("X-Legacy", "ok"), (b"X-Bytes", b"1")]
+
+    request = httpx.Request("GET", "https://example.org/socket")
+
+    response = _build_websocket_response(request, LegacyWebSocket())
+
+    assert response.status_code == 204
+    assert response.headers["X-Legacy"] == "ok"
+    assert response.headers["X-Bytes"] == "1"
+
+
+def test_build_websocket_response_with_modern_metadata():
+    class ModernHandshakeResponse:
+        status_code = 202
+        headers = {"X-Modern": "ok"}
+
+    class ModernWebSocket:
+        response = ModernHandshakeResponse()
+
+    request = httpx.Request("GET", "https://example.org/socket")
+
+    response = _build_websocket_response(request, ModernWebSocket())
+
+    assert response.status_code == 202
+    assert response.headers["X-Modern"] == "ok"
+
+
+@pytest.mark.anyio
+async def test_http_client_websocket_interceptors_receive_modern_response(monkeypatch: pytest.MonkeyPatch):
+    class ModernHandshakeResponse:
+        status_code = 201
+        headers = httpx.Headers({"X-Modern": "1"})
+
+    class DummyWebSocket:
+        response = ModernHandshakeResponse()
+
+        async def close(self) -> None:
+            return None
+
+    async def fake_websocket_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        return DummyWebSocket()
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: fake_websocket_connect)
+
+    intercepted: list[tuple[int, str | None]] = []
+
+    def after(response: httpx.Response) -> httpx.Response:
+        intercepted.append((response.status_code, response.headers.get("X-Modern")))
+        return response
+
+    client.add_interceptor(HttpInterceptor(after_response=after))
+
+    websocket = await client.ws_connect("https://example.org/socket")
+    await websocket.aclose()
+    await client.aclose()
+
+    assert intercepted == [(201, "1")]
+    assert websocket.response.status_code == 201
+    assert websocket.response.headers["X-Modern"] == "1"
 
 
 @pytest.mark.anyio
