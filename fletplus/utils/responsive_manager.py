@@ -105,9 +105,8 @@ else:
             self._previous_on_resize = getattr(self.page, "on_resize", None)
 
             def _combined_resize(event: ft.ControlEvent | None = None) -> None:
-                if self._disposed:
-                    return
-                self._handle_resize(event)
+                if not self._disposed:
+                    self._handle_resize(event)
                 if callable(self._previous_on_resize):
                     self._previous_on_resize(event)
 

@@ -259,6 +259,11 @@ def test_responsive_manager_dispose_with_sequential_managers():
     page = DummyPage(500, 800)
     calls: list[str] = []
 
+    def previous_handler(event):
+        calls.append("previous")
+
+    page.on_resize = previous_handler
+
     manager_a = ResponsiveManager(page, {0: lambda _w: calls.append("a")})
     manager_b = ResponsiveManager(
         page,
@@ -273,14 +278,15 @@ def test_responsive_manager_dispose_with_sequential_managers():
     manager_a.dispose()
 
     # El primer manager quedó encadenado como previous del segundo,
-    # pero al estar dispuesto no debe volver a disparar callbacks.
+    # pero al estar dispuesto no debe volver a disparar callbacks propios;
+    # sí debe seguir encadenando el handler previo.
     page.resize(600)
-    assert calls == ["a", "b-small", "b-large"]
+    assert calls == ["a", "b-small", "b-large", "previous"]
 
     manager_b.dispose()
     assert page.on_resize is manager_a._on_resize_wrapper
 
-    # El wrapper restaurado pertenece a un manager dispuesto, por lo que
-    # no debe ejecutar callbacks adicionales.
+    # El wrapper restaurado pertenece a un manager dispuesto: no debe ejecutar
+    # callbacks propios, pero sí mantener encadenado el handler original.
     page.resize(700)
-    assert calls == ["a", "b-small", "b-large"]
+    assert calls == ["a", "b-small", "b-large", "previous", "previous"]
