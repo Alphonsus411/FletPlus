@@ -224,12 +224,33 @@ def _load_websocket_connect() -> Callable[..., Awaitable[Any]]:
 
 
 def _build_websocket_response(request: httpx.Request, websocket: Any) -> httpx.Response:
-    status_code = getattr(websocket, "response_status", 101)
+    status_code: int | None = getattr(websocket, "response_status", None)
     response_headers = getattr(websocket, "response_headers", None)
+
+    websocket_response = getattr(websocket, "response", None)
+    if websocket_response is not None:
+        if status_code is None:
+            status_code = getattr(websocket_response, "status_code", None)
+        if response_headers is None:
+            response_headers = getattr(websocket_response, "headers", None)
+
     headers: dict[str, str] = {}
     if response_headers:
-        headers = dict(response_headers)
-    return httpx.Response(status_code=status_code, headers=headers, request=request)
+        items = getattr(response_headers, "items", None)
+
+        def _as_text(value: Any) -> str:
+            if isinstance(value, bytes):
+                return value.decode("latin1")
+            return str(value)
+
+        try:
+            iterable = items() if callable(items) else response_headers
+            headers = {_as_text(key): _as_text(value) for key, value in iterable}
+        except Exception:
+            headers = {}
+
+    resolved_status = status_code if status_code is not None else 101
+    return httpx.Response(status_code=resolved_status, headers=headers, request=request)
 
 
 def _resolve_websocket_headers_arg(connect: Callable[..., Awaitable[Any]]) -> str:
