@@ -278,3 +278,24 @@ def test_router_render_path_keeps_parent_chain_with_python_fallback(monkeypatch)
     assert router.active_match.parent is not None
     assert router.active_match.parent.path == "/dashboard"
     assert router.active_match.parent.parent is None
+
+
+def test_router_python_fallback_tries_dynamic_after_non_terminal_static():
+    router = Router(
+        [
+            Route(path="/users/<user_id>", view=lambda match: ft.Text(match.param("user_id"))),
+            Route(
+                path="/users/me",
+                children=[
+                    Route(path="settings", view=lambda match: ft.Text("Settings")),
+                ],
+            ),
+        ]
+    )
+
+    from fletplus.router import router as router_mod
+
+    matches = router_mod._match_py(router._root, "/users/me")
+    assert len(matches) == 1
+    assert [node.full_path for node, _ in matches[0]] == ["/users", "/users/<user_id>"]
+    assert matches[0][-1][1]["user_id"] == "me"

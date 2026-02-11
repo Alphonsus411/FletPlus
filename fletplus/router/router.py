@@ -342,14 +342,13 @@ def _dfs_match_py(
         else:
             static_children.append(child)
 
-    static_matched = False
+    previous_results_len = len(results)
     for child in static_children:
         if child.segment == segment:
-            static_matched = True
             stack[index] = (child, dict(params))
             _dfs_match_py(child, segments, index + 1, params, stack, results)
 
-    if static_matched:
+    if len(results) > previous_results_len:
         return
 
     for child in dynamic_children:
