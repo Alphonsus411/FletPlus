@@ -339,11 +339,16 @@ class SmartTable:
             self._ingest_rows(rows)
         if self.virtualized and self.auto_load:
             try:
-                self.load_more(sync=True)
+                running_loop = asyncio.get_running_loop()
             except RuntimeError:
+                running_loop = None
+
+            if running_loop is not None and running_loop.is_running():
                 pending = self.load_more(sync=False)
                 if pending is not None and not isinstance(pending, asyncio.Task):
                     self._resolve_async_result(pending, context="carga inicial")
+            else:
+                self.load_more(sync=True)
 
     # ------------------------------------------------------------------
     # API pública
