@@ -331,8 +331,7 @@ def _dfs_match_py(
 ) -> None:
     if index == len(segments):
         if node.view_builder is not None:
-            stack[index] = (node, dict(params))
-            results.append([entry for entry in stack[: index + 1] if entry is not None])
+            results.append([entry for entry in stack[:index] if entry is not None])
         return
     segment = segments[index]
     static_children: List[_RouteNode] = []
@@ -343,10 +342,15 @@ def _dfs_match_py(
         else:
             static_children.append(child)
 
+    static_matched = False
     for child in static_children:
         if child.segment == segment:
+            static_matched = True
             stack[index] = (child, dict(params))
             _dfs_match_py(child, segments, index + 1, params, stack, results)
+
+    if static_matched:
+        return
 
     for child in dynamic_children:
         key = child.parameter_name or "param"

@@ -222,3 +222,59 @@ def test_router_match_consistency_between_impls():
         assert cy_results == base_results
 
     assert py_results == base_results
+
+
+def test_router_python_match_does_not_duplicate_leaf_nodes():
+    router = Router(
+        [
+            Route(path="/home", view=lambda match: ft.Text("Home")),
+            Route(
+                path="/dashboard",
+                children=[
+                    Route(path="settings", view=lambda match: ft.Text("Settings")),
+                ],
+            ),
+        ]
+    )
+
+    from fletplus.router import router as router_mod
+
+    home_matches = router_mod._match_py(router._root, "/home")
+    assert len(home_matches) == 1
+    assert [node.full_path for node, _ in home_matches[0]] == ["/home"]
+
+    settings_matches = router_mod._match_py(router._root, "/dashboard/settings")
+    assert len(settings_matches) == 1
+    assert [node.full_path for node, _ in settings_matches[0]] == [
+        "/dashboard",
+        "/dashboard/settings",
+    ]
+
+
+def test_router_render_path_keeps_parent_chain_with_python_fallback(monkeypatch):
+    router = Router(
+        [
+            Route(path="/home", view=lambda match: ft.Text("Home")),
+            Route(
+                path="/dashboard",
+                children=[
+                    Route(path="settings", view=lambda match: ft.Text("Settings")),
+                ],
+            ),
+        ]
+    )
+    from fletplus.router import router as router_mod
+
+    monkeypatch.setattr(router_mod, "_match", router_mod._match_py)
+
+    router.go("/home")
+    assert router.active_match is not None
+    assert router.active_match.path == "/home"
+    assert router.active_match.parent is None
+
+    router.go("/dashboard/settings")
+    assert router.active_match is not None
+    assert router.active_match.path == "/dashboard/settings"
+    assert router.active_match.parent is not None
+    assert router.active_match.parent.path == "/dashboard"
+    assert router.active_match.parent.parent is None
