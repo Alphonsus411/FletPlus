@@ -67,3 +67,33 @@ def test_locale_context_default_resolution():
     with pytest.raises(LookupError):
         theme_context.get()
     assert locale_context.get(default="es") == "es"
+
+
+def test_context_reuse_with_compatible_configuration():
+    ctx = Context("reuse-compatible", default={"theme": "light"})
+
+    reused = Context("reuse-compatible")
+    reused_with_same_default = Context("reuse-compatible", default={"theme": "light"})
+
+    assert reused is ctx
+    assert reused_with_same_default is ctx
+
+
+def test_context_reuse_conflict_on_default():
+    Context("reuse-default-conflict", default="es")
+
+    with pytest.raises(ValueError, match="reuse-default-conflict"):
+        Context("reuse-default-conflict", default="en")
+
+
+def test_context_reuse_conflict_on_comparer():
+    def eq_lower(left, right):
+        return str(left).lower() == str(right).lower()
+
+    def eq_upper(left, right):
+        return str(left).upper() == str(right).upper()
+
+    Context("reuse-comparer-conflict", comparer=eq_lower)
+
+    with pytest.raises(ValueError, match="reuse-comparer-conflict"):
+        Context("reuse-comparer-conflict", comparer=eq_upper)

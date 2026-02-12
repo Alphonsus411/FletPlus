@@ -70,15 +70,77 @@ class Context(Generic[_T], AbstractContextManager["ContextProvider[_T]"]):
 
     _registry: dict[str, "Context[Any]"] = {}
 
+    @staticmethod
+    def _config_repr(value: Any) -> str:
+        if value is MISSING:
+            return "<no especificado>"
+        return repr(value)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _same_default(existing: Any, requested: Any) -> bool:
+        if existing is MISSING and requested is MISSING:
+            return True
+        if existing is MISSING or requested is MISSING:
+            return False
+        try:
+            return existing == requested
+        except Exception:  # pragma: no cover - comparadores patológicos
+            return existing is requested
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _same_comparer(existing: Any, requested: Any) -> bool:
+        return existing is requested
+
+    # ------------------------------------------------------------------
+    @classmethod
+    def _ensure_compatible_request(
+        cls,
+        existing: "Context[Any]",
+        *,
+        requested_default: Any,
+        requested_comparer: Any,
+    ) -> None:
+        default_conflict = (
+            requested_default is not MISSING
+            and not cls._same_default(existing.default, requested_default)
+        )
+        comparer_conflict = (
+            requested_comparer is not MISSING
+            and not cls._same_comparer(existing._comparer, requested_comparer)
+        )
+        if not (default_conflict or comparer_conflict):
+            return
+
+        existing_config = (
+            f"default={cls._config_repr(existing.default)}, "
+            f"comparer={cls._config_repr(existing._comparer)}"
+        )
+        requested_config = (
+            f"default={cls._config_repr(requested_default)}, "
+            f"comparer={cls._config_repr(requested_comparer)}"
+        )
+        raise ValueError(
+            "Conflicto al reutilizar contexto "
+            f"'{existing.name}': configuración existente ({existing_config}) "
+            f"vs nueva ({requested_config})"
+        )
+
     def __new__(
         cls,
         name: str,
         *,
         default: _T | _Missing = MISSING,
-        comparer: Callable[[Any, Any], bool] | None = None,
+        comparer: Callable[[Any, Any], bool] | None | _Missing = MISSING,
     ) -> "Context[_T]":
         existing = cls._registry.get(name)
         if existing is not None:
+            cls._ensure_compatible_request(
+                existing,
+                requested_default=default,
+                requested_comparer=comparer,
+            )
             return existing  # type: ignore[return-value]
         self = super().__new__(cls)
         cls._registry[name] = self  # type: ignore[assignment]
@@ -89,13 +151,15 @@ class Context(Generic[_T], AbstractContextManager["ContextProvider[_T]"]):
         name: str,
         *,
         default: _T | _Missing = MISSING,
-        comparer: Callable[[Any, Any], bool] | None = None,
+        comparer: Callable[[Any, Any], bool] | None | _Missing = MISSING,
     ) -> None:
         if hasattr(self, "_initialized"):
             return
         self.name = name
         self.default: _T | _Missing = default
-        self._comparer = comparer
+        self._comparer: Callable[[Any, Any], bool] | None = (
+            None if comparer is MISSING else comparer
+        )
         self._providers_var: contextvars.ContextVar[Tuple[ContextProvider[Any], ...]] = (
             contextvars.ContextVar(f"fletplus.context.{name}", default=())
         )
