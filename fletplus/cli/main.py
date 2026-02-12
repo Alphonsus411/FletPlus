@@ -192,7 +192,12 @@ def create(nombre: str, directorio_base: Path | None) -> None:
     paquete = _normalize_package_name(nombre)
     _validate_package_name(paquete)
     proyecto = directorio_base / nombre
-    if proyecto.exists() and any(proyecto.iterdir()):
+    if proyecto.exists() and not proyecto.is_dir():
+        raise click.ClickException(
+            f"La ruta '{proyecto}' ya existe y no es un directorio."
+        )
+
+    if proyecto.is_dir() and any(proyecto.iterdir()):
         raise click.ClickException(f"El directorio '{proyecto}' ya existe y no está vacío.")
 
     proyecto.mkdir(parents=True, exist_ok=True)
