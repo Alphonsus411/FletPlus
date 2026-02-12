@@ -74,3 +74,52 @@ def test_create_rejects_invalid_package_name(monkeypatch, watchdog_available: bo
     assert "identificador Python válido" in result.output
     assert "Ejemplos válidos" in result.output
     assert "Ejemplos inválidos" in result.output
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_fails_when_target_exists_as_file(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        target = base / "demo"
+        target.write_text("archivo", encoding="utf-8")
+
+        result = runner.invoke(app, ["create", "demo"])
+
+    assert result.exit_code != 0
+    assert "ya existe y no es un directorio" in result.output
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_allows_existing_empty_directory(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        target = base / "demo"
+        target.mkdir(parents=True)
+
+        result = runner.invoke(app, ["create", "demo"])
+
+        assert result.exit_code == 0, result.output
+        assert (target / "src" / "__init__.py").exists()
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_fails_when_target_directory_is_not_empty(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        target = base / "demo"
+        target.mkdir(parents=True)
+        (target / "README.md").write_text("contenido", encoding="utf-8")
+
+        result = runner.invoke(app, ["create", "demo"])
+
+    assert result.exit_code != 0
+    assert "ya existe y no está vacío" in result.output
