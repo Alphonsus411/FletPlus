@@ -1,5 +1,7 @@
+import asyncio
+import inspect
 import flet as ft
-from typing import Callable, Dict, Tuple
+from typing import Awaitable, Callable, Dict, Tuple
 
 
 class ShortcutManager:
@@ -50,7 +52,30 @@ class ShortcutManager:
         callback = self._shortcuts.get(combo)
         try:
             if callback:
-                callback()
+                result = callback()
+                if inspect.isawaitable(result):
+                    if callable(getattr(self.page, "run_task", None)):
+                        self.page.run_task(result)
+                    else:
+                        self._run_awaitable_fallback(result)
         finally:
             if callable(self._previous_handler):
                 self._previous_handler(e)
+
+    @staticmethod
+    def _run_awaitable_fallback(result: Awaitable) -> None:
+        """Ejecuta awaitables sin ``page.run_task`` y evita corutinas sin esperar.
+
+        Si existe loop activo, agenda la tarea con ``asyncio.ensure_future``.
+        En caso contrario, ejecuta el awaitable de forma bloqueante con ``asyncio.run``.
+        """
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(ShortcutManager._await_result(result))
+        else:
+            asyncio.ensure_future(result)
+
+    @staticmethod
+    async def _await_result(result: Awaitable) -> None:
+        await result
