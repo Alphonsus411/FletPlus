@@ -390,7 +390,10 @@ class HttpClient:
         de la petición `Cache-Control`/`Pragma` con `no-store` o `no-cache`
         (a menos que se pase `cache=True`), y en la respuesta se consideran
         `Cache-Control`/`Pragma` con `no-store` o `private`, la presencia de
-        `Set-Cookie` y solo se cachean respuestas exitosas (2xx). Si `stream=True`,
+        `Set-Cookie` y solo se cachean respuestas exitosas (2xx). Si la respuesta
+        llega con `no-cache`, se persiste en disco (incluyendo ETag/Last-Modified
+        en headers) pero no se sirve directamente sin una futura revalidación.
+        Si `stream=True`,
         se desactiva la caché para no cargar el cuerpo completo en memoria.
         """
         stream = kwargs.pop("stream", stream)
@@ -443,6 +446,13 @@ class HttpClient:
             if cache_key and self._cache:
                 cached = self._cache.get(cache_key, request=request)
                 if cached is not None:
+                    cached_directives = _parse_cache_control_tokens(
+                        cached.headers.get("cache-control", ""),
+                        cached.headers.get("pragma", ""),
+                    )
+                    if "no-cache" in cached_directives:
+                        cached = None
+                if cached is not None:
                     # DiskCache.get construye un httpx.Response nuevo en cada lectura,
                     # así que los interceptores pueden modificarlo sin necesidad de
                     # clonar ni invalidar la instancia para evitar efectos secundarios
@@ -459,13 +469,13 @@ class HttpClient:
                     cache_control = response.headers.get("cache-control", "")
                     pragma = response.headers.get("pragma", "")
                     response_directives = _parse_cache_control_tokens(cache_control, pragma)
-                    has_no_cache = "no-cache" in response_directives
                     has_no_store = "no-store" in response_directives
                     has_private = "private" in response_directives
                     has_set_cookie = response.headers.get("set-cookie") is not None
                     is_success = 200 <= response.status_code <= 299
-                    # Respeta no-store/private/set-cookie y evita cachear contenido sensible/volátil.
-                    should_cache = not (has_no_cache or has_no_store or has_private or has_set_cookie)
+                    # Respeta no-store/private/set-cookie y evita cachear contenido sensible.
+                    # `no-cache` se persiste para futura revalidación.
+                    should_cache = not (has_no_store or has_private or has_set_cookie)
                     max_age = _parse_cache_control_max_age(cache_control)
                     now = time.time()
                     expires_at: float | None = None

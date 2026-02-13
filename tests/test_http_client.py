@@ -368,6 +368,7 @@ async def test_http_client_cache_respects_no_store(tmp_path: Path):
     assert first.json() == {"count": 1}
     assert second.json() == {"count": 2}
     assert call_count == 2
+    assert list(tmp_path.glob("*.json")) == []
 
 
 @pytest.mark.anyio
@@ -390,6 +391,45 @@ async def test_http_client_cache_respects_no_cache(tmp_path: Path):
     assert first.json() == {"count": 1}
     assert second.json() == {"count": 2}
     assert call_count == 2
+    cached_entries = list(tmp_path.glob("*.json"))
+    assert len(cached_entries) == 1
+
+
+@pytest.mark.anyio
+async def test_http_client_no_cache_persists_metadata_without_serving_from_cache(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(
+            200,
+            headers={
+                "Cache-Control": "no-cache",
+                "ETag": '"abc123"',
+                "Last-Modified": "Wed, 21 Oct 2015 07:28:00 GMT",
+            },
+            json={"count": call_count},
+        )
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/no-cache-metadata")
+    second = await client.get("https://example.org/no-cache-metadata")
+
+    await client.aclose()
+
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 2}
+    assert call_count == 2
+
+    cache_files = list(tmp_path.glob("*.json"))
+    assert len(cache_files) == 1
+    cached_response = cache.get(cache_files[0].stem, request=httpx.Request("GET", "https://example.org/no-cache-metadata"))
+    assert cached_response is not None
+    assert cached_response.headers["ETag"] == '"abc123"'
+    assert cached_response.headers["Last-Modified"] == "Wed, 21 Oct 2015 07:28:00 GMT"
 
 
 @pytest.mark.anyio
