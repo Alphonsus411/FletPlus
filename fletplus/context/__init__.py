@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from contextlib import AbstractContextManager
 import contextvars
+import weakref
 from typing import Any, Callable, Generic, Optional, Tuple, TypeVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -68,7 +69,9 @@ class Context(Generic[_T], AbstractContextManager["ContextProvider[_T]"]):
             la comparación por igualdad estándar.
     """
 
-    _registry: dict[str, "Context[Any]"] = {}
+    _registry: weakref.WeakValueDictionary[str, "Context[Any]"] = (
+        weakref.WeakValueDictionary()
+    )
 
     @staticmethod
     def _config_repr(value: Any) -> str:
@@ -143,7 +146,7 @@ class Context(Generic[_T], AbstractContextManager["ContextProvider[_T]"]):
             )
             return existing  # type: ignore[return-value]
         self = super().__new__(cls)
-        cls._registry[name] = self  # type: ignore[assignment]
+        cls._registry[name] = self
         return self  # type: ignore[return-value]
 
     def __init__(

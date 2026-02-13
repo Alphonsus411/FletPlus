@@ -1,3 +1,6 @@
+import gc
+import weakref
+
 import pytest
 
 from fletplus.context import Context, locale_context, theme_context
@@ -80,10 +83,12 @@ def test_context_reuse_with_compatible_configuration():
 
 
 def test_context_reuse_conflict_on_default():
-    Context("reuse-default-conflict", default="es")
+    existing = Context("reuse-default-conflict", default="es")
 
     with pytest.raises(ValueError, match="reuse-default-conflict"):
         Context("reuse-default-conflict", default="en")
+
+    assert Context("reuse-default-conflict") is existing
 
 
 def test_context_reuse_conflict_on_comparer():
@@ -93,7 +98,32 @@ def test_context_reuse_conflict_on_comparer():
     def eq_upper(left, right):
         return str(left).upper() == str(right).upper()
 
-    Context("reuse-comparer-conflict", comparer=eq_lower)
+    existing = Context("reuse-comparer-conflict", comparer=eq_lower)
 
     with pytest.raises(ValueError, match="reuse-comparer-conflict"):
         Context("reuse-comparer-conflict", comparer=eq_upper)
+
+    assert Context("reuse-comparer-conflict") is existing
+
+
+def test_context_registry_releases_temporary_contexts():
+    name = "temporary-context-gc"
+
+    temporary = Context(name)
+    temporary_ref = weakref.ref(temporary)
+
+    del temporary
+    gc.collect()
+
+    assert temporary_ref() is None
+    assert name not in Context._registry
+
+
+def test_context_registry_keeps_compatibility_validation_for_live_instances():
+    name = "temporary-context-compatible-validation"
+    live = Context(name, default="es")
+
+    with pytest.raises(ValueError, match=name):
+        Context(name, default="en")
+
+    assert Context(name) is live
