@@ -572,6 +572,7 @@ class HttpClient:
         request_context: MutableMapping[str, Any] = context if context is not None else {}
         request_context.setdefault("websocket", True)
         event = RequestEvent(request=request, context=request_context, cache_key=None)
+        websocket: Any | None = None
         try:
             await self._hooks.emit_before(event)
         except Exception as exc:  # pragma: no cover - rutas excepcionales
@@ -613,13 +614,7 @@ class HttpClient:
                     response = await interceptor.apply_response(response)
                 websocket = _WebSocketConnection(websocket, response)
             except Exception:
-                close = getattr(websocket, "close", None)
-                if close is None:
-                    close = getattr(websocket, "aclose", None)
-                if close is not None:
-                    result = close()
-                    if inspect.isawaitable(result):
-                        await result
+                await self._close_websocket_with_guard(websocket)
                 raise
         except Exception as exc:  # pragma: no cover - rutas excepcionales
             response_event = ResponseEvent(
@@ -638,8 +633,30 @@ class HttpClient:
             from_cache=False,
             error=None,
         )
-        await self._emit_after_with_guard(response_event, primary_error=None)
+        try:
+            await self._emit_after_with_guard(response_event, primary_error=None)
+        except Exception:
+            if websocket is not None:
+                await self._close_websocket_with_guard(websocket, suppress_errors=True)
+            raise
         return websocket
+
+    # ------------------------------------------------------------------
+    async def _close_websocket_with_guard(self, websocket: Any, *, suppress_errors: bool = False) -> None:
+        try:
+            close = getattr(websocket, "close", None)
+            if close is None:
+                close = getattr(websocket, "aclose", None)
+            if close is None:
+                return
+            result = close()
+            if inspect.isawaitable(result):
+                await result
+        except Exception:
+            if suppress_errors:
+                logger.exception("Fallo al cerrar websocket durante la limpieza defensiva.")
+                return
+            raise
 
     # ------------------------------------------------------------------
     async def aclose(self) -> None:
