@@ -45,3 +45,40 @@ def test_shortcut_manager_preserves_existing_handler():
     manager._handle_event(Event("x"))
 
     assert events == [("shortcut", "x"), ("previous", "x")]
+
+
+def test_dispose_restores_previous_handler_and_disables_shortcuts():
+    events = []
+
+    class Event:
+        def __init__(self, key: str):
+            self.key = key
+            self.ctrl = False
+            self.shift = False
+            self.alt = False
+
+    def previous_handler(event):
+        events.append(("previous", event.key))
+
+    page = DummyPage()
+    page.on_keyboard_event = previous_handler
+
+    manager = ShortcutManager(page)
+    manager.register("x", lambda: events.append(("shortcut", "x")))
+
+    manager.dispose()
+
+    assert page.on_keyboard_event is previous_handler
+
+    page.on_keyboard_event(Event("x"))
+    assert events == [("previous", "x")]
+
+
+def test_dispose_is_idempotent():
+    page = DummyPage()
+    manager = ShortcutManager(page)
+
+    manager.dispose()
+    manager.dispose()
+
+    assert page.on_keyboard_event is None
