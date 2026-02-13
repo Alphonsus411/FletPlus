@@ -19,6 +19,26 @@ from . import Signal
 Subscriber = Callable[[object], None]
 
 
+@dataclass(slots=True)
+class _WatchRegistration:
+    signals: tuple[Signal, ...]
+    callback: Callable[..., None]
+    subscriptions: list[Callable[[], None]] = field(default_factory=list)
+
+    def emit(self) -> None:
+        values = [sig.get() for sig in self.signals]
+        if len(values) == 1:
+            self.callback(values[0])
+        else:
+            self.callback(*values)
+
+    def stop(self) -> None:
+        for unsubscribe in list(self.subscriptions):
+            with suppress(Exception):
+                unsubscribe()
+        self.subscriptions.clear()
+
+
 def _ensure_signal(obj: object) -> Signal:
     if not hasattr(obj, "subscribe") or not hasattr(obj, "get"):
         raise TypeError("Se esperaba una señal compatible con subscribe/get")
@@ -76,8 +96,11 @@ class _ReactiveInstance:
     _states: List[Signal] = field(default_factory=list)
     _subscriptions: Dict[Signal, Callable[[], None]] = field(default_factory=dict)
     _active_signals: set[Signal] = field(default_factory=set)
+    _watchers: list[_WatchRegistration | None] = field(default_factory=list)
+    _active_watchers: set[int] = field(default_factory=set)
     _cleanups: list[Callable[[], None]] = field(default_factory=list)
     _hook_index: int = 0
+    _watch_index: int = 0
     _invalidated: bool = False
     _owner_ref: Callable[[], object | None] = field(default=lambda: None, init=False, repr=False)
 
@@ -96,12 +119,15 @@ class _ReactiveInstance:
         self.owner = owner
         _context_stack.append(self)
         self._active_signals = set()
+        self._active_watchers = set()
         self._hook_index = 0
+        self._watch_index = 0
         try:
             result = self.func(*args, **kwargs)
         finally:
             _context_stack.pop()
             self._cleanup_unused_signals()
+            self._cleanup_unused_watchers()
         return result
 
     # ------------------------------------------------------------------
@@ -110,6 +136,16 @@ class _ReactiveInstance:
             if signal not in self._active_signals:
                 unsubscribe()
                 self._subscriptions.pop(signal, None)
+
+    # ------------------------------------------------------------------
+    def _cleanup_unused_watchers(self) -> None:
+        for index, watcher in enumerate(self._watchers):
+            if watcher is None:
+                continue
+            if index in self._active_watchers:
+                continue
+            watcher.stop()
+            self._watchers[index] = None
 
     # ------------------------------------------------------------------
     def next_state(self, initial: Any) -> Signal:
@@ -160,11 +196,59 @@ class _ReactiveInstance:
         self._cleanups.append(callback)
 
     # ------------------------------------------------------------------
+    def watch(self, signals: list[Signal], callback: Callable[..., None], *, immediate: bool = True) -> Callable[[], None]:
+        index = self._watch_index
+        self._watch_index += 1
+        self._active_watchers.add(index)
+
+        while len(self._watchers) <= index:
+            self._watchers.append(None)
+
+        expected = tuple(signals)
+        watcher = self._watchers[index]
+
+        if watcher is not None and watcher.signals != expected:
+            watcher.stop()
+            watcher = None
+
+        if watcher is None:
+            watcher = _WatchRegistration(signals=expected, callback=callback)
+
+            for sig in expected:
+
+                def _handler(_value: object, *, _watcher=watcher) -> None:
+                    _watcher.emit()
+
+                watcher.subscriptions.append(sig.subscribe(_handler))
+
+            self._watchers[index] = watcher
+            if immediate:
+                watcher.emit()
+        else:
+            watcher.callback = callback
+            if not watcher.subscriptions:
+                for sig in watcher.signals:
+
+                    def _handler(_value: object, *, _watcher=watcher) -> None:
+                        _watcher.emit()
+
+                    watcher.subscriptions.append(sig.subscribe(_handler))
+                if immediate:
+                    watcher.emit()
+
+        return watcher.stop
+
+    # ------------------------------------------------------------------
     def dispose(self) -> None:
         for unsubscribe in list(self._subscriptions.values()):
             with suppress(Exception):
                 unsubscribe()
         self._subscriptions.clear()
+        for watcher in list(self._watchers):
+            if watcher is None:
+                continue
+            watcher.stop()
+        self._watchers.clear()
         for cleanup in list(self._cleanups):
             with suppress(Exception):
                 cleanup()
@@ -197,37 +281,24 @@ def watch(signals: Signal | Iterable[Signal], callback: Callable[..., None], *, 
     else:
         signal_list = [_ensure_signal(signals)]
 
-    def emit() -> None:
-        values = [sig.get() for sig in signal_list]
-        if len(values) == 1:
-            callback(values[0])
-        else:
-            callback(*values)
+    if context is not None:
+        for sig in signal_list:
+            context.track(sig)
+        return context.watch(signal_list, callback, immediate=immediate)
 
-    subscriptions: list[Callable[[], None]] = []
+    watcher = _WatchRegistration(signals=tuple(signal_list), callback=callback)
 
     for sig in signal_list:
-        if context is not None:
-            context.track(sig)
 
-        def _handler(_value: object, *, _emit=emit) -> None:
-            _emit()
+        def _handler(_value: object, *, _watcher=watcher) -> None:
+            _watcher.emit()
 
-        subscriptions.append(sig.subscribe(_handler))
+        watcher.subscriptions.append(sig.subscribe(_handler))
 
     if immediate:
-        emit()
+        watcher.emit()
 
-    def stop() -> None:
-        for unsubscribe in list(subscriptions):
-            with suppress(Exception):
-                unsubscribe()
-        subscriptions.clear()
-
-    if context is not None:
-        context.add_cleanup(stop)
-
-    return stop
+    return watcher.stop
 
 
 __all__ = ["reactive", "use_state", "use_signal", "watch"]
