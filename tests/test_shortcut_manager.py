@@ -1,3 +1,5 @@
+import warnings
+
 from fletplus.utils.shortcut_manager import ShortcutManager
 
 
@@ -82,3 +84,58 @@ def test_dispose_is_idempotent():
     manager.dispose()
 
     assert page.on_keyboard_event is None
+
+
+def test_shortcut_manager_executes_async_callback_with_run_task():
+    page = DummyPage()
+    manager = ShortcutManager(page)
+    called = []
+
+    def run_task(awaitable):
+        manager._run_awaitable_fallback(awaitable)
+
+    page.run_task = run_task
+
+    async def async_callback():
+        called.append("ok")
+
+    manager.register("k", async_callback, ctrl=True)
+
+    class Event:
+        def __init__(self):
+            self.key = "k"
+            self.ctrl = True
+            self.shift = False
+            self.alt = False
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        manager._handle_event(Event())
+
+    assert called == ["ok"]
+    assert not [w for w in captured if "was never awaited" in str(w.message)]
+
+
+def test_shortcut_manager_executes_async_callback_with_safe_fallback():
+    page = DummyPage()
+    manager = ShortcutManager(page)
+    called = []
+
+    async def async_callback():
+        called.append("ok")
+
+    manager.register("k", async_callback, ctrl=True)
+
+    class Event:
+        def __init__(self):
+            self.key = "k"
+            self.ctrl = True
+            self.shift = False
+            self.alt = False
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        manager._handle_event(Event())
+
+    assert called == ["ok"]
+    assert not [w for w in captured if "was never awaited" in str(w.message)]
