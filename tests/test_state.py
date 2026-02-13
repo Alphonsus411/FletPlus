@@ -126,3 +126,56 @@ def test_watch_runs_callback_for_signal_changes():
     signal.set(2)
 
     assert observed == [0, 1]
+
+
+class WatchReactiveComponent:
+    def __init__(self, signal: Signal):
+        self.signal = signal
+        self.observed: list[int] = []
+        self.stopper = lambda: None
+        self.runtime = None
+
+    def _register_reactive_render(self, runtime) -> None:
+        self.runtime = runtime
+
+    @reactive
+    def render(self) -> None:
+        self.stopper = watch(self.signal, lambda value: self.observed.append(value), immediate=True)
+
+
+def test_watch_deduplicates_between_renders() -> None:
+    signal = Signal(0)
+    component = WatchReactiveComponent(signal)
+
+    component.render()
+    component.render()
+
+    assert component.observed == [0]
+
+    signal.set(1)
+
+    assert component.observed == [0, 1]
+
+
+def test_watch_stop_still_works_in_reactive_context() -> None:
+    signal = Signal(0)
+    component = WatchReactiveComponent(signal)
+
+    component.render()
+    component.stopper()
+    signal.set(1)
+
+    assert component.observed == [0]
+
+
+def test_watch_dispose_cleans_reactive_subscriptions() -> None:
+    signal = Signal(0)
+    component = WatchReactiveComponent(signal)
+
+    component.render()
+    assert component.runtime is not None
+
+    component.runtime.dispose()
+    signal.set(1)
+
+    assert component.observed == [0]
