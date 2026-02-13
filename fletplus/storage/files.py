@@ -7,7 +7,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, Mapping
 
 if os.name == "nt":
     import msvcrt
@@ -30,6 +30,10 @@ class FileStorageProvider(StorageProvider[Any]):
       local y evitar perder claves ajenas.
     - La persistencia final sigue siendo atómica (temporal + ``os.replace``)
       dentro del lock.
+    - En lectura, cada instancia hace una comprobación ligera de mtime
+      (``stat().st_mtime_ns``) y recarga la caché sólo si detecta cambios en
+      disco. Así, múltiples instancias sobre el mismo archivo observan
+      actualizaciones externas sin necesidad de escribir para sincronizarse.
     """
 
     def __init__(
@@ -44,6 +48,7 @@ class FileStorageProvider(StorageProvider[Any]):
         self._lock_path = self._path.with_suffix(f"{self._path.suffix}.lock")
         self._encoding = encoding
         self._cache: Dict[str, Any] = {}
+        self._last_mtime_ns: int | None = None
         self._dirty_keys: set[str] = set()
         self._deleted_keys: set[str] = set()
         self._clear_requested = False
@@ -56,6 +61,27 @@ class FileStorageProvider(StorageProvider[Any]):
     # ------------------------------------------------------------------
     def _load_cache(self) -> None:
         self._cache = self._read_disk_data()
+        self._last_mtime_ns = self._get_mtime_ns()
+
+    # ------------------------------------------------------------------
+    def _get_mtime_ns(self) -> int | None:
+        try:
+            return self._path.stat().st_mtime_ns
+        except FileNotFoundError:
+            return None
+        except OSError:
+            return None
+
+    # ------------------------------------------------------------------
+    def _refresh_cache_if_changed(self) -> bool:
+        if self._clear_requested or self._dirty_keys or self._deleted_keys:
+            return False
+        current_mtime_ns = self._get_mtime_ns()
+        if current_mtime_ns == self._last_mtime_ns:
+            return False
+        self._cache = self._read_disk_data()
+        self._last_mtime_ns = current_mtime_ns
+        return True
 
     # ------------------------------------------------------------------
     @contextmanager
@@ -130,6 +156,7 @@ class FileStorageProvider(StorageProvider[Any]):
                 os.chmod(tmp_path, 0o600)
                 os.replace(tmp_path, self._path)
                 os.chmod(self._path, 0o600)
+                self._last_mtime_ns = self._get_mtime_ns()
                 self._dirty_keys.clear()
                 self._deleted_keys.clear()
                 self._clear_requested = False
@@ -144,13 +171,21 @@ class FileStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _iter_keys(self) -> list[str]:
+        self._refresh_cache_if_changed()
         return list(self._cache.keys())
 
     # ------------------------------------------------------------------
     def _read_raw(self, key: str) -> Any:
+        self._refresh_cache_if_changed()
         if key in self._cache:
             return self._cache[key]
         raise KeyError(key)
+
+    # ------------------------------------------------------------------
+    def snapshot(self) -> Mapping[str, Any]:
+        if self._refresh_cache_if_changed():
+            self._refresh_snapshot()
+        return super().snapshot()
 
     # ------------------------------------------------------------------
     def _write_raw(self, key: str, value: Any) -> None:
