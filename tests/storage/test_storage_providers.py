@@ -113,6 +113,17 @@ def test_file_storage_provider_persists_data(tmp_path: Path) -> None:
     assert json.loads(path.read_text("utf-8")) == {}
 
 
+def test_file_storage_provider_refreshes_reads_between_instances(tmp_path: Path) -> None:
+    path = tmp_path / "shared-storage-refresh.json"
+    provider_writer = FileStorageProvider(path)
+    provider_reader = FileStorageProvider(path)
+
+    provider_writer.set("shared", {"version": 1})
+
+    # La segunda instancia no escribe, sólo lee, y debe observar el cambio.
+    assert provider_reader.get("shared") == {"version": 1}
+    assert "shared" in provider_reader.keys()
+
 def test_file_storage_provider_write_always_valid_json(tmp_path: Path) -> None:
     path = tmp_path / "storage.json"
     provider = FileStorageProvider(path)
