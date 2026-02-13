@@ -9,7 +9,17 @@ class ShortcutManager:
         self.page = page
         self._shortcuts: Dict[Tuple[str, bool, bool, bool], Callable] = {}
         self._previous_handler = getattr(page, "on_keyboard_event", None)
+        self._disposed = False
         self.page.on_keyboard_event = self._handle_event
+
+    def dispose(self) -> None:
+        """Libera recursos y restaura el handler previo de teclado."""
+        if self._disposed:
+            return
+
+        self.page.on_keyboard_event = self._previous_handler
+        self._shortcuts.clear()
+        self._disposed = True
 
     def register(
         self,
@@ -32,6 +42,9 @@ class ShortcutManager:
         self._shortcuts[combo] = callback
 
     def _handle_event(self, e: ft.KeyboardEvent) -> None:
+        if self._disposed:
+            return
+
         key = (e.key or "").lower()
         combo = (key, e.ctrl, e.shift, e.alt)
         callback = self._shortcuts.get(combo)
