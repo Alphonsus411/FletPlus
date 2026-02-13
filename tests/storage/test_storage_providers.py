@@ -6,6 +6,7 @@ from collections.abc import Mapping
 import json
 import os
 from pathlib import Path
+import threading
 from typing import Any, Dict, List
 
 import pytest
@@ -121,6 +122,35 @@ def test_file_storage_provider_write_always_valid_json(tmp_path: Path) -> None:
         provider.set("payload", {"value": index, "items": [index, index + 1]})
         raw = path.read_text("utf-8")
         assert json.loads(raw)
+
+
+def test_file_storage_provider_merges_external_writes_under_concurrency(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "shared-storage.json"
+    provider_a = FileStorageProvider(path)
+    provider_b = FileStorageProvider(path)
+
+    start = threading.Barrier(2)
+
+    def writer(prefix: str, provider: FileStorageProvider) -> None:
+        start.wait()
+        for index in range(30):
+            provider.set(f"{prefix}-{index}", index)
+
+    thread_a = threading.Thread(target=writer, args=("a", provider_a))
+    thread_b = threading.Thread(target=writer, args=("b", provider_b))
+
+    thread_a.start()
+    thread_b.start()
+    thread_a.join()
+    thread_b.join()
+
+    persisted = json.loads(path.read_text("utf-8"))
+    expected_keys = {f"a-{index}" for index in range(30)} | {
+        f"b-{index}" for index in range(30)
+    }
+    assert set(persisted.keys()) == expected_keys
 
 
 @pytest.mark.skipif(os.name != "posix", reason="Permisos sólo en POSIX")
