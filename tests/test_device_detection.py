@@ -1,10 +1,13 @@
-import flet as ft
+from enum import Enum
 
-from fletplus.utils.device import is_mobile, is_web, is_desktop
+import flet as ft
+import pytest
+
+from fletplus.utils.device import is_desktop, is_mobile, is_web
 
 
 class DummyPage:
-    def __init__(self, platform: str):
+    def __init__(self, platform: object):
         self.platform = platform
         self.title = ""
         self.controls = []
@@ -21,17 +24,60 @@ class DummyPage:
         self.updated = True
 
 
-def test_device_helpers():
-    android = type("P", (), {"platform": "android"})()
-    assert is_mobile(android)
-    assert not is_web(android)
-    assert not is_desktop(android)
+class PlatformEnum(str, Enum):
+    ANDROID = "android"
+    WEB = "web"
+    WINDOWS = "windows"
 
-    web = type("P", (), {"platform": "web"})()
-    assert is_web(web)
-    assert not is_mobile(web)
 
-    desktop = type("P", (), {"platform": "windows"})()
-    assert is_desktop(desktop)
-    assert not is_mobile(desktop)
+class ValueWrapper:
+    def __init__(self, value: object):
+        self.value = value
 
+
+@pytest.mark.parametrize(
+    ("platform", "mobile", "web", "desktop"),
+    [
+        ("android", True, False, False),
+        ("web", False, True, False),
+        ("windows", False, False, True),
+    ],
+)
+def test_device_helpers(platform, mobile, web, desktop):
+    page = DummyPage(platform)
+    assert is_mobile(page) is mobile
+    assert is_web(page) is web
+    assert is_desktop(page) is desktop
+
+
+@pytest.mark.parametrize(
+    ("platform", "mobile", "web", "desktop"),
+    [
+        ("AnDrOiD", True, False, False),
+        ("WEB", False, True, False),
+        ("LiNuX", False, False, True),
+    ],
+)
+def test_device_helpers_case_insensitive(platform, mobile, web, desktop):
+    page = DummyPage(platform)
+    assert is_mobile(page) is mobile
+    assert is_web(page) is web
+    assert is_desktop(page) is desktop
+
+
+@pytest.mark.parametrize(
+    ("platform", "mobile", "web", "desktop"),
+    [
+        (PlatformEnum.ANDROID, True, False, False),
+        (PlatformEnum.WEB, False, True, False),
+        (PlatformEnum.WINDOWS, False, False, True),
+        (ValueWrapper("iOS"), True, False, False),
+        (ValueWrapper("MACOS"), False, False, True),
+        (ValueWrapper("WEB"), False, True, False),
+    ],
+)
+def test_device_helpers_enum_and_non_string_values(platform, mobile, web, desktop):
+    page = DummyPage(platform)
+    assert is_mobile(page) is mobile
+    assert is_web(page) is web
+    assert is_desktop(page) is desktop
