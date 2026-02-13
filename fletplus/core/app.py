@@ -114,19 +114,26 @@ class FletPlusApp:
     def shutdown(self) -> None:
         """Finaliza el ciclo de vida, liberando recursos y observadores.
 
-        Tras ejecutar ``on_shutdown``, se limpian los controles de la página y se
-        fuerza un refresco seguro para dejar la UI en un estado consistente.
+        Siempre ejecuta la limpieza crítica de UI/estado incluso si ``on_shutdown``
+        falla. Si el hook de cierre lanza una excepción, esta se propaga después
+        de completar el cleanup.
         """
         if self._page is None:
             return
         page = self._page
-        self.on_shutdown(page, self.state)
-        page.controls.clear()
-        self._safe_page_update(page)
-        if self._unsubscribe:
-            self._unsubscribe()
-        self.state.bind_refresher(None)
-        self._page = None
+        try:
+            self.on_shutdown(page, self.state)
+        finally:
+            page.controls.clear()
+            self._safe_page_update(page)
+
+            unsubscribe = self._unsubscribe
+            self._unsubscribe = None
+            if unsubscribe:
+                unsubscribe()
+
+            self.state.bind_refresher(None)
+            self._page = None
 
     @staticmethod
     def _safe_page_update(page: ft.Page) -> None:
