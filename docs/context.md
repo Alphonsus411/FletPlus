@@ -39,6 +39,8 @@ assert request_context.get() is None  # vuelve al valor por defecto
 
 > ℹ️ Si llamas a `Context("request_id")` varias veces, siempre recibirás la misma instancia registrada originalmente.
 
+> ⚠️ Recomendación: evita generar nombres de contexto altamente dinámicos (por ejemplo, con IDs aleatorios por petición). Aunque el registro ahora usa referencias débiles y libera instancias sin uso, mantener nombres estables simplifica la reutilización, la depuración y la consistencia de configuración.
+
 ## Control preciso con `ContextProvider`
 
 En lugar de usar el gestor automático (`with context:`), puedes crear un proveedor explícito para inyectar un valor inicial, decidir si hereda del padre o integrarlo con el ciclo de vida de un control.
