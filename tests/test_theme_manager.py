@@ -181,3 +181,31 @@ def test_load_theme_from_json_helper_returns_definition(tmp_path):
     assert payload["preset"] == "fluent"
     assert payload["mode"] == "light"
     assert payload["variants"]["light"]["colors"]["primary"] == "#101010"
+
+
+def test_theme_manager_applies_device_token_overrides_by_active_device():
+    page = DummyPage()
+    theme = ThemeManager(
+        page=page,
+        tokens={"colors": {"primary": ft.Colors.RED}},
+        device_tokens={
+            "mobile": {"colors": {"primary": ft.Colors.GREEN}},
+            "web": {"colors": {"primary": ft.Colors.YELLOW}},
+            "desktop": {"colors": {"primary": ft.Colors.BLUE}},
+        },
+    )
+
+    theme.apply_theme(device="mobile")
+    assert theme.active_device == "mobile"
+    assert theme.get_token("colors.primary") == ft.Colors.GREEN
+    assert page.theme.color_scheme_seed == ft.Colors.GREEN
+
+    theme.apply_theme(device="web")
+    assert theme.active_device == "web"
+    assert theme.get_token("colors.primary") == ft.Colors.YELLOW
+    assert page.theme.color_scheme_seed == ft.Colors.YELLOW
+
+    theme.apply_theme(device="desktop")
+    assert theme.active_device == "desktop"
+    assert theme.get_token("colors.primary") == ft.Colors.BLUE
+    assert page.theme.color_scheme_seed == ft.Colors.BLUE
