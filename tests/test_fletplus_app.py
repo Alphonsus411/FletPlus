@@ -1,5 +1,8 @@
 import flet as ft
+import pytest
 
+from fletplus.core import AppState
+from fletplus.core.app import FletPlusApp as CoreFletPlusApp
 from fletplus.animation import AnimationController
 from fletplus.context import locale_context, theme_context, user_context
 from fletplus.core_legacy import FletPlusApp
@@ -17,6 +20,7 @@ class DummyPage:
         self.scroll = None
         self.horizontal_alignment = None
         self.updated = False
+        self.update_calls = 0
         self.client_storage = storage
 
     def add(self, *controls):
@@ -24,6 +28,17 @@ class DummyPage:
 
     def update(self):
         self.updated = True
+        self.update_calls += 1
+
+
+class TrackingState(AppState):
+    def __init__(self):
+        super().__init__()
+        self.refresher_bindings = []
+
+    def bind_refresher(self, refresher):
+        self.refresher_bindings.append(refresher)
+        super().bind_refresher(refresher)
 
 
 class DummyStorage:
@@ -206,3 +221,29 @@ def test_theme_preferences_persist_between_sessions():
     assert app_second._theme_button.icon == ft.Icons.LIGHT_MODE
 
     app_second.dispose()
+
+
+def test_core_shutdown_executes_cleanup_when_shutdown_hook_fails():
+    state = TrackingState()
+
+    def layout(_state):
+        return ft.Text("Core")
+
+    def fail_on_shutdown(_page, _state):
+        raise RuntimeError("shutdown hook error")
+
+    page = DummyPage()
+    app = CoreFletPlusApp(layout=layout, state=state, on_shutdown=fail_on_shutdown)
+    app.start(page)
+
+    updates_before_shutdown = page.update_calls
+
+    with pytest.raises(RuntimeError, match="shutdown hook error"):
+        app.shutdown()
+
+    assert page.controls == []
+    assert page.update_calls >= updates_before_shutdown + 1
+    assert len(state._subscribers) == 0
+    assert state.refresher_bindings[-1] is None
+    assert app.page is None
+    assert app._unsubscribe is None
