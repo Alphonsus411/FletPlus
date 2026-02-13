@@ -142,6 +142,19 @@ await cliente.get("https://api.example.com/items")
 
 Puede deshabilitarse el almacenamiento por petición con `cache=False`.
 
+### Política de `Cache-Control`
+
+La política actual del cliente para respuestas `GET` exitosas es:
+
+- **No se almacena** cuando la respuesta incluye `no-store`, `private` o
+  `Set-Cookie`.
+- **Sí se almacena** cuando la respuesta incluye `no-cache`, para conservar
+  metadatos de revalidación (por ejemplo `ETag` y `Last-Modified`, ya que se
+  persisten en los headers guardados en disco).
+- Las respuestas con `no-cache` **no se sirven directamente desde caché**:
+  requieren revalidación previa y, mientras esa revalidación no esté
+  implementada, el cliente vuelve a consultar la red en cada solicitud.
+
 ## Relación con el almacenamiento reactivo
 
 Cuando necesites recordar tokens de autenticación, cabeceras personalizadas o la
