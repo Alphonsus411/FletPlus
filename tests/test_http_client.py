@@ -274,6 +274,41 @@ async def test_http_client_websocket_missing_dependency(monkeypatch: pytest.Monk
 
 
 @pytest.mark.anyio
+async def test_http_client_ws_connect_closes_websocket_when_after_hook_fails(monkeypatch: pytest.MonkeyPatch):
+    class DummyWebSocket:
+        response_headers = {}
+        response_status = 101
+
+        def __init__(self) -> None:
+            self.closed = False
+
+        async def close(self) -> None:
+            self.closed = True
+
+    created: dict[str, DummyWebSocket] = {}
+
+    async def fake_websocket_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        websocket = DummyWebSocket()
+        created["ws"] = websocket
+        return websocket
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: fake_websocket_connect)
+
+    def after_hook(_event: Any) -> None:
+        raise RuntimeError("hook after failed")
+
+    client.add_after_hook(after_hook)
+
+    with pytest.raises(RuntimeError, match="hook after failed"):
+        await client.ws_connect("https://example.org/socket")
+
+    await client.aclose()
+
+    assert created["ws"].closed is True
+
+
+@pytest.mark.anyio
 async def test_http_client_response_interceptors_with_cache(tmp_path: Path):
     call_count = 0
 
