@@ -30,6 +30,7 @@ class DevToolsServer:
     ) -> None:
         self._clients: set[ServerProtocol] = set()
         self._lock = asyncio.Lock()
+        self._initial_payloads_lock = asyncio.Lock()
         self._initial_payloads: OrderedDict[str, str] = OrderedDict()
         self._max_initial_payloads = max_initial_payloads
         self._max_payload_size = max_payload_size
@@ -90,7 +91,7 @@ class DevToolsServer:
     ) -> None:
         """Reenvía ``message`` a los clientes conectados, excluyendo ``sender``."""
 
-        self._remember_initial_payload(message)
+        await self._remember_initial_payload(message)
 
         async with self._lock:
             targets: Iterable[ServerProtocol] = (
@@ -228,10 +229,17 @@ class DevToolsServer:
         return None
 
     async def _send_initial_payloads(self, websocket: ServerProtocol) -> None:
-        for message in self._initial_payloads.values():
+        async with self._initial_payloads_lock:
+            messages = list(self._initial_payloads.values())
+
+        for message in messages:
             await self._safe_send(websocket, message)
 
-    def _remember_initial_payload(self, message: str) -> None:
+    async def _remember_initial_payload(self, message: str) -> None:
+        async with self._initial_payloads_lock:
+            self._remember_initial_payload_unlocked(message)
+
+    def _remember_initial_payload_unlocked(self, message: str) -> None:
         if (
             self._max_payload_size is not None
             and self._payload_size_bytes(message) > self._max_payload_size
