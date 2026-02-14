@@ -213,7 +213,7 @@ def validate_required_qa_scripts_exist() -> list[str]:
     return errors
 
 
-def validate_single_source_of_truth_sync() -> list[str]:
+def validate_critical_commands_sync() -> list[str]:
     errors: list[str] = []
     workflow_commands = load_workflow_run_commands(REUSABLE_WORKFLOW)
     qa_commands = extract_python_commands_from_text(
@@ -259,6 +259,11 @@ def validate_single_source_of_truth_sync() -> list[str]:
     return errors
 
 
+def validate_single_source_of_truth_sync() -> list[str]:
+    """Compatibilidad retroactiva con nombre anterior del check integral."""
+    return validate_critical_commands_sync()
+
+
 def validate_pages_docs_wording() -> list[str]:
     errors: list[str] = []
     docs = {
@@ -291,7 +296,7 @@ def main() -> int:
     errors: list[str] = []
     errors.extend(validate_workflow_references())
     errors.extend(validate_required_qa_scripts_exist())
-    errors.extend(validate_single_source_of_truth_sync())
+    errors.extend(validate_critical_commands_sync())
     errors.extend(validate_pages_docs_wording())
 
     for wrapper in WRAPPER_WORKFLOWS:
