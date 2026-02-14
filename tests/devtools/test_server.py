@@ -254,13 +254,27 @@ async def test_remember_initial_payload_handles_case_insensitive_allowed_snapsho
     )
 
     assert "snapshot" in server._initial_payloads
-    assert "SNAPSHOT:NODE" in server._initial_payloads
+    assert "snapshot:node" in server._initial_payloads
 
     await server._remember_initial_payload(
         json.dumps({"type": "sNaPsHoT:Edge", "data": {"id": "e1"}})
     )
 
     assert "sNaPsHoT:Edge" not in server._initial_payloads
+
+
+@pytest.mark.anyio
+async def test_remember_initial_payload_overwrites_same_type_with_different_casing():
+    server = DevToolsServer()
+
+    first_message = json.dumps({"type": "snapshot:node", "data": {"value": 1}})
+    second_message = json.dumps({"type": "SNAPSHOT:NODE", "data": {"value": 2}})
+
+    await server._remember_initial_payload(first_message)
+    await server._remember_initial_payload(second_message)
+
+    assert list(server._initial_payloads.keys()) == ["snapshot:node"]
+    assert server._initial_payloads["snapshot:node"] == second_message
 
 
 @pytest.mark.anyio

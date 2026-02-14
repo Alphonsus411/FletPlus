@@ -303,6 +303,13 @@ class DevToolsServer:
             self._remember_initial_payload_unlocked(message)
 
     def _remember_initial_payload_unlocked(self, message: str) -> None:
+        """Guarda snapshots por tipo en forma case-insensitive.
+
+        La clave interna se normaliza a minúsculas para evitar duplicados cuando
+        llegan mensajes del mismo tipo con distinto casing (por ejemplo
+        ``snapshot`` y ``SNAPSHOT``). El valor almacenado conserva el mensaje
+        original más reciente recibido para ese tipo normalizado.
+        """
         if (
             self._max_payload_size is not None
             and self._payload_size_bytes(message) > self._max_payload_size
@@ -328,10 +335,10 @@ class DevToolsServer:
         ):
             return
 
-        if payload_type in self._initial_payloads:
-            self._initial_payloads.move_to_end(payload_type)
+        if payload_type_lower in self._initial_payloads:
+            self._initial_payloads.move_to_end(payload_type_lower)
 
-        self._initial_payloads[payload_type] = message
+        self._initial_payloads[payload_type_lower] = message
         if (
             self._max_initial_payloads is not None
             and len(self._initial_payloads) > self._max_initial_payloads
