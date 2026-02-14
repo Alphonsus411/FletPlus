@@ -121,11 +121,15 @@ nox -s pytest
 nox -s qa
 ```
 
-En los Pull Requests se ejecuta el workflow de CI en `.github/workflows/qa.yml`,
-y en `push`/PR también corre `.github/workflows/quality.yml`. Ambos workflows
-usan exactamente los mismos comandos que `tools/qa.sh` y `noxfile.py`, incluyendo
-las allowlists `pip-audit.policy.json` y `safety-policy.yml` para las auditorías
-de `pip-audit` y `safety`.
+En los Pull Requests hacia `main` o `develop` se ejecuta únicamente
+`.github/workflows/qa.yml`.
+
+En `push` a `main` o `develop` se ejecuta únicamente
+`.github/workflows/quality.yml`.
+
+Ambos workflows usan los mismos comandos de calidad que `tools/qa.sh` y
+`noxfile.py`, incluyendo las allowlists `pip-audit.policy.json` y
+`safety-policy.yml` para las auditorías de `pip-audit` y `safety`.
 
 ### ✅ Cómo interpretar fallos comunes y dónde ajustar configuración
 
