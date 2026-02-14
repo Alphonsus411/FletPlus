@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import configparser
 import re
 import sys
 from pathlib import Path
@@ -355,7 +356,7 @@ def validate_perf_workflow_contract(path: Path) -> list[str]:
     if PYTEST_INI.exists():
         pytest_ini_text = PYTEST_INI.read_text(encoding="utf-8")
 
-    if re.search(r"^\s*addopts\s*=\s*-m\s+[\"']not perf[\"']\s*$", pytest_ini_text, re.MULTILINE):
+    if pytest_ini_has_global_perf_exclusion(pytest_ini_text):
         override_command = normalize_command("python -m pytest -m perf -o addopts=")
         if override_command not in commands:
             errors.append(
@@ -363,6 +364,28 @@ def validate_perf_workflow_contract(path: Path) -> list[str]:
             )
 
     return errors
+
+
+def pytest_ini_has_global_perf_exclusion(pytest_ini_text: str) -> bool:
+    """Detecta si pytest.ini excluye globalmente el marker perf vía addopts."""
+    if not pytest_ini_text.strip():
+        return False
+
+    parser = configparser.ConfigParser()
+    addopts = ""
+    try:
+        parser.read_string(pytest_ini_text)
+        if parser.has_option("pytest", "addopts"):
+            addopts = parser.get("pytest", "addopts")
+    except configparser.Error:
+        addopts = ""
+
+    if not addopts:
+        addopts_match = re.search(r"^\s*addopts\s*=\s*(?P<value>.+)$", pytest_ini_text, re.MULTILINE)
+        if addopts_match:
+            addopts = addopts_match.group("value")
+
+    return bool(re.search(r"\bnot\s+perf\b", addopts))
 
 
 def validate_workflow_references() -> list[str]:
