@@ -84,6 +84,10 @@ def register_pwa(
         parsed = urlparse(url)
         if parsed.netloc:
             raise ValueError(f"{name.capitalize()} URL must be same origin")
+        if parsed.scheme and not parsed.netloc:
+            raise ValueError(
+                f"{name.capitalize()} URL must not use a scheme without host"
+            )
         if parsed.scheme not in ("", "http", "https"):
             raise ValueError(f"Invalid {name} URL")
         if any(c in url for c in ' <>"\''):
