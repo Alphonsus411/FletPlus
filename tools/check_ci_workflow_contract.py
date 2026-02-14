@@ -3,31 +3,42 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+import ast
 import re
 import sys
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REUSABLE_WORKFLOW = REPO_ROOT / ".github/workflows/reusable-quality.yml"
 QA_SCRIPT = REPO_ROOT / "tools/qa.sh"
+NOXFILE = REPO_ROOT / "noxfile.py"
 TOOLING_DOC = REPO_ROOT / "docs/tooling.md"
 README_DOC = REPO_ROOT / "README.md"
 WRAPPER_WORKFLOWS = (
     REPO_ROOT / ".github/workflows/qa.yml",
     REPO_ROOT / ".github/workflows/quality.yml",
 )
+REQUIRED_QA_CHECKS = (
+    "python tools/check_package_data_files.py",
+    "python tools/check_canonical_repo_links.py",
+)
 
 WORKFLOW_REF_PATTERN = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.yml")
 RUN_BLOCK_PATTERN = re.compile(r"^\s*run:\s*\|\s*$", re.MULTILINE)
+INLINE_RUN_PATTERN = re.compile(r"^\s*run:\s*(.+?)\s*$", re.MULTILINE)
 USES_REUSABLE_PATTERN = re.compile(
     r"^\s*uses:\s*\./\.github/workflows/reusable-quality\.yml\s*$", re.MULTILINE
 )
 
 CRITICAL_COMMANDS = {
+    "test-dependencies": "python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket",
+    "package-data": "python tools/check_package_data_files.py",
+    "canonical-links": "python tools/check_canonical_repo_links.py",
     "pytest": "python -m pytest",
     "ruff": "python -m ruff check .",
     "black": "python -m black --check .",
     "mypy": "python -m mypy fletplus",
+    "bandit-sync": "python tools/check_bandit_command_sync.py",
     "bandit": "python -m bandit -c pyproject.toml -r fletplus",
     "pip-audit": "python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json",
     "safety": "python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml",
@@ -42,12 +53,12 @@ def extract_workflow_references(text: str) -> set[str]:
     return set(WORKFLOW_REF_PATTERN.findall(text))
 
 
-def extract_python_commands_from_text(text: str) -> set[str]:
-    commands: set[str] = set()
+def extract_python_commands_from_text(text: str) -> list[str]:
+    commands: list[str] = []
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if line.startswith("python "):
-            commands.add(normalize_command(line))
+            commands.append(normalize_command(line))
     return commands
 
 
@@ -79,11 +90,79 @@ def _extract_run_blocks(text: str) -> list[str]:
     return run_blocks
 
 
-def load_workflow_commands(path: Path) -> set[str]:
+def load_workflow_run_commands(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
-    commands: set[str] = set()
+    commands: list[str] = []
+
     for block in _extract_run_blocks(text):
-        commands.update(extract_python_commands_from_text(block))
+        for raw in block.splitlines():
+            line = raw.strip()
+            if line:
+                commands.append(normalize_command(line))
+
+    for match in INLINE_RUN_PATTERN.finditer(text):
+        candidate = match.group(1).strip()
+        if candidate == "|":
+            continue
+        commands.append(normalize_command(candidate))
+
+    return commands
+
+
+def load_workflow_commands(path: Path) -> set[str]:
+    """Compatibilidad con tests existentes: extrae comandos python del workflow."""
+    commands = set()
+    for command in load_workflow_run_commands(path):
+        if command.startswith("python "):
+            commands.add(command)
+    return commands
+
+
+def load_nox_qa_commands(path: Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+
+    def function_has_qa_session_decorator(node: ast.FunctionDef) -> bool:
+        for decorator in node.decorator_list:
+            if not isinstance(decorator, ast.Call):
+                continue
+            if not isinstance(decorator.func, ast.Attribute):
+                continue
+            if decorator.func.attr != "session":
+                continue
+            for keyword in decorator.keywords:
+                if keyword.arg == "name" and isinstance(keyword.value, ast.Constant):
+                    if keyword.value.value == "qa":
+                        return True
+        return False
+
+    qa_function = None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and function_has_qa_session_decorator(
+            node
+        ):
+            qa_function = node
+            break
+
+    if qa_function is None:
+        return []
+
+    commands: list[str] = []
+    for node in qa_function.body:
+        if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
+            continue
+        call = node.value
+        if not isinstance(call.func, ast.Attribute):
+            continue
+        if call.func.attr != "run":
+            continue
+
+        parts: list[str] = []
+        for arg in call.args:
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                parts.append(arg.value)
+        if parts:
+            commands.append(normalize_command(" ".join(parts)))
+
     return commands
 
 
@@ -105,7 +184,9 @@ def validate_workflow_references() -> list[str]:
     errors: list[str] = []
     referenced: set[str] = set()
     for doc_path in (README_DOC, TOOLING_DOC):
-        referenced.update(extract_workflow_references(doc_path.read_text(encoding="utf-8")))
+        referenced.update(
+            extract_workflow_references(doc_path.read_text(encoding="utf-8"))
+        )
 
     for rel_path in sorted(referenced):
         file_path = REPO_ROOT / rel_path
@@ -114,23 +195,59 @@ def validate_workflow_references() -> list[str]:
     return errors
 
 
-def validate_critical_commands_sync() -> list[str]:
+def validate_required_qa_scripts_exist() -> list[str]:
     errors: list[str] = []
-    workflow_commands = load_workflow_commands(REUSABLE_WORKFLOW)
-    qa_commands = extract_python_commands_from_text(QA_SCRIPT.read_text(encoding="utf-8"))
+    for command in REQUIRED_QA_CHECKS:
+        script_path = REPO_ROOT / command.split()[1]
+        if not script_path.exists():
+            errors.append(
+                f"No existe script requerido por QA: {script_path.relative_to(REPO_ROOT)}"
+            )
+    return errors
+
+
+def validate_single_source_of_truth_sync() -> list[str]:
+    errors: list[str] = []
+    workflow_commands = load_workflow_run_commands(REUSABLE_WORKFLOW)
+    qa_commands = extract_python_commands_from_text(
+        QA_SCRIPT.read_text(encoding="utf-8")
+    )
+    nox_qa_commands = load_nox_qa_commands(NOXFILE)
+
+    if normalize_command("bash tools/qa.sh") not in workflow_commands:
+        errors.append(
+            "reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'."
+        )
+
+    if normalize_command("bash tools/qa.sh") not in nox_qa_commands:
+        errors.append(
+            "noxfile.py sesión qa debe ejecutar exactamente 'bash tools/qa.sh'."
+        )
+
+    if workflow_commands.count(normalize_command("bash tools/qa.sh")) != 1:
+        errors.append("reusable-quality.yml debe invocar tools/qa.sh una única vez.")
+
+    for command in REQUIRED_QA_CHECKS:
+        normalized = normalize_command(command)
+        if normalized not in qa_commands:
+            errors.append(f"tools/qa.sh no incluye verificación requerida: {command}")
+
     docs_tooling = TOOLING_DOC.read_text(encoding="utf-8")
     docs_readme = README_DOC.read_text(encoding="utf-8")
-
     for tool, command in CRITICAL_COMMANDS.items():
         normalized = normalize_command(command)
-        if normalized not in workflow_commands:
-            errors.append(f"reusable-quality.yml no incluye comando crítico de {tool}: {command}")
         if normalized not in qa_commands:
-            errors.append(f"tools/qa.sh no incluye comando crítico de {tool}: {command}")
+            errors.append(
+                f"tools/qa.sh no incluye comando crítico de {tool}: {command}"
+            )
         if command not in docs_tooling:
-            errors.append(f"docs/tooling.md no documenta comando crítico de {tool}: {command}")
+            errors.append(
+                f"docs/tooling.md no documenta comando crítico de {tool}: {command}"
+            )
         if command not in docs_readme:
-            errors.append(f"README.md no documenta comando crítico de {tool}: {command}")
+            errors.append(
+                f"README.md no documenta comando crítico de {tool}: {command}"
+            )
 
     return errors
 
@@ -138,18 +255,23 @@ def validate_critical_commands_sync() -> list[str]:
 def main() -> int:
     errors: list[str] = []
     errors.extend(validate_workflow_references())
-    errors.extend(validate_critical_commands_sync())
+    errors.extend(validate_required_qa_scripts_exist())
+    errors.extend(validate_single_source_of_truth_sync())
 
     for wrapper in WRAPPER_WORKFLOWS:
         errors.extend(validate_wrapper_workflow(wrapper))
 
     if errors:
-        print("ERROR: inconsistencias detectadas en contrato CI/docs:\n", file=sys.stderr)
+        print(
+            "ERROR: inconsistencias detectadas en contrato CI/docs:\n", file=sys.stderr
+        )
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
 
-    print("OK: contrato CI/docs validado (workflows y comandos críticos sincronizados).")
+    print(
+        "OK: contrato CI/docs validado (workflow reusable, tools/qa.sh, nox y docs sincronizados)."
+    )
     return 0
 
 

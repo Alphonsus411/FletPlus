@@ -4,12 +4,12 @@ Esta guía reúne los apoyos disponibles durante el ciclo de vida de una app Fle
 
 ## QA y políticas de seguridad en CI
 
-La definición base de QA está centralizada en `.github/workflows/reusable-quality.yml` (workflow reusable con `workflow_call`).
+La fuente única de verdad de QA está centralizada en `tools/qa.sh`. El workflow reusable y la sesión `nox -s qa` delegan exactamente en ese script.
 
 - `.github/workflows/qa.yml` es el **wrapper** para eventos `pull_request`.
 - `.github/workflows/quality.yml` es el **wrapper** para eventos `push`.
 
-Ambos wrappers delegan en el reusable para evitar duplicación y mantener en un solo lugar la matriz de Python (`3.9`, `3.10`, `3.11`) y todos los comandos de validación.
+Ambos wrappers delegan en el reusable para evitar duplicación y mantener en un solo lugar la matriz de Python (`3.9`, `3.10`, `3.11`). El reusable, a su vez, ejecuta `bash tools/qa.sh` sin redefinir comandos de QA.
 
 El preflight soporta selección explícita por suite con `--suite`:
 
@@ -23,18 +23,20 @@ Se pueden combinar suites repitiendo la bandera (por ejemplo, `--suite unit --su
 Orden real de QA (idéntico en shell, reusable workflow y nox):
 
 1. `python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket`
-2. `python -m pytest`
-3. `python -m ruff check .`
-4. `python -m black --check .`
-5. `python -m mypy fletplus`
-6. `python tools/check_bandit_command_sync.py`
-7. `python -m bandit -c pyproject.toml -r fletplus`
-8. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
-9. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
+2. `python tools/check_package_data_files.py`
+3. `python tools/check_canonical_repo_links.py`
+4. `python -m pytest`
+5. `python -m ruff check .`
+6. `python -m black --check .`
+7. `python -m mypy fletplus`
+8. `python tools/check_bandit_command_sync.py`
+9. `python -m bandit -c pyproject.toml -r fletplus`
+10. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
+11. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
-> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos, versiones de Python o herramientas de QA debe hacerse en `.github/workflows/reusable-quality.yml`. Los workflows `qa.yml` y `quality.yml` deben mantenerse como wrappers mínimos sin lógica duplicada.
+> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía.
 
 ## Estrategia de tests: suite rápida vs benchmarks
 
