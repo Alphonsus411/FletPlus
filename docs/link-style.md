@@ -10,7 +10,7 @@ Guía corta para evitar enlaces rotos cuando `README.md` se renderiza en dos con
 Para enlaces hacia archivos dentro de `docs/` en `README.md`, usa referencias duales:
 
 1. Un enlace interno de MkDocs (por ejemplo `cli.md`).
-2. Un fallback absoluto a GitHub (`https://github.com/<org>/<repo>/blob/main/docs/cli.md`).
+2. Un fallback absoluto a GitHub (`https://github.com/FletPlus/FletPlus/blob/main/docs/cli.md`).
 
 Ejemplo:
 

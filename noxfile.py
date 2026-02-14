@@ -106,6 +106,7 @@ def qa(session: nox.Session) -> None:
     session.run("python", "-m", "ruff", "check", ".")
     session.run("python", "-m", "black", "--check", ".")
     session.run("python", "-m", "mypy", "fletplus")
+    session.run("python", "tools/check_canonical_repo_links.py")
     session.run("python", "tools/check_bandit_command_sync.py")
     session.run("python", "-m", "bandit", "-c", "pyproject.toml", "-r", "fletplus")
     session.run(

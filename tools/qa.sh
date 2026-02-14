@@ -3,6 +3,7 @@ set -euo pipefail
 
 python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
 python tools/check_package_data_files.py
+python tools/check_canonical_repo_links.py
 python -m pytest
 python -m ruff check .
 python -m black --check .

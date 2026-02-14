@@ -34,9 +34,9 @@ fletplus-demo = "fletplus_demo:main"
 
 # ------------ LINKS ------------
 [project.urls]
-Homepage = "https://github.com/Alphonsus411/fletplus"
-Source = "https://github.com/Alphonsus411/fletplus"
-Documentation = "https://github.com/Alphonsus411/fletplus#readme"
+Homepage = "https://github.com/FletPlus/FletPlus"
+Source = "https://github.com/FletPlus/FletPlus"
+Documentation = "https://github.com/FletPlus/FletPlus#readme"
 
 
 # ------------ OPTIONAL SPEEDUPS (Cython) ------------
