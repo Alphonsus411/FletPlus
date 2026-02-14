@@ -47,6 +47,25 @@ class FakeSessionStorage(_BaseFakeStorage):
         return list(self.data.keys())
 
 
+class FakePageWithSession:
+    def __init__(self) -> None:
+        self.session = FakeSessionStorage()
+
+
+class FakePageWithSessionStorage:
+    def __init__(self) -> None:
+        self.session_storage = FakeSessionStorage()
+
+
+class FakePageInvalidSessionBackend:
+    class InvalidStorage:
+        def get(self, key: str) -> Any | None:
+            return None
+
+    def __init__(self) -> None:
+        self.session = self.InvalidStorage()
+
+
 def test_storage_provider_signals_update_on_set() -> None:
     storage = FakeClientStorage()
     provider = LocalStorageProvider(storage)
@@ -89,6 +108,31 @@ def test_session_storage_provider_tracks_keys() -> None:
 
     assert collected == ["abc", "xyz", None]
     assert "token" not in provider
+
+
+def test_session_storage_provider_from_page_uses_session() -> None:
+    page = FakePageWithSession()
+
+    provider = SessionStorageProvider.from_page(page)
+
+    provider.set("token", "abc")
+    assert provider.get("token") == "abc"
+
+
+def test_session_storage_provider_from_page_uses_session_storage() -> None:
+    page = FakePageWithSessionStorage()
+
+    provider = SessionStorageProvider.from_page(page)
+
+    provider.set("token", "xyz")
+    assert provider.get("token") == "xyz"
+
+
+def test_session_storage_provider_from_page_fails_with_invalid_backend() -> None:
+    page = FakePageInvalidSessionBackend()
+
+    with pytest.raises(TypeError, match="no es compatible"):
+        SessionStorageProvider.from_page(page)
 
 
 def test_file_storage_provider_persists_data(tmp_path: Path) -> None:
