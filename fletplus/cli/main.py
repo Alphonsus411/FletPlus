@@ -233,9 +233,9 @@ class _ReloadHandler(FileSystemEventHandler):
         self._trigger()
 
 
-def _launch_flet_process(app_path: Path, port: int, devtools: bool) -> subprocess.Popen:
+def _launch_flet_process(app_path: Path, port: int | None, devtools: bool) -> subprocess.Popen:
     command = [sys.executable, "-m", "flet", "run", str(app_path)]
-    if port:
+    if port is not None:
         command.extend(["--port", str(port)])
     if devtools:
         command.append("--devtools")

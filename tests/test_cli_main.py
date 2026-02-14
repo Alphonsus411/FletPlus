@@ -187,6 +187,37 @@ def test_run_propagates_subprocess_failure_without_watchdog(monkeypatch) -> None
     assert "finalizó con código 2" in result.output
 
 
+def test_run_with_port_zero_passes_and_transmits_port(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+    runner = CliRunner()
+
+    captured_command: list[str] = []
+
+    class _FakeProcess:
+        def poll(self) -> int:
+            return 0
+
+    def _fake_popen(command, env=None, cwd=None):
+        captured_command.extend(command)
+        return _FakeProcess()
+
+    monkeypatch.setattr(cli_main.subprocess, "Popen", _fake_popen)
+    monkeypatch.setattr(cli_main, "_stop_process", lambda process: None)
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        app_file = base / "src" / "main.py"
+        app_file.parent.mkdir(parents=True, exist_ok=True)
+        app_file.write_text("print('ok')", encoding="utf-8")
+
+        result = runner.invoke(cli_main.app, ["run", "--watch", str(base), "--port", "0"])
+
+    assert result.exit_code == 0, result.output
+    assert "--port" in captured_command
+    assert "0" in captured_command
+
+
 def test_profile_runs_subset_of_flows_with_flow_option(monkeypatch) -> None:
     _configure_watchdog(monkeypatch, available=False)
     cli_main = _load_cli_main_module()
