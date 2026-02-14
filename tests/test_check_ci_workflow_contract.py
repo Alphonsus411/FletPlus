@@ -290,6 +290,30 @@ jobs:
     assert errors == []
 
 
+def test_validate_wrapper_workflow_fails_when_only_one_job_delegates(
+    contract_env: dict[str, Path],
+) -> None:
+    wrapper = contract_env["workflows_dir"] / "wrapper-multi-jobs-partial.yml"
+    wrapper.write_text(
+        """
+name: Wrapper
+jobs:
+  qa:
+    uses: ./.github/workflows/reusable-quality.yml
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo local
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_wrapper_workflow(wrapper)
+
+    assert any("debe delegar en ./.github/workflows/reusable-quality.yml" in error for error in errors)
+    assert any("no debe definir steps locales" in error for error in errors)
+
+
 def test_validate_critical_commands_sync_fails_when_workflow_qa_and_docs_drift(
     contract_env: dict[str, Path],
 ) -> None:
@@ -319,6 +343,114 @@ def test_validate_critical_commands_sync_fails_when_workflow_qa_and_docs_drift(
     assert "reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'." in errors
     assert any("tools/qa.sh no incluye comando crítico de ruff" in error for error in errors)
     assert any("docs/tooling.md no documenta comando crítico de ruff" in error for error in errors)
+
+
+def test_load_workflow_run_commands_supports_inline_and_block_with_spacing_variants(
+    contract_env: dict[str, Path],
+) -> None:
+    workflow = contract_env["workflows_dir"] / "spacing-variants.yml"
+    workflow.write_text(
+        """
+name: Spacing
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run:   python   -m   pytest
+      - run: |
+          python  -m  ruff   check .
+      -
+        run: |
+          python -m mypy fletplus
+      -
+        run:    python   tools/check_github_workflows.py
+""",
+        encoding="utf-8",
+    )
+
+    commands = check_ci_workflow_contract.load_workflow_run_commands(workflow)
+
+    assert "python -m pytest" in commands
+    assert "python -m ruff check ." in commands
+    assert "python -m mypy fletplus" in commands
+    assert "python tools/check_github_workflows.py" in commands
+
+
+def test_validate_critical_commands_sync_allows_whitespace_normalization_in_qa_script(
+    contract_env: dict[str, Path],
+) -> None:
+    qa_content = contract_env["qa_script"].read_text(encoding="utf-8")
+    contract_env["qa_script"].write_text(
+        qa_content.replace(
+            "python tools/check_github_workflows.py",
+            "python    tools/check_github_workflows.py",
+        ),
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_critical_commands_sync()
+
+    assert not any("comando crítico de workflow-validation" in error for error in errors)
+
+
+def test_validate_critical_commands_sync_requires_exact_qa_invocation(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["reusable"].write_text(
+        contract_env["reusable"].read_text(encoding="utf-8").replace(
+            "run: bash tools/qa.sh", "run: bash ./tools/qa.sh"
+        ),
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_critical_commands_sync()
+
+    assert "reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'." in errors
+
+
+def test_validate_critical_commands_sync_flags_duplicate_qa_invocation(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["reusable"].write_text(
+        """
+name: Reusable Quality
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - run: bash tools/qa.sh
+      - run: echo helper
+      - run: bash tools/qa.sh
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_critical_commands_sync()
+
+    assert "reusable-quality.yml debe invocar tools/qa.sh una única vez." in errors
+
+
+def test_validate_critical_commands_sync_accepts_single_qa_invocation_with_aux_steps(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["reusable"].write_text(
+        """
+name: Reusable Quality
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo setup
+      - run: bash tools/qa.sh
+      - run: echo cleanup
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_critical_commands_sync()
+
+    assert "reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'." not in errors
+    assert "reusable-quality.yml debe invocar tools/qa.sh una única vez." not in errors
 
 
 def test_validate_workflow_references_fails_for_missing_doc_reference(
