@@ -240,7 +240,7 @@ Modifica `build_config.yaml` para añadir o quitar módulos sin tocar la configu
 
 > 🔁 Compatibilidad Cython: si editas un `.pyx`, regenera su `.c` correspondiente antes de publicar. El flujo recomendado es ejecutar `python tools/select_cython_modules.py --profile build/profile.txt --config build_config.yaml --limit 4` (o `make update-build-config`) y luego `make build`, que encadena `update-build-config`, `build-rust` y `python -m build` para generar `sdist`/`wheel` en `dist/`.
 
-> 🧰 Si necesitas regenerar los artefactos C (por ejemplo, tras modificar un `.pyx`), instala el extra opcional `build` con `pip install .[build]` o `pip install "fletplus[build]"`.
+> 🧰 Si necesitas regenerar los artefactos C (por ejemplo, tras modificar un `.pyx`), instala el extra opcional `build` con `pip install .[build]` (incluye `build` y `cython`) o `pip install "fletplus[build]"`.
 
 ## 🚀 Router acelerado con Rust
 

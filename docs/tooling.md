@@ -51,6 +51,8 @@ El comando `fletplus run` monitoriza el árbol del proyecto (ignorando carpetas 
 
 Para decidir qué módulos compilar con Cython antes de publicar una nueva versión:
 
+> Requisito previo: instala el extra de build (`pip install .[build]`), que aporta `python -m build` y `cython` en el entorno local.
+
 1. Genera el perfil con cProfile y guarda el resultado en `build/profile.txt`:
 
    ```bash
