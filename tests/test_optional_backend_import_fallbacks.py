@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import sys
+from pathlib import Path
+
 
 def _force_import_failure(monkeypatch, *module_names: str) -> None:
     original_find_spec = importlib.util.find_spec
@@ -22,10 +25,29 @@ def _force_import_failure(monkeypatch, *module_names: str) -> None:
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
 
+def _fresh_import(module_name: str):
+    sys.modules.pop(module_name, None)
+    return importlib.import_module(module_name)
+
+
+def test_state_module_imports_real_module_without_stubs():
+    state_module = _fresh_import("fletplus.state.state")
+
+    assert state_module.__name__ == "fletplus.state.state"
+    assert Path(state_module.__file__).name == "state.py"
+
+
+def test_responsive_manager_imports_real_module_without_stubs():
+    responsive_module = _fresh_import("fletplus.utils.responsive_manager")
+
+    assert responsive_module.__name__ == "fletplus.utils.responsive_manager"
+    assert Path(responsive_module.__file__).name == "responsive_manager.py"
+
+
 def test_state_module_imports_when_native_backend_fails(monkeypatch):
     _force_import_failure(monkeypatch, "fletplus.state._native")
 
-    state_module = importlib.import_module("fletplus.state.state")
+    state_module = _fresh_import("fletplus.state.state")
 
     signal = state_module.Signal(1)
     signal.set(2)
@@ -36,7 +58,7 @@ def test_state_module_imports_when_native_backend_fails(monkeypatch):
 def test_smart_table_module_keeps_python_fallback_when_rs_backend_fails(monkeypatch):
     _force_import_failure(monkeypatch, "fletplus.components.smart_table_rs")
 
-    smart_table_module = importlib.import_module("fletplus.components.smart_table")
+    smart_table_module = _fresh_import("fletplus.components.smart_table")
 
     table = smart_table_module.SmartTable(columns=["name"], rows=[{"name": "Ana"}, {"name": "Luis"}])
     records = table._apply_query(table._records)
@@ -47,7 +69,7 @@ def test_smart_table_module_keeps_python_fallback_when_rs_backend_fails(monkeypa
 def test_responsive_manager_imports_when_native_backend_fails(monkeypatch):
     _force_import_failure(monkeypatch, "fletplus.utils._native")
 
-    responsive_manager_module = importlib.import_module("fletplus.utils.responsive_manager")
+    responsive_manager_module = _fresh_import("fletplus.utils.responsive_manager")
 
     class DummyPage:
         width = 500
@@ -70,7 +92,7 @@ def test_theme_manager_imports_when_rs_backends_fail(monkeypatch, tmp_path):
         "fletplus.themes.theme_merge_rs",
     )
 
-    theme_manager_module = importlib.import_module("fletplus.themes.theme_manager")
+    theme_manager_module = _fresh_import("fletplus.themes.theme_manager")
 
     palette_file = tmp_path / "palette.json"
     palette_file.write_text('{"light": {"info": {"100": "#fff"}}}', encoding="utf-8")
