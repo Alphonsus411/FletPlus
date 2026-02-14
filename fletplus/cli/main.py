@@ -220,9 +220,16 @@ def _should_ignore(path: Path) -> bool:
 
 
 class _ReloadHandler(FileSystemEventHandler):
-    def __init__(self, trigger: Callable[[], None], patterns: Iterable[str] | None = None) -> None:
+    def __init__(
+        self,
+        trigger: Callable[[], None],
+        patterns: Iterable[str] | None = None,
+        debounce_window_seconds: float = 0.3,
+    ) -> None:
         self._trigger = trigger
         self._patterns = tuple(patterns or ())
+        self._debounce_window_seconds = debounce_window_seconds
+        self._last_event_by_path: dict[str, float] = {}
 
     def on_any_event(self, event: FileSystemEvent) -> None:  # pragma: no cover - interactivo
         if event.is_directory:
@@ -234,6 +241,17 @@ class _ReloadHandler(FileSystemEventHandler):
 
         if self._patterns and path.suffix not in self._patterns:
             return
+
+        now = time.monotonic()
+        path_key = event.src_path
+        last_event_time = self._last_event_by_path.get(path_key)
+        if (
+            last_event_time is not None
+            and now - last_event_time < self._debounce_window_seconds
+        ):
+            return
+
+        self._last_event_by_path[path_key] = now
 
         self._trigger()
 
