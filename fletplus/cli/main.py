@@ -263,13 +263,40 @@ def _stop_process(process: subprocess.Popen) -> None:
             process.kill()
 
 
+def _resolve_app_path(app_path: Path, watch_path: Path) -> Path:
+    """Resuelve --app priorizando --watch para rutas relativas.
+
+    Regla de precedencia:
+    1) Si --app es absoluto, se usa tal cual.
+    2) Si --app es relativo, se intenta primero `watch_path / app_path`.
+    3) Como compatibilidad, si no existe, se intenta `Path.cwd() / app_path`.
+    4) Si no existe en ninguna, se devuelve el candidato primario para el error final.
+    """
+
+    if app_path.is_absolute():
+        return app_path
+
+    watch_candidate = watch_path / app_path
+    if watch_candidate.exists():
+        return watch_candidate
+
+    cwd_candidate = Path.cwd() / app_path
+    if cwd_candidate.exists():
+        return cwd_candidate
+
+    return watch_candidate
+
+
 @app.command()
 @click.option(
     "--app",
     "app_path",
     type=click.Path(dir_okay=False, path_type=Path),
     default="src/main.py",
-    help="Ruta al archivo principal de la app.",
+    help=(
+        "Ruta al archivo principal de la app. Si es relativa, se resuelve primero "
+        "contra --watch y, si no existe, contra el directorio actual."
+    ),
 )
 @click.option("--port", default=8550, show_default=True, help="Puerto del servidor web.")
 @click.option("--no-devtools", "devtools", flag_value=False, default=True, help="Desactiva DevTools.")
@@ -278,23 +305,19 @@ def _stop_process(process: subprocess.Popen) -> None:
     "watch_path",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     default=None,
-    help="Ruta a monitorear para recarga automática.",
+    help="Directorio a monitorear y base primaria para resolver --app relativo.",
 )
 def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> None:
     """Inicia el servidor de desarrollo con recarga automática."""
 
     if watch_path is None:
         watch_path = Path.cwd()
+    watch_path = watch_path.resolve()
 
     if not watch_path.exists():
         raise click.ClickException(f"La ruta a monitorear no existe: {watch_path}")
 
-    if not app_path.is_absolute():
-        resolved_path = Path.cwd() / app_path
-        if resolved_path.exists():
-            app_path = resolved_path
-        else:
-            app_path = watch_path / app_path
+    app_path = _resolve_app_path(app_path, watch_path)
     if not app_path.exists():
         raise click.ClickException(f"No se encontró el archivo de la aplicación: {app_path}")
     if not app_path.is_file():
