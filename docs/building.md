@@ -21,6 +21,22 @@ fletplus build --target <web|desktop|mobile|all>
 Si alguno de los empaquetadores falla, el comando finaliza con un error
 indicando qué objetivo no se pudo generar.
 
+## Configuración de compilación (Cython)
+
+La configuración del empaquetado vive en `pyproject.toml` y la selección de
+módulos Cython en `build_config.yaml`.
+
+- `pyproject.toml` define metadatos, backend de build y artefactos incluidos en
+  distribución.
+- `build_config.yaml` lista los módulos candidatos a compilar con Cython para
+  los builds locales.
+
+Para mantener compatibilidad al instalar desde fuente sin Cython, conserva los
+artefactos `*.c` versionados junto a sus `.pyx`. Si cambias un módulo Cython,
+regenera el listado con `tools/select_cython_modules.py` (o `make
+update-build-config`) y ejecuta `make build` para refrescar los artefactos en
+el flujo actual.
+
 ## Ejemplos de uso
 
 ### Compilación completa
@@ -59,4 +75,3 @@ personalizadas de Briefcase:
 
 Estas variables pueden consumirse desde scripts o configuraciones externas para
 ajustar el empaquetado sin modificar el código fuente.
-
