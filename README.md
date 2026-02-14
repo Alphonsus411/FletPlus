@@ -18,20 +18,53 @@ pip install fletplus
 
 ## 📚 Documentación
 
-- [CLI de FletPlus](docs/cli.md)
-- [Herramientas de desarrollo y publicación](docs/tooling.md)
-- [Generación de iconos](docs/icons.md)
-- [Cliente HTTP reactivo](docs/http.md)
-- [Arquitectura de FletPlusApp](docs/app.md)
-- [Contextos y proveedores](docs/context.md)
-- [Gestor de temas, paletas y overrides](docs/themes.md)
-- [Proveedores de almacenamiento reactivo](docs/storage.md)
-- [Compilación y empaquetado](docs/building.md)
-- [Recorrido por la demo](docs/demo.md)
-- [Router declarativo y layouts persistentes](docs/router.md)
-- [Animaciones coordinadas con AnimationController](docs/animation.md): coordina triggers compartidos y envoltorios como FadeIn o AnimatedContainer.
-- [Catálogo de componentes](docs/components.md)
-- [Perfiles de dispositivo y breakpoints](docs/responsive.md)
+- [CLI de FletPlus][doc-cli] ([GitHub][gh-doc-cli])
+- [Herramientas de desarrollo y publicación][doc-tooling] ([GitHub][gh-doc-tooling])
+- [Generación de iconos][doc-icons] ([GitHub][gh-doc-icons])
+- [Cliente HTTP reactivo][doc-http] ([GitHub][gh-doc-http])
+- [Arquitectura de FletPlusApp][doc-app] ([GitHub][gh-doc-app])
+- [Contextos y proveedores][doc-context] ([GitHub][gh-doc-context])
+- [Gestor de temas, paletas y overrides][doc-themes] ([GitHub][gh-doc-themes])
+- [Proveedores de almacenamiento reactivo][doc-storage] ([GitHub][gh-doc-storage])
+- [Compilación y empaquetado][doc-building] ([GitHub][gh-doc-building])
+- [Recorrido por la demo][doc-demo] ([GitHub][gh-doc-demo])
+- [Router declarativo y layouts persistentes][doc-router] ([GitHub][gh-doc-router])
+- [Animaciones coordinadas con AnimationController][doc-animation] ([GitHub][gh-doc-animation]): coordina triggers compartidos y envoltorios como FadeIn o AnimatedContainer.
+- [Catálogo de componentes][doc-components] ([GitHub][gh-doc-components])
+- [Perfiles de dispositivo y breakpoints][doc-responsive] ([GitHub][gh-doc-responsive])
+
+[doc-cli]: cli.md
+[doc-tooling]: tooling.md
+[doc-icons]: icons.md
+[doc-http]: http.md
+[doc-app]: app.md
+[doc-context]: context.md
+[doc-themes]: themes.md
+[doc-storage]: storage.md
+[doc-building]: building.md
+[doc-demo]: demo.md
+[doc-router]: router.md
+[doc-animation]: animation.md
+[doc-components]: components.md
+[doc-responsive]: responsive.md
+
+[gh-doc-cli]: https://github.com/FletPlus/FletPlus/blob/main/docs/cli.md
+[gh-doc-tooling]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md
+[gh-doc-icons]: https://github.com/FletPlus/FletPlus/blob/main/docs/icons.md
+[gh-doc-http]: https://github.com/FletPlus/FletPlus/blob/main/docs/http.md
+[gh-doc-app]: https://github.com/FletPlus/FletPlus/blob/main/docs/app.md
+[gh-doc-context]: https://github.com/FletPlus/FletPlus/blob/main/docs/context.md
+[gh-doc-themes]: https://github.com/FletPlus/FletPlus/blob/main/docs/themes.md
+[gh-doc-storage]: https://github.com/FletPlus/FletPlus/blob/main/docs/storage.md
+[gh-doc-building]: https://github.com/FletPlus/FletPlus/blob/main/docs/building.md
+[gh-doc-demo]: https://github.com/FletPlus/FletPlus/blob/main/docs/demo.md
+[gh-doc-router]: https://github.com/FletPlus/FletPlus/blob/main/docs/router.md
+[gh-doc-animation]: https://github.com/FletPlus/FletPlus/blob/main/docs/animation.md
+[gh-doc-components]: https://github.com/FletPlus/FletPlus/blob/main/docs/components.md
+[gh-doc-responsive]: https://github.com/FletPlus/FletPlus/blob/main/docs/responsive.md
+
+[doc-tooling-workflow]: tooling.md#workflow-de-documentacion
+[gh-doc-tooling-workflow]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md#workflow-de-documentacion
 
 ## ✅ Quality Checks
 
@@ -344,7 +377,7 @@ ft.app(target=main)
 ```
 
 Consulta la guía detallada en
-[`docs/responsive.md`](docs/responsive.md) para aprender a extender
+[guía responsive][doc-responsive] ([GitHub][gh-doc-responsive]) para aprender a extender
 `EXTENDED_DEVICE_PROFILES`, definir tus propios breakpoints y cubrir
 escenarios híbridos.
 
@@ -407,13 +440,13 @@ jobs:
 
 - 📄 Guarda este workflow en `.github/workflows/docs.yml` dentro del repositorio.
 - 🌐 Habilita **Settings → Pages → Build and deployment → Source: GitHub Actions** la primera vez para permitir el despliegue automático.
-- 🔗 Consulta la guía extendida en [Herramientas de desarrollo y publicación](docs/tooling.md#workflow-de-documentación) para más detalles sobre el pipeline y tareas relacionadas.
+- 🔗 Consulta la guía extendida en [Herramientas de desarrollo y publicación][doc-tooling-workflow] ([GitHub][gh-doc-tooling-workflow]) para más detalles sobre el pipeline y tareas relacionadas.
 
 #### Cómo actualizar o previsualizar la documentación
 
 1. Instala las dependencias con `pip install -r requirements-docs.txt`.
 2. Ejecuta `mkdocs serve` para obtener una vista previa local con recarga en caliente.
-3. Tras realizar cambios en los archivos dentro de `docs/` o en `README.md`, haz commit y sube la rama. El pipeline publicará la nueva versión (consulta más detalles en [Herramientas de desarrollo y publicación](docs/tooling.md)).
+3. Tras realizar cambios en los archivos dentro de `docs/` o en `README.md`, haz commit y sube la rama. El pipeline publicará la nueva versión (consulta más detalles en [Herramientas de desarrollo y publicación][doc-tooling] ([GitHub][gh-doc-tooling])).
 
 > ⚠️ **Paso manual inicial**: desde la pestaña **Settings → Pages** del repositorio, selecciona “GitHub Actions” como fuente y guarda los cambios. Esta acción solo es necesaria una vez para habilitar la publicación.
 
@@ -482,7 +515,7 @@ FletPlus incorpora un módulo `fletplus.state` con primitivas reactivas ligeras
 para compartir datos entre componentes sin acoplarlos al árbol de controles.
 
 > ℹ️ ¿Necesitas persistir estas señales? Consulta la guía de
-> [almacenamiento reactivo](docs/storage.md) para conocer los proveedores
+> [almacenamiento reactivo][doc-storage] ([GitHub][gh-doc-storage]) para conocer los proveedores
 > disponibles (local, sesión y archivos) y cómo enlazarlos con controles.
 
 ```python
@@ -577,7 +610,7 @@ El módulo `fletplus.router` aporta navegación jerárquica declarativa sin depe
 - Expone `Router.observe` para reaccionar a cada activación y montar el árbol resultante en la página.
 - Recuerda layouts ya creados para que shells y menús permanezcan montados entre transiciones.
 
-Consulta la guía completa en [docs/router.md](docs/router.md).
+Consulta la guía completa en [router.md][doc-router] ([GitHub][gh-doc-router]).
 
 ## 🌐 Contextos compartidos
 
