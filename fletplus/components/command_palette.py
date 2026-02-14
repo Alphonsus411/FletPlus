@@ -8,7 +8,11 @@ from fletplus.context import locale_context, user_context
 
 
 class CommandPalette:
-    """Paleta de comandos con búsqueda."""
+    """Paleta de comandos con búsqueda.
+
+    Quien instancia esta clase debe llamar explícitamente a :meth:`dispose`
+    al desmontar/cerrar la vista para liberar suscripciones de contexto.
+    """
 
     def __init__(self, commands: Dict[str, Callable]):
         self.commands = commands
@@ -29,6 +33,7 @@ class CommandPalette:
         )
         self.dialog.title = ft.Text("")
         self._subscriptions: list[Callable[[], None]] = []
+        self._disposed = False
         self._setup_context_bindings()
         self.refresh()
 
@@ -132,9 +137,24 @@ class CommandPalette:
             self.dialog.update()
 
     # ------------------------------------------------------------------
-    def __del__(self):  # pragma: no cover - liberación defensiva
+    def dispose(self) -> None:
+        """Libera las suscripciones asociadas a esta instancia."""
+        if self._disposed:
+            return
+
         for unsubscribe in self._subscriptions:
             try:
                 unsubscribe()
             except Exception:
                 logging.exception("Error al cancelar la subscripción de CommandPalette")
+
+        self._subscriptions.clear()
+        self._disposed = True
+
+    # ------------------------------------------------------------------
+    def __del__(self):  # pragma: no cover - liberación defensiva
+        try:
+            if not getattr(self, "_disposed", True):
+                self.dispose()
+        except Exception:
+            logging.exception("Error durante la liberación defensiva de CommandPalette")
