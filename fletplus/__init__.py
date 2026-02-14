@@ -30,7 +30,9 @@ LAZY_IMPORTS = {
     "FlexColumn": "fletplus.components",
     "FlexRow": "fletplus.components",
     "FloatingActionButton": "fletplus.components",
-    "FletPlusApp": "fletplus.core",
+    # Contrato público oficial por compatibilidad: API legacy.
+    # La nueva core desacoplada sigue disponible vía `fletplus.core`.
+    "FletPlusApp": "fletplus.core_legacy",
     "Grid": "fletplus.components",
     "GridItem": "fletplus.components",
     "HttpClient": "fletplus.http",
@@ -156,7 +158,8 @@ if TYPE_CHECKING:
         theme_context,
         user_context,
     )
-    from fletplus.core import FletPlusApp, Layout, State
+    from fletplus.core import Layout, State
+    from fletplus.core_legacy import FletPlusApp
     from fletplus.desktop import WindowManager, SystemTray, show_notification
     from fletplus.http import (
         DiskCache,

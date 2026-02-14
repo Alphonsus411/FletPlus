@@ -2,13 +2,15 @@
 
 `FletPlusApp` centraliza la navegación, la gestión de temas, los atajos de teclado y la paleta de comandos sobre una página de Flet. Esta guía repasa el flujo interno tomando como referencia la Core legacy (`fletplus/core_legacy.py`) y muestra cómo sacarle partido en proyectos reales.
 
-> ℹ️ La nueva Core desacoplada vive en el paquete `fletplus/core/`. Para nuevas integraciones, utiliza `fletplus.core`.
+> ℹ️ **Contrato público oficial actual**: usa `from fletplus import FletPlusApp` (alias compatible con la core legacy).
+>
+> ⚠️ Migración planificada: la core desacoplada sigue disponible en `fletplus.core` con firma `FletPlusApp(layout=..., state=...)` y se recomienda adoptarla gradualmente para una futura versión mayor.
 
 ## Inicialización básica
 
 ```python
 import flet as ft
-from fletplus.core_legacy import FletPlusApp
+from fletplus import FletPlusApp
 from fletplus.router import Route
 
 
@@ -81,7 +83,7 @@ La paleta (`CommandPalette`) recibe un mapeo sencillo `dict[str, Callable]` al i
 
 ```python
 import flet as ft
-from fletplus.core_legacy import FletPlusApp
+from fletplus import FletPlusApp
 from fletplus.router import Route
 
 
