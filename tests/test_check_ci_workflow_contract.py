@@ -340,6 +340,28 @@ def test_validate_workflow_references_fails_for_missing_doc_reference(
 def test_validate_docs_workflow_contract_passes_with_required_jobs_and_actions(
     contract_env: dict[str, Path],
 ) -> None:
+    contract_env["docs_workflow"].write_text(
+        """
+name: Docs
+jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Setup pages
+          uses: actions/configure-pages@v4
+        -
+          name: Upload artifact
+          uses: actions/upload-pages-artifact@v3
+    deploy:
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+        - name: Deploy
+          uses: actions/deploy-pages@v4
+""",
+        encoding="utf-8",
+    )
+
     errors = check_ci_workflow_contract.validate_docs_workflow_contract(
         contract_env["docs_workflow"]
     )
@@ -347,7 +369,7 @@ def test_validate_docs_workflow_contract_passes_with_required_jobs_and_actions(
     assert errors == []
 
 
-def test_validate_docs_workflow_contract_fails_when_build_or_deploy_contract_breaks(
+def test_validate_docs_workflow_contract_passes_when_deploy_needs_is_list(
     contract_env: dict[str, Path],
 ) -> None:
     contract_env["docs_workflow"].write_text(
@@ -357,8 +379,39 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
   deploy:
+    needs:
+      - lint
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_docs_workflow_contract(
+        contract_env["docs_workflow"]
+    )
+
+    assert errors == []
+
+
+def test_validate_docs_workflow_contract_fails_when_required_action_is_missing(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["docs_workflow"].write_text(
+        """
+name: Docs
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v4
+  deploy:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - run: echo deploy
@@ -370,8 +423,7 @@ jobs:
         contract_env["docs_workflow"]
     )
 
-    assert any("build' debe usar actions/configure-pages" in error for error in errors)
-    assert any("deploy' debe depender de 'build'" in error for error in errors)
+    assert any("build' debe usar actions/upload-pages-artifact" in error for error in errors)
     assert any("deploy' debe usar actions/deploy-pages" in error for error in errors)
 
 
