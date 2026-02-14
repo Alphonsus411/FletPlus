@@ -65,7 +65,7 @@ Para decidir qué módulos compilar con Cython antes de publicar una nueva versi
    python tools/select_cython_modules.py --profile build/profile.txt --config build_config.yaml --limit 4
    ```
 
-   El script ordena los archivos del repositorio por tiempo acumulado en el perfil y rellena `build_config.yaml` con los módulos más costosos. Si el perfil no contiene datos del proyecto, recurre al listado por defecto usado en `setup.py`.
+   El script ordena los archivos del repositorio por tiempo acumulado en el perfil y rellena `build_config.yaml` con los módulos más costosos. Si el perfil no contiene datos del proyecto, recurre al listado por defecto definido en `tools/select_cython_modules.py`.
 
 3. Construye las extensiones C justo después de actualizar la configuración. El `Makefile` ya encadena este flujo al objetivo `build`:
 
@@ -73,9 +73,9 @@ Para decidir qué módulos compilar con Cython antes de publicar una nueva versi
    make build
    ```
 
-   Este objetivo regenera `build_config.yaml` antes de invocar `setup.py`, de modo que la configuración que lee `_load_module_config` siempre está alineada con el último perfil.
+   Este objetivo regenera `build_config.yaml` y luego compila extensiones en local, de modo que la selección de módulos queda alineada con el último perfil.
 
-> ✅ Ejecuta los pasos 1 y 2 antes de cortar cada release. Así nos aseguramos de que los módulos más calientes se compilan con Cython y `setup.py` los detecta automáticamente al construir paquetes o instalar en editable.
+> ✅ Ejecuta los pasos 1 y 2 antes de cortar cada release. Así nos aseguramos de que los módulos más calientes queden reflejados en `build_config.yaml` y entren en el flujo de compilación local con Cython cuando corresponda.
 
 ## Gestores de escritorio
 
