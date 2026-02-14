@@ -119,6 +119,14 @@ def load_workflow_run_commands(path: Path) -> list[str]:
     return commands
 
 
+def load_workflow_run_commands_for_jobs(
+    path: Path, job_names: tuple[str, ...]
+) -> dict[str, list[str]]:
+    """Extrae comandos run únicamente para los jobs indicados."""
+    commands_by_job = load_workflow_run_commands_by_job(path)
+    return {job_name: commands_by_job.get(job_name, []) for job_name in job_names}
+
+
 def load_workflow_commands(path: Path) -> set[str]:
     """Compatibilidad con tests existentes: extrae comandos python del workflow."""
     commands = set()
@@ -263,12 +271,14 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
                 uses_values.add(uses.split("@", maxsplit=1)[0])
         return uses_values
 
+    docs_job_commands = load_workflow_run_commands_for_jobs(path, ("build", "deploy"))
+
     build_job = jobs.get("build")
     if not isinstance(build_job, dict):
         errors.append(f"{path}: falta el job obligatorio 'build'.")
     else:
         build_uses = _job_step_uses(build_job)
-        build_commands = load_workflow_run_commands_by_job(path).get("build", [])
+        build_commands = docs_job_commands["build"]
         if not any(
             command.startswith("mkdocs build") and "--strict" in command
             for command in build_commands
@@ -320,7 +330,7 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
 
 def validate_perf_workflow_contract(path: Path) -> list[str]:
     errors: list[str] = []
-    commands = load_workflow_run_commands_by_job(path).get("perf", [])
+    commands = load_workflow_run_commands_for_jobs(path, ("perf",))["perf"]
 
     required_commands = ["pip install -r requirements-dev.txt"]
 
@@ -330,11 +340,13 @@ def validate_perf_workflow_contract(path: Path) -> list[str]:
                 f"{path}: falta el comando requerido en perf workflow: {required}"
             )
 
+    if not any(re.search(r"(?:^|\s)pytest(?:\s|$)", command) for command in commands):
+        errors.append(
+            f"{path}: falta el comando requerido en perf workflow: pytest"
+        )
+
     perf_pytest_base = normalize_command("python -m pytest -m perf")
-    if not any(
-        command == perf_pytest_base or command.startswith(f"{perf_pytest_base} ")
-        for command in commands
-    ):
+    if not any(command == perf_pytest_base or command.startswith(f"{perf_pytest_base} ") for command in commands):
         errors.append(
             f"{path}: falta el comando requerido en perf workflow: python -m pytest -m perf"
         )
