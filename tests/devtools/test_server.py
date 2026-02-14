@@ -173,23 +173,63 @@ def test_is_authorized_rejects_when_request_metadata_is_missing():
     assert server._is_authorized(WebSocketWithoutMetadata()) is False
 
 
-def test_remember_initial_payload_handles_case_insensitive_allowed_snapshot_types():
+@pytest.mark.anyio
+async def test_remember_initial_payload_handles_case_insensitive_allowed_snapshot_types():
     server = DevToolsServer(
         allowed_snapshot_types={"SNAPSHOT", "Snapshot:Node"},
     )
 
-    server._remember_initial_payload(
+    await server._remember_initial_payload(
         json.dumps({"type": "snapshot", "data": {"value": 1}})
     )
-    server._remember_initial_payload(
+    await server._remember_initial_payload(
         json.dumps({"type": "SNAPSHOT:NODE", "data": {"id": "n1"}})
     )
 
     assert "snapshot" in server._initial_payloads
     assert "SNAPSHOT:NODE" in server._initial_payloads
 
-    server._remember_initial_payload(
+    await server._remember_initial_payload(
         json.dumps({"type": "sNaPsHoT:Edge", "data": {"id": "e1"}})
     )
 
     assert "sNaPsHoT:Edge" not in server._initial_payloads
+
+
+@pytest.mark.anyio
+async def test_initial_payload_snapshot_is_stable_during_concurrent_updates():
+    server = DevToolsServer()
+
+    await server._remember_initial_payload(
+        json.dumps({"type": "snapshot", "data": {"value": 0}})
+    )
+
+    class SlowWebSocket:
+        def __init__(self) -> None:
+            self.messages: list[str] = []
+            self.first_send_started = asyncio.Event()
+            self.allow_first_send = asyncio.Event()
+
+        async def send(self, message: str) -> None:
+            if not self.messages:
+                self.first_send_started.set()
+                await self.allow_first_send.wait()
+            self.messages.append(message)
+
+    websocket = SlowWebSocket()
+
+    send_task = asyncio.create_task(server._send_initial_payloads(websocket))
+
+    await asyncio.wait_for(websocket.first_send_started.wait(), timeout=1)
+
+    await server._remember_initial_payload(
+        json.dumps({"type": "snapshot:node", "data": {"value": 1}})
+    )
+
+    websocket.allow_first_send.set()
+
+    await asyncio.wait_for(send_task, timeout=1)
+
+    assert websocket.messages == [
+        json.dumps({"type": "snapshot", "data": {"value": 0}})
+    ]
