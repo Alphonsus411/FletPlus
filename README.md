@@ -33,20 +33,20 @@ pip install fletplus
 - [Catálogo de componentes][doc-components] ([GitHub][gh-doc-components])
 - [Perfiles de dispositivo y breakpoints][doc-responsive] ([GitHub][gh-doc-responsive])
 
-[doc-cli]: cli.md
-[doc-tooling]: tooling.md
-[doc-icons]: icons.md
-[doc-http]: http.md
-[doc-app]: app.md
-[doc-context]: context.md
-[doc-themes]: themes.md
-[doc-storage]: storage.md
-[doc-building]: building.md
-[doc-demo]: demo.md
-[doc-router]: router.md
-[doc-animation]: animation.md
-[doc-components]: components.md
-[doc-responsive]: responsive.md
+[doc-cli]: docs/cli.md
+[doc-tooling]: docs/tooling.md
+[doc-icons]: docs/icons.md
+[doc-http]: docs/http.md
+[doc-app]: docs/app.md
+[doc-context]: docs/context.md
+[doc-themes]: docs/themes.md
+[doc-storage]: docs/storage.md
+[doc-building]: docs/building.md
+[doc-demo]: docs/demo.md
+[doc-router]: docs/router.md
+[doc-animation]: docs/animation.md
+[doc-components]: docs/components.md
+[doc-responsive]: docs/responsive.md
 
 [gh-doc-cli]: https://github.com/FletPlus/FletPlus/blob/main/docs/cli.md
 [gh-doc-tooling]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md
@@ -63,7 +63,7 @@ pip install fletplus
 [gh-doc-components]: https://github.com/FletPlus/FletPlus/blob/main/docs/components.md
 [gh-doc-responsive]: https://github.com/FletPlus/FletPlus/blob/main/docs/responsive.md
 
-[doc-tooling-workflow]: tooling.md#workflow-de-documentacion
+[doc-tooling-workflow]: docs/tooling.md#workflow-de-documentacion
 [gh-doc-tooling-workflow]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md#workflow-de-documentacion
 
 ## ✅ Quality Checks
