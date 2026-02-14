@@ -141,6 +141,9 @@ Con el entorno listo, estos son los comandos estándar de calidad que se
 pueden ejecutar desde la raíz del repositorio:
 
 ```bash
+python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
+python tools/check_package_data_files.py
+python tools/check_canonical_repo_links.py
 python -m pytest
 python -m ruff check .
 python -m black --check .
@@ -153,9 +156,9 @@ python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file
 make qa-all
 ```
 
-El flujo esperado es ejecutar primero los linters y el chequeo de tipos,
-continuar con las auditorías de seguridad y finalizar con los tests. Si
-quieres correr un paso específico, puedes usar los targets del `Makefile`:
+La fuente única de verdad del flujo QA es `tools/qa.sh`. El workflow reusable de GitHub Actions y la sesión `nox -s qa` invocan ese script para mantener sincronía.
+
+Si quieres correr un paso específico, puedes usar los targets del `Makefile`:
 
 ```bash
 make ruff
@@ -186,9 +189,7 @@ En los Pull Requests hacia `main` o `develop` se ejecuta únicamente
 En `push` a `main` o `develop` se ejecuta únicamente
 `.github/workflows/quality.yml`.
 
-Ambos workflows usan los mismos comandos de calidad que `tools/qa.sh` y
-`noxfile.py`, incluyendo las allowlists `pip-audit.policy.json` y
-`safety-policy.yml` para las auditorías de `pip-audit` y `safety`.
+Ambos workflows delegan en `.github/workflows/reusable-quality.yml`, y este ejecuta `bash tools/qa.sh` como secuencia única de QA. `nox -s qa` también ejecuta el mismo script. Las auditorías de `pip-audit` y `safety` usan `pip-audit.policy.json` y `safety-policy.yml`.
 
 ### ✅ Cómo interpretar fallos comunes y dónde ajustar configuración
 

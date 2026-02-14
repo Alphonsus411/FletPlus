@@ -1,6 +1,5 @@
 import nox
 
-
 nox.options.sessions = [
     "pytest",
     "ruff",
@@ -92,43 +91,4 @@ def safety_check(session: nox.Session) -> None:
 @nox.session(name="qa")
 def qa(session: nox.Session) -> None:
     _install_deps(session)
-    session.run(
-        "python",
-        "tools/check_test_dependencies.py",
-        "--suite",
-        "unit",
-        "--suite",
-        "cli",
-        "--suite",
-        "websocket",
-    )
-    session.run("python", "-m", "pytest")
-    session.run("python", "-m", "ruff", "check", ".")
-    session.run("python", "-m", "black", "--check", ".")
-    session.run("python", "-m", "mypy", "fletplus")
-    session.run("python", "tools/check_canonical_repo_links.py")
-    session.run("python", "tools/check_bandit_command_sync.py")
-    session.run("python", "-m", "bandit", "-c", "pyproject.toml", "-r", "fletplus")
-    session.run(
-        "python",
-        "-m",
-        "pip_audit",
-        "-r",
-        "requirements.txt",
-        "-r",
-        "requirements-dev.txt",
-        "--policy",
-        "pip-audit.policy.json",
-    )
-    session.run(
-        "python",
-        "-m",
-        "safety",
-        "check",
-        "-r",
-        "requirements.txt",
-        "-r",
-        "requirements-dev.txt",
-        "--policy-file",
-        "safety-policy.yml",
-    )
+    session.run("bash", "tools/qa.sh", external=True)
