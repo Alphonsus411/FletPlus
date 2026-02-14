@@ -4,10 +4,18 @@ Esta guía reúne los apoyos disponibles durante el ciclo de vida de una app Fle
 
 ## QA y políticas de seguridad en CI
 
-Los workflows `.github/workflows/qa.yml` y `.github/workflows/quality.yml` ejecutan las mismas auditorías que `tools/qa.sh` y las sesiones equivalentes de `noxfile.py`, para evitar divergencias entre local y CI. En particular, CI usa explícitamente estas allowlists:
+Los workflows `.github/workflows/qa.yml` y `.github/workflows/quality.yml` ejecutan exactamente la misma secuencia que `tools/qa.sh` y la sesión `qa` de `noxfile.py`, para evitar divergencias entre local y CI.
 
-- `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
-- `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
+Orden real de QA (idéntico en shell, workflows y nox):
+
+1. `python tools/check_test_dependencies.py`
+2. `python -m pytest`
+3. `python -m ruff check .`
+4. `python -m black --check .`
+5. `python -m mypy fletplus`
+6. `python -m bandit -r fletplus`
+7. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
+8. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
