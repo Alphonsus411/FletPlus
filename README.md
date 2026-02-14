@@ -399,8 +399,8 @@ escenarios híbridos.
 
 ### 🌐 Sitio estático con MkDocs
 
-- La documentación pública se publica automáticamente en **GitHub Pages** desde la rama `gh-pages` utilizando MkDocs, el tema Material y el workflow oficial **“Publicar documentación”** (`.github/workflows/docs.yml`).
-- Cada push a la rama por defecto (`main`) ejecuta el workflow `docs.yml`, que construye el sitio y lo despliega. No es necesario lanzar acciones manuales una vez habilitado el flujo.
+- La documentación pública se publica automáticamente en **GitHub Pages** mediante el workflow oficial **“Publicar documentación”** ([`.github/workflows/docs.yml`](.github/workflows/docs.yml)).
+- En cada `push` a `main` (y también bajo `workflow_dispatch`), el job `build` genera el sitio MkDocs y lo sube como artefacto de Pages (`actions/upload-pages-artifact`). Después, el job `deploy` consume ese artefacto y publica con `actions/deploy-pages@v4`.
 - La URL final sigue el formato `https://<usuario>.github.io/FletPlus/`; reemplaza `<usuario>` por la organización o cuenta propietaria del repositorio.
 
 ```yaml
