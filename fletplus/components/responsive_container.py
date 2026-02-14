@@ -25,9 +25,13 @@ class ResponsiveContainer:
         self.content = content
         self.styles = styles
         self.breakpoints = breakpoints or {}
+        self._manager: ResponsiveManager | None = None
 
     def build(self, page: ft.Page) -> ft.Control:
         """Devuelve el control con estilos responsivos aplicados."""
+        if self._manager is not None:
+            self._manager.dispose()
+
         target = (
             self.content
             if isinstance(self.content, ft.Container)
@@ -106,7 +110,7 @@ class ResponsiveContainer:
             key: _orientation_callback for key in orientation_keys
         }
 
-        ResponsiveManager(
+        self._manager = ResponsiveManager(
             page,
             breakpoints=callbacks,
             height_breakpoints=height_callbacks,
@@ -114,3 +118,11 @@ class ResponsiveContainer:
         )
 
         return target
+
+    def dispose(self) -> None:
+        """Libera el ``ResponsiveManager`` activo del contenedor."""
+        if self._manager is None:
+            return
+
+        self._manager.dispose()
+        self._manager = None

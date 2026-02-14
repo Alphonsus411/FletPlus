@@ -49,3 +49,31 @@ def test_responsive_container_restores_base_attributes():
 
     assert target.padding == 5
     assert target.bgcolor == "red"
+
+
+def test_responsive_container_rebuild_disposes_previous_manager():
+    page = DummyPage(width=500, height=700)
+    calls: list[int] = []
+
+    styles = ResponsiveStyle(width={0: Style(padding=5), 800: Style(padding=10)})
+
+    def on_width(width: int) -> None:
+        calls.append(width)
+
+    container = ResponsiveContainer(
+        ft.Container(content=ft.Text("Contenido")),
+        styles,
+        breakpoints={0: on_width, 800: on_width},
+    )
+
+    container.build(page)
+    container.build(page)
+    calls_before_resize = len(calls)
+
+    page.width = 900
+    _trigger_resize(page)
+
+    assert len(calls) == calls_before_resize + 1
+
+    container.dispose()
+    assert page.on_resize is None

@@ -31,8 +31,37 @@ def main(page: ft.Page) -> None:
         base=Style(border_radius=10),
     )
 
-    container = ResponsiveContainer(ft.Text("Contenido adaptable"), estilos)
-    page.add(container.build(page))
+    container_host = ft.Column()
+    container: ResponsiveContainer | None = None
+
+    def render_container(_event: ft.ControlEvent | None = None) -> None:
+        nonlocal container
+        if container is not None:
+            container.dispose()
+
+        container = ResponsiveContainer(ft.Text("Contenido adaptable"), estilos)
+        container_host.controls = [container.build(page)]
+        page.update()
+
+    def dispose_container(_event: ft.ControlEvent | None = None) -> None:
+        nonlocal container
+        if container is not None:
+            container.dispose()
+            container = None
+        container_host.controls = [ft.Text("Contenedor desmontado")]
+        page.update()
+
+    page.add(
+        ft.Row(
+            [
+                ft.ElevatedButton("Reconstruir", on_click=render_container),
+                ft.OutlinedButton("Desmontar", on_click=dispose_container),
+            ]
+        ),
+        container_host,
+    )
+
+    render_container()
 
 
 if __name__ == "__main__":

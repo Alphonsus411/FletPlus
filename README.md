@@ -1268,6 +1268,9 @@ def main(page: ft.Page):
     contenedor = ResponsiveContainer(ft.Text("Hola"), estilos)
     page.add(contenedor.build(page))
 
+    # Si lo reconstruyes o desmontas, libera el manager anterior.
+    # contenedor.dispose()
+
 ft.app(target=main)
 ```
 
