@@ -198,7 +198,7 @@ Una vez generados ambos archivos, sirve el directorio que los contiene y llama a
 
 ## Workflow de documentación
 
-El repositorio incluye el workflow `.github/workflows/docs.yml` que publica automáticamente la documentación en GitHub Pages. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y construye el sitio de MkDocs antes de subirlo como artefacto:
+El repositorio incluye el workflow [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) que publica automáticamente la documentación en GitHub Pages. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y construye el sitio de MkDocs antes de subirlo como artefacto de Pages:
 
 ```yaml
 jobs:
@@ -217,7 +217,7 @@ jobs:
           path: site
 ```
 
-El job `deploy` depende del artefacto previo y ejecuta `actions/deploy-pages@v4`, exponiendo la URL final a través de la salida `page_url`:
+El job `deploy` depende de ese artefacto y ejecuta `actions/deploy-pages@v4`, exponiendo la URL final a través de la salida `page_url`:
 
 ```yaml
   deploy:

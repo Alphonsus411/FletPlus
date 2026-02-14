@@ -30,6 +30,13 @@ USES_REUSABLE_PATTERN = re.compile(
     r"^\s*uses:\s*\./\.github/workflows/reusable-quality\.yml\s*$", re.MULTILINE
 )
 
+OBSOLETE_DOC_PHRASES = (
+    "desde la rama `gh-pages`",
+    "desde la rama gh-pages",
+)
+
+DOC_PAGES_SOURCE_SENTINEL = "Source: GitHub Actions"
+
 CRITICAL_COMMANDS = {
     "test-dependencies": "python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket",
     "package-data": "python tools/check_package_data_files.py",
@@ -252,11 +259,40 @@ def validate_single_source_of_truth_sync() -> list[str]:
     return errors
 
 
+def validate_pages_docs_wording() -> list[str]:
+    errors: list[str] = []
+    docs = {
+        README_DOC: README_DOC.read_text(encoding="utf-8"),
+        TOOLING_DOC: TOOLING_DOC.read_text(encoding="utf-8"),
+    }
+
+    for path, content in docs.items():
+        lowered = content.lower()
+        for phrase in OBSOLETE_DOC_PHRASES:
+            if phrase.lower() in lowered:
+                errors.append(
+                    f"{path.relative_to(REPO_ROOT)} contiene referencia obsoleta de despliegue: {phrase}"
+                )
+
+    if DOC_PAGES_SOURCE_SENTINEL not in docs[README_DOC]:
+        errors.append(
+            "README.md debe indicar explícitamente 'Source: GitHub Actions' como fuente de GitHub Pages."
+        )
+
+    if "GitHub Actions" not in docs[TOOLING_DOC]:
+        errors.append(
+            "docs/tooling.md debe mencionar GitHub Actions como fuente de GitHub Pages."
+        )
+
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     errors.extend(validate_workflow_references())
     errors.extend(validate_required_qa_scripts_exist())
     errors.extend(validate_single_source_of_truth_sync())
+    errors.extend(validate_pages_docs_wording())
 
     for wrapper in WRAPPER_WORKFLOWS:
         errors.extend(validate_wrapper_workflow(wrapper))
