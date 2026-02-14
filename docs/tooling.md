@@ -52,6 +52,22 @@ python -m pytest -m perf
 
 Para automatización, el workflow dedicado `.github/workflows/perf.yml` separa estas mediciones del flujo de QA/Quality y permite lanzarlas en horario nocturno o manualmente cuando se requiera comparar rendimiento entre cambios.
 
+## Política de stubs en tests
+
+Para evitar falsos positivos en imports, los dobles globales ya no se aplican de forma automática en toda la suite.
+
+- Usa fixtures **opt-in** cuando el objetivo sea un test unitario aislado:
+  - `use_state_stub`
+  - `use_responsive_manager_stub`
+- Aplica esos stubs solo en el test (o módulo) que realmente necesite desacoplarse de implementaciones reales.
+- Para pruebas de contrato de import público o fallbacks de backend, **no uses stubs**: valida el import real y, si aplica, fuerza fallos controlados con `monkeypatch`.
+
+Archivos de referencia en esta política:
+
+- `tests/test_unit_stub_fixtures.py`: ejemplos de uso explícito de stubs.
+- `tests/test_optional_backend_import_fallbacks.py`: integración de imports reales + fallback controlado.
+- `tests/test_public_api_entrypoints.py`: contrato de entrypoints públicos con módulos reales.
+
 ## DevTools integrados
 
 `DevToolsServer` expone un servidor WebSocket ligero que reenvía mensajes entre clientes conectados. Cada vez que un cliente envía un *frame*, el servidor lo redistribuye al resto y guarda instantáneas iniciales (payloads con tipo `snapshot`) para nuevos suscriptores. De esta manera puedes abrir la vista de DevTools en múltiples navegadores y mantenerlos sincronizados mientras inspeccionas el estado de la app (implementación en `fletplus/devtools/server.py`).

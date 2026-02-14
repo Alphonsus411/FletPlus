@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import importlib
+import sys
+from pathlib import Path
+
 import flet as ft
 
 from fletplus import FletPlusApp
@@ -33,6 +37,15 @@ class DummyPage:
 
 def test_public_fletplus_app_alias_targets_legacy_contract():
     assert FletPlusApp is LegacyFletPlusApp
+
+
+def test_public_entrypoints_use_real_modules_without_stubs():
+    sys.modules.pop("fletplus", None)
+    module = importlib.import_module("fletplus")
+
+    assert module.__name__ == "fletplus"
+    assert Path(module.__file__).name == "__init__.py"
+    assert module.FletPlusApp is LegacyFletPlusApp
 
 
 def test_public_import_supports_demo_construction():

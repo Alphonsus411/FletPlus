@@ -6,13 +6,10 @@ import types
 import pytest
 
 
-@pytest.fixture(autouse=True)
-def state_stub(monkeypatch):
-    if "fletplus.state.state" in sys.modules:
-        yield
-        return
-
+@pytest.fixture
+def use_state_stub(monkeypatch):
     module = types.ModuleType("fletplus.state.state")
+
     class _Dummy:
         def __init__(self, *args, **kwargs):  # noqa: ANN001, D401
             """Implementación mínima utilizada solo en tests."""
@@ -42,12 +39,8 @@ def state_stub(monkeypatch):
     yield
 
 
-@pytest.fixture(autouse=True)
-def responsive_manager_stub(monkeypatch):
-    if "fletplus.utils.responsive_manager" in sys.modules:
-        yield
-        return
-
+@pytest.fixture
+def use_responsive_manager_stub(monkeypatch):
     module = types.ModuleType("fletplus.utils.responsive_manager")
 
     class ResponsiveManager:  # noqa: D401
