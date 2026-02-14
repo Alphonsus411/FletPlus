@@ -18,7 +18,12 @@ _spec = importlib.util.find_spec("fletplus.components.smart_table_rs._native")
 if _spec is None:
     _native = None
 else:
-    _native = importlib.import_module("fletplus.components.smart_table_rs._native")
+    try:
+        _native = importlib.import_module("fletplus.components.smart_table_rs._native")
+    except (ImportError, OSError, RuntimeError):
+        _native = None
+    except Exception:
+        _native = None
 
 if _native is not None:
     apply_query = _native.apply_query
