@@ -67,13 +67,24 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         web_command, _ = calls[0]
         desktop_command, _ = calls[1]
         mobile_command, mobile_kwargs = calls[2]
-        assert any("flet" in part for part in web_command)
+
+        expected_app_path = str((base / "src" / "main.py").resolve())
+        expected_web_output = str((base / "dist" / "web").resolve())
+
+        module_flag_index = web_command.index("-m")
+        assert web_command[module_flag_index + 1 : module_flag_index + 5] == [
+            "flet",
+            "build",
+            "web",
+            expected_app_path,
+        ]
+        assert web_command.count("web") == 1
         assert web_command.count("--output") == 1
-        web_target_index = web_command.index("web")
-        app_path_index = web_target_index + 1
         output_index = web_command.index("--output")
-        assert output_index > app_path_index
-        assert web_command[app_path_index].endswith("src/main.py")
+        assert web_command[output_index + 1] == expected_web_output
+        assert web_command.count(expected_web_output) == 1
+        assert expected_app_path in web_command
+        assert web_command.count(expected_app_path) == 1
         assert any("PyInstaller" in part for part in desktop_command)
         assert mobile_command[0] == "briefcase"
         assert "FLETPLUS_METADATA" in mobile_kwargs.get("env", {})
