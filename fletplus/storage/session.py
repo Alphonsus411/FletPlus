@@ -58,9 +58,33 @@ class SessionStorageProvider(StorageProvider[Any]):
         deserializer: Deserializer | None = None,
     ) -> "SessionStorageProvider":
         """Inicializa el proveedor a partir de la página actual de Flet."""
+        required_methods = ("get", "set", "remove", "clear", "get_keys")
 
-        return cls(
-            page.session,
-            serializer=serializer,
-            deserializer=deserializer,
+        for attr_name in ("session", "session_storage"):
+            storage = getattr(page, attr_name, None)
+            if storage is None:
+                continue
+
+            missing_methods = [
+                method
+                for method in required_methods
+                if not callable(getattr(storage, method, None))
+            ]
+            if missing_methods:
+                missing = ", ".join(missing_methods)
+                raise TypeError(
+                    f"El backend '{attr_name}' no es compatible con SessionStorageProvider: "
+                    f"faltan métodos requeridos ({missing})."
+                )
+
+            return cls(
+                storage,
+                serializer=serializer,
+                deserializer=deserializer,
+            )
+
+        raise ValueError(
+            "No se encontró backend de sesión compatible en la página. "
+            "Se esperaba 'page.session' o 'page.session_storage' "
+            "con métodos: get, set, remove, clear, get_keys."
         )
