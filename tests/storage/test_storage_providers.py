@@ -219,6 +219,27 @@ def test_file_storage_provider_sets_permissions_posix(tmp_path: Path) -> None:
     assert mode == 0o600
 
 
+def test_file_storage_provider_persists_even_if_chmod_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "storage.json"
+    provider = FileStorageProvider(path)
+
+    def fail_chmod(*_: Any, **__: Any) -> None:
+        raise OSError("chmod blocked")
+
+    monkeypatch.setattr(os, "chmod", fail_chmod)
+
+    provider.set("token", "abc")
+
+    persisted = json.loads(path.read_text("utf-8"))
+    assert persisted["token"] == json.dumps("abc")
+    assert provider.get("token") == "abc"
+    assert provider._dirty_keys == set()
+    assert provider._deleted_keys == set()
+    assert provider._clear_requested is False
+
+
 class DummyProvider(StorageProvider[Any]):
     """Implementación mínima para probar utilidades del base class."""
 

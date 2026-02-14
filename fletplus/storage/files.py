@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 from contextlib import contextmanager
@@ -17,6 +18,9 @@ else:
 from . import Deserializer, Serializer, StorageProvider
 
 __all__ = ["FileStorageProvider"]
+
+
+logger = logging.getLogger(__name__)
 
 
 class FileStorageProvider(StorageProvider[Any]):
@@ -153,9 +157,23 @@ class FileStorageProvider(StorageProvider[Any]):
                     os.fsync(fp.fileno())
                 if tmp_path is None:
                     return
-                os.chmod(tmp_path, 0o600)
+                try:
+                    os.chmod(tmp_path, 0o600)
+                except OSError:
+                    logger.warning(
+                        "No se pudo ajustar permisos del temporal: %s",
+                        tmp_path,
+                        exc_info=True,
+                    )
                 os.replace(tmp_path, self._path)
-                os.chmod(self._path, 0o600)
+                try:
+                    os.chmod(self._path, 0o600)
+                except OSError:
+                    logger.warning(
+                        "No se pudo ajustar permisos del archivo persistido: %s",
+                        self._path,
+                        exc_info=True,
+                    )
                 self._last_mtime_ns = self._get_mtime_ns()
                 self._dirty_keys.clear()
                 self._deleted_keys.clear()
