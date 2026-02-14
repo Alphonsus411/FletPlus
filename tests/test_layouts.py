@@ -12,6 +12,7 @@ from fletplus.components.layouts import (
     Wrap,
 )
 from fletplus.styles import Style
+from fletplus.utils.responsive_style import ResponsiveStyle
 
 
 class DummyPage:
@@ -76,12 +77,14 @@ def test_responsive_container_adjusts_style():
     page = DummyPage(300, 800)
     rc = ResponsiveContainer(
         ft.Text("Hola"),
-        breakpoints={
-            0: Style(max_width=200, padding=5),
-            400: Style(max_width=400, padding=20),
-        },
+        styles=ResponsiveStyle(
+            width={
+                0: Style(max_width=200, padding=5),
+                400: Style(max_width=400, padding=20),
+            }
+        ),
     )
-    container = rc.init_responsive(page)
+    container = rc.build(page)
     assert container.max_width == 200
     assert container.padding == 5
 

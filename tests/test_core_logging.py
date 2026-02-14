@@ -18,7 +18,7 @@ DummyPage = importlib.import_module("tests.test_fletplus_app").DummyPage
 
 import flet as ft
 
-from fletplus.core import FletPlusApp
+from fletplus.core_legacy import FletPlusApp
 
 
 def test_load_route_invalid_index_logs_error(caplog):

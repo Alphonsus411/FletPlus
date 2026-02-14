@@ -14,11 +14,14 @@ nav:
       - Router declarativo: router.md
       - Animaciones coordinadas: animation.md
       - Almacenamiento reactivo: storage.md
+      - Tareas de implementación: TAREAS_IMPLEMENTACION.md
+      - Revisión de ingeniería 2025: REVISION_INGENIERIA_2025.md
   - Referencias:
       - Cliente HTTP reactivo: http.md
       - Generación de iconos: icons.md
       - Recorrido por la demo: demo.md
       - Catálogo de componentes: components.md
+      - Automatización PyRust: pyrust-auto.md
 docs_dir: docs
 theme:
   name: material

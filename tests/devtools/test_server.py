@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -17,6 +18,15 @@ from fletplus.devtools import DevToolsServer
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+def _connect_with_headers(uri: str, headers: dict[str, str] | None = None):
+    if not headers:
+        return websockets.connect(uri)
+
+    params = inspect.signature(websockets.connect).parameters
+    header_kw = "additional_headers" if "additional_headers" in params else "extra_headers"
+    return websockets.connect(uri, **{header_kw: headers})
 
 
 @pytest.mark.anyio
@@ -93,9 +103,9 @@ async def test_authorizes_connection_with_token_in_authorization_header():
         port = ws_server.sockets[0].getsockname()[1]
         uri = f"ws://127.0.0.1:{port}"
 
-        async with websockets.connect(
+        async with _connect_with_headers(
             uri,
-            additional_headers={"Authorization": "Bearer secret"},
+            {"Authorization": "Bearer secret"},
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
@@ -110,9 +120,9 @@ async def test_rejects_connection_with_invalid_header_token():
         uri = f"ws://127.0.0.1:{port}"
 
         with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
-            async with websockets.connect(
+            async with _connect_with_headers(
                 uri,
-                additional_headers={"X-DevTools-Token": "invalid"},
+                {"X-DevTools-Token": "invalid"},
             ) as denied_client:
                 await denied_client.recv()
 
@@ -144,17 +154,17 @@ async def test_authorizes_connection_with_allowed_origin():
         port = ws_server.sockets[0].getsockname()[1]
         uri = f"ws://127.0.0.1:{port}"
 
-        async with websockets.connect(
+        async with _connect_with_headers(
             uri,
-            additional_headers={"Origin": "https://trusted.example"},
+            {"Origin": "https://trusted.example"},
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
 
         with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
-            async with websockets.connect(
+            async with _connect_with_headers(
                 uri,
-                additional_headers={"Origin": "https://blocked.example"},
+                {"Origin": "https://blocked.example"},
             ) as denied_client:
                 await denied_client.recv()
 
@@ -169,9 +179,9 @@ async def test_authorizes_semantically_equivalent_origin_with_trailing_slash_and
         port = ws_server.sockets[0].getsockname()[1]
         uri = f"ws://127.0.0.1:{port}"
 
-        async with websockets.connect(
+        async with _connect_with_headers(
             uri,
-            additional_headers={"Origin": "https://TRUSTED.EXAMPLE/"},
+            {"Origin": "https://TRUSTED.EXAMPLE/"},
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
@@ -185,9 +195,9 @@ async def test_authorizes_semantically_equivalent_origin_when_allowed_origin_has
         port = ws_server.sockets[0].getsockname()[1]
         uri = f"ws://127.0.0.1:{port}"
 
-        async with websockets.connect(
+        async with _connect_with_headers(
             uri,
-            additional_headers={"Origin": "https://trusted.example"},
+            {"Origin": "https://trusted.example"},
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
@@ -209,9 +219,9 @@ async def test_rejects_origins_with_different_port_or_scheme(origin: str):
         uri = f"ws://127.0.0.1:{port}"
 
         with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
-            async with websockets.connect(
+            async with _connect_with_headers(
                 uri,
-                additional_headers={"Origin": origin},
+                {"Origin": origin},
             ) as denied_client:
                 await denied_client.recv()
 

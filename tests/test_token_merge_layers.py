@@ -52,6 +52,7 @@ class _MergeHarness(ThemeManager):
         self._orientation_overrides = orientation_overrides
         self._breakpoint_overrides = breakpoint_overrides
         self._effective_tokens = {}
+        self._palette_tokens = {}
         self.overrides_signal = Signal(dict)
         self.tokens_signal = Signal(dict)
 

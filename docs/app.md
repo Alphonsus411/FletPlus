@@ -214,6 +214,6 @@ La instancia de `FletPlusApp` mantiene un registro de los renders reactivos (`se
 
 - [Router declarativo y layouts persistentes](router.md)
 - [Proveedores de almacenamiento reactivo](storage.md)
-- [Guía de hooks y estado](index.md#gestion-de-estado-reactivo)
+- [Guía de hooks y estado](app.md#hooks-reactivos)
 
 Si buscas cómo combinar contextos y hooks con almacenamiento persistente, revisa la sección correspondiente en [Almacenamiento reactivo](storage.md#recursos-relacionados).

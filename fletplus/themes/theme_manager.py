@@ -812,10 +812,12 @@ class ThemeManager:
         orientation_overrides = self._resolve_orientation_overrides(orientation)
         breakpoint_overrides = self._resolve_breakpoint_overrides(width)
 
+        palette_tokens = getattr(self, "_palette_tokens", {})
+
         self._effective_tokens = merge_token_layers(
             self.tokens,
             [
-                self._palette_tokens,
+                palette_tokens,
                 device_overrides,
                 orientation_overrides,
                 breakpoint_overrides,
