@@ -43,6 +43,7 @@ CRITICAL_COMMANDS = {
     "test-dependencies": "python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket",
     "package-data": "python tools/check_package_data_files.py",
     "canonical-links": "python tools/check_canonical_repo_links.py",
+    "workflow-validation": "python tools/check_github_workflows.py",
     "pytest": "python -m pytest",
     "ruff": "python -m ruff check .",
     "black": "python -m black --check .",
