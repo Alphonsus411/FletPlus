@@ -71,17 +71,17 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         expected_app_path = str((base / "src" / "main.py").resolve())
         expected_web_output = str((base / "dist" / "web").resolve())
 
-        module_flag_index = web_command.index("-m")
-        executable_before_module = web_command[:module_flag_index].count(sys.executable)
-        assert module_flag_index == 1
-        assert executable_before_module == 1
-        assert web_command[0] == sys.executable
-        assert web_command[module_flag_index + 1 : module_flag_index + 5] == [
+        assert web_command[:5] == [sys.executable, "-m", "flet", "build", "web"]
+        assert web_command[:6] == [
+            sys.executable,
+            "-m",
             "flet",
             "build",
             "web",
             expected_app_path,
         ]
+        assert web_command.count(sys.executable) == 1
+        assert web_command[1:].count(sys.executable) == 0
         assert web_command.count("web") == 1
         assert web_command.count("--output") == 1
         output_index = web_command.index("--output")
@@ -107,7 +107,11 @@ def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> N
         base = Path(temp_dir)
         _setup_minimal_project(base)
 
+        calls: list[list[str]] = []
+
         def fake_run(command, **kwargs):
+            normalized = [str(part) for part in command]
+            calls.append(normalized)
             if "PyInstaller" in command:
                 raise subprocess.CalledProcessError(returncode=1, cmd=command)
             return subprocess.CompletedProcess(command, 0)
@@ -121,6 +125,10 @@ def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> N
         assert "código=1" in result.output
         assert "comando='" in result.output
         assert "cwd=" in result.output
+        desktop_command = next(command for command in calls if "PyInstaller" in command)
+        assert desktop_command[:3] == [sys.executable, "-m", "PyInstaller"]
+        assert desktop_command.count(sys.executable) == 1
+        assert desktop_command[1:].count(sys.executable) == 0
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
@@ -143,5 +151,8 @@ def test_build_normalizes_name_for_pyinstaller(monkeypatch, watchdog_available: 
 
         assert result.exit_code == 0, result.output
         desktop_command = next(command for command, _ in calls if "PyInstaller" in command)
+        assert desktop_command[:3] == [sys.executable, "-m", "PyInstaller"]
+        assert desktop_command.count(sys.executable) == 1
+        assert desktop_command[1:].count(sys.executable) == 0
         name_index = desktop_command.index("--name")
         assert desktop_command[name_index + 1] == "demo-app-name2024"
