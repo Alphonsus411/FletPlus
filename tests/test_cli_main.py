@@ -162,6 +162,49 @@ def test_run_restarts_on_change_event_with_watchdog(monkeypatch) -> None:
     assert "Cambios detectados, reiniciando servidor" in result.output
 
 
+def test_reload_handler_debounces_consecutive_events_for_same_path(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    trigger_calls: list[str] = []
+    handler = cli_main._ReloadHandler(
+        lambda: trigger_calls.append("trigger"),
+        patterns=(".py",),
+        debounce_window_seconds=0.3,
+    )
+
+    monotonic_values = iter([10.0, 10.1, 10.2])
+    monkeypatch.setattr(cli_main.time, "monotonic", lambda: next(monotonic_values))
+
+    event = SimpleNamespace(is_directory=False, src_path="src/main.py")
+    handler.on_any_event(event)
+    handler.on_any_event(event)
+    handler.on_any_event(event)
+
+    assert trigger_calls == ["trigger"]
+
+
+def test_reload_handler_allows_events_after_debounce_window(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    trigger_calls: list[str] = []
+    handler = cli_main._ReloadHandler(
+        lambda: trigger_calls.append("trigger"),
+        patterns=(".py",),
+        debounce_window_seconds=0.3,
+    )
+
+    monotonic_values = iter([20.0, 20.35])
+    monkeypatch.setattr(cli_main.time, "monotonic", lambda: next(monotonic_values))
+
+    event = SimpleNamespace(is_directory=False, src_path="src/main.py")
+    handler.on_any_event(event)
+    handler.on_any_event(event)
+
+    assert trigger_calls == ["trigger", "trigger"]
+
+
 def test_run_propagates_subprocess_failure_without_watchdog(monkeypatch) -> None:
     _configure_watchdog(monkeypatch, available=False)
     cli_main = _load_cli_main_module()
