@@ -6,12 +6,10 @@ nav:
       - CLI de FletPlus: cli.md
       - Compilación y empaquetado: building.md
       - Herramientas de desarrollo y publicación: tooling.md
+      - Estilo de enlaces y referencias: link-style.md
       - Arquitectura de FletPlusApp: app.md
       - Contextos y proveedores: context.md
-      - Perfiles de dispositivo y breakpoints:
-          - Panorama general: responsive.md
-          - Visibilidad condicional: responsive.md#controlar-visibilidad-con-responsivevisibility
-          - Tipografía y espaciado responsivo: responsive.md#tipografia-y-espaciado-responsivo
+      - Perfiles de dispositivo y breakpoints: responsive.md
       - Gestor de temas, paletas y overrides: themes.md
       - Router declarativo: router.md
       - Animaciones coordinadas: animation.md

@@ -184,3 +184,5 @@ El job `deploy` depende del artefacto previo y ejecuta `actions/deploy-pages@v4`
 ```
 
 > ✅ Recuerda habilitar GitHub Pages la primera vez desde **Settings → Pages** seleccionando “GitHub Actions” como fuente. Después de ese paso manual, cada `push` sobre `main` publicará la nueva versión de la documentación sin intervención adicional.【F:.github/workflows/docs.yml†L1-L43】
+
+Para mantener la compatibilidad de enlaces entre el `README.md` en GitHub y el `index.md` de MkDocs (que incluye ese README), sigue también la guía breve de [estilo de enlaces](link-style.md).
