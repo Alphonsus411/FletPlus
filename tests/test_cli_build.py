@@ -68,6 +68,12 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         desktop_command, _ = calls[1]
         mobile_command, mobile_kwargs = calls[2]
         assert any("flet" in part for part in web_command)
+        assert web_command.count("--output") == 1
+        web_target_index = web_command.index("web")
+        app_path_index = web_target_index + 1
+        output_index = web_command.index("--output")
+        assert output_index > app_path_index
+        assert web_command[app_path_index].endswith("src/main.py")
         assert any("PyInstaller" in part for part in desktop_command)
         assert mobile_command[0] == "briefcase"
         assert "FLETPLUS_METADATA" in mobile_kwargs.get("env", {})
@@ -97,6 +103,9 @@ def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> N
         assert result.exit_code != 0
         assert "❌ desktop" in result.output
         assert "La compilación terminó con errores" in result.output
+        assert "código=1" in result.output
+        assert "comando='" in result.output
+        assert "cwd=" in result.output
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
