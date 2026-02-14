@@ -66,15 +66,45 @@ class FletPlusApp:
         (priorizando ``page.run_task`` cuando existe) y hacer fallback a
         ``page.update()`` directo si el mecanismo seguro no está disponible.
         """
-        self._page = page
-        if self.title is not None:
-            page.title = self.title
+        previous_page = self._page
+        previous_unsubscribe = self._unsubscribe
+        local_page = page
+        local_refresher = lambda: self._safe_page_update(local_page)
+        local_unsubscribe: Callable[[], None] | None = None
+        ui_mounted = False
 
-        self.state.bind_refresher(lambda: self._safe_page_update(page))
-        self._unsubscribe = self.state.subscribe(self._handle_state_update)
-        self.on_start(page, self.state)
-        self.rebuild_layout(self.state, initial=True)
-        self.state.refresh_ui()
+        try:
+            self._page = local_page
+            if self.title is not None:
+                local_page.title = self.title
+
+            self.state.bind_refresher(local_refresher)
+            local_unsubscribe = self.state.subscribe(self._handle_state_update)
+            self._unsubscribe = local_unsubscribe
+
+            self.on_start(local_page, self.state)
+            self.rebuild_layout(self.state, initial=True)
+            ui_mounted = True
+            self.state.refresh_ui()
+        except Exception:
+            if local_unsubscribe:
+                try:
+                    local_unsubscribe()
+                except Exception:
+                    pass
+
+            self.state.bind_refresher(None)
+            self._page = previous_page
+            self._unsubscribe = previous_unsubscribe
+
+            if ui_mounted or local_page.controls:
+                try:
+                    local_page.controls.clear()
+                    self._safe_page_update(local_page)
+                except Exception:
+                    pass
+
+            raise
 
     def rebuild_layout(self, state: StateProtocol, *, initial: bool = False) -> None:
         """Reconstruye el layout en función del estado actual."""

@@ -247,3 +247,52 @@ def test_core_shutdown_executes_cleanup_when_shutdown_hook_fails():
     assert state.refresher_bindings[-1] is None
     assert app.page is None
     assert app._unsubscribe is None
+
+
+def test_core_start_executes_cleanup_when_on_start_fails():
+    state = TrackingState()
+
+    def layout(_state):
+        return ft.Text("Core")
+
+    def fail_on_start(_page, _state):
+        raise RuntimeError("start hook error")
+
+    page = DummyPage()
+    app = CoreFletPlusApp(layout=layout, state=state, on_start=fail_on_start)
+
+    with pytest.raises(RuntimeError, match="start hook error"):
+        app.start(page)
+
+    assert len(state._subscribers) == 0
+    assert state._refresher is None
+    assert state.refresher_bindings[-1] is None
+    assert app.page is None
+    assert app._unsubscribe is None
+    assert page.controls == []
+
+
+def test_core_start_executes_cleanup_when_rebuild_layout_fails(monkeypatch):
+    state = TrackingState()
+
+    def layout(_state):
+        return ft.Text("Core")
+
+    page = DummyPage()
+    app = CoreFletPlusApp(layout=layout, state=state)
+
+    def fail_rebuild(_state, *, initial=False):
+        app._page.controls.append(ft.Text("partial"))
+        raise RuntimeError("rebuild error")
+
+    monkeypatch.setattr(app, "rebuild_layout", fail_rebuild)
+
+    with pytest.raises(RuntimeError, match="rebuild error"):
+        app.start(page)
+
+    assert len(state._subscribers) == 0
+    assert state._refresher is None
+    assert state.refresher_bindings[-1] is None
+    assert app.page is None
+    assert app._unsubscribe is None
+    assert page.controls == []
