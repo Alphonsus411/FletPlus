@@ -37,6 +37,8 @@ regenera el listado con `tools/select_cython_modules.py` (o `make
 update-build-config`) y ejecuta `make build` para encadenar `update-build-config`,
 `build-rust` y `python -m build` en el flujo actual.
 
+Antes de ejecutar ese flujo en local, instala el extra opcional de build con `pip install .[build]` (incluye `build` y `cython`).
+
 ## Ejemplos de uso
 
 ### Compilación completa
