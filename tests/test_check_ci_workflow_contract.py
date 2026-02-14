@@ -110,7 +110,7 @@ jobs:
       - run: |
           pip install -r requirements-dev.txt
       - run: |
-          python -m pytest -m perf
+          python -m pytest -m perf -o addopts=
 """,
         encoding="utf-8",
     )
@@ -135,8 +135,12 @@ jobs:
     monkeypatch.setattr(check_ci_workflow_contract, "NOXFILE", tmp_path / "noxfile.py")
     monkeypatch.setattr(check_ci_workflow_contract, "README_DOC", tmp_path / "README.md")
     monkeypatch.setattr(check_ci_workflow_contract, "TOOLING_DOC", docs_dir / "tooling.md")
+    pytest_ini = tmp_path / "pytest.ini"
+    pytest_ini.write_text('addopts = -m "not perf"\n', encoding="utf-8")
+
     monkeypatch.setattr(check_ci_workflow_contract, "DOCS_WORKFLOW", docs_workflow)
     monkeypatch.setattr(check_ci_workflow_contract, "PERF_WORKFLOW", perf_workflow)
+    monkeypatch.setattr(check_ci_workflow_contract, "PYTEST_INI", pytest_ini)
     monkeypatch.setattr(
         check_ci_workflow_contract,
         "WRAPPER_WORKFLOWS",
@@ -651,3 +655,28 @@ jobs:
 
     assert any("pip install -r requirements-dev.txt" in error for error in errors)
     assert any("python -m pytest -m perf" in error for error in errors)
+
+
+def test_validate_perf_workflow_contract_fails_when_addopts_override_is_missing(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip install -r requirements-dev.txt
+      - run: |
+          python -m pytest -m perf
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert any("python -m pytest -m perf -o addopts=" in error for error in errors)

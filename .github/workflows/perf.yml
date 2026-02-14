@@ -27,4 +27,4 @@ jobs:
       - name: Run perf benchmarks
         run: |
           python tools/check_test_dependencies.py --suite perf
-          python -m pytest -m perf
+          python -m pytest -m perf -o addopts=
