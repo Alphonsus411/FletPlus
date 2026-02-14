@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Iterator
@@ -47,6 +48,7 @@ class FileStorageProvider(StorageProvider[Any]):
         self._dirty_keys: set[str] = set()
         self._deleted_keys: set[str] = set()
         self._clear_requested = False
+        self._state_lock = threading.RLock()
         self._load_cache()
         super().__init__(
             serializer=serializer or json.dumps,
@@ -91,87 +93,93 @@ class FileStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _persist(self) -> None:
-        with self._file_lock():
-            self._path.parent.mkdir(parents=True, exist_ok=True)
-            disk_data = self._read_disk_data()
-            if self._clear_requested:
-                merged_data = dict(self._cache)
-            else:
-                merged_data = dict(disk_data)
-                for key in self._dirty_keys:
-                    if key in self._cache:
-                        merged_data[key] = self._cache[key]
-                for key in self._deleted_keys:
-                    merged_data.pop(key, None)
-            self._cache = merged_data
+        with self._state_lock:
+            with self._file_lock():
+                self._path.parent.mkdir(parents=True, exist_ok=True)
+                disk_data = self._read_disk_data()
+                if self._clear_requested:
+                    merged_data = dict(self._cache)
+                else:
+                    merged_data = dict(disk_data)
+                    for key in self._dirty_keys:
+                        if key in self._cache:
+                            merged_data[key] = self._cache[key]
+                    for key in self._deleted_keys:
+                        merged_data.pop(key, None)
+                self._cache = merged_data
 
-            tmp_path: Path | None = None
-            try:
-                with tempfile.NamedTemporaryFile(
-                    "w",
-                    delete=False,
-                    dir=self._path.parent,
-                    prefix=self._path.name,
-                    suffix=".tmp",
-                    encoding=self._encoding,
-                ) as fp:
-                    tmp_path = Path(fp.name)
-                    json.dump(
-                        merged_data,
-                        fp,
-                        ensure_ascii=False,
-                        indent=2,
-                        sort_keys=True,
-                    )
-                    fp.flush()
-                    os.fsync(fp.fileno())
-                if tmp_path is None:
-                    return
-                os.chmod(tmp_path, 0o600)
-                os.replace(tmp_path, self._path)
-                os.chmod(self._path, 0o600)
-                self._dirty_keys.clear()
-                self._deleted_keys.clear()
-                self._clear_requested = False
-            finally:
-                if tmp_path is not None:
-                    try:
-                        tmp_path.unlink()
-                    except FileNotFoundError:
-                        pass
-                    except OSError:
-                        pass
+                tmp_path: Path | None = None
+                try:
+                    with tempfile.NamedTemporaryFile(
+                        "w",
+                        delete=False,
+                        dir=self._path.parent,
+                        prefix=self._path.name,
+                        suffix=".tmp",
+                        encoding=self._encoding,
+                    ) as fp:
+                        tmp_path = Path(fp.name)
+                        json.dump(
+                            merged_data,
+                            fp,
+                            ensure_ascii=False,
+                            indent=2,
+                            sort_keys=True,
+                        )
+                        fp.flush()
+                        os.fsync(fp.fileno())
+                    if tmp_path is None:
+                        return
+                    os.chmod(tmp_path, 0o600)
+                    os.replace(tmp_path, self._path)
+                    os.chmod(self._path, 0o600)
+                    self._dirty_keys.clear()
+                    self._deleted_keys.clear()
+                    self._clear_requested = False
+                finally:
+                    if tmp_path is not None:
+                        try:
+                            tmp_path.unlink()
+                        except FileNotFoundError:
+                            pass
+                        except OSError:
+                            pass
 
     # ------------------------------------------------------------------
     def _iter_keys(self) -> list[str]:
-        return list(self._cache.keys())
+        with self._state_lock:
+            return list(self._cache.keys())
 
     # ------------------------------------------------------------------
     def _read_raw(self, key: str) -> Any:
-        if key in self._cache:
-            return self._cache[key]
-        raise KeyError(key)
+        with self._state_lock:
+            if key in self._cache:
+                return self._cache[key]
+            raise KeyError(key)
 
     # ------------------------------------------------------------------
     def _write_raw(self, key: str, value: Any) -> None:
-        self._cache[key] = value
-        self._dirty_keys.add(key)
-        self._deleted_keys.discard(key)
-        self._persist()
+        with self._state_lock:
+            self._cache[key] = value
+            self._dirty_keys.add(key)
+            self._deleted_keys.discard(key)
+            self._persist()
 
     # ------------------------------------------------------------------
     def _remove_raw(self, key: str) -> None:
-        if key not in self._cache:
-            raise KeyError(key)
-        self._cache.pop(key)
-        self._deleted_keys.add(key)
-        self._dirty_keys.discard(key)
-        self._persist()
+        with self._state_lock:
+            if key not in self._cache:
+                raise KeyError(key)
+            self._cache.pop(key)
+            self._deleted_keys.add(key)
+            self._dirty_keys.discard(key)
+            self._persist()
 
     # ------------------------------------------------------------------
     def _clear_raw(self) -> None:
-        self._cache.clear()
-        self._dirty_keys.clear()
-        self._deleted_keys.clear()
-        self._clear_requested = True
-        self._persist()
+        with self._state_lock:
+            self._cache.clear()
+            self._dirty_keys.clear()
+            self._deleted_keys.clear()
+            self._clear_requested = True
+            self._persist()

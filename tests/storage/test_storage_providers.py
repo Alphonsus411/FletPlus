@@ -153,6 +153,34 @@ def test_file_storage_provider_merges_external_writes_under_concurrency(
     assert set(persisted.keys()) == expected_keys
 
 
+def test_file_storage_provider_keeps_dirty_state_for_same_instance_threads(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "same-instance-storage.json"
+    provider = FileStorageProvider(path)
+
+    start = threading.Barrier(2)
+
+    def writer(prefix: str) -> None:
+        start.wait()
+        for index in range(40):
+            provider.set(f"{prefix}-{index}", index)
+
+    thread_a = threading.Thread(target=writer, args=("a",))
+    thread_b = threading.Thread(target=writer, args=("b",))
+
+    thread_a.start()
+    thread_b.start()
+    thread_a.join()
+    thread_b.join()
+
+    persisted = json.loads(path.read_text("utf-8"))
+    expected_keys = {f"a-{index}" for index in range(40)} | {
+        f"b-{index}" for index in range(40)
+    }
+    assert set(persisted.keys()) == expected_keys
+
+
 @pytest.mark.skipif(os.name != "posix", reason="Permisos sólo en POSIX")
 def test_file_storage_provider_sets_permissions_posix(tmp_path: Path) -> None:
     path = tmp_path / "storage.json"
