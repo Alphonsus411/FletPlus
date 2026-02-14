@@ -219,7 +219,12 @@ def _run_command(command: List[str], cwd: Path | None = None) -> None:
             "Asegúrate de que esté instalada y disponible en el PATH."
         ) from exc
     except subprocess.CalledProcessError as exc:  # pragma: no cover - manejado en adaptador
-        raise PackagingError(f"El comando {' '.join(command)} falló con código {exc.returncode}") from exc
+        executed_command = " ".join(str(part) for part in (exc.cmd or command))
+        cwd_label = str(cwd) if cwd else os.getcwd()
+        raise PackagingError(
+            "El subproceso de compilación falló "
+            f"(código={exc.returncode}, cwd={cwd_label}, comando='{executed_command}')."
+        ) from exc
 
 
 class _BaseAdapter:
@@ -257,9 +262,9 @@ class WebAdapter(_BaseAdapter):
             "flet",
             "build",
             "web",
+            str(self.context.app_path),
             "--output",
             str(self.output_dir),
-            str(self.context.app_path),
         ]
         _run_command(command, cwd=self.context.project_dir)
 
@@ -336,8 +341,10 @@ class MobileAdapter(_BaseAdapter):
                 "Asegúrate de que esté instalada y disponible en el PATH."
             ) from exc
         except subprocess.CalledProcessError as exc:
+            executed_command = " ".join(str(part) for part in (exc.cmd or command))
             raise PackagingError(
-                f"El comando {' '.join(command)} falló con código {exc.returncode}"
+                "El subproceso de compilación móvil falló "
+                f"(código={exc.returncode}, cwd={self.context.project_dir}, comando='{executed_command}')."
             ) from exc
 
 
