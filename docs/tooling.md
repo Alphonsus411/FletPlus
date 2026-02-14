@@ -2,6 +2,15 @@
 
 Esta guía reúne los apoyos disponibles durante el ciclo de vida de una app FletPlus: desde las utilidades de depuración, pasando por la recarga en caliente de la CLI y los gestores de escritorio, hasta la automatización de despliegue de la documentación.
 
+## QA y políticas de seguridad en CI
+
+Los workflows `.github/workflows/qa.yml` y `.github/workflows/quality.yml` ejecutan las mismas auditorías que `tools/qa.sh` y las sesiones equivalentes de `noxfile.py`, para evitar divergencias entre local y CI. En particular, CI usa explícitamente estas allowlists:
+
+- `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
+- `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
+
+Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
+
 ## DevTools integrados
 
 `DevToolsServer` expone un servidor WebSocket ligero que reenvía mensajes entre clientes conectados. Cada vez que un cliente envía un *frame*, el servidor lo redistribuye al resto y guarda instantáneas iniciales (payloads con tipo `snapshot`) para nuevos suscriptores. De esta manera puedes abrir la vista de DevTools en múltiples navegadores y mantenerlos sincronizados mientras inspeccionas el estado de la app.【F:fletplus/devtools/server.py†L15-L86】
