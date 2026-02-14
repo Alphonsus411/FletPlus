@@ -27,9 +27,10 @@ Orden real de QA (idéntico en shell, reusable workflow y nox):
 3. `python -m ruff check .`
 4. `python -m black --check .`
 5. `python -m mypy fletplus`
-6. `python -m bandit -r fletplus`
-7. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
-8. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
+6. `python tools/check_bandit_command_sync.py`
+7. `python -m bandit -c pyproject.toml -r fletplus`
+8. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
+9. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 

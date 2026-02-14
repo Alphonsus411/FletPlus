@@ -145,7 +145,8 @@ python -m pytest
 python -m ruff check .
 python -m black --check .
 python -m mypy fletplus
-python -m bandit -r fletplus
+python tools/check_bandit_command_sync.py
+python -m bandit -c pyproject.toml -r fletplus
 python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
 python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 ./tools/qa.sh
@@ -203,7 +204,7 @@ Ambos workflows usan los mismos comandos de calidad que `tools/qa.sh` y
   `websockets`, `perf` => preflight específico). Si fallan tests por plugins o
   markers, actualiza `addopts`, `markers` o `testpaths`.
 - **`bandit`**: las exclusiones se definen en `pyproject.toml` para evitar
-  falsos positivos en `tests/`, `venv/` y `.venv/`. Ajusta `exclude` o revisa
+  falsos positivos en `tests/`, `venv/`, `.venv/` y directorios nativos `*_rs`. Ajusta `exclude_dirs` o revisa
   el código señalado.
 - **`pip-audit`**: usa `pip-audit.policy.json` como allowlist. Si aparece una
   nueva vulnerabilidad que se acepta temporalmente, añade la excepción con
@@ -213,7 +214,7 @@ Ambos workflows usan los mismos comandos de calidad que `tools/qa.sh` y
 
 ### ✅ Criterios de aceptación de QA y seguridad
 
-- `bandit` debe ejecutarse con las exclusiones definidas en `pyproject.toml` para evitar falsos positivos en `tests/`, `venv/` y `.venv/`.
+- `bandit` debe ejecutarse con las exclusiones definidas en `pyproject.toml` (`exclude_dirs`) para evitar falsos positivos en `tests/`, `venv/`, `.venv/` y bindings nativos `*_rs`.
 - `pip-audit` debe usar `pip-audit.policy.json` como allowlist; cualquier excepción nueva necesita justificación y fecha de expiración en ese archivo.
 - `safety` debe leer `safety-policy.yml` como allowlist; cualquier excepción nueva necesita justificación y fecha de expiración en ese archivo.
 - El flujo de CI debe terminar en verde sin hallazgos de seguridad fuera de las allowlists.
@@ -1457,7 +1458,8 @@ pip install -r requirements-dev.txt
 ruff check .
 black --check .
 mypy fletplus
-bandit -r fletplus
+python tools/check_bandit_command_sync.py
+bandit -c pyproject.toml -r fletplus
 pip-audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
 safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 ./tools/qa.sh

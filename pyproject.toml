@@ -134,11 +134,24 @@ disallow_untyped_defs = true
 ignore_missing_imports = true
 
 [tool.bandit]
-# Excluir bindings nativos generados (.rs/.c) y carpetas de tests/entornos virtuales.
-exclude = [
-  "fletplus/**/_rs",
-  "fletplus/**/*.c",
+# Excluir directorios generados y rutas no relevantes para el análisis de Bandit.
+exclude_dirs = [
   "tests",
   "venv",
   ".venv",
+  "fletplus/animation/listeners_pr_rs",
+  "fletplus/animation/listeners_rs",
+  "fletplus/components/charts/line_chart_rs",
+  "fletplus/components/command_palette_rs",
+  "fletplus/components/responsive_grid_rs",
+  "fletplus/components/smart_table_rs",
+  "fletplus/http/disk_cache_pr_rs",
+  "fletplus/router/router_pr_rs",
+  "fletplus/router/router_rs",
+  "fletplus/state/signal_pr_rs",
+  "fletplus/themes/palette_flatten_rs",
+  "fletplus/themes/theme_merge_rs",
+  "fletplus/themes/token_merge_rs",
+  "fletplus/utils/breakpoint_rs",
+  "fletplus/utils/responsive_manager_rs",
 ]
