@@ -11,6 +11,22 @@ Los workflows `.github/workflows/qa.yml` y `.github/workflows/quality.yml` ejecu
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
+## Estrategia de tests: suite rápida vs benchmarks
+
+La configuración base de `pytest` en este repositorio define `addopts = -m "not perf"`, por lo que la ejecución estándar excluye benchmarks y prioriza feedback rápido en desarrollo y CI principal:
+
+```bash
+python -m pytest
+```
+
+Los benchmarks viven bajo `tests/perf/` y se ejecutan de forma explícita con el marker `perf`:
+
+```bash
+python -m pytest -m perf
+```
+
+Para automatización, el workflow dedicado `.github/workflows/perf.yml` separa estas mediciones del flujo de QA/Quality y permite lanzarlas en horario nocturno o manualmente cuando se requiera comparar rendimiento entre cambios.
+
 ## DevTools integrados
 
 `DevToolsServer` expone un servidor WebSocket ligero que reenvía mensajes entre clientes conectados. Cada vez que un cliente envía un *frame*, el servidor lo redistribuye al resto y guarda instantáneas iniciales (payloads con tipo `snapshot`) para nuevos suscriptores. De esta manera puedes abrir la vista de DevTools en múltiples navegadores y mantenerlos sincronizados mientras inspeccionas el estado de la app.【F:fletplus/devtools/server.py†L15-L86】

@@ -77,6 +77,22 @@ python -m pytest
 
 El script `tools/check_test_dependencies.py` falla de forma temprana y explícita si faltan `websockets` o `watchdog`, mostrando un mensaje de instalación para corregir el entorno antes de correr tests.
 
+### ⚡ Suite rápida por defecto y benchmarks `perf`
+
+La configuración de `pytest.ini` excluye por defecto los benchmarks marcados con `@pytest.mark.perf`, para que `python -m pytest` ejecute la suite funcional/rápida habitual:
+
+```bash
+python -m pytest
+```
+
+Cuando necesites medir rendimiento de forma explícita, ejecuta únicamente los benchmarks:
+
+```bash
+python -m pytest -m perf
+```
+
+En CI, las pruebas `perf` se ejecutan en un workflow dedicado (`.github/workflows/perf.yml`) con disparador manual (`workflow_dispatch`) y nocturno (`schedule`), separado de QA/Quality para no afectar los tiempos del feedback estándar.
+
 ### ✅ Comandos estándar de calidad
 
 Con el entorno listo, estos son los comandos estándar de calidad que se
