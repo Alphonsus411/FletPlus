@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import threading
 from importlib import resources, util
 from importlib.resources.abc import Traversable
@@ -340,12 +341,19 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
         proceso = _launch_flet_process(app_path.resolve(), port, devtools)
         try:
             while True:
-                try:
-                    proceso.wait(timeout=0.5)
-                except subprocess.TimeoutExpired:
-                    continue
-                click.echo("El servidor se detuvo.")
-                break
+                returncode = proceso.poll()
+                if returncode is not None:
+                    if returncode != 0:
+                        click.echo(
+                            f"El servidor terminó con error (código {returncode}).",
+                            err=True,
+                        )
+                        raise click.ClickException(
+                            f"La ejecución de la app finalizó con código {returncode}."
+                        )
+                    click.echo("El servidor se detuvo.")
+                    break
+                time.sleep(0.5)
         except KeyboardInterrupt:  # pragma: no cover - interactivo
             click.echo("Deteniendo servidor...")
         finally:
@@ -366,7 +374,16 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
                 _stop_process(proceso)
                 proceso = _launch_flet_process(app_path.resolve(), port, devtools)
 
-            if proceso.poll() is not None:
+            returncode = proceso.poll()
+            if returncode is not None:
+                if returncode != 0:
+                    click.echo(
+                        f"El servidor terminó con error (código {returncode}).",
+                        err=True,
+                    )
+                    raise click.ClickException(
+                        f"La ejecución de la app finalizó con código {returncode}."
+                    )
                 click.echo("El servidor se detuvo.")
                 break
     except KeyboardInterrupt:  # pragma: no cover - interactivo

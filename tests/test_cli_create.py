@@ -167,3 +167,65 @@ def test_run_resolves_relative_app_prioritizing_watch_path(monkeypatch) -> None:
 
     assert result.exit_code == 0, result.output
     assert launched_app_path == [watch_main.resolve()]
+
+
+def test_run_fails_with_non_zero_exit_code_without_watchdog(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+    runner = CliRunner()
+
+    class _FakeProcess:
+        def poll(self) -> int:
+            return 2
+
+    monkeypatch.setattr(cli_main, "_launch_flet_process", lambda *args, **kwargs: _FakeProcess())
+    monkeypatch.setattr(cli_main, "_stop_process", lambda process: None)
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        app_file = base / "src" / "main.py"
+        app_file.parent.mkdir(parents=True, exist_ok=True)
+        app_file.write_text("print('hola')", encoding="utf-8")
+
+        result = runner.invoke(cli_main.app, ["run", "--watch", str(base)])
+
+    assert result.exit_code != 0
+    assert "código 2" in result.output
+
+
+def test_run_fails_with_non_zero_exit_code_with_watchdog(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    cli_main = _load_cli_main_module()
+    runner = CliRunner()
+
+    class _FakeObserver:
+        def schedule(self, *args, **kwargs) -> None:
+            return None
+
+        def start(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+        def join(self) -> None:
+            return None
+
+    class _FakeProcess:
+        def poll(self) -> int:
+            return 3
+
+    monkeypatch.setattr(cli_main, "Observer", _FakeObserver)
+    monkeypatch.setattr(cli_main, "_launch_flet_process", lambda *args, **kwargs: _FakeProcess())
+    monkeypatch.setattr(cli_main, "_stop_process", lambda process: None)
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        app_file = base / "src" / "main.py"
+        app_file.parent.mkdir(parents=True, exist_ok=True)
+        app_file.write_text("print('hola')", encoding="utf-8")
+
+        result = runner.invoke(cli_main.app, ["run", "--watch", str(base)])
+
+    assert result.exit_code != 0
+    assert "código 3" in result.output
