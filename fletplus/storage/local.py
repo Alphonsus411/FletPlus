@@ -58,9 +58,29 @@ class LocalStorageProvider(StorageProvider[Any]):
         deserializer: Deserializer | None = None,
     ) -> "LocalStorageProvider":
         """Crea el proveedor tomando la instancia de :class:`Page` completa."""
+        storage = getattr(page, "client_storage", None)
+        if storage is None:
+            raise ValueError(
+                "No se encontró backend local compatible en la página. "
+                "Se esperaba 'page.client_storage' "
+                "con métodos: get, set, remove, clear, get_keys."
+            )
+
+        required_methods = ("get", "set", "remove", "clear", "get_keys")
+        missing_methods = [
+            method
+            for method in required_methods
+            if not callable(getattr(storage, method, None))
+        ]
+        if missing_methods:
+            missing = ", ".join(missing_methods)
+            raise TypeError(
+                "El backend 'client_storage' no es compatible con LocalStorageProvider: "
+                f"faltan métodos requeridos ({missing})."
+            )
 
         return cls(
-            page.client_storage,
+            storage,
             serializer=serializer,
             deserializer=deserializer,
         )

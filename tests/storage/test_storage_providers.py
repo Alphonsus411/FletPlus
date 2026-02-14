@@ -66,6 +66,24 @@ class FakePageInvalidSessionBackend:
         self.session = self.InvalidStorage()
 
 
+class FakePageWithoutClientStorage:
+    pass
+
+
+class FakePageInvalidClientStorageBackend:
+    class InvalidStorage:
+        def get(self, key: str) -> Any | None:
+            return None
+
+    def __init__(self) -> None:
+        self.client_storage = self.InvalidStorage()
+
+
+class FakePageWithClientStorage:
+    def __init__(self) -> None:
+        self.client_storage = FakeClientStorage()
+
+
 def test_storage_provider_signals_update_on_set() -> None:
     storage = FakeClientStorage()
     provider = LocalStorageProvider(storage)
@@ -133,6 +151,29 @@ def test_session_storage_provider_from_page_fails_with_invalid_backend() -> None
 
     with pytest.raises(TypeError, match="no es compatible"):
         SessionStorageProvider.from_page(page)
+
+
+def test_local_storage_provider_from_page_fails_without_client_storage() -> None:
+    page = FakePageWithoutClientStorage()
+
+    with pytest.raises(ValueError, match="No se encontró backend local compatible"):
+        LocalStorageProvider.from_page(page)
+
+
+def test_local_storage_provider_from_page_fails_with_invalid_backend() -> None:
+    page = FakePageInvalidClientStorageBackend()
+
+    with pytest.raises(TypeError, match="no es compatible"):
+        LocalStorageProvider.from_page(page)
+
+
+def test_local_storage_provider_from_page_with_valid_backend() -> None:
+    page = FakePageWithClientStorage()
+
+    provider = LocalStorageProvider.from_page(page)
+
+    provider.set("theme", "dark")
+    assert provider.get("theme") == "dark"
 
 
 def test_file_storage_provider_persists_data(tmp_path: Path) -> None:
