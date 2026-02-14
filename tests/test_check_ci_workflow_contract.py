@@ -223,6 +223,35 @@ jobs:
     assert commands["deploy"] == ["echo deploy"]
 
 
+def test_load_workflow_run_commands_for_jobs_filters_requested_jobs(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text(
+        """
+name: Example
+jobs:
+  build:
+    steps:
+      - run: mkdocs build --strict
+  deploy:
+    steps:
+      - run: echo deploy
+  perf:
+    steps:
+      - run: python -m pytest -m perf
+""",
+        encoding="utf-8",
+    )
+
+    commands = check_ci_workflow_contract.load_workflow_run_commands_for_jobs(
+        workflow, ("build", "perf")
+    )
+
+    assert commands == {
+        "build": ["mkdocs build --strict"],
+        "perf": ["python -m pytest -m perf"],
+    }
+
+
 def test_validate_wrapper_workflow_fails_if_local_steps_exist(
     contract_env: dict[str, Path],
 ) -> None:
@@ -682,6 +711,44 @@ jobs:
 
     assert any("job 'build' debe ejecutar mkdocs build --strict" in error for error in errors)
 
+
+def test_validate_docs_workflow_contract_fails_when_build_command_exists_only_in_unknown_job(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["docs_workflow"].write_text(
+        """
+name: Docs
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: mkdocs build --strict
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_docs_workflow_contract(
+        contract_env["docs_workflow"]
+    )
+
+    assert any("job 'build' debe ejecutar mkdocs build --strict" in error for error in errors)
+
 def test_validate_perf_workflow_contract_passes_when_deps_and_perf_pytest_exist(
     contract_env: dict[str, Path],
 ) -> None:
@@ -753,7 +820,7 @@ jobs:
       - run: |
           pip install -r requirements-dev.txt
       - run: |
-          python -m pytest -m perf -o addopts=
+          pytest -m perf -o addopts=
   perf:
     runs-on: ubuntu-latest
     steps:
@@ -767,6 +834,7 @@ jobs:
     )
 
     assert any("pip install -r requirements-dev.txt" in error for error in errors)
+    assert any("falta el comando requerido en perf workflow: pytest" in error for error in errors)
     assert any("python -m pytest -m perf" in error for error in errors)
 
 
@@ -793,4 +861,57 @@ jobs:
     )
 
     assert any("pip install -r requirements-dev.txt" in error for error in errors)
+    assert any("falta el comando requerido en perf workflow: pytest" in error for error in errors)
+    assert any("python -m pytest -m perf" in error for error in errors)
+
+
+def test_validate_perf_workflow_contract_fails_when_pytest_exists_only_outside_perf_job(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pytest -m perf -o addopts=
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pip install -r requirements-dev.txt
+      - run: echo benchmark
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert any("falta el comando requerido en perf workflow: pytest" in error for error in errors)
+    assert any("python -m pytest -m perf" in error for error in errors)
+
+
+def test_validate_perf_workflow_contract_fails_when_only_plain_pytest_exists(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pip install -r requirements-dev.txt
+      - run: pytest
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert not any("falta el comando requerido en perf workflow: pytest" in error for error in errors)
     assert any("python -m pytest -m perf" in error for error in errors)
