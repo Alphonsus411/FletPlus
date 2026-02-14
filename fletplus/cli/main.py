@@ -427,6 +427,9 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
 def profile(flow_names: tuple[str, ...], output_path: Path, sort: str, limit: int) -> None:
     """Ejecuta flujos clave con cProfile y genera un reporte."""
 
+    if limit <= 0:
+        raise click.ClickException("--limit debe ser un entero positivo.")
+
     selected_names = flow_names or tuple(PROFILE_FLOWS)
     flows = [PROFILE_FLOWS[name] for name in selected_names]
     click.echo(f"Ejecutando {len(flows)} flujo(s): {', '.join(selected_names)}")
