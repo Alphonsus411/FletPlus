@@ -161,6 +161,63 @@ async def test_authorizes_connection_with_allowed_origin():
         assert denied.value.rcvd.code == 1008
 
 
+@pytest.mark.anyio
+async def test_authorizes_semantically_equivalent_origin_with_trailing_slash_and_uppercase_host():
+    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}"
+
+        async with websockets.connect(
+            uri,
+            additional_headers={"Origin": "https://TRUSTED.EXAMPLE/"},
+        ) as allowed_client:
+            ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
+            assert ready == "server:ready"
+
+
+@pytest.mark.anyio
+async def test_authorizes_semantically_equivalent_origin_when_allowed_origin_has_trailing_slash():
+    server = DevToolsServer(allowed_origins={"https://trusted.example/"})
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}"
+
+        async with websockets.connect(
+            uri,
+            additional_headers={"Origin": "https://trusted.example"},
+        ) as allowed_client:
+            ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
+            assert ready == "server:ready"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://trusted.example:444",
+        "http://trusted.example",
+    ],
+)
+async def test_rejects_origins_with_different_port_or_scheme(origin: str):
+    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}"
+
+        with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
+            async with websockets.connect(
+                uri,
+                additional_headers={"Origin": origin},
+            ) as denied_client:
+                await denied_client.recv()
+
+        assert denied.value.rcvd.code == 1008
+
+
 def test_is_authorized_rejects_when_request_metadata_is_missing():
     server = DevToolsServer(
         auth_token="secret",

@@ -15,6 +15,13 @@ from websockets.exceptions import ConnectionClosed
 
 _LOGGER = logging.getLogger(__name__)
 
+_DEFAULT_PORTS_BY_SCHEME: dict[str, int] = {
+    "http": 80,
+    "https": 443,
+    "ws": 80,
+    "wss": 443,
+}
+
 
 class DevToolsServer:
     """Servidor WebSocket simple para reenviar eventos entre clientes."""
@@ -41,7 +48,7 @@ class DevToolsServer:
             else None
         )
         self._auth_token = auth_token
-        self._allowed_origins = allowed_origins
+        self._allowed_origins = self._normalize_allowed_origins(allowed_origins)
 
     def listen(self, host: str = "127.0.0.1", port: int = 0):
         """Crea el servidor y comienza a escuchar conexiones.
@@ -192,7 +199,12 @@ class DevToolsServer:
                 return False
 
             origin = headers.get("Origin")
-            if origin not in self._allowed_origins:
+            normalized_origin = self._normalize_origin(origin)
+            if normalized_origin is None:
+                _LOGGER.warning("Origin inválido al conectar DevTools: %s", origin)
+                return False
+
+            if normalized_origin not in self._allowed_origins:
                 _LOGGER.warning("Origen no permitido al conectar DevTools: %s", origin)
                 return False
 
@@ -227,6 +239,57 @@ class DevToolsServer:
             return token_header.strip()
 
         return None
+
+    @classmethod
+    def _normalize_allowed_origins(
+        cls,
+        allowed_origins: set[str] | None,
+    ) -> set[str] | None:
+        if allowed_origins is None:
+            return None
+
+        normalized_origins: set[str] = set()
+        for origin in allowed_origins:
+            normalized_origin = cls._normalize_origin(origin)
+            if normalized_origin is None:
+                _LOGGER.warning(
+                    "Se ignoró allowed_origin inválido en configuración: %s", origin
+                )
+                continue
+
+            normalized_origins.add(normalized_origin)
+
+        return normalized_origins
+
+    @staticmethod
+    def _normalize_origin(origin: str | None) -> str | None:
+        if not origin:
+            return None
+
+        parsed = urlparse(origin)
+        scheme = parsed.scheme.lower()
+        host = parsed.hostname
+        if not scheme or host is None:
+            return None
+
+        if parsed.path.rstrip("/"):
+            return None
+
+        if parsed.params or parsed.query or parsed.fragment:
+            return None
+
+        try:
+            port = parsed.port
+        except ValueError:
+            return None
+
+        if port is None:
+            port = _DEFAULT_PORTS_BY_SCHEME.get(scheme)
+
+        if port is None:
+            return None
+
+        return f"{scheme}://{host.lower()}:{port}"
 
     async def _send_initial_payloads(self, websocket: ServerProtocol) -> None:
         async with self._initial_payloads_lock:
