@@ -213,29 +213,64 @@ def _extract_job_block(workflow_text: str, job_name: str) -> str:
 
 def validate_docs_workflow_contract(path: Path) -> list[str]:
     errors: list[str] = []
-    text = path.read_text(encoding="utf-8")
+    try:
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        return [f"{path}: YAML inválido ({exc})."]
 
-    build_block = _extract_job_block(text, "build")
-    deploy_block = _extract_job_block(text, "deploy")
+    jobs = content.get("jobs") if isinstance(content, dict) else None
+    if not isinstance(jobs, dict):
+        return [f"{path}: falta la sección 'jobs' en el workflow."]
 
-    if not build_block:
+    def _job_step_uses(job_def: object) -> set[str]:
+        if not isinstance(job_def, dict):
+            return set()
+        steps = job_def.get("steps")
+        if not isinstance(steps, list):
+            return set()
+
+        uses_values: set[str] = set()
+        for step in steps:
+            if not isinstance(step, dict):
+                continue
+            uses = step.get("uses")
+            if isinstance(uses, str):
+                uses_values.add(uses.split("@", maxsplit=1)[0])
+        return uses_values
+
+    build_job = jobs.get("build")
+    if not isinstance(build_job, dict):
         errors.append(f"{path}: falta el job obligatorio 'build'.")
     else:
-        if "uses: actions/configure-pages@" not in build_block:
+        build_uses = _job_step_uses(build_job)
+        if "actions/configure-pages" not in build_uses:
             errors.append(
                 f"{path}: el job 'build' debe usar actions/configure-pages."
             )
-        if "uses: actions/upload-pages-artifact@" not in build_block:
+        if "actions/upload-pages-artifact" not in build_uses:
             errors.append(
                 f"{path}: el job 'build' debe usar actions/upload-pages-artifact."
             )
 
-    if not deploy_block:
+    deploy_job = jobs.get("deploy")
+    if not isinstance(deploy_job, dict):
         errors.append(f"{path}: falta el job obligatorio 'deploy'.")
     else:
-        if not re.search(r"^\s*needs:\s*build\s*$", deploy_block, re.MULTILINE):
-            errors.append(f"{path}: el job 'deploy' debe depender de 'build' (needs: build).")
-        if "uses: actions/deploy-pages@" not in deploy_block:
+        deploy_needs = deploy_job.get("needs")
+        if isinstance(deploy_needs, str):
+            needs_items = [deploy_needs]
+        elif isinstance(deploy_needs, list):
+            needs_items = [item for item in deploy_needs if isinstance(item, str)]
+        else:
+            needs_items = []
+
+        if "build" not in needs_items:
+            errors.append(
+                f"{path}: el job 'deploy' debe depender de 'build' (needs: build)."
+            )
+
+        deploy_uses = _job_step_uses(deploy_job)
+        if "actions/deploy-pages" not in deploy_uses:
             errors.append(
                 f"{path}: el job 'deploy' debe usar actions/deploy-pages."
             )
