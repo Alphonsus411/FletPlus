@@ -44,4 +44,4 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/FletPlus/FletPlus
+      link: "https://github.com/FletPlus/FletPlus"
