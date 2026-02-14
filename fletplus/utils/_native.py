@@ -12,7 +12,12 @@ def _load_extension(module_name: str):
         return None
     if not spec.origin.endswith(tuple(importlib.machinery.EXTENSION_SUFFIXES)):
         return None
-    return importlib.import_module(module_name)
+    try:
+        return importlib.import_module(module_name)
+    except (ImportError, OSError, RuntimeError):
+        return None
+    except Exception:
+        return None
 
 
 _native_module = _load_extension("fletplus.utils.responsive_manager")

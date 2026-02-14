@@ -43,7 +43,12 @@ def _load_palette_flatten_backend():
     spec = importlib.util.find_spec("fletplus.themes.palette_flatten_rs")
     if spec is None:
         return None
-    module = importlib.import_module("fletplus.themes.palette_flatten_rs")
+    try:
+        module = importlib.import_module("fletplus.themes.palette_flatten_rs")
+    except (ImportError, OSError, RuntimeError):
+        return None
+    except Exception:
+        return None
     if getattr(module, "flatten_palette", None) is None:
         return None
     return module
@@ -56,7 +61,12 @@ def _load_theme_merge_backend():
     spec = importlib.util.find_spec("fletplus.themes.theme_merge_rs")
     if spec is None:
         return None
-    module = importlib.import_module("fletplus.themes.theme_merge_rs")
+    try:
+        module = importlib.import_module("fletplus.themes.theme_merge_rs")
+    except (ImportError, OSError, RuntimeError):
+        return None
+    except Exception:
+        return None
     if getattr(module, "merge_token_groups", None) is None:
         return None
     if getattr(module, "merge_variant_overrides", None) is None:

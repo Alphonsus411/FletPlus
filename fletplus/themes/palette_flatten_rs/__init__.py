@@ -17,7 +17,12 @@ _spec = importlib.util.find_spec("fletplus.themes.palette_flatten_rs._native")
 if _spec is None:
     _native = None
 else:
-    _native = importlib.import_module("fletplus.themes.palette_flatten_rs._native")
+    try:
+        _native = importlib.import_module("fletplus.themes.palette_flatten_rs._native")
+    except (ImportError, OSError, RuntimeError):
+        _native = None
+    except Exception:
+        _native = None
 
 
 def _py_flatten_palette(palette: Mapping[str, Any]) -> dict[str, Any]:

@@ -24,7 +24,12 @@ _spec = importlib.util.find_spec("fletplus.state._native")
 if _spec is None:
     _native = None
 else:
-    _native = importlib.import_module("fletplus.state._native")
+    try:
+        _native = importlib.import_module("fletplus.state._native")
+    except (ImportError, OSError, RuntimeError):
+        _native = None
+    except Exception:
+        _native = None
 
 _native_signal = getattr(_native, "Signal", None) if _native else None
 _native_derived = getattr(_native, "DerivedSignal", None) if _native else None

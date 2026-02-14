@@ -283,7 +283,12 @@ def _load_rust_backend():
     spec = importlib.util.find_spec("fletplus.components.smart_table_rs")
     if spec is None:
         return None
-    module = importlib.import_module("fletplus.components.smart_table_rs")
+    try:
+        module = importlib.import_module("fletplus.components.smart_table_rs")
+    except (ImportError, OSError, RuntimeError):
+        return None
+    except Exception:
+        return None
     if (
         getattr(module, "apply_query", None) is None
         and getattr(module, "apply_query_ids", None) is None

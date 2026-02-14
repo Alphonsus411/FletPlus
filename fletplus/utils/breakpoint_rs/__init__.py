@@ -18,7 +18,12 @@ _spec = importlib.util.find_spec("fletplus.utils.breakpoint_rs._native")
 if _spec is None:
     _native = None
 else:
-    _native = importlib.import_module("fletplus.utils.breakpoint_rs._native")
+    try:
+        _native = importlib.import_module("fletplus.utils.breakpoint_rs._native")
+    except (ImportError, OSError, RuntimeError):
+        _native = None
+    except Exception:
+        _native = None
 
 
 def _py_select_breakpoint(keys: Sequence[int], value: int) -> Optional[int]:

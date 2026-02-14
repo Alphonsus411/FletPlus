@@ -47,7 +47,12 @@ _spec = importlib.util.find_spec("fletplus.utils._native")
 if _spec is None:
     _native = None
 else:
-    _native = importlib.import_module("fletplus.utils._native")
+    try:
+        _native = importlib.import_module("fletplus.utils._native")
+    except (ImportError, OSError, RuntimeError):
+        _native = None
+    except Exception:
+        _native = None
 
 _native_responsive = getattr(_native, "ResponsiveManager", None) if _native else None
 if _native_responsive is not None:

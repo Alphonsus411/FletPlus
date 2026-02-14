@@ -28,7 +28,12 @@ _spec = importlib.util.find_spec("fletplus.components.command_palette_rs._native
 if _spec is None:
     _native: Optional[object] = None
 else:
-    _native = importlib.import_module("fletplus.components.command_palette_rs._native")
+    try:
+        _native = importlib.import_module("fletplus.components.command_palette_rs._native")
+    except (ImportError, OSError, RuntimeError):
+        _native = None
+    except Exception:
+        _native = None
 
 if _native is not None:
     native_filter_commands = _native.filter_commands
