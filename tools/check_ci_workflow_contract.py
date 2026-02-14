@@ -218,6 +218,29 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
     except yaml.YAMLError as exc:
         return [f"{path}: YAML inválido ({exc})."]
 
+    workflow_on = content.get("on", content.get(True)) if isinstance(content, dict) else None
+    if not isinstance(workflow_on, dict):
+        errors.append(f"{path}: falta la sección de triggers 'on'.")
+    else:
+        pull_request = workflow_on.get("pull_request")
+        if not isinstance(pull_request, dict):
+            errors.append(
+                f"{path}: debe definir trigger pull_request para validar docs en PR."
+            )
+        else:
+            branches = pull_request.get("branches")
+            if isinstance(branches, list):
+                branch_items = {item for item in branches if isinstance(item, str)}
+            elif isinstance(branches, str):
+                branch_items = {branches}
+            else:
+                branch_items = set()
+            missing_branches = {"main", "develop"} - branch_items
+            if missing_branches:
+                errors.append(
+                    f"{path}: pull_request debe incluir ramas {sorted(missing_branches)}."
+                )
+
     jobs = content.get("jobs") if isinstance(content, dict) else None
     if not isinstance(jobs, dict):
         return [f"{path}: falta la sección 'jobs' en el workflow."]
@@ -243,6 +266,14 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
         errors.append(f"{path}: falta el job obligatorio 'build'.")
     else:
         build_uses = _job_step_uses(build_job)
+        build_commands = load_workflow_run_commands(path)
+        if not any(
+            command.startswith("mkdocs build") and "--strict" in command
+            for command in build_commands
+        ):
+            errors.append(
+                f"{path}: el job 'build' debe ejecutar mkdocs build --strict."
+            )
         if "actions/configure-pages" not in build_uses:
             errors.append(
                 f"{path}: el job 'build' debe usar actions/configure-pages."
@@ -256,6 +287,13 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
     if not isinstance(deploy_job, dict):
         errors.append(f"{path}: falta el job obligatorio 'deploy'.")
     else:
+        deploy_if = deploy_job.get("if")
+        expected_if = "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+        if deploy_if != expected_if:
+            errors.append(
+                f"{path}: el job 'deploy' debe limitarse a push en main con if: {expected_if}"
+            )
+
         deploy_needs = deploy_job.get("needs")
         if isinstance(deploy_needs, str):
             needs_items = [deploy_needs]

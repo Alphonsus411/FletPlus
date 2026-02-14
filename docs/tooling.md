@@ -242,7 +242,7 @@ Una vez generados ambos archivos, sirve el directorio que los contiene y llama a
 
 ## Workflow de documentación
 
-El repositorio incluye el workflow [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) que publica automáticamente la documentación en GitHub Pages. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y construye el sitio de MkDocs antes de subirlo como artefacto de Pages:
+El repositorio incluye el workflow [`.github/workflows/docs.yml`](../.github/workflows/docs.yml), que valida la documentación en `pull_request` (ramas `main` y `develop`) y la publica en GitHub Pages cuando hay `push` a `main`. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y ejecuta `mkdocs build --strict --site-dir site` antes de subir el resultado como artefacto de Pages:
 
 ```yaml
 jobs:
@@ -265,6 +265,7 @@ El job `deploy` depende de ese artefacto y ejecuta `actions/deploy-pages@v4`, ex
 
 ```yaml
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -272,13 +273,13 @@ El job `deploy` depende de ese artefacto y ejecuta `actions/deploy-pages@v4`, ex
         uses: actions/deploy-pages@v4
 ```
 
-> ✅ Recuerda habilitar GitHub Pages la primera vez desde **Settings → Pages** seleccionando “GitHub Actions” como fuente. Después de ese paso manual, cada `push` sobre `main` publicará la nueva versión de la documentación sin intervención adicional.
+> ✅ Recuerda habilitar GitHub Pages la primera vez desde **Settings → Pages** seleccionando “GitHub Actions” como fuente. Después de ese paso manual, cada `pull_request` a `main`/`develop` validará la documentación sin publicar y cada `push` sobre `main` publicará la nueva versión.
 
 Para mantener la compatibilidad de enlaces entre el `README.md` en GitHub y el `index.md` de MkDocs (que incluye ese README), sigue también la guía breve de [estilo de enlaces](link-style.md).
 
 Además, `tools/check_ci_workflow_contract.py` valida automáticamente el contrato mínimo de CI para documentación y rendimiento:
 
-- `docs.yml` debe conservar los jobs `build`/`deploy`; en `build` se exige `actions/configure-pages` y `actions/upload-pages-artifact`, y en `deploy` se exige `needs: build` junto con `actions/deploy-pages`.
+- `docs.yml` debe conservar los jobs `build`/`deploy`; el workflow debe incluir `pull_request` hacia `main` y `develop`, `build` debe ejecutar `mkdocs build --strict` y usar `actions/configure-pages` + `actions/upload-pages-artifact`, y `deploy` debe usar `needs: build`, `actions/deploy-pages` y la condición `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`.
 - `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf`.
 
 Estos checks se ejecutan en tests (`tests/test_check_ci_workflow_contract.py`) para detectar drift antes de mezclar cambios en workflows.

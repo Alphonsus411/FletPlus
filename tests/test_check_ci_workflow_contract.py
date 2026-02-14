@@ -77,13 +77,20 @@ def qa(session):
     docs_workflow.write_text(
         """
 name: Docs
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/configure-pages@v4
+      - run: mkdocs build --strict --site-dir site
       - uses: actions/upload-pages-artifact@v3
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -475,16 +482,24 @@ def test_validate_docs_workflow_contract_passes_with_required_jobs_and_actions(
     contract_env["docs_workflow"].write_text(
         """
 name: Docs
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
 jobs:
     build:
       runs-on: ubuntu-latest
       steps:
         - name: Setup pages
           uses: actions/configure-pages@v4
+        - name: Build docs
+          run: mkdocs build --strict --site-dir site
         -
           name: Upload artifact
           uses: actions/upload-pages-artifact@v3
     deploy:
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       needs: build
       steps:
@@ -507,13 +522,20 @@ def test_validate_docs_workflow_contract_passes_when_deploy_needs_is_list(
     contract_env["docs_workflow"].write_text(
         """
 name: Docs
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/configure-pages@v4
+      - run: mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
       - lint
       - build
@@ -537,12 +559,18 @@ def test_validate_docs_workflow_contract_fails_when_required_action_is_missing(
     contract_env["docs_workflow"].write_text(
         """
 name: Docs
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/configure-pages@v4
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -558,6 +586,39 @@ jobs:
     assert any("build' debe usar actions/upload-pages-artifact" in error for error in errors)
     assert any("deploy' debe usar actions/deploy-pages" in error for error in errors)
 
+
+def test_validate_docs_workflow_contract_fails_when_triggers_or_deploy_guard_are_missing(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["docs_workflow"].write_text(
+        """
+name: Docs
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v4
+      - run: mkdocs build --strict
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_docs_workflow_contract(
+        contract_env["docs_workflow"]
+    )
+
+    assert any("debe definir trigger pull_request" in error for error in errors)
+    assert any("debe limitarse a push en main" in error for error in errors)
 
 def test_validate_perf_workflow_contract_passes_when_deps_and_perf_pytest_exist(
     contract_env: dict[str, Path],
