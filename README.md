@@ -720,15 +720,16 @@ iniciar FletPlus:
 
 ```python
 import logging
-from fletplus.core_legacy import FletPlusApp
+from fletplus import FletPlusApp
 
 logging.basicConfig(level=logging.DEBUG)
 
 FletPlusApp.start(routes)
 ```
 
-> ℹ️ La Core legacy vive en `fletplus/core_legacy.py`. Para nuevas integraciones,
-> utiliza el paquete `fletplus.core` (por ejemplo, `from fletplus.core import FletPlusApp`).
+> ℹ️ **Contrato público oficial actual**: importa `FletPlusApp` desde `fletplus` (`from fletplus import FletPlusApp`).
+>
+> ⚠️ Migración recomendada: la core desacoplada permanece disponible en `fletplus.core` con firma `FletPlusApp(layout=..., state=...)` para adopción progresiva.
 
 # 🎨 Sistema de estilos
 

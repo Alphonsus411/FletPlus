@@ -80,6 +80,17 @@ class ResponsiveNavigationConfig:
 
 
 class FletPlusApp:
+    """Aplicación legacy de FletPlus.
+
+    Esta clase es el contrato público oficial actual expuesto por
+    ``from fletplus import FletPlusApp`` para mantener compatibilidad.
+
+    Nota de migración: la core desacoplada vive en ``fletplus.core`` y ofrece
+    la firma moderna ``FletPlusApp(layout=..., state=...)``. Se recomienda
+    planificar la migración progresiva hacia esa API para futuras versiones
+    mayores.
+    """
+
     def __init__(
         self,
         page: ft.Page,
