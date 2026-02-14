@@ -29,8 +29,6 @@ REQUIRED_QA_CHECKS = (
 )
 
 WORKFLOW_REF_PATTERN = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.yml")
-RUN_BLOCK_PATTERN = re.compile(r"^\s*(?:-\s*)?run:\s*\|\s*$", re.MULTILINE)
-INLINE_RUN_PATTERN = re.compile(r"^\s*(?:-\s*)?run:\s*(.+?)\s*$", re.MULTILINE)
 OBSOLETE_DOC_PHRASES = (
     "desde la rama `gh-pages`",
     "desde la rama gh-pages",
@@ -71,50 +69,53 @@ def extract_python_commands_from_text(text: str) -> list[str]:
     return commands
 
 
-def _extract_run_blocks(text: str) -> list[str]:
-    lines = text.splitlines()
-    run_blocks: list[str] = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        if not RUN_BLOCK_PATTERN.match(line):
-            i += 1
+def _extract_step_run_commands(step: object) -> list[str]:
+    if not isinstance(step, dict):
+        return []
+
+    run_value = step.get("run")
+    if not isinstance(run_value, str):
+        return []
+
+    commands: list[str] = []
+    for raw in run_value.splitlines():
+        line = raw.strip()
+        if line:
+            commands.append(normalize_command(line))
+    return commands
+
+
+def load_workflow_run_commands_by_job(path: Path) -> dict[str, list[str]]:
+    try:
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        return {}
+
+    jobs = content.get("jobs") if isinstance(content, dict) else None
+    if not isinstance(jobs, dict):
+        return {}
+
+    commands_by_job: dict[str, list[str]] = {}
+    for job_name, job_def in jobs.items():
+        if not isinstance(job_name, str) or not isinstance(job_def, dict):
+            continue
+        steps = job_def.get("steps")
+        if not isinstance(steps, list):
+            commands_by_job[job_name] = []
             continue
 
-        run_indent = len(line) - len(line.lstrip(" "))
-        block_lines: list[str] = []
-        i += 1
-        while i < len(lines):
-            current = lines[i]
-            if not current.strip():
-                block_lines.append("")
-                i += 1
-                continue
-            current_indent = len(current) - len(current.lstrip(" "))
-            if current_indent <= run_indent:
-                break
-            block_lines.append(current.strip())
-            i += 1
-        run_blocks.append("\n".join(block_lines))
-    return run_blocks
+        job_commands: list[str] = []
+        for step in steps:
+            job_commands.extend(_extract_step_run_commands(step))
+        commands_by_job[job_name] = job_commands
+
+    return commands_by_job
 
 
 def load_workflow_run_commands(path: Path) -> list[str]:
-    text = path.read_text(encoding="utf-8")
     commands: list[str] = []
-
-    for block in _extract_run_blocks(text):
-        for raw in block.splitlines():
-            line = raw.strip()
-            if line:
-                commands.append(normalize_command(line))
-
-    for match in INLINE_RUN_PATTERN.finditer(text):
-        candidate = match.group(1).strip()
-        if candidate == "|":
-            continue
-        commands.append(normalize_command(candidate))
-
+    for job_commands in load_workflow_run_commands_by_job(path).values():
+        commands.extend(job_commands)
     return commands
 
 
@@ -267,7 +268,7 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
         errors.append(f"{path}: falta el job obligatorio 'build'.")
     else:
         build_uses = _job_step_uses(build_job)
-        build_commands = load_workflow_run_commands(path)
+        build_commands = load_workflow_run_commands_by_job(path).get("build", [])
         if not any(
             command.startswith("mkdocs build") and "--strict" in command
             for command in build_commands
@@ -319,7 +320,7 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
 
 def validate_perf_workflow_contract(path: Path) -> list[str]:
     errors: list[str] = []
-    commands = load_workflow_run_commands(path)
+    commands = load_workflow_run_commands_by_job(path).get("perf", [])
 
     required_commands = ["pip install -r requirements-dev.txt"]
 

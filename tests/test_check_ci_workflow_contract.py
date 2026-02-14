@@ -200,6 +200,29 @@ jobs:
     assert "python -m ruff check ." in commands
 
 
+def test_load_workflow_run_commands_by_job_scopes_commands_per_job(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text(
+        """
+name: Example
+jobs:
+  build:
+    steps:
+      - run: |
+          mkdocs build --strict
+  deploy:
+    steps:
+      - run: echo deploy
+""",
+        encoding="utf-8",
+    )
+
+    commands = check_ci_workflow_contract.load_workflow_run_commands_by_job(workflow)
+
+    assert commands["build"] == ["mkdocs build --strict"]
+    assert commands["deploy"] == ["echo deploy"]
+
+
 def test_validate_wrapper_workflow_fails_if_local_steps_exist(
     contract_env: dict[str, Path],
 ) -> None:
@@ -624,6 +647,41 @@ jobs:
     assert any("debe definir trigger pull_request" in error for error in errors)
     assert any("debe limitarse a push en main" in error for error in errors)
 
+
+def test_validate_docs_workflow_contract_fails_when_mkdocs_strict_is_in_wrong_job(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["docs_workflow"].write_text(
+        """
+name: Docs
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: mkdocs build --strict
+      - uses: actions/deploy-pages@v4
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_docs_workflow_contract(
+        contract_env["docs_workflow"]
+    )
+
+    assert any("job 'build' debe ejecutar mkdocs build --strict" in error for error in errors)
+
 def test_validate_perf_workflow_contract_passes_when_deps_and_perf_pytest_exist(
     contract_env: dict[str, Path],
 ) -> None:
@@ -680,3 +738,59 @@ jobs:
     )
 
     assert any("python -m pytest -m perf -o addopts=" in error for error in errors)
+
+
+def test_validate_perf_workflow_contract_fails_when_required_commands_are_in_wrong_job(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip install -r requirements-dev.txt
+      - run: |
+          python -m pytest -m perf -o addopts=
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo only-perf-shell
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert any("pip install -r requirements-dev.txt" in error for error in errors)
+    assert any("python -m pytest -m perf" in error for error in errors)
+
+
+def test_validate_perf_workflow_contract_fails_when_perf_job_is_missing(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip install -r requirements-dev.txt
+      - run: |
+          python -m pytest -m perf -o addopts=
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert any("pip install -r requirements-dev.txt" in error for error in errors)
+    assert any("python -m pytest -m perf" in error for error in errors)
