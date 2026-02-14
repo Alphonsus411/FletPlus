@@ -9,8 +9,16 @@ from collections.abc import Iterable
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from websockets.asyncio.server import ServerProtocol, serve
-from websockets.exceptions import ConnectionClosed
+try:
+    from websockets.asyncio.server import ServerProtocol, serve
+    from websockets.exceptions import ConnectionClosed
+except ImportError as exc:  # pragma: no cover - exercised via optional-dep tests
+    ServerProtocol = Any  # type: ignore[assignment]
+    serve = None
+    ConnectionClosed = Exception
+    _WEBSOCKETS_IMPORT_ERROR: ImportError | None = exc
+else:
+    _WEBSOCKETS_IMPORT_ERROR = None
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +32,10 @@ _DEFAULT_PORTS_BY_SCHEME: dict[str, int] = {
 
 
 class DevToolsServer:
-    """Servidor WebSocket simple para reenviar eventos entre clientes."""
+    """Servidor WebSocket simple para reenviar eventos entre clientes.
+
+    Requiere la dependencia opcional ``websockets`` para crear instancias.
+    """
 
     def __init__(
         self,
@@ -35,6 +46,12 @@ class DevToolsServer:
         auth_token: str | None = None,
         allowed_origins: set[str] | None = None,
     ) -> None:
+        if _WEBSOCKETS_IMPORT_ERROR is not None:
+            raise RuntimeError(
+                "DevToolsServer requiere la dependencia opcional 'websockets'. "
+                "Instálala con: pip install websockets"
+            ) from _WEBSOCKETS_IMPORT_ERROR
+
         self._clients: set[ServerProtocol] = set()
         self._lock = asyncio.Lock()
         self._initial_payloads_lock = asyncio.Lock()
