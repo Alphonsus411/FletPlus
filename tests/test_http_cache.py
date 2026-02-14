@@ -47,6 +47,25 @@ def test_disk_cache_preserves_headers_and_reason(tmp_path: Path):
     assert loaded.read() == b"payload"
 
 
+
+def test_disk_cache_roundtrip_http_version_bytes(tmp_path: Path):
+    cache = DiskCache(tmp_path)
+    request = _make_request("https://example.org/version")
+    response = httpx.Response(
+        200,
+        content=b"ok",
+        request=request,
+        extensions={"http_version": b"HTTP/1.1"},
+    )
+
+    key = cache.build_key(request)
+    cache.set(key, response)
+
+    loaded = cache.get(key, request=request)
+    assert loaded is not None
+    assert loaded.extensions["http_version"] == b"HTTP/1.1"
+    assert loaded.http_version == "HTTP/1.1"
+
 def test_disk_cache_expiration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     clock = _ControlledClock()
     monkeypatch.setattr(time, "time", clock.time)

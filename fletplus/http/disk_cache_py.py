@@ -166,10 +166,10 @@ class DiskCache:
         )
         http_version = data.get("http_version")
         reason_phrase = data.get("reason_phrase")
-        if http_version:
-            response.extensions["http_version"] = http_version
-        if reason_phrase:
-            response.extensions["reason_phrase"] = str(reason_phrase).encode("ascii", "ignore")
+        if http_version is not None:
+            response.extensions["http_version"] = str(http_version).encode("latin-1")
+        if reason_phrase is not None:
+            response.extensions["reason_phrase"] = str(reason_phrase).encode("latin-1")
         try:
             os.utime(path, None)
         except OSError:
@@ -184,12 +184,29 @@ class DiskCache:
             (name.decode("latin-1"), value.decode("latin-1"))
             for name, value in response.headers.raw
         ]
+
+        raw_http_version = response.extensions.get("http_version")
+        if isinstance(raw_http_version, bytes):
+            http_version: str | None = raw_http_version.decode("latin-1")
+        elif raw_http_version is None:
+            http_version = None
+        else:
+            http_version = str(raw_http_version)
+
+        raw_reason_phrase = response.extensions.get("reason_phrase", response.reason_phrase)
+        if isinstance(raw_reason_phrase, bytes):
+            reason_phrase: str | None = raw_reason_phrase.decode("latin-1")
+        elif raw_reason_phrase is None:
+            reason_phrase = None
+        else:
+            reason_phrase = str(raw_reason_phrase)
+
         entry: dict[str, Any] = {
             "status_code": response.status_code,
             "headers": headers,
             "content": base64.b64encode(response.content).decode("ascii"),
-            "http_version": response.extensions.get("http_version"),
-            "reason_phrase": response.reason_phrase,
+            "http_version": http_version,
+            "reason_phrase": reason_phrase,
             "timestamp": time.time(),
             "expires_at": expires_at,
         }
