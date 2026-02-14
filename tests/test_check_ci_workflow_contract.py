@@ -229,6 +229,67 @@ jobs:
     assert any("debe delegar en ./.github/workflows/reusable-quality.yml" in error for error in errors)
 
 
+def test_validate_wrapper_workflow_fails_with_wrong_uses_and_main_job_broken(
+    contract_env: dict[str, Path],
+) -> None:
+    wrapper = contract_env["workflows_dir"] / "wrapper-wrong-uses.yml"
+    wrapper.write_text(
+        """
+name: Wrapper
+jobs:
+  qa:
+    uses: ./.github/workflows/other.yml
+  main:
+    runs-on: ubuntu-latest
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_wrapper_workflow(wrapper)
+
+    assert any("debe delegar en ./.github/workflows/reusable-quality.yml" in error for error in errors)
+
+
+def test_validate_wrapper_workflow_fails_if_uses_only_in_comment_or_string(
+    contract_env: dict[str, Path],
+) -> None:
+    wrapper = contract_env["workflows_dir"] / "wrapper-comment-string-uses.yml"
+    wrapper.write_text(
+        """
+name: Wrapper
+jobs:
+  qa:
+    name: "uses: ./.github/workflows/reusable-quality.yml"
+    runs-on: ubuntu-latest
+    # uses: ./.github/workflows/reusable-quality.yml
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_wrapper_workflow(wrapper)
+
+    assert any("debe delegar en ./.github/workflows/reusable-quality.yml" in error for error in errors)
+
+
+def test_validate_wrapper_workflow_passes_with_minimal_valid_wrapper(
+    contract_env: dict[str, Path],
+) -> None:
+    wrapper = contract_env["workflows_dir"] / "wrapper-minimal-valid.yml"
+    wrapper.write_text(
+        """
+name: Wrapper
+jobs:
+  qa:
+    uses: ./.github/workflows/reusable-quality.yml
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_wrapper_workflow(wrapper)
+
+    assert errors == []
+
+
 def test_validate_critical_commands_sync_fails_when_workflow_qa_and_docs_drift(
     contract_env: dict[str, Path],
 ) -> None:
