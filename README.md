@@ -121,7 +121,7 @@ python -m pytest
 Cuando necesites medir rendimiento de forma explícita, ejecuta únicamente los benchmarks:
 
 ```bash
-python -m pytest -m perf
+python -m pytest -m perf -o addopts=
 ```
 
 En CI, las pruebas `perf` se ejecutan en un workflow dedicado (`.github/workflows/perf.yml`) con disparador manual (`workflow_dispatch`) y nocturno (`schedule`), separado de QA/Quality para no afectar los tiempos del feedback estándar.

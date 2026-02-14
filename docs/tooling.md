@@ -93,7 +93,7 @@ python -m pytest
 Los benchmarks viven bajo `tests/perf/` y se ejecutan de forma explícita con el marker `perf`:
 
 ```bash
-python -m pytest -m perf
+python -m pytest -m perf -o addopts=
 ```
 
 Para automatización, el workflow dedicado `.github/workflows/perf.yml` separa estas mediciones del flujo de QA/Quality y permite lanzarlas en horario nocturno o manualmente cuando se requiera comparar rendimiento entre cambios.
@@ -280,6 +280,6 @@ Para mantener la compatibilidad de enlaces entre el `README.md` en GitHub y el `
 Además, `tools/check_ci_workflow_contract.py` valida automáticamente el contrato mínimo de CI para documentación y rendimiento:
 
 - `docs.yml` debe conservar los jobs `build`/`deploy`; el workflow debe incluir `pull_request` hacia `main` y `develop`, `build` debe ejecutar `mkdocs build --strict` y usar `actions/configure-pages` + `actions/upload-pages-artifact`, y `deploy` debe usar `needs: build`, `actions/deploy-pages` y la condición `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`.
-- `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf`.
+- `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf -o addopts=`.
 
 Estos checks se ejecutan en tests (`tests/test_check_ci_workflow_contract.py`) para detectar drift antes de mezclar cambios en workflows.

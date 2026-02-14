@@ -22,6 +22,7 @@ WRAPPER_WORKFLOWS = (
 )
 DOCS_WORKFLOW = REPO_ROOT / ".github/workflows/docs.yml"
 PERF_WORKFLOW = REPO_ROOT / ".github/workflows/perf.yml"
+PYTEST_INI = REPO_ROOT / "pytest.ini"
 REQUIRED_QA_CHECKS = (
     "python tools/check_package_data_files.py",
     "python tools/check_canonical_repo_links.py",
@@ -320,14 +321,32 @@ def validate_perf_workflow_contract(path: Path) -> list[str]:
     errors: list[str] = []
     commands = load_workflow_run_commands(path)
 
-    required_commands = (
-        "pip install -r requirements-dev.txt",
-        "python -m pytest -m perf",
-    )
+    required_commands = ["pip install -r requirements-dev.txt"]
+
     for required in required_commands:
         if normalize_command(required) not in commands:
             errors.append(
                 f"{path}: falta el comando requerido en perf workflow: {required}"
+            )
+
+    perf_pytest_base = normalize_command("python -m pytest -m perf")
+    if not any(
+        command == perf_pytest_base or command.startswith(f"{perf_pytest_base} ")
+        for command in commands
+    ):
+        errors.append(
+            f"{path}: falta el comando requerido en perf workflow: python -m pytest -m perf"
+        )
+
+    pytest_ini_text = ""
+    if PYTEST_INI.exists():
+        pytest_ini_text = PYTEST_INI.read_text(encoding="utf-8")
+
+    if re.search(r"^\s*addopts\s*=\s*-m\s+[\"']not perf[\"']\s*$", pytest_ini_text, re.MULTILINE):
+        override_command = normalize_command("python -m pytest -m perf -o addopts=")
+        if override_command not in commands:
+            errors.append(
+                f"{path}: falta el comando requerido en perf workflow: python -m pytest -m perf -o addopts="
             )
 
     return errors
