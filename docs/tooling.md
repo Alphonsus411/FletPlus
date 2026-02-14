@@ -4,9 +4,14 @@ Esta guía reúne los apoyos disponibles durante el ciclo de vida de una app Fle
 
 ## QA y políticas de seguridad en CI
 
-Los workflows `.github/workflows/qa.yml` y `.github/workflows/quality.yml` ejecutan exactamente la misma secuencia que `tools/qa.sh` y la sesión `qa` de `noxfile.py`, para evitar divergencias entre local y CI.
+La definición base de QA está centralizada en `.github/workflows/reusable-quality.yml` (workflow reusable con `workflow_call`).
 
-Orden real de QA (idéntico en shell, workflows y nox):
+- `.github/workflows/qa.yml` es el **wrapper** para eventos `pull_request`.
+- `.github/workflows/quality.yml` es el **wrapper** para eventos `push`.
+
+Ambos wrappers delegan en el reusable para evitar duplicación y mantener en un solo lugar la matriz de Python (`3.9`, `3.10`, `3.11`) y todos los comandos de validación.
+
+Orden real de QA (idéntico en shell, reusable workflow y nox):
 
 1. `python tools/check_test_dependencies.py`
 2. `python -m pytest`
@@ -18,6 +23,8 @@ Orden real de QA (idéntico en shell, workflows y nox):
 8. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
+
+> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos, versiones de Python o herramientas de QA debe hacerse en `.github/workflows/reusable-quality.yml`. Los workflows `qa.yml` y `quality.yml` deben mantenerse como wrappers mínimos sin lógica duplicada.
 
 ## Estrategia de tests: suite rápida vs benchmarks
 
