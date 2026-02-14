@@ -26,6 +26,8 @@ Ejemplo:
 - En archivos dentro de `docs/` (distintos de `README.md`), usa enlaces relativos normales (`components.md`, `tooling.md#ancla`).
 - Evita enlazar como `docs/*.md` dentro de `README.md`; en MkDocs eso suele resolver a `docs/docs/*.md`.
 - Si cambias un título que define un ancla, revisa también los enlaces `#ancla` asociados.
+- No publiques artefactos de tooling en el contenido final: elimina marcas automáticas como `【F:...】`, `†L...` u otros fragmentos de citación interna antes de hacer merge.
+- Si necesitas mencionar origen de implementación en docs públicas, usa texto normal o enlaces Markdown estándar a rutas del repo (por ejemplo `../fletplus/cli/main.py`).
 - Antes de publicar, valida con:
 
 ```bash
