@@ -25,18 +25,62 @@ Orden real de QA (idéntico en shell, reusable workflow y nox):
 1. `python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket`
 2. `python tools/check_package_data_files.py`
 3. `python tools/check_canonical_repo_links.py`
-4. `python -m pytest`
-5. `python -m ruff check .`
-6. `python -m black --check .`
-7. `python -m mypy fletplus`
-8. `python tools/check_bandit_command_sync.py`
-9. `python -m bandit -c pyproject.toml -r fletplus`
-10. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
-11. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
+4. `python tools/check_github_workflows.py`
+5. `python -m pytest`
+6. `python -m ruff check .`
+7. `python -m black --check .`
+8. `python -m mypy fletplus`
+9. `python tools/check_bandit_command_sync.py`
+10. `python -m bandit -c pyproject.toml -r fletplus`
+11. `python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json`
+12. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
 > ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía.
+
+
+### Validación local de workflows (GitHub Actions)
+
+`tools/qa.sh` ejecuta `python tools/check_github_workflows.py`, que valida:
+
+- Sintaxis YAML de cada archivo en `.github/workflows/*.yml`.
+- Reglas base de GitHub Actions (presencia de `on`, `jobs`, estructura de `steps`, y consistencia `uses`/`runs-on`).
+
+Instalación necesaria para este check:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+El script depende de `PyYAML` (incluido en `requirements-dev.txt`).
+
+### Depuración de errores de workflows en local
+
+Si falla la validación de workflows:
+
+1. Ejecuta solo el check para aislar el error:
+
+   ```bash
+   python tools/check_github_workflows.py
+   ```
+2. Revisa el archivo y job/step indicado en el mensaje de error.
+3. Verifica YAML con parser local:
+
+   ```bash
+   python - <<'PY'
+from pathlib import Path
+import yaml
+path = Path('.github/workflows/reusable-quality.yml')
+yaml.safe_load(path.read_text(encoding='utf-8'))
+print('YAML OK')
+PY
+   ```
+4. Reejecuta QA completo:
+
+   ```bash
+   bash tools/qa.sh
+   ```
 
 ## Estrategia de tests: suite rápida vs benchmarks
 

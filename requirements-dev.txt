@@ -9,3 +9,4 @@ bandit>=1.7.8,<2
 pip-audit>=2.7,<3
 safety>=2.3,<3
 nox
+PyYAML>=6.0,<7
