@@ -203,6 +203,22 @@ async def test_authorizes_semantically_equivalent_origin_when_allowed_origin_has
             assert ready == "server:ready"
 
 
+def test_allowed_origins_with_only_invalid_entries_fails_fast():
+    with pytest.raises(ValueError, match="contiene solo orígenes inválidos"):
+        DevToolsServer(
+            allowed_origins={
+                "trusted.example",
+                "ftp://trusted.example",
+                "https://trusted.example/path",
+            }
+        )
+
+
+def test_allowed_origins_normalizes_valid_origin_with_implicit_port():
+    server = DevToolsServer(allowed_origins={"https://host/"})
+    assert server._allowed_origins == {"https://host:443"}
+
+
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "origin",

@@ -276,6 +276,14 @@ class DevToolsServer:
 
             normalized_origins.add(normalized_origin)
 
+        if allowed_origins and not normalized_origins:
+            raise ValueError(
+                "allowed_origins contiene solo orígenes inválidos. "
+                "Usa formatos como 'https://host', 'https://host:443', "
+                "'http://host' o 'http://host:80' (esquema obligatorio; "
+                "puerto implícito o explícito)."
+            )
+
         return normalized_origins
 
     @staticmethod
