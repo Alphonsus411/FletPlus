@@ -19,7 +19,16 @@ def _install_deps(session: nox.Session) -> None:
 @nox.session
 def pytest(session: nox.Session) -> None:
     _install_deps(session)
-    session.run("python", "tools/check_test_dependencies.py")
+    session.run(
+        "python",
+        "tools/check_test_dependencies.py",
+        "--suite",
+        "unit",
+        "--suite",
+        "cli",
+        "--suite",
+        "websocket",
+    )
     session.run("python", "-m", "pytest")
 
 
@@ -83,7 +92,16 @@ def safety_check(session: nox.Session) -> None:
 @nox.session(name="qa")
 def qa(session: nox.Session) -> None:
     _install_deps(session)
-    session.run("python", "tools/check_test_dependencies.py")
+    session.run(
+        "python",
+        "tools/check_test_dependencies.py",
+        "--suite",
+        "unit",
+        "--suite",
+        "cli",
+        "--suite",
+        "websocket",
+    )
     session.run("python", "-m", "pytest")
     session.run("python", "-m", "ruff", "check", ".")
     session.run("python", "-m", "black", "--check", ".")

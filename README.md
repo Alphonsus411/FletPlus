@@ -84,9 +84,9 @@ python -m pip install -e .[dev,qa,cli]
 python -m pip install -r requirements-dev.txt
 ```
 
-> **Nota**: las dependencias de desarrollo incluyen `websockets` y `watchdog`,
-> necesarias para los tests de herramientas/CLI, así que asegúrate de instalarlas
-> antes de ejecutar la batería de pruebas.
+> **Nota**: la validación previa de tests es configurable por suite (`--suite`).
+> Para ejecutar la suite general de QA se validan dependencias de `cli` (`watchdog`)
+> y `websocket` (`websockets`) antes de `pytest`.
 
 ### 🔁 Secuencia recomendada para tests (local y CI)
 
@@ -99,7 +99,7 @@ python -m pip install -e .[dev,qa,cli]
 2. **Validar imports críticos antes de `pytest`**:
 
 ```bash
-python tools/check_test_dependencies.py
+python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
 ```
 
 3. **Ejecutar la suite completa**:
@@ -108,7 +108,7 @@ python tools/check_test_dependencies.py
 python -m pytest
 ```
 
-El script `tools/check_test_dependencies.py` falla de forma temprana y explícita si faltan `websockets` o `watchdog`, mostrando un mensaje de instalación para corregir el entorno antes de correr tests.
+El script `tools/check_test_dependencies.py` permite seleccionar suites con `--suite` y falla de forma temprana si faltan dependencias opcionales de la suite elegida (por ejemplo, `watchdog` para `cli` o `websockets` para `websocket`).
 
 ### ⚡ Suite rápida por defecto y benchmarks `perf`
 
@@ -125,6 +125,15 @@ python -m pytest -m perf
 ```
 
 En CI, las pruebas `perf` se ejecutan en un workflow dedicado (`.github/workflows/perf.yml`) con disparador manual (`workflow_dispatch`) y nocturno (`schedule`), separado de QA/Quality para no afectar los tiempos del feedback estándar.
+
+Ejemplos de preflight por suite:
+
+```bash
+python tools/check_test_dependencies.py --suite default
+python tools/check_test_dependencies.py --suite cli
+python tools/check_test_dependencies.py --suite websocket
+python tools/check_test_dependencies.py --suite perf
+```
 
 ### ✅ Comandos estándar de calidad
 
@@ -188,13 +197,11 @@ Ambos workflows usan los mismos comandos de calidad que `tools/qa.sh` y
 - **`mypy`**: los flags y overrides viven en `pyproject.toml` bajo
   `[tool.mypy]`. Ajusta `ignore_missing_imports`, `strict` o los overrides por
   módulo si el error corresponde a dependencias opcionales.
-- **`pytest`**: configuración en `pytest.ini`. Los tests requieren `websockets`
-  instalado (está en `requirements-dev.txt` y en el extra `dev` de
-  `pyproject.toml`) y, si ejecutas pruebas ligadas a la CLI o a la recarga
-  automática, también necesitas `watchdog` para evitar fallos de importación en
-  `fletplus/cli/main.py`. Puedes instalarlo directamente con
-  `pip install -e .[cli]` o con `pip install -e .[dev,cli]`. Si fallan tests por
-  plugins o markers, actualiza `addopts`, `markers` o `testpaths`.
+- **`pytest`**: configuración en `pytest.ini`. Antes de ejecutar tests, usa
+  `tools/check_test_dependencies.py --suite ...` para validar únicamente las
+  dependencias opcionales de la suite objetivo (`cli` => `watchdog`, `websocket` =>
+  `websockets`, `perf` => preflight específico). Si fallan tests por plugins o
+  markers, actualiza `addopts`, `markers` o `testpaths`.
 - **`bandit`**: las exclusiones se definen en `pyproject.toml` para evitar
   falsos positivos en `tests/`, `venv/` y `.venv/`. Ajusta `exclude` o revisa
   el código señalado.
