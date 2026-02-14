@@ -56,7 +56,7 @@ mypy:
 	python -m mypy fletplus
 
 bandit:
-	python -m bandit -r fletplus
+	python -m bandit -c pyproject.toml -r fletplus
 
 pip-audit:
 	python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json

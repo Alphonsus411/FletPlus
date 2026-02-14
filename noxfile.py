@@ -53,7 +53,7 @@ def mypy(session: nox.Session) -> None:
 @nox.session
 def bandit(session: nox.Session) -> None:
     _install_deps(session)
-    session.run("python", "-m", "bandit", "-r", "fletplus")
+    session.run("python", "-m", "bandit", "-c", "pyproject.toml", "-r", "fletplus")
 
 
 @nox.session(name="pip-audit")
@@ -106,7 +106,8 @@ def qa(session: nox.Session) -> None:
     session.run("python", "-m", "ruff", "check", ".")
     session.run("python", "-m", "black", "--check", ".")
     session.run("python", "-m", "mypy", "fletplus")
-    session.run("python", "-m", "bandit", "-r", "fletplus")
+    session.run("python", "tools/check_bandit_command_sync.py")
+    session.run("python", "-m", "bandit", "-c", "pyproject.toml", "-r", "fletplus")
     session.run(
         "python",
         "-m",
