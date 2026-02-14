@@ -11,9 +11,18 @@ La definición base de QA está centralizada en `.github/workflows/reusable-qual
 
 Ambos wrappers delegan en el reusable para evitar duplicación y mantener en un solo lugar la matriz de Python (`3.9`, `3.10`, `3.11`) y todos los comandos de validación.
 
+El preflight soporta selección explícita por suite con `--suite`:
+
+- `--suite default`: validación mínima (sin dependencias opcionales).
+- `--suite cli`: valida dependencias de CLI (incluye `watchdog`).
+- `--suite websocket`: valida dependencias de WebSocket (incluye `websockets`).
+- `--suite perf`: validación específica para benchmarks de rendimiento.
+
+Se pueden combinar suites repitiendo la bandera (por ejemplo, `--suite unit --suite cli --suite websocket`).
+
 Orden real de QA (idéntico en shell, reusable workflow y nox):
 
-1. `python tools/check_test_dependencies.py`
+1. `python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket`
 2. `python -m pytest`
 3. `python -m ruff check .`
 4. `python -m black --check .`

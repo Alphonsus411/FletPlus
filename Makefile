@@ -4,7 +4,7 @@ PROFILE_LIMIT=30
 CONFIG_LIMIT=4
 RUST_MANIFESTS=fletplus/router/router_pr_rs/Cargo.toml fletplus/router/router_rs/Cargo.toml fletplus/animation/listeners_rs/Cargo.toml fletplus/animation/listeners_pr_rs/Cargo.toml fletplus/components/smart_table_rs/Cargo.toml
 
-.PHONY: profile update-build-config build build-rust rustify-auto qa test-preflight pytest ruff black mypy bandit pip-audit safety qa-all
+.PHONY: profile update-build-config build build-rust rustify-auto qa test-preflight test-preflight-full test-preflight-perf pytest ruff black mypy bandit pip-audit safety qa-all
 
 profile:
 	@mkdir -p build
@@ -35,7 +35,13 @@ qa:
 	./tools/qa.sh
 
 test-preflight:
-	python tools/check_test_dependencies.py
+	python tools/check_test_dependencies.py --suite default
+
+test-preflight-full:
+	python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
+
+test-preflight-perf:
+	python tools/check_test_dependencies.py --suite perf
 
 pytest:
 	python -m pytest
@@ -58,4 +64,4 @@ pip-audit:
 safety:
 	python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 
-qa-all: test-preflight ruff black mypy bandit pip-audit safety pytest
+qa-all: test-preflight-full ruff black mypy bandit pip-audit safety pytest
