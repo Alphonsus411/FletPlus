@@ -72,6 +72,10 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         expected_web_output = str((base / "dist" / "web").resolve())
 
         module_flag_index = web_command.index("-m")
+        executable_before_module = web_command[:module_flag_index].count(sys.executable)
+        assert module_flag_index == 1
+        assert executable_before_module == 1
+        assert web_command[0] == sys.executable
         assert web_command[module_flag_index + 1 : module_flag_index + 5] == [
             "flet",
             "build",
