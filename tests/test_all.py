@@ -1,23 +1,18 @@
-"""Ejecutor agregado para lanzar varias pruebas unitarias a la vez.
+"""Meta-pruebas ligeras para contrato público e importabilidad.
 
-La importación ``from tests...`` funciona correctamente cuando ``pytest``
-descubre el paquete porque añade la raíz del proyecto al ``sys.path``.
-Sin embargo, ejecutar el módulo directamente con ``python tests/test_all.py``
-fallaba con ``ModuleNotFoundError`` al no resolverse el paquete ``tests``.
-
-Para mantener la compatibilidad con ambos escenarios utilizamos
-``importlib`` y, en caso de no estar empacado, añadimos la raíz del
-repositorio al ``sys.path`` antes de cargar los módulos necesarios.
+Este módulo **no** ejecuta funciones ``test_*`` de otros archivos.
+Cuando se requiere una suite agregada, debe resolverse con selección de rutas
+(``pytest tests/test_a.py tests/test_b.py ...``) o markers en ``pytest.ini``.
 """
 
 from __future__ import annotations
 
 from importlib import import_module
-from pathlib import Path
-import sys
-from typing import Protocol, cast
+
+import pytest
 
 
+@pytest.mark.aggregate_contract
 def test_public_state_imports() -> None:
     from fletplus import State as PublicState
     from fletplus.core import AppState, State as CoreState
@@ -26,81 +21,39 @@ def test_public_state_imports() -> None:
     assert CoreState is AppState
 
 
-class _SmartTableModule(Protocol):
-    def test_smart_table_builds_with_filters_and_multi_sort(self) -> None: ...
-
-    def test_inline_editing_with_validation_and_callback(self) -> None: ...
-
-    def test_toggle_sort_cycle_removes_sort(self) -> None: ...
-
-    def test_set_filter_requires_filterable_column(self) -> None: ...
-
-    def test_virtualized_async_provider_and_manual_refresh(self) -> None: ...
-
-
-class _SidebarAdminModule(Protocol):
-    def test_sidebar_admin_build_and_selection(self) -> None: ...
-
-
-class _ResponsiveGridModule(Protocol):
-    def test_responsive_grid_builds_correctly(self) -> None: ...
+@pytest.mark.aggregate_contract
+@pytest.mark.parametrize(
+    "module_name",
+    [
+        "tests.test_smart_table",
+        "tests.test_sidebar_admin",
+        "tests.test_responsive_grid",
+        "tests.test_theme_manager",
+        "tests.test_fletplus_app",
+    ],
+)
+def test_core_component_test_modules_are_importable(module_name: str) -> None:
+    module = import_module(module_name)
+    assert module is not None
 
 
-class _ThemeManagerModule(Protocol):
-    def test_theme_manager_initialization_and_toggle(self) -> None: ...
-
-
-class _FletPlusAppModule(Protocol):
-    def test_fletplus_app_initialization_and_routing(self) -> None: ...
-
-
-def _module_prefix() -> str:
-    """Devuelve el prefijo apropiado para importar submódulos de pruebas."""
-
-    if __package__:
-        return f"{__package__}."
-
-    project_root = Path(__file__).resolve().parent.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-    return "tests."
-
-
-def _load_tests() -> tuple[
-    _SmartTableModule,
-    _SidebarAdminModule,
-    _ResponsiveGridModule,
-    _ThemeManagerModule,
-    _FletPlusAppModule,
-]:
-    prefix = _module_prefix()
-    return (
-        cast(_SmartTableModule, import_module(f"{prefix}test_smart_table")),
-        cast(_SidebarAdminModule, import_module(f"{prefix}test_sidebar_admin")),
-        cast(
-            _ResponsiveGridModule, import_module(f"{prefix}test_responsive_grid")
-        ),
-        cast(_ThemeManagerModule, import_module(f"{prefix}test_theme_manager")),
-        cast(_FletPlusAppModule, import_module(f"{prefix}test_fletplus_app")),
+@pytest.mark.aggregate_contract
+def test_public_component_entrypoints() -> None:
+    from fletplus import (
+        FletPlusApp,
+        ResponsiveGrid,
+        SidebarAdmin,
+        SmartTable,
+        ThemeManager,
     )
+    from fletplus.components.responsive_grid import ResponsiveGrid as DirectResponsiveGrid
+    from fletplus.components.sidebar_admin import SidebarAdmin as DirectSidebarAdmin
+    from fletplus.components.smart_table import SmartTable as DirectSmartTable
+    from fletplus.core_legacy import FletPlusApp as DirectFletPlusApp
+    from fletplus.themes.theme_manager import ThemeManager as DirectThemeManager
 
-
-(
-    test_smart_table_module,
-    test_sidebar_admin_module,
-    test_responsive_grid_module,
-    test_theme_manager_module,
-    test_fletplus_app_module,
-) = _load_tests()
-
-
-def test_all_components() -> None:
-    test_smart_table_module.test_smart_table_builds_with_filters_and_multi_sort()
-    test_smart_table_module.test_inline_editing_with_validation_and_callback()
-    test_smart_table_module.test_toggle_sort_cycle_removes_sort()
-    test_smart_table_module.test_set_filter_requires_filterable_column()
-    test_smart_table_module.test_virtualized_async_provider_and_manual_refresh()
-    test_sidebar_admin_module.test_sidebar_admin_build_and_selection()
-    test_responsive_grid_module.test_responsive_grid_builds_correctly()
-    test_theme_manager_module.test_theme_manager_initialization_and_toggle()
-    test_fletplus_app_module.test_fletplus_app_initialization_and_routing()
+    assert SmartTable is DirectSmartTable
+    assert SidebarAdmin is DirectSidebarAdmin
+    assert ResponsiveGrid is DirectResponsiveGrid
+    assert ThemeManager is DirectThemeManager
+    assert FletPlusApp is DirectFletPlusApp
