@@ -14,8 +14,8 @@ Cerrar fisuras detectadas en robustez, calidad continua y mantenimiento de docum
 - [ ] **T2.3** Integrar una fase de “smoke-tests” rápida para PRs y dejar la suite completa para quality/perf.
 
 ## Bloque 3 — CI/CD GitHub Actions
-- [ ] **T3.1** Añadir validación automática de workflows (parseo YAML + lint de actions).
-- [ ] **T3.2** Versionar matriz de Python en un único origen (mantener `reusable-quality.yml` como fuente de verdad).
+- [x] **T3.1** Añadir validación automática de workflows (parseo YAML + lint de actions).
+- [x] **T3.2** Versionar matriz de Python en un único origen (mantener `reusable-quality.yml` como fuente de verdad).
 - [ ] **T3.3** Publicar en la documentación interna una tabla de checks obligatorios por tipo de rama.
 
 ## Bloque 4 — Documentación técnica

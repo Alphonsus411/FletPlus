@@ -25,6 +25,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
+      - name: Validate CI/docs contract
+        run: python tools/check_ci_workflow_contract.py
+
       - name: Run quality checks
         run: |
           python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
