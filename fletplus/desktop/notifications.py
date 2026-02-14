@@ -2,12 +2,44 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shutil
 import subprocess
 import sys
 from typing import Callable
 
 logger = logging.getLogger(__name__)
+
+_MAX_LOG_BODY_LEN = 80
+
+
+def _sanitize_for_log(value: str, max_len: int = _MAX_LOG_BODY_LEN) -> str:
+    """Sanitiza texto para logs, evitando multilinea y exceso de longitud."""
+
+    compact = " ".join(value.split())
+    if len(compact) <= max_len:
+        return compact
+    return f"{compact[: max_len - 3]}..."
+
+
+def _is_verbose_logging_enabled(verbose: bool | None = None) -> bool:
+    """Habilita logging verboso solo en modo desarrollo."""
+
+    if verbose is False:
+        return False
+
+    dev_mode = os.environ.get("FLETPLUS_ENV", "").lower() in {"dev", "development"}
+    env_verbose = os.environ.get("FLETPLUS_NOTIFICATION_VERBOSE", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+    if verbose is True:
+        return dev_mode
+
+    return dev_mode and env_verbose
 
 
 def _escape_powershell(text: str) -> str:
@@ -145,14 +177,20 @@ def _notify_linux(title: str, body: str) -> bool:
     return False
 
 
-def _notify_in_page(title: str, body: str) -> bool:
+def _notify_in_page(title: str, body: str, *, verbose: bool | None = None) -> bool:
     """Muestra una notificación dentro de la página como fallback."""
 
-    print(f"Notificación: {title} - {body}")
+    logger.info("Notificación en página activada (fallback).")
+    if _is_verbose_logging_enabled(verbose):
+        logger.debug(
+            "Fallback notificación | title=%s | body=%s",
+            _sanitize_for_log(title),
+            _sanitize_for_log(body),
+        )
     return True
 
 
-def show_notification(title: str, body: str) -> None:
+def show_notification(title: str, body: str, *, verbose: bool | None = None) -> None:
     """Muestra una notificación nativa o una interna si la plataforma no la soporta."""
     plat = sys.platform
     if plat.startswith("win"):
@@ -171,4 +209,4 @@ def show_notification(title: str, body: str) -> None:
         logger.error("Error al mostrar la notificación: %s", err)
 
     if not delivered:
-        _notify_in_page(title, body)
+        _notify_in_page(title, body, verbose=verbose)

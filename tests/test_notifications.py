@@ -61,15 +61,15 @@ def test_fallback_to_in_page(monkeypatch):
     def fake_win(title, body):
         return False
 
-    def fake_fallback(title, body):
-        called.append((title, body))
+    def fake_fallback(title, body, *, verbose=None):
+        called.append((title, body, verbose))
         return True
 
     monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.setattr(notifications, "_notify_windows", fake_win)
     monkeypatch.setattr(notifications, "_notify_in_page", fake_fallback)
     notifications.show_notification("Hola", "Fallback")
-    assert called == [("Hola", "Fallback")]
+    assert called == [("Hola", "Fallback", None)]
 
 
 def test_show_notification_logs_error(monkeypatch, caplog):
@@ -83,3 +83,28 @@ def test_show_notification_logs_error(monkeypatch, caplog):
         notifications.show_notification("Hola", "Error")
 
     assert "Error al mostrar la notificación" in caplog.text
+
+
+def test_fallback_no_prints_sensitive_payload_and_verbose_logging(monkeypatch, capsys, caplog):
+    sensitive_body = "token=super-secret-value"
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(notifications, "_notify_linux", lambda *args, **kwargs: False)
+    monkeypatch.setenv("FLETPLUS_ENV", "development")
+    monkeypatch.delenv("FLETPLUS_NOTIFICATION_VERBOSE", raising=False)
+
+    with caplog.at_level(logging.DEBUG):
+        notifications.show_notification("Pago", sensitive_body)
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+    assert "Notificación en página activada (fallback)." in caplog.text
+    assert sensitive_body not in caplog.text
+
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        notifications.show_notification("Pago", sensitive_body, verbose=True)
+
+    assert "Fallback notificación" in caplog.text
+    assert sensitive_body in caplog.text
