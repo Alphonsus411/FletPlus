@@ -153,13 +153,18 @@ def _validate_package_name(paquete: str) -> None:
 
 
 def _validate_project_name(nombre: str) -> None:
+    if "/" in nombre or "\\" in nombre:
+        raise click.ClickException(
+            "El nombre del proyecto no puede incluir separadores de ruta Unix ('/') ni Windows ('\\\\')."
+        )
+
     separators = {os.sep}
     if os.altsep:
         separators.add(os.altsep)
 
     if any(sep in nombre for sep in separators):
         raise click.ClickException(
-            "El nombre del proyecto no puede incluir separadores de ruta."
+            "El nombre del proyecto no puede incluir separadores de ruta Unix ('/') ni Windows ('\\\\')."
         )
 
     if ".." in Path(nombre).parts:

@@ -83,6 +83,37 @@ def test_create_rejects_invalid_package_name(monkeypatch, watchdog_available: bo
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
+@pytest.mark.parametrize("project_name", ["demo/sub", "demo\\sub"])
+def test_create_rejects_path_separators_in_any_platform(
+    monkeypatch, watchdog_available: bool, project_name: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(app, ["create", project_name])
+
+    assert result.exit_code != 0
+    assert "separadores de ruta Unix ('/') ni Windows ('\\\\')" in result.output
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+@pytest.mark.parametrize("project_name", ["mi_app", "_demo", "app2"])
+def test_create_keeps_accepting_valid_project_names(
+    monkeypatch, watchdog_available: bool, project_name: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(app, ["create", project_name])
+
+    assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
 def test_create_fails_when_target_exists_as_file(monkeypatch, watchdog_available: bool) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
