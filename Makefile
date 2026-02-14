@@ -10,7 +10,7 @@ profile:
 	@mkdir -p build
 	python -m cProfile -o $(PROFILE) -s cumtime -m compileall fletplus
 
-update-build-config: $(PROFILE)
+update-build-config: profile
 	python tools/select_cython_modules.py --profile $(PROFILE) --config $(CONFIG) --limit $(CONFIG_LIMIT)
 
 build-rust:
@@ -29,7 +29,7 @@ rustify-auto:
 	tools/pyrust_native_auto.sh
 
 build: update-build-config build-rust
-	python setup.py build_ext --inplace
+	python -m build
 
 qa:
 	./tools/qa.sh

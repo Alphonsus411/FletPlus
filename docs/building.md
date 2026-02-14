@@ -34,8 +34,8 @@ módulos Cython en `build_config.yaml`.
 Para mantener compatibilidad al instalar desde fuente sin Cython, conserva los
 artefactos `*.c` versionados junto a sus `.pyx`. Si cambias un módulo Cython,
 regenera el listado con `tools/select_cython_modules.py` (o `make
-update-build-config`) y ejecuta `make build` para refrescar los artefactos en
-el flujo actual.
+update-build-config`) y ejecuta `make build` para encadenar `update-build-config`,
+`build-rust` y `python -m build` en el flujo actual.
 
 ## Ejemplos de uso
 

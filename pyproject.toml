@@ -43,6 +43,7 @@ Documentation = "https://github.com/Alphonsus411/fletplus#readme"
 [project.optional-dependencies]
 speedups = ["cython>=3.0"]
 rust = ["pyrust-native>=0.0.4", "maturin>=1.7"]
+build = ["build>=1.2"]
 cli = ["watchdog>=3.0"]
 dev = [
   "pytest>=7.4,<9",
