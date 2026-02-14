@@ -73,6 +73,41 @@ def qa(session):
         encoding="utf-8",
     )
 
+    docs_workflow = workflows_dir / "docs.yml"
+    docs_workflow.write_text(
+        """
+name: Docs
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
+""",
+        encoding="utf-8",
+    )
+
+    perf_workflow = workflows_dir / "perf.yml"
+    perf_workflow.write_text(
+        """
+name: Perf
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip install -r requirements-dev.txt
+      - run: |
+          python -m pytest -m perf
+""",
+        encoding="utf-8",
+    )
+
     docs_content = "\n".join(
         [
             "Referencias:",
@@ -93,6 +128,8 @@ def qa(session):
     monkeypatch.setattr(check_ci_workflow_contract, "NOXFILE", tmp_path / "noxfile.py")
     monkeypatch.setattr(check_ci_workflow_contract, "README_DOC", tmp_path / "README.md")
     monkeypatch.setattr(check_ci_workflow_contract, "TOOLING_DOC", docs_dir / "tooling.md")
+    monkeypatch.setattr(check_ci_workflow_contract, "DOCS_WORKFLOW", docs_workflow)
+    monkeypatch.setattr(check_ci_workflow_contract, "PERF_WORKFLOW", perf_workflow)
     monkeypatch.setattr(
         check_ci_workflow_contract,
         "WRAPPER_WORKFLOWS",
@@ -106,6 +143,8 @@ def qa(session):
         "qa_wrapper": qa_wrapper,
         "quality_wrapper": quality_wrapper,
         "qa_script": tools_dir / "qa.sh",
+        "docs_workflow": docs_workflow,
+        "perf_workflow": perf_workflow,
         "readme": tmp_path / "README.md",
         "tooling": docs_dir / "tooling.md",
     }
@@ -235,3 +274,74 @@ def test_validate_workflow_references_fails_for_missing_doc_reference(
     assert errors == [
         "Workflow referenciado en docs no existe: .github/workflows/missing-workflow.yml"
     ]
+
+
+def test_validate_docs_workflow_contract_passes_with_required_jobs_and_actions(
+    contract_env: dict[str, Path],
+) -> None:
+    errors = check_ci_workflow_contract.validate_docs_workflow_contract(
+        contract_env["docs_workflow"]
+    )
+
+    assert errors == []
+
+
+def test_validate_docs_workflow_contract_fails_when_build_or_deploy_contract_breaks(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["docs_workflow"].write_text(
+        """
+name: Docs
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/upload-pages-artifact@v3
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo deploy
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_docs_workflow_contract(
+        contract_env["docs_workflow"]
+    )
+
+    assert any("build' debe usar actions/configure-pages" in error for error in errors)
+    assert any("deploy' debe depender de 'build'" in error for error in errors)
+    assert any("deploy' debe usar actions/deploy-pages" in error for error in errors)
+
+
+def test_validate_perf_workflow_contract_passes_when_deps_and_perf_pytest_exist(
+    contract_env: dict[str, Path],
+) -> None:
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert errors == []
+
+
+def test_validate_perf_workflow_contract_fails_when_required_commands_are_missing(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo no-op
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert any("pip install -r requirements-dev.txt" in error for error in errors)
+    assert any("python -m pytest -m perf" in error for error in errors)

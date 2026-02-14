@@ -18,14 +18,16 @@ WRAPPER_WORKFLOWS = (
     REPO_ROOT / ".github/workflows/qa.yml",
     REPO_ROOT / ".github/workflows/quality.yml",
 )
+DOCS_WORKFLOW = REPO_ROOT / ".github/workflows/docs.yml"
+PERF_WORKFLOW = REPO_ROOT / ".github/workflows/perf.yml"
 REQUIRED_QA_CHECKS = (
     "python tools/check_package_data_files.py",
     "python tools/check_canonical_repo_links.py",
 )
 
 WORKFLOW_REF_PATTERN = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.yml")
-RUN_BLOCK_PATTERN = re.compile(r"^\s*run:\s*\|\s*$", re.MULTILINE)
-INLINE_RUN_PATTERN = re.compile(r"^\s*run:\s*(.+?)\s*$", re.MULTILINE)
+RUN_BLOCK_PATTERN = re.compile(r"^\s*(?:-\s*)?run:\s*\|\s*$", re.MULTILINE)
+INLINE_RUN_PATTERN = re.compile(r"^\s*(?:-\s*)?run:\s*(.+?)\s*$", re.MULTILINE)
 USES_REUSABLE_PATTERN = re.compile(
     r"^\s*uses:\s*\./\.github/workflows/reusable-quality\.yml\s*$", re.MULTILINE
 )
@@ -187,6 +189,63 @@ def validate_wrapper_workflow(path: Path) -> list[str]:
     return errors
 
 
+def _extract_job_block(workflow_text: str, job_name: str) -> str:
+    pattern = re.compile(
+        rf"(?ms)^  {re.escape(job_name)}:\n(?P<body>(?:^(?:    |\s*$).*(?:\n|$))+)"
+    )
+    match = pattern.search(workflow_text)
+    return match.group("body") if match else ""
+
+
+def validate_docs_workflow_contract(path: Path) -> list[str]:
+    errors: list[str] = []
+    text = path.read_text(encoding="utf-8")
+
+    build_block = _extract_job_block(text, "build")
+    deploy_block = _extract_job_block(text, "deploy")
+
+    if not build_block:
+        errors.append(f"{path}: falta el job obligatorio 'build'.")
+    else:
+        if "uses: actions/configure-pages@" not in build_block:
+            errors.append(
+                f"{path}: el job 'build' debe usar actions/configure-pages."
+            )
+        if "uses: actions/upload-pages-artifact@" not in build_block:
+            errors.append(
+                f"{path}: el job 'build' debe usar actions/upload-pages-artifact."
+            )
+
+    if not deploy_block:
+        errors.append(f"{path}: falta el job obligatorio 'deploy'.")
+    else:
+        if not re.search(r"^\s*needs:\s*build\s*$", deploy_block, re.MULTILINE):
+            errors.append(f"{path}: el job 'deploy' debe depender de 'build' (needs: build).")
+        if "uses: actions/deploy-pages@" not in deploy_block:
+            errors.append(
+                f"{path}: el job 'deploy' debe usar actions/deploy-pages."
+            )
+
+    return errors
+
+
+def validate_perf_workflow_contract(path: Path) -> list[str]:
+    errors: list[str] = []
+    commands = load_workflow_run_commands(path)
+
+    required_commands = (
+        "pip install -r requirements-dev.txt",
+        "python -m pytest -m perf",
+    )
+    for required in required_commands:
+        if normalize_command(required) not in commands:
+            errors.append(
+                f"{path}: falta el comando requerido en perf workflow: {required}"
+            )
+
+    return errors
+
+
 def validate_workflow_references() -> list[str]:
     errors: list[str] = []
     referenced: set[str] = set()
@@ -298,6 +357,8 @@ def main() -> int:
     errors.extend(validate_required_qa_scripts_exist())
     errors.extend(validate_critical_commands_sync())
     errors.extend(validate_pages_docs_wording())
+    errors.extend(validate_docs_workflow_contract(DOCS_WORKFLOW))
+    errors.extend(validate_perf_workflow_contract(PERF_WORKFLOW))
 
     for wrapper in WRAPPER_WORKFLOWS:
         errors.extend(validate_wrapper_workflow(wrapper))

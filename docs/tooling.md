@@ -231,3 +231,10 @@ El job `deploy` depende de ese artefacto y ejecuta `actions/deploy-pages@v4`, ex
 > ✅ Recuerda habilitar GitHub Pages la primera vez desde **Settings → Pages** seleccionando “GitHub Actions” como fuente. Después de ese paso manual, cada `push` sobre `main` publicará la nueva versión de la documentación sin intervención adicional.
 
 Para mantener la compatibilidad de enlaces entre el `README.md` en GitHub y el `index.md` de MkDocs (que incluye ese README), sigue también la guía breve de [estilo de enlaces](link-style.md).
+
+Además, `tools/check_ci_workflow_contract.py` valida automáticamente el contrato mínimo de CI para documentación y rendimiento:
+
+- `docs.yml` debe conservar los jobs `build`/`deploy`; en `build` se exige `actions/configure-pages` y `actions/upload-pages-artifact`, y en `deploy` se exige `needs: build` junto con `actions/deploy-pages`.
+- `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf`.
+
+Estos checks se ejecutan en tests (`tests/test_check_ci_workflow_contract.py`) para detectar drift antes de mezclar cambios en workflows.
