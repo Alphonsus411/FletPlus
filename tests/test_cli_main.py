@@ -248,6 +248,15 @@ def test_profile_creates_non_empty_output_file(monkeypatch) -> None:
     cli_main = _load_cli_main_module()
     runner = CliRunner()
 
+    monkeypatch.setattr(
+        cli_main,
+        "PROFILE_FLOWS",
+        {
+            "router": lambda: sum(range(3)),
+            "scaffold": lambda: "ok",
+        },
+    )
+
     with runner.isolated_filesystem() as temp_dir:
         base = Path(temp_dir)
         output = base / "out" / "profile.txt"
@@ -257,6 +266,7 @@ def test_profile_creates_non_empty_output_file(monkeypatch) -> None:
         )
 
         assert result.exit_code == 0, result.output
+        assert "Ejecutando 1 flujo(s): router" in result.output
         assert output.exists()
         assert output.read_text(encoding="utf-8").strip() != ""
 
