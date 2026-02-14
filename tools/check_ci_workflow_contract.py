@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REUSABLE_WORKFLOW = REPO_ROOT / ".github/workflows/reusable-quality.yml"
 QA_SCRIPT = REPO_ROOT / "tools/qa.sh"
@@ -28,10 +30,6 @@ REQUIRED_QA_CHECKS = (
 WORKFLOW_REF_PATTERN = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.yml")
 RUN_BLOCK_PATTERN = re.compile(r"^\s*(?:-\s*)?run:\s*\|\s*$", re.MULTILINE)
 INLINE_RUN_PATTERN = re.compile(r"^\s*(?:-\s*)?run:\s*(.+?)\s*$", re.MULTILINE)
-USES_REUSABLE_PATTERN = re.compile(
-    r"^\s*uses:\s*\./\.github/workflows/reusable-quality\.yml\s*$", re.MULTILINE
-)
-
 OBSOLETE_DOC_PHRASES = (
     "desde la rama `gh-pages`",
     "desde la rama gh-pages",
@@ -178,14 +176,29 @@ def load_nox_qa_commands(path: Path) -> list[str]:
 
 def validate_wrapper_workflow(path: Path) -> list[str]:
     errors: list[str] = []
-    text = path.read_text(encoding="utf-8")
+    try:
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        return [f"{path}: YAML inválido ({exc})."]
 
-    if not USES_REUSABLE_PATTERN.search(text):
-        errors.append(
-            f"{path}: debe delegar en ./.github/workflows/reusable-quality.yml"
-        )
-    if re.search(r"^\s*steps:\s*$", text, re.MULTILINE):
-        errors.append(f"{path}: no debe definir steps locales (wrapper mínimo)")
+    jobs = content.get("jobs") if isinstance(content, dict) else None
+    if not isinstance(jobs, dict) or not jobs:
+        errors.append(f"{path}: debe delegar en ./.github/workflows/reusable-quality.yml")
+        return errors
+
+    for job_def in jobs.values():
+        if not isinstance(job_def, dict):
+            errors.append(
+                f"{path}: debe delegar en ./.github/workflows/reusable-quality.yml"
+            )
+            continue
+
+        if job_def.get("uses") != "./.github/workflows/reusable-quality.yml":
+            errors.append(
+                f"{path}: debe delegar en ./.github/workflows/reusable-quality.yml"
+            )
+        if "steps" in job_def:
+            errors.append(f"{path}: no debe definir steps locales (wrapper mínimo)")
 
     return errors
 
