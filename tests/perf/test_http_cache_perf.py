@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 
 import httpx
+import pytest
 
 from fletplus.http import DiskCache
 
@@ -28,6 +29,7 @@ def _build_responses(requests: list[httpx.Request]) -> list[httpx.Response]:
     return responses
 
 
+@pytest.mark.perf
 def test_http_cache_microbenchmark(tmp_path: Path):
     cache = DiskCache(tmp_path, max_entries=600)
     requests = _build_requests(500)
