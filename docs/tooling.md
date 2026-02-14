@@ -280,6 +280,6 @@ Para mantener la compatibilidad de enlaces entre el `README.md` en GitHub y el `
 Además, `tools/check_ci_workflow_contract.py` valida automáticamente el contrato mínimo de CI para documentación y rendimiento:
 
 - `docs.yml` debe conservar los jobs `build`/`deploy`; el workflow debe incluir `pull_request` hacia `main` y `develop`, `build` debe ejecutar `mkdocs build --strict` y usar `actions/configure-pages` + `actions/upload-pages-artifact`, y `deploy` debe usar `needs: build`, `actions/deploy-pages` y la condición `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`.
-- `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf -o addopts=`.
+- `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf`. Si `pytest.ini` define una exclusión global del marker `perf` (por ejemplo, `addopts = -m "not perf"`), entonces el workflow debe forzar el override `-o addopts=` para garantizar que los benchmarks sí se ejecuten en CI.
 
 Estos checks se ejecutan en tests (`tests/test_check_ci_workflow_contract.py`) para detectar drift antes de mezclar cambios en workflows.

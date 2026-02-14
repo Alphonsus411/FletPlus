@@ -807,6 +807,38 @@ jobs:
     assert any("python -m pytest -m perf -o addopts=" in error for error in errors)
 
 
+def test_validate_perf_workflow_contract_passes_without_addopts_override_when_pytest_ini_does_not_exclude_perf(
+    contract_env: dict[str, Path],
+) -> None:
+    (contract_env["tmp_path"] / "pytest.ini").write_text(
+        """
+[pytest]
+addopts = -ra
+""",
+        encoding="utf-8",
+    )
+    contract_env["perf_workflow"].write_text(
+        """
+name: Perf
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          pip install -r requirements-dev.txt
+      - run: |
+          python -m pytest -m perf
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_perf_workflow_contract(
+        contract_env["perf_workflow"]
+    )
+
+    assert errors == []
+
+
 def test_validate_perf_workflow_contract_fails_when_required_commands_are_in_wrong_job(
     contract_env: dict[str, Path],
 ) -> None:
