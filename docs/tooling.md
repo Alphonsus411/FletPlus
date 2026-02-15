@@ -9,7 +9,7 @@ La fuente única de verdad de QA está centralizada en `tools/qa.sh`. El workflo
 - `.github/workflows/qa.yml` es el **wrapper** para eventos `pull_request`.
 - `.github/workflows/quality.yml` es el **wrapper** para eventos `push`.
 
-Ambos wrappers delegan en el reusable para evitar duplicación y mantener en un solo lugar la matriz de Python (`3.9`, `3.10`, `3.11`). El reusable, a su vez, ejecuta `bash tools/qa.sh` sin redefinir comandos de QA.
+Ambos wrappers delegan en el reusable para evitar duplicación. El reusable se divide en dos jobs contractuales: `tests-matrix` (matriz `3.9`, `3.10`, `3.11`) y `static-security` (solo `3.11`). Cada job delega en `tools/qa.sh` con `--scope` para no repetir auditorías de seguridad en toda la matriz.
 
 El preflight soporta selección explícita por suite con `--suite`:
 
@@ -37,7 +37,7 @@ Orden real de QA (idéntico en shell, reusable workflow y nox):
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
-> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía. Además, `tools/check_bandit_command_sync.py` valida que `tools/qa.sh` mantenga el comando canónico de Bandit y que el reusable siga delegando en `bash tools/qa.sh`.
+> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía. En CI, el reusable usa `bash tools/qa.sh --scope tests-matrix` y `bash tools/qa.sh --scope static-security`; localmente puedes ejecutar `bash tools/qa.sh` (scope `all`) para correr todo. Además, `tools/check_bandit_command_sync.py` valida que `tools/qa.sh` mantenga el comando canónico de Bandit y que el reusable siga delegando en `tools/qa.sh`.
 
 
 ### Validación local de workflows (GitHub Actions)
@@ -76,9 +76,12 @@ yaml.safe_load(path.read_text(encoding='utf-8'))
 print('YAML OK')
 PY
    ```
-4. Reejecuta QA completo:
+4. Reejecuta QA según necesidad:
 
    ```bash
+   bash tools/qa.sh --scope tests-matrix
+   bash tools/qa.sh --scope static-security
+   # o todo junto:
    bash tools/qa.sh
    ```
 

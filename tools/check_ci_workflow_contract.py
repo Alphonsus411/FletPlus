@@ -29,9 +29,13 @@ REQUIRED_QA_CHECKS = (
     "python tools/check_canonical_repo_links.py",
 )
 
-WORKFLOW_REF_PATTERN = re.compile(
-    r"\.github/workflows/[A-Za-z0-9_.-]+\.(?:yml|yaml)"
-)
+REUSABLE_JOB_NAMES = ("tests-matrix", "static-security")
+REUSABLE_JOB_QA_SCOPE_COMMANDS = {
+    "tests-matrix": "bash tools/qa.sh --scope tests-matrix",
+    "static-security": "bash tools/qa.sh --scope static-security",
+}
+
+WORKFLOW_REF_PATTERN = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.(?:yml|yaml)")
 OBSOLETE_DOC_PHRASES = (
     "desde la rama `gh-pages`",
     "desde la rama gh-pages",
@@ -196,7 +200,9 @@ def validate_wrapper_workflow(path: Path) -> list[str]:
 
     jobs = content.get("jobs") if isinstance(content, dict) else None
     if not isinstance(jobs, dict) or not jobs:
-        errors.append(f"{path}: debe delegar en ./.github/workflows/reusable-quality.yml")
+        errors.append(
+            f"{path}: debe delegar en ./.github/workflows/reusable-quality.yml"
+        )
         return errors
 
     for job_def in jobs.values():
@@ -231,7 +237,9 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
     except yaml.YAMLError as exc:
         return [f"{path}: YAML inválido ({exc})."]
 
-    workflow_on = content.get("on", content.get(True)) if isinstance(content, dict) else None
+    workflow_on = (
+        content.get("on", content.get(True)) if isinstance(content, dict) else None
+    )
     if not isinstance(workflow_on, dict):
         errors.append(f"{path}: falta la sección de triggers 'on'.")
     else:
@@ -290,9 +298,7 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
                 f"{path}: el job 'build' debe ejecutar mkdocs build --strict."
             )
         if "actions/configure-pages" not in build_uses:
-            errors.append(
-                f"{path}: el job 'build' debe usar actions/configure-pages."
-            )
+            errors.append(f"{path}: el job 'build' debe usar actions/configure-pages.")
         if "actions/upload-pages-artifact" not in build_uses:
             errors.append(
                 f"{path}: el job 'build' debe usar actions/upload-pages-artifact."
@@ -324,9 +330,7 @@ def validate_docs_workflow_contract(path: Path) -> list[str]:
 
         deploy_uses = _job_step_uses(deploy_job)
         if "actions/deploy-pages" not in deploy_uses:
-            errors.append(
-                f"{path}: el job 'deploy' debe usar actions/deploy-pages."
-            )
+            errors.append(f"{path}: el job 'deploy' debe usar actions/deploy-pages.")
 
     return errors
 
@@ -344,12 +348,13 @@ def validate_perf_workflow_contract(path: Path) -> list[str]:
             )
 
     if not any(re.search(r"(?:^|\s)pytest(?:\s|$)", command) for command in commands):
-        errors.append(
-            f"{path}: falta el comando requerido en perf workflow: pytest"
-        )
+        errors.append(f"{path}: falta el comando requerido en perf workflow: pytest")
 
     perf_pytest_base = normalize_command("python -m pytest -m perf")
-    if not any(command == perf_pytest_base or command.startswith(f"{perf_pytest_base} ") for command in commands):
+    if not any(
+        command == perf_pytest_base or command.startswith(f"{perf_pytest_base} ")
+        for command in commands
+    ):
         errors.append(
             f"{path}: falta el comando requerido en perf workflow: python -m pytest -m perf"
         )
@@ -383,7 +388,9 @@ def pytest_ini_has_global_perf_exclusion(pytest_ini_text: str) -> bool:
         addopts = ""
 
     if not addopts:
-        addopts_match = re.search(r"^\s*addopts\s*=\s*(?P<value>.+)$", pytest_ini_text, re.MULTILINE)
+        addopts_match = re.search(
+            r"^\s*addopts\s*=\s*(?P<value>.+)$", pytest_ini_text, re.MULTILINE
+        )
         if addopts_match:
             addopts = addopts_match.group("value")
 
@@ -419,23 +426,89 @@ def validate_required_qa_scripts_exist() -> list[str]:
 def validate_critical_commands_sync() -> list[str]:
     errors: list[str] = []
     workflow_commands = load_workflow_run_commands(REUSABLE_WORKFLOW)
+    workflow_commands_by_job = load_workflow_run_commands_for_jobs(
+        REUSABLE_WORKFLOW, REUSABLE_JOB_NAMES
+    )
     qa_commands = extract_python_commands_from_text(
         QA_SCRIPT.read_text(encoding="utf-8")
     )
     nox_qa_commands = load_nox_qa_commands(NOXFILE)
 
-    if normalize_command("bash tools/qa.sh") not in workflow_commands:
+    try:
+        reusable_content = yaml.safe_load(REUSABLE_WORKFLOW.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        reusable_content = {}
+    reusable_jobs = (
+        reusable_content.get("jobs", {}) if isinstance(reusable_content, dict) else {}
+    )
+
+    for job_name in REUSABLE_JOB_NAMES:
+        job_commands = workflow_commands_by_job.get(job_name, [])
+        if not job_commands:
+            errors.append(
+                f"reusable-quality.yml debe definir el job contractual '{job_name}'."
+            )
+
+    tests_job = (
+        reusable_jobs.get("tests-matrix") if isinstance(reusable_jobs, dict) else None
+    )
+    tests_matrix = (
+        tests_job.get("strategy", {}).get("matrix", {}).get("python-version")
+        if isinstance(tests_job, dict)
+        else None
+    )
+    if not isinstance(tests_matrix, list) or set(tests_matrix) != {
+        "3.9",
+        "3.10",
+        "3.11",
+    }:
         errors.append(
-            "reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'."
+            "reusable-quality.yml job 'tests-matrix' debe usar matriz python-version: [3.9, 3.10, 3.11]."
         )
+
+    static_job = (
+        reusable_jobs.get("static-security")
+        if isinstance(reusable_jobs, dict)
+        else None
+    )
+    static_steps = static_job.get("steps") if isinstance(static_job, dict) else None
+    setup_python_311 = False
+    if isinstance(static_steps, list):
+        for step in static_steps:
+            if not isinstance(step, dict):
+                continue
+            uses_value = step.get("uses")
+            if not isinstance(uses_value, str) or not uses_value.startswith(
+                "actions/setup-python"
+            ):
+                continue
+            with_values = step.get("with")
+            if (
+                isinstance(with_values, dict)
+                and str(with_values.get("python-version")) == "3.11"
+            ):
+                setup_python_311 = True
+                break
+    if not setup_python_311:
+        errors.append(
+            "reusable-quality.yml job 'static-security' debe fijar python-version 3.11 en actions/setup-python."
+        )
+
+    for job_name, command in REUSABLE_JOB_QA_SCOPE_COMMANDS.items():
+        normalized = normalize_command(command)
+        if normalized not in workflow_commands_by_job.get(job_name, []):
+            errors.append(
+                f"reusable-quality.yml job '{job_name}' debe ejecutar exactamente '{command}'."
+            )
+        if workflow_commands.count(normalized) != 1:
+            errors.append(
+                f"reusable-quality.yml debe invocar '{command}' una única vez."
+            )
 
     if normalize_command("bash tools/qa.sh") not in nox_qa_commands:
         errors.append(
             "noxfile.py sesión qa debe ejecutar exactamente 'bash tools/qa.sh'."
         )
-
-    if workflow_commands.count(normalize_command("bash tools/qa.sh")) != 1:
-        errors.append("reusable-quality.yml debe invocar tools/qa.sh una única vez.")
 
     for command in REQUIRED_QA_CHECKS:
         normalized = normalize_command(command)
@@ -516,7 +589,7 @@ def main() -> int:
         return 1
 
     print(
-        "OK: contrato CI/docs validado (workflow reusable, tools/qa.sh, nox y docs sincronizados)."
+        "OK: contrato CI/docs validado (workflow reusable por jobs, tools/qa.sh, nox y docs sincronizados)."
     )
     return 0
 

@@ -24,10 +24,14 @@ def checker_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Pa
         """
 name: Reusable Quality
 jobs:
-  qa:
+  tests-matrix:
     steps:
-      - name: QA
-        run: bash tools/qa.sh
+      - name: QA tests
+        run: bash tools/qa.sh --scope tests-matrix
+  static-security:
+    steps:
+      - name: QA static
+        run: bash tools/qa.sh --scope static-security
 """,
         encoding='utf-8',
     )
@@ -45,7 +49,9 @@ python -m bandit -c pyproject.toml -r fletplus
     return {'workflow': workflow_path, 'qa': qa_path}
 
 
-def test_main_ok_when_bandit_is_aligned(checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_ok_when_bandit_is_aligned(
+    checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
     result = check_bandit_command_sync.main()
 
     captured = capsys.readouterr()
@@ -96,12 +102,12 @@ def test_main_ok_when_workflow_run_is_multiline_with_qa_call(
         """
 name: Reusable Quality
 jobs:
-  qa:
+  static-security:
     steps:
       - name: QA
         run: |
           echo "pre-check"
-          bash tools/qa.sh
+          bash tools/qa.sh --scope static-security
 """,
         encoding='utf-8',
     )
@@ -110,7 +116,7 @@ jobs:
 
     captured = capsys.readouterr()
     assert result == 0
-    assert "OK: reusable-quality.yml delega en 'bash tools/qa.sh'" in captured.out
+    assert "OK: reusable-quality.yml delega en tools/qa.sh" in captured.out
 
 
 def test_main_fails_when_workflow_run_is_multiline_without_qa_call(
@@ -120,7 +126,7 @@ def test_main_fails_when_workflow_run_is_multiline_without_qa_call(
         """
 name: Reusable Quality
 jobs:
-  qa:
+  static-security:
     steps:
       - name: QA
         run: |
@@ -134,4 +140,7 @@ jobs:
 
     captured = capsys.readouterr()
     assert result == 1
-    assert "Contrato roto: reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'." in captured.err
+    assert (
+        "Contrato roto: reusable-quality.yml debe delegar en tools/qa.sh (con o sin --scope)."
+        in captured.err
+    )
