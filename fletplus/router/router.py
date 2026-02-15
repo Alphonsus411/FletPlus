@@ -1,25 +1,23 @@
 """Motor de enrutamiento para FletPlus."""
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
 import warnings
 
-try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
-    from . import router_pr as _router_pr
-except Exception:  # pragma: no cover - fallback cuando no hay compilación
-    _router_pr = None
 
-try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
-    from . import router_rs as _router_rs
-except Exception:  # pragma: no cover - fallback cuando no hay compilación
-    _router_rs = None
+def _import_optional_backend(module_name: str):
+    try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
+        return importlib.import_module(f".{module_name}", __package__)
+    except (ImportError, ModuleNotFoundError, OSError):  # pragma: no cover - fallback controlado
+        return None
 
-try:  # pragma: no cover - la importación puede fallar en entornos sin compilación
-    from . import router_cy as _router_cy
-except Exception:  # pragma: no cover - fallback cuando no hay compilación
-    _router_cy = None
+
+_router_pr = _import_optional_backend("router_pr")
+_router_rs = _import_optional_backend("router_rs")
+_router_cy = _import_optional_backend("router_cy")
 
 if _router_pr is None and _router_rs is None and _router_cy is None:
     warnings.warn(
