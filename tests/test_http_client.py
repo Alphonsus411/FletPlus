@@ -433,10 +433,12 @@ async def test_http_client_cache_respects_no_cache(tmp_path: Path):
 @pytest.mark.anyio
 async def test_http_client_no_cache_persists_metadata_without_serving_from_cache(tmp_path: Path):
     call_count = 0
+    seen_if_none_match: list[str | None] = []
 
     async def handler(request: httpx.Request) -> httpx.Response:
         nonlocal call_count
         call_count += 1
+        seen_if_none_match.append(request.headers.get("If-None-Match"))
         return httpx.Response(
             200,
             headers={
@@ -458,6 +460,11 @@ async def test_http_client_no_cache_persists_metadata_without_serving_from_cache
     assert first.json() == {"count": 1}
     assert second.json() == {"count": 2}
     assert call_count == 2
+    assert seen_if_none_match == [None, '"abc123"']
+
+    last_event = client.after_request.get()
+    assert last_event is not None
+    assert last_event.from_cache is False
 
     cache_files = list(tmp_path.glob("*.json"))
     assert len(cache_files) == 1
@@ -465,6 +472,138 @@ async def test_http_client_no_cache_persists_metadata_without_serving_from_cache
     assert cached_response is not None
     assert cached_response.headers["ETag"] == '"abc123"'
     assert cached_response.headers["Last-Modified"] == "Wed, 21 Oct 2015 07:28:00 GMT"
+
+
+@pytest.mark.anyio
+async def test_http_client_revalidates_no_cache_with_etag_and_uses_cached_body(tmp_path: Path):
+    call_count = 0
+    seen_if_none_match: list[str | None] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        seen_if_none_match.append(request.headers.get("If-None-Match"))
+        if call_count == 1:
+            return httpx.Response(
+                200,
+                headers={
+                    "Cache-Control": "no-cache",
+                    "ETag": '"etag-v1"',
+                    "Last-Modified": "Wed, 21 Oct 2015 07:28:00 GMT",
+                    "X-Version": "v1",
+                },
+                json={"count": 1, "value": "cached"},
+            )
+        return httpx.Response(
+            304,
+            headers={
+                "ETag": '"etag-v1"',
+                "X-Version": "v2",
+            },
+        )
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/revalidate-etag")
+    second = await client.get("https://example.org/revalidate-etag")
+
+    await client.aclose()
+
+    assert call_count == 2
+    assert seen_if_none_match == [None, '"etag-v1"']
+    assert first.json() == {"count": 1, "value": "cached"}
+    assert second.status_code == 200
+    assert second.json() == {"count": 1, "value": "cached"}
+    assert second.headers["X-Version"] == "v2"
+
+    last_event = client.after_request.get()
+    assert last_event is not None
+    assert last_event.from_cache is True
+
+
+@pytest.mark.anyio
+async def test_http_client_revalidates_no_cache_with_last_modified_when_no_etag(tmp_path: Path):
+    call_count = 0
+    seen_if_modified_since: list[str | None] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        seen_if_modified_since.append(request.headers.get("If-Modified-Since"))
+        if call_count == 1:
+            return httpx.Response(
+                200,
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Last-Modified": "Wed, 21 Oct 2015 07:28:00 GMT",
+                    "X-Version": "lm-v1",
+                },
+                json={"count": 1, "value": "cached"},
+            )
+        return httpx.Response(
+            304,
+            headers={
+                "Last-Modified": "Wed, 21 Oct 2015 07:28:00 GMT",
+                "X-Version": "lm-v2",
+            },
+        )
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/revalidate-last-modified")
+    second = await client.get("https://example.org/revalidate-last-modified")
+
+    await client.aclose()
+
+    assert call_count == 2
+    assert seen_if_modified_since == [None, "Wed, 21 Oct 2015 07:28:00 GMT"]
+    assert first.json() == {"count": 1, "value": "cached"}
+    assert second.status_code == 200
+    assert second.json() == {"count": 1, "value": "cached"}
+    assert second.headers["X-Version"] == "lm-v2"
+
+    last_event = client.after_request.get()
+    assert last_event is not None
+    assert last_event.from_cache is True
+
+
+@pytest.mark.anyio
+async def test_http_client_no_cache_without_validators_does_full_fetch(tmp_path: Path):
+    call_count = 0
+    seen_conditional_headers: list[tuple[str | None, str | None]] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        seen_conditional_headers.append(
+            (request.headers.get("If-None-Match"), request.headers.get("If-Modified-Since"))
+        )
+        return httpx.Response(
+            200,
+            headers={
+                "Cache-Control": "no-cache",
+            },
+            json={"count": call_count},
+        )
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    first = await client.get("https://example.org/no-validators")
+    second = await client.get("https://example.org/no-validators")
+
+    await client.aclose()
+
+    assert call_count == 2
+    assert seen_conditional_headers == [(None, None), (None, None)]
+    assert first.json() == {"count": 1}
+    assert second.json() == {"count": 2}
+
+    last_event = client.after_request.get()
+    assert last_event is not None
+    assert last_event.from_cache is False
 
 
 @pytest.mark.anyio

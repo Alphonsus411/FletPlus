@@ -417,6 +417,7 @@ class HttpClient:
         response: httpx.Response | None = None
         from_cache = False
         error: Exception | None = None
+        cached_for_revalidation: httpx.Response | None = None
 
         try:
             for interceptor in self._interceptors:
@@ -445,24 +446,53 @@ class HttpClient:
 
             if cache_key and self._cache:
                 cached = self._cache.get(cache_key, request=request)
+                cached_for_revalidation = cached
                 if cached is not None:
                     cached_directives = _parse_cache_control_tokens(
                         cached.headers.get("cache-control", ""),
                         cached.headers.get("pragma", ""),
                     )
-                    if "no-cache" in cached_directives:
-                        cached = None
+                    should_revalidate = "no-cache" in cached_directives
+                    if not should_revalidate:
+                        cached_for_revalidation = None
+                else:
+                    should_revalidate = False
                 if cached is not None:
-                    # DiskCache.get construye un httpx.Response nuevo en cada lectura,
-                    # así que los interceptores pueden modificarlo sin necesidad de
-                    # clonar ni invalidar la instancia para evitar efectos secundarios
-                    # compartidos entre llamadas.
-                    for interceptor in reversed(self._interceptors):
-                        cached = await interceptor.apply_response(cached)
-                    response = cached
-                    from_cache = True
+                    if should_revalidate:
+                        etag = cached.headers.get("etag")
+                        last_modified = cached.headers.get("last-modified")
+                        if etag:
+                            request.headers["If-None-Match"] = etag
+                        elif last_modified:
+                            request.headers["If-Modified-Since"] = last_modified
+                    else:
+                        # DiskCache.get construye un httpx.Response nuevo en cada lectura,
+                        # así que los interceptores pueden modificarlo sin necesidad de
+                        # clonar ni invalidar la instancia para evitar efectos secundarios
+                        # compartidos entre llamadas.
+                        for interceptor in reversed(self._interceptors):
+                            cached = await interceptor.apply_response(cached)
+                        response = cached
+                        from_cache = True
             if response is None:
                 response = await self._client.send(request, stream=stream)
+                if (
+                    response.status_code == 304
+                    and cache_key
+                    and self._cache
+                    and request.method.upper() == "GET"
+                    and cached_for_revalidation is not None
+                ):
+                    merged_headers = dict(cached_for_revalidation.headers)
+                    merged_headers.update(dict(response.headers))
+                    response = httpx.Response(
+                        cached_for_revalidation.status_code,
+                        headers=merged_headers,
+                        content=cached_for_revalidation.content,
+                        request=request,
+                        extensions=dict(cached_for_revalidation.extensions),
+                    )
+                    from_cache = True
                 for interceptor in reversed(self._interceptors):
                     response = await interceptor.apply_response(response)
                 if cache_key and self._cache and not stream:
