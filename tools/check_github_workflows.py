@@ -97,7 +97,13 @@ def main() -> int:
         print(f"ERROR: no existe directorio de workflows: {WORKFLOWS_DIR}", file=sys.stderr)
         return 1
 
-    workflow_files = sorted(WORKFLOWS_DIR.glob("*.yml"))
+    workflow_files = sorted(
+        {
+            *WORKFLOWS_DIR.glob("*.yml"),
+            *WORKFLOWS_DIR.glob("*.yaml"),
+        },
+        key=lambda path: path.name,
+    )
     if not workflow_files:
         print(f"ERROR: no se encontraron workflows en {WORKFLOWS_DIR}", file=sys.stderr)
         return 1
