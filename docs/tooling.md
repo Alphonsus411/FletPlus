@@ -44,7 +44,7 @@ Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse
 
 `tools/qa.sh` ejecuta `python tools/check_github_workflows.py`, que valida:
 
-- Sintaxis YAML de cada archivo en `.github/workflows/*.yml`.
+- Sintaxis YAML de cada archivo en `.github/workflows/*.yml` y `.github/workflows/*.yaml`.
 - Reglas base de GitHub Actions (presencia de `on`, `jobs`, estructura de `steps`, y consistencia `uses`/`runs-on`).
 
 Instalación necesaria para este check:
