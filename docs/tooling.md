@@ -37,7 +37,7 @@ Orden real de QA (idéntico en shell, reusable workflow y nox):
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
-> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía.
+> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía. Además, `tools/check_bandit_command_sync.py` valida que `tools/qa.sh` mantenga el comando canónico de Bandit y que el reusable siga delegando en `bash tools/qa.sh`.
 
 
 ### Validación local de workflows (GitHub Actions)
