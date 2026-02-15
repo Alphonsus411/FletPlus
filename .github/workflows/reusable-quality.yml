@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  quality:
+  tests-matrix:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,5 +28,29 @@ jobs:
       - name: Validate CI/docs contract
         run: python tools/check_ci_workflow_contract.py
 
-      - name: Run quality checks
-        run: bash tools/qa.sh
+      - name: Run tests and compatibility checks
+        run: bash tools/qa.sh --scope tests-matrix
+
+  static-security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Validate CI/docs contract
+        run: python tools/check_ci_workflow_contract.py
+
+      - name: Run static/security checks
+        run: bash tools/qa.sh --scope static-security

@@ -153,6 +153,8 @@ python tools/check_bandit_command_sync.py
 python -m bandit -c pyproject.toml -r fletplus
 python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
 python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
+bash tools/qa.sh --scope tests-matrix
+bash tools/qa.sh --scope static-security
 ./tools/qa.sh
 make qa-all
 ```
@@ -190,7 +192,7 @@ En los Pull Requests hacia `main` o `develop` se ejecuta únicamente
 En `push` a `main` o `develop` se ejecuta únicamente
 `.github/workflows/quality.yml`.
 
-Ambos workflows delegan en `.github/workflows/reusable-quality.yml`, y este ejecuta `bash tools/qa.sh` como secuencia única de QA. `nox -s qa` también ejecuta el mismo script. Las auditorías de `pip-audit` y `safety` usan `pip-audit.policy.json` y `safety-policy.yml`.
+Ambos workflows delegan en `.github/workflows/reusable-quality.yml`, que ahora separa QA en dos jobs: `tests-matrix` (matriz `3.9`/`3.10`/`3.11`) y `static-security` (solo `3.11`). Ambos jobs siguen usando `tools/qa.sh` como fuente de verdad mediante `bash tools/qa.sh --scope tests-matrix` y `bash tools/qa.sh --scope static-security`. `nox -s qa` continúa ejecutando `bash tools/qa.sh` (scope `all`) para validar todo localmente. Las auditorías de `pip-audit` y `safety` usan `pip-audit.policy.json` y `safety-policy.yml`.
 
 ### ✅ Cómo interpretar fallos comunes y dónde ajustar configuración
 

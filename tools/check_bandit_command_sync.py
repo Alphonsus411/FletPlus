@@ -13,7 +13,7 @@ WORKFLOW_PATH = Path('.github/workflows/reusable-quality.yml')
 QA_SCRIPT_PATH = Path('tools/qa.sh')
 EXPECTED_BANDIT_COMMAND = 'python -m bandit -c pyproject.toml -r fletplus'
 BANDIT_PATTERN = re.compile(r'^\s*python\s+-m\s+bandit\b.*$', re.MULTILINE)
-WORKFLOW_QA_CALL = 'bash tools/qa.sh'
+WORKFLOW_QA_CALL_PREFIX = 'bash tools/qa.sh'
 
 
 def _normalize_command(command: str) -> str:
@@ -80,9 +80,13 @@ def main() -> int:
         )
 
     workflow_commands = _extract_run_commands(WORKFLOW_PATH)
-    if WORKFLOW_QA_CALL not in workflow_commands:
+    if not any(
+        command == WORKFLOW_QA_CALL_PREFIX
+        or command.startswith(f"{WORKFLOW_QA_CALL_PREFIX} ")
+        for command in workflow_commands
+    ):
         errors.append(
-            "Contrato roto: reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'."
+            "Contrato roto: reusable-quality.yml debe delegar en tools/qa.sh (con o sin --scope)."
         )
 
     if errors:
@@ -90,7 +94,7 @@ def main() -> int:
         return 1
 
     print(f'OK: comando Bandit alineado -> {EXPECTED_BANDIT_COMMAND}')
-    print("OK: reusable-quality.yml delega en 'bash tools/qa.sh'")
+    print("OK: reusable-quality.yml delega en tools/qa.sh")
     return 0
 
 
