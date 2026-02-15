@@ -17,7 +17,7 @@ DOC_PATHS = (
     REPO_ROOT / "docs" / "building.md",
 )
 EXTRA_REF_PATTERN = re.compile(
-    r"(?:pip\s+install\s+(?:\.|\"?fletplus)\[(?P<extra>[A-Za-z0-9_.-]+)\]\"?)"
+    r"(?:pip\s+install\s+(?:-e\s+)?[\"']?(?:\.|fletplus)\[(?P<extras>[^\]]+)\][\"']?)"
 )
 
 
@@ -27,8 +27,20 @@ def _load_defined_extras() -> set[str]:
     return set(optional.keys())
 
 
+def _split_extras(raw_extras: str) -> set[str]:
+    extras = set()
+    for extra in raw_extras.split(","):
+        normalized = extra.strip().strip('"\'')
+        if normalized:
+            extras.add(normalized)
+    return extras
+
+
 def _find_referenced_extras(content: str) -> set[str]:
-    return {match.group("extra") for match in EXTRA_REF_PATTERN.finditer(content)}
+    referenced: set[str] = set()
+    for match in EXTRA_REF_PATTERN.finditer(content):
+        referenced.update(_split_extras(match.group("extras")))
+    return referenced
 
 
 def main() -> int:
