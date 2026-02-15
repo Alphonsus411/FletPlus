@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+
+import pytest
+
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / 'tools/check_bandit_command_sync.py'
+SPEC = importlib.util.spec_from_file_location('check_bandit_command_sync', MODULE_PATH)
+assert SPEC and SPEC.loader
+check_bandit_command_sync = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(check_bandit_command_sync)
+
+
+@pytest.fixture
+def checker_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
+    workflow_path = tmp_path / '.github' / 'workflows' / 'reusable-quality.yml'
+    qa_path = tmp_path / 'tools' / 'qa.sh'
+    workflow_path.parent.mkdir(parents=True)
+    qa_path.parent.mkdir(parents=True)
+
+    workflow_path.write_text(
+        """
+name: Reusable Quality
+jobs:
+  qa:
+    steps:
+      - name: QA
+        run: bash tools/qa.sh
+""",
+        encoding='utf-8',
+    )
+
+    qa_path.write_text(
+        """
+#!/usr/bin/env bash
+python -m bandit -c pyproject.toml -r fletplus
+""",
+        encoding='utf-8',
+    )
+
+    monkeypatch.setattr(check_bandit_command_sync, 'WORKFLOW_PATH', workflow_path)
+    monkeypatch.setattr(check_bandit_command_sync, 'QA_SCRIPT_PATH', qa_path)
+    return {'workflow': workflow_path, 'qa': qa_path}
+
+
+def test_main_ok_when_bandit_is_aligned(checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]) -> None:
+    result = check_bandit_command_sync.main()
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert 'OK: comando Bandit alineado' in captured.out
+
+
+def test_main_fails_when_bandit_command_is_misaligned(
+    checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    checker_env['qa'].write_text(
+        """
+#!/usr/bin/env bash
+python -m bandit -c pyproject.toml -r src
+""",
+        encoding='utf-8',
+    )
+
+    result = check_bandit_command_sync.main()
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert 'Desalineación detectada' in captured.err
+
+
+def test_main_fails_when_bandit_command_is_missing(
+    checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    checker_env['qa'].write_text(
+        """
+#!/usr/bin/env bash
+python -m pytest
+""",
+        encoding='utf-8',
+    )
+
+    result = check_bandit_command_sync.main()
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert 'No se encontró un comando de Bandit' in captured.err
