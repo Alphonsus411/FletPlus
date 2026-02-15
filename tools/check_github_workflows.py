@@ -38,6 +38,47 @@ def _validate_step(workflow: Path, job_name: str, step: object, index: int) -> l
     return errors
 
 
+def _normalize_local_workflow_use(value: str) -> str | None:
+    prefix = "./.github/workflows/"
+    if not value.startswith(prefix):
+        return None
+    return value.split("@", maxsplit=1)[0]
+
+
+def _validate_reusable_trigger(path: Path, content: dict[object, object]) -> list[str]:
+    on_value = content.get("on")
+    if on_value is None and True in content:
+        on_value = content.get(True)
+
+    if not isinstance(on_value, dict) or "workflow_call" not in on_value:
+        return [
+            f"{path}: al ser invocado vía 'uses: ./.github/workflows/...', debe declarar 'on.workflow_call'."
+        ]
+
+    workflow_call = on_value.get("workflow_call")
+    if workflow_call is None:
+        return []
+
+    if not isinstance(workflow_call, dict):
+        return [f"{path}: 'on.workflow_call' debe ser un objeto YAML."]
+
+    errors: list[str] = []
+    for key in ("inputs", "secrets"):
+        block = workflow_call.get(key)
+        if block is None:
+            continue
+        if not isinstance(block, dict):
+            errors.append(f"{path}: 'on.workflow_call.{key}' debe ser un objeto YAML.")
+            continue
+        for item_name, item_def in block.items():
+            if not isinstance(item_def, dict):
+                errors.append(
+                    f"{path}: 'on.workflow_call.{key}.{item_name}' debe ser un objeto YAML."
+                )
+
+    return errors
+
+
 def validate_workflow(path: Path) -> list[str]:
     errors: list[str] = []
     try:
@@ -79,6 +120,20 @@ def validate_workflow(path: Path) -> list[str]:
                 f"{path}: job '{job_name}' reusable no debe declarar 'steps' locales."
             )
 
+        if has_uses:
+            with_value = job_def.get("with")
+            if with_value is not None and not isinstance(with_value, dict):
+                errors.append(f"{path}: job '{job_name}' reusable debe declarar 'with' como objeto YAML.")
+
+            secrets_value = job_def.get("secrets")
+            if secrets_value is not None and not (
+                isinstance(secrets_value, dict)
+                or (_is_non_empty_string(secrets_value) and secrets_value == "inherit")
+            ):
+                errors.append(
+                    f"{path}: job '{job_name}' reusable debe declarar 'secrets' como objeto YAML o 'inherit'."
+                )
+
         if has_runs_on:
             steps = job_def.get("steps")
             if not isinstance(steps, list) or not steps:
@@ -88,6 +143,56 @@ def validate_workflow(path: Path) -> list[str]:
                 continue
             for index, step in enumerate(steps, start=1):
                 errors.extend(_validate_step(path, str(job_name), step, index))
+
+    return errors
+
+
+def validate_reusable_workflow_references(workflow_files: list[Path]) -> list[str]:
+    errors: list[str] = []
+    indexed_files = {
+        f"./.github/workflows/{workflow_file.name}": workflow_file for workflow_file in workflow_files
+    }
+
+    for workflow in workflow_files:
+        try:
+            content = yaml.safe_load(workflow.read_text(encoding="utf-8"))
+        except yaml.YAMLError:
+            continue
+
+        if not isinstance(content, dict):
+            continue
+
+        jobs = content.get("jobs")
+        if not isinstance(jobs, dict):
+            continue
+
+        for job_def in jobs.values():
+            if not isinstance(job_def, dict):
+                continue
+
+            use_value = job_def.get("uses")
+            if not _is_non_empty_string(use_value):
+                continue
+
+            normalized_use = _normalize_local_workflow_use(use_value)
+            if normalized_use is None:
+                continue
+
+            target_workflow = indexed_files.get(normalized_use)
+            if target_workflow is None:
+                errors.append(
+                    f"{workflow}: referencia reusable inexistente '{normalized_use}'."
+                )
+                continue
+
+            try:
+                target_content = yaml.safe_load(target_workflow.read_text(encoding="utf-8"))
+            except yaml.YAMLError:
+                continue
+            if not isinstance(target_content, dict):
+                continue
+
+            errors.extend(_validate_reusable_trigger(target_workflow, target_content))
 
     return errors
 
@@ -111,6 +216,7 @@ def main() -> int:
     errors: list[str] = []
     for workflow in workflow_files:
         errors.extend(validate_workflow(workflow))
+    errors.extend(validate_reusable_workflow_references(workflow_files))
 
     if errors:
         print("ERROR: validación de workflows falló:", file=sys.stderr)
