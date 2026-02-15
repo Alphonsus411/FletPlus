@@ -29,7 +29,9 @@ REQUIRED_QA_CHECKS = (
     "python tools/check_canonical_repo_links.py",
 )
 
-WORKFLOW_REF_PATTERN = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.yml")
+WORKFLOW_REF_PATTERN = re.compile(
+    r"\.github/workflows/[A-Za-z0-9_.-]+\.(?:yml|yaml)"
+)
 OBSOLETE_DOC_PHRASES = (
     "desde la rama `gh-pages`",
     "desde la rama gh-pages",

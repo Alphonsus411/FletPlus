@@ -163,16 +163,17 @@ jobs:
 
 def test_extract_workflow_references_detects_all_mentions() -> None:
     text = """
-    revisar .github/workflows/qa.yml y .github/workflows/quality.yml
-    además de .github/workflows/reusable-quality.yml
+    revisar .github/workflows/qa.yml y .github/workflows/quality.yaml
+    además de .github/workflows/reusable-quality.yml y .github/workflows/docs.yaml
     """
 
     refs = check_ci_workflow_contract.extract_workflow_references(text)
 
     assert refs == {
         ".github/workflows/qa.yml",
-        ".github/workflows/quality.yml",
+        ".github/workflows/quality.yaml",
         ".github/workflows/reusable-quality.yml",
+        ".github/workflows/docs.yaml",
     }
 
 
@@ -529,6 +530,22 @@ def test_validate_workflow_references_fails_for_missing_doc_reference(
 
     assert errors == [
         "Workflow referenciado en docs no existe: .github/workflows/missing-workflow.yml"
+    ]
+
+
+def test_validate_workflow_references_fails_for_missing_doc_reference_yaml(
+    contract_env: dict[str, Path],
+) -> None:
+    contract_env["readme"].write_text(
+        contract_env["readme"].read_text(encoding="utf-8")
+        + "\n.github/workflows/missing-workflow.yaml\n",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_workflow_references()
+
+    assert errors == [
+        "Workflow referenciado en docs no existe: .github/workflows/missing-workflow.yaml"
     ]
 
 
