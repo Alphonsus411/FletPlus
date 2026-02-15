@@ -78,9 +78,45 @@ class _FileBackend(_BaseBackend):
         env_path = os.environ.get("FLETPLUS_PREFS_FILE")
         if env_path:
             self._path = Path(env_path)
+            self._expected_base_dir: Path | None = None
         else:
             base_dir = Path.home() / ".fletplus"
             self._path = base_dir / "preferences.json"
+            self._expected_base_dir = base_dir
+
+    def _is_path_secure(self, path: Path, *, label: str) -> bool:
+        if path.exists() and path.is_symlink():
+            logger.error("Guardado de preferencias abortado: %s es symlink (%s)", label, path)
+            return False
+        return True
+
+    def _is_default_path_inside_expected_base(self) -> bool:
+        if self._expected_base_dir is None:
+            return True
+        try:
+            expected_base = self._expected_base_dir.resolve()
+            resolved_target = self._path.resolve(strict=False)
+        except OSError:
+            logger.exception(
+                "Guardado de preferencias abortado: no se pudo resolver ruta segura %s",
+                self._path,
+            )
+            return False
+        if not resolved_target.is_relative_to(expected_base):
+            logger.error(
+                "Guardado de preferencias abortado: ruta fuera del directorio esperado (%s -> %s)",
+                self._path,
+                resolved_target,
+            )
+            return False
+        return True
+
+    def _validate_save_target(self) -> bool:
+        if not self._is_path_secure(self._path.parent, label="directorio padre"):
+            return False
+        if not self._is_path_secure(self._path, label="archivo de preferencias"):
+            return False
+        return self._is_default_path_inside_expected_base()
 
     def _read_all(self) -> dict[str, Any]:
         try:
@@ -110,8 +146,12 @@ class _FileBackend(_BaseBackend):
         payload[self._key] = dict(data)
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
+            if not self._validate_save_target():
+                return
             tmp_path = self._path.with_name(f"{self._path.name}.tmp")
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            flags |= getattr(os, "O_NOFOLLOW", 0)
+            flags |= getattr(os, "O_CLOEXEC", 0)
             try:
                 fd = os.open(tmp_path, flags, 0o600)
             except FileExistsError:
@@ -122,6 +162,12 @@ class _FileBackend(_BaseBackend):
                     json.dump(payload, fh, ensure_ascii=False, indent=2)
                     fh.flush()
                     os.fsync(fh.fileno())
+                if not self._validate_save_target() or not self._is_path_secure(
+                    tmp_path,
+                    label="archivo temporal de preferencias",
+                ):
+                    tmp_path.unlink(missing_ok=True)
+                    return
                 os.replace(tmp_path, self._path)
                 os.chmod(self._path, 0o600)
             finally:
