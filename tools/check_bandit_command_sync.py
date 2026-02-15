@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 import sys
 
+import yaml
+
 WORKFLOW_PATH = Path('.github/workflows/reusable-quality.yml')
 QA_SCRIPT_PATH = Path('tools/qa.sh')
 EXPECTED_BANDIT_COMMAND = 'python -m bandit -c pyproject.toml -r fletplus'
@@ -27,14 +29,37 @@ def _extract_bandit_command(path: Path) -> str:
 
 
 def _extract_run_commands(path: Path) -> list[str]:
+    try:
+        content = yaml.safe_load(path.read_text(encoding='utf-8'))
+    except yaml.YAMLError:
+        return []
+
+    jobs = content.get('jobs') if isinstance(content, dict) else None
+    if not isinstance(jobs, dict):
+        return []
+
     commands: list[str] = []
-    for raw_line in path.read_text(encoding='utf-8').splitlines():
-        line = raw_line.strip()
-        if not line.startswith('run:'):
+    for job in jobs.values():
+        if not isinstance(job, dict):
             continue
-        run_cmd = line.split('run:', 1)[1].strip()
-        if run_cmd:
-            commands.append(_normalize_command(run_cmd))
+
+        steps = job.get('steps')
+        if not isinstance(steps, list):
+            continue
+
+        for step in steps:
+            if not isinstance(step, dict):
+                continue
+
+            run_value = step.get('run')
+            if not isinstance(run_value, str):
+                continue
+
+            for raw_line in run_value.splitlines():
+                line = raw_line.strip()
+                if line:
+                    commands.append(_normalize_command(line))
+
     return commands
 
 

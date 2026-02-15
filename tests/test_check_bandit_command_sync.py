@@ -87,3 +87,51 @@ python -m pytest
     captured = capsys.readouterr()
     assert result == 1
     assert 'No se encontró un comando de Bandit' in captured.err
+
+
+def test_main_ok_when_workflow_run_is_multiline_with_qa_call(
+    checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    checker_env['workflow'].write_text(
+        """
+name: Reusable Quality
+jobs:
+  qa:
+    steps:
+      - name: QA
+        run: |
+          echo "pre-check"
+          bash tools/qa.sh
+""",
+        encoding='utf-8',
+    )
+
+    result = check_bandit_command_sync.main()
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert "OK: reusable-quality.yml delega en 'bash tools/qa.sh'" in captured.out
+
+
+def test_main_fails_when_workflow_run_is_multiline_without_qa_call(
+    checker_env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    checker_env['workflow'].write_text(
+        """
+name: Reusable Quality
+jobs:
+  qa:
+    steps:
+      - name: QA
+        run: |
+          echo "pre-check"
+          python -m pytest
+""",
+        encoding='utf-8',
+    )
+
+    result = check_bandit_command_sync.main()
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert "Contrato roto: reusable-quality.yml debe ejecutar exactamente 'bash tools/qa.sh'." in captured.err
