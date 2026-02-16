@@ -180,7 +180,7 @@ import flet as ft
 from fletplus.state import reactive, use_state, use_signal, watch
 
 
-class DashboardCard(ft.UserControl):
+class DashboardCard(ft.Column):
     def __init__(self, store):
         super().__init__()
         self.store = store
