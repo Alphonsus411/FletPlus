@@ -3,6 +3,9 @@ name: Reusable Quality
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   tests-matrix:
     runs-on: ubuntu-latest

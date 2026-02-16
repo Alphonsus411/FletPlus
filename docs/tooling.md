@@ -11,6 +11,8 @@ La fuente única de verdad de QA está centralizada en `tools/qa.sh`. El workflo
 
 Ambos wrappers delegan en el reusable para evitar duplicación. El reusable se divide en dos jobs contractuales: `tests-matrix` (matriz `3.9`, `3.10`, `3.11`) y `static-security` (solo `3.11`). Cada job delega en `tools/qa.sh` con `--scope` para no repetir auditorías de seguridad en toda la matriz.
 
+Como política de mínimo privilegio, `qa.yml`, `quality.yml` y `reusable-quality.yml` deben declarar permisos explícitos de solo lectura (`permissions: { contents: read }`) a nivel workflow o job. Ninguno de estos pipelines necesita permisos de escritura adicionales para ejecutar `actions/checkout`, `actions/setup-python` y los comandos de QA.
+
 El preflight soporta selección explícita por suite con `--suite`:
 
 - `--suite default`: validación mínima (sin dependencias opcionales).
@@ -282,9 +284,10 @@ El job `deploy` depende de ese artefacto y ejecuta `actions/deploy-pages@v4`, ex
 
 Para mantener la compatibilidad de enlaces entre el `README.md` en GitHub y el `index.md` de MkDocs (que incluye ese README), sigue también la guía breve de [estilo de enlaces](link-style.md).
 
-Además, `tools/check_ci_workflow_contract.py` valida automáticamente el contrato mínimo de CI para documentación y rendimiento:
+Además, `tools/check_ci_workflow_contract.py` valida automáticamente el contrato mínimo de CI para documentación y rendimiento, junto con la política de permisos mínimos en workflows QA:
 
 - `docs.yml` debe conservar los jobs `build`/`deploy`; el workflow debe incluir `pull_request` hacia `main` y `develop`, `build` debe ejecutar `mkdocs build --strict` y usar `actions/configure-pages` + `actions/upload-pages-artifact`, y `deploy` debe usar `needs: build`, `actions/deploy-pages` y la condición `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`.
 - `perf.yml` debe instalar dependencias de desarrollo (`pip install -r requirements-dev.txt`) y ejecutar benchmarks con `python -m pytest -m perf`. Si `pytest.ini` define una exclusión global del marker `perf` (por ejemplo, `addopts = -m "not perf"`), entonces el workflow debe forzar el override `-o addopts=` para garantizar que los benchmarks sí se ejecuten en CI.
+- `qa.yml`, `quality.yml` y `reusable-quality.yml` deben declarar `permissions` explícitos con `contents: read` (a nivel workflow o job), evitando permisos de escritura innecesarios en CI.
 
 Estos checks se ejecutan en tests (`tests/test_check_ci_workflow_contract.py`) para detectar drift antes de mezclar cambios en workflows.

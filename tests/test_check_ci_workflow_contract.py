@@ -28,6 +28,8 @@ def contract_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, P
     reusable.write_text(
         """
 name: Reusable Quality
+permissions:
+  contents: read
 jobs:
   tests-matrix:
     runs-on: ubuntu-latest
@@ -53,6 +55,8 @@ jobs:
     qa_wrapper.write_text(
         """
 name: QA
+permissions:
+  contents: read
 jobs:
   qa:
     uses: ./.github/workflows/reusable-quality.yml
@@ -64,6 +68,8 @@ jobs:
     quality_wrapper.write_text(
         """
 name: Quality
+permissions:
+  contents: read
 jobs:
   quality:
     uses: ./.github/workflows/reusable-quality.yml
@@ -274,6 +280,58 @@ jobs:
         "build": ["mkdocs build --strict"],
         "perf": ["python -m pytest -m perf"],
     }
+
+
+def test_validate_workflow_permissions_passes_with_workflow_level_permissions(
+    contract_env: dict[str, Path],
+) -> None:
+    errors = check_ci_workflow_contract.validate_workflow_permissions(
+        contract_env["qa_wrapper"]
+    )
+
+    assert errors == []
+
+
+def test_validate_workflow_permissions_fails_without_permissions(
+    contract_env: dict[str, Path],
+) -> None:
+    workflow = contract_env["workflows_dir"] / "missing-permissions.yml"
+    workflow.write_text(
+        """
+name: Missing Permissions
+jobs:
+  qa:
+    uses: ./.github/workflows/reusable-quality.yml
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_workflow_permissions(workflow)
+
+    assert any("permissions.contents: read" in error for error in errors)
+
+
+def test_validate_workflow_permissions_fails_if_job_permissions_are_incomplete(
+    contract_env: dict[str, Path],
+) -> None:
+    workflow = contract_env["workflows_dir"] / "job-permissions-incomplete.yml"
+    workflow.write_text(
+        """
+name: Job Permissions Incomplete
+jobs:
+  qa:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-quality.yml
+  lint:
+    uses: ./.github/workflows/reusable-quality.yml
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_workflow_permissions(workflow)
+
+    assert any("jobs ['lint']" in error for error in errors)
 
 
 def test_validate_wrapper_workflow_fails_if_local_steps_exist(

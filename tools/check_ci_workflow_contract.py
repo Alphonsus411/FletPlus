@@ -21,6 +21,7 @@ WRAPPER_WORKFLOWS = (
     REPO_ROOT / ".github/workflows/qa.yml",
     REPO_ROOT / ".github/workflows/quality.yml",
 )
+WORKFLOWS_REQUIRING_CONTENTS_READ = WRAPPER_WORKFLOWS + (REUSABLE_WORKFLOW,)
 DOCS_WORKFLOW = REPO_ROOT / ".github/workflows/docs.yml"
 PERF_WORKFLOW = REPO_ROOT / ".github/workflows/perf.yml"
 PYTEST_INI = REPO_ROOT / "pytest.ini"
@@ -218,6 +219,55 @@ def validate_wrapper_workflow(path: Path) -> list[str]:
             )
         if "steps" in job_def:
             errors.append(f"{path}: no debe definir steps locales (wrapper mínimo)")
+
+    return errors
+
+
+def validate_workflow_permissions(path: Path) -> list[str]:
+    """Exige permisos explícitos mínimos en workflows de QA/Quality."""
+    errors: list[str] = []
+
+    try:
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        return [f"{path}: YAML inválido ({exc})."]
+
+    if not isinstance(content, dict):
+        return [f"{path}: el workflow debe ser un objeto YAML válido."]
+
+    workflow_permissions = content.get("permissions")
+    if isinstance(workflow_permissions, dict):
+        if workflow_permissions.get("contents") != "read":
+            errors.append(
+                f"{path}: permissions a nivel workflow debe definir contents: read."
+            )
+        return errors
+
+    jobs = content.get("jobs")
+    if not isinstance(jobs, dict) or not jobs:
+        errors.append(
+            f"{path}: debe definir permissions: {{contents: read}} a nivel workflow o job."
+        )
+        return errors
+
+    missing_jobs: list[str] = []
+    for job_name, job_def in jobs.items():
+        if not isinstance(job_name, str):
+            continue
+        if not isinstance(job_def, dict):
+            missing_jobs.append(job_name)
+            continue
+        job_permissions = job_def.get("permissions")
+        if (
+            not isinstance(job_permissions, dict)
+            or job_permissions.get("contents") != "read"
+        ):
+            missing_jobs.append(job_name)
+
+    if missing_jobs:
+        errors.append(
+            f"{path}: los jobs {missing_jobs} deben definir permissions.contents: read o declararlo a nivel workflow."
+        )
 
     return errors
 
@@ -579,6 +629,9 @@ def main() -> int:
 
     for wrapper in WRAPPER_WORKFLOWS:
         errors.extend(validate_wrapper_workflow(wrapper))
+
+    for workflow in WORKFLOWS_REQUIRING_CONTENTS_READ:
+        errors.extend(validate_workflow_permissions(workflow))
 
     if errors:
         print(
