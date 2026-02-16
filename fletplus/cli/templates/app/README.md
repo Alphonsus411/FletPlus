@@ -8,6 +8,7 @@ El punto de entrada de la aplicación está en `src/main.py`, donde se define la
 ## Requisitos
 
 - Python 3.9 o superior
+- Flet 0.28.0 o superior (recomendado)
 - Dependencias listadas en `requirements.txt`
 
 ## Ejecución en modo desarrollo
