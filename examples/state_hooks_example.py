@@ -16,9 +16,8 @@ from fletplus.state import Signal, reactive, use_signal, use_state, watch  # noq
 global_counter = Signal(0)
 
 
-class ReactiveCounter(ft.UserControl):
+class ReactiveCounter:
     def __init__(self) -> None:
-        super().__init__()
         self.global_signal = global_counter
         self._total_text = ft.Text()
         self._summary_text = ft.Text()
@@ -73,11 +72,12 @@ class ReactiveCounter(ft.UserControl):
 
 
 def counter_view() -> ft.Control:
+    counter = ReactiveCounter()
     return ft.Column(
         expand=True,
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        controls=[ReactiveCounter()],
+        controls=[counter.build()],
     )
 
 
