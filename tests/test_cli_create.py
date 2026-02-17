@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+
 def _configure_watchdog(monkeypatch, *, available: bool) -> None:
     if available:
         watchdog_module = types.ModuleType("watchdog")
@@ -37,8 +38,24 @@ def _load_cli_main_module():
     return importlib.reload(cli_main)
 
 
+def _read_main_flet_dependency() -> str:
+    pyproject_text = Path("pyproject.toml").read_text(encoding="utf-8")
+    for line in pyproject_text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('"flet'):
+            return stripped.strip('",')
+    raise AssertionError("No se encontró dependencia de Flet en pyproject.toml")
+
+
+def _read_main_flet_policy() -> str:
+    dependency = _read_main_flet_dependency()
+    return dependency.removeprefix("flet")
+
+
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_create_generates_project_with_valid_package_name(monkeypatch, watchdog_available: bool) -> None:
+def test_create_generates_project_with_valid_package_name(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -54,7 +71,32 @@ def test_create_generates_project_with_valid_package_name(monkeypatch, watchdog_
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_create_prefixes_numeric_package_name(monkeypatch, watchdog_available: bool) -> None:
+def test_create_template_uses_main_flet_version_policy(
+    monkeypatch, watchdog_available: bool
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+    expected_flet_dependency = _read_main_flet_dependency()
+    expected_flet_policy = _read_main_flet_policy()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(app, ["create", "demo"])
+
+        assert result.exit_code == 0, result.output
+        project = base / "demo"
+        requirements = (project / "requirements.txt").read_text(encoding="utf-8")
+        readme = (project / "README.md").read_text(encoding="utf-8")
+
+    assert expected_flet_dependency in requirements
+    assert f"Flet `{expected_flet_policy}`" in readme
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_prefixes_numeric_package_name(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -69,7 +111,9 @@ def test_create_prefixes_numeric_package_name(monkeypatch, watchdog_available: b
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_create_rejects_invalid_package_name(monkeypatch, watchdog_available: bool) -> None:
+def test_create_rejects_invalid_package_name(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -114,7 +158,9 @@ def test_create_keeps_accepting_valid_project_names(
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_create_fails_when_target_exists_as_file(monkeypatch, watchdog_available: bool) -> None:
+def test_create_fails_when_target_exists_as_file(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -130,7 +176,9 @@ def test_create_fails_when_target_exists_as_file(monkeypatch, watchdog_available
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_create_allows_existing_empty_directory(monkeypatch, watchdog_available: bool) -> None:
+def test_create_allows_existing_empty_directory(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -146,7 +194,9 @@ def test_create_allows_existing_empty_directory(monkeypatch, watchdog_available:
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_create_fails_when_target_directory_is_not_empty(monkeypatch, watchdog_available: bool) -> None:
+def test_create_fails_when_target_directory_is_not_empty(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -209,7 +259,9 @@ def test_run_fails_with_non_zero_exit_code_without_watchdog(monkeypatch) -> None
         def poll(self) -> int:
             return 2
 
-    monkeypatch.setattr(cli_main, "_launch_flet_process", lambda *args, **kwargs: _FakeProcess())
+    monkeypatch.setattr(
+        cli_main, "_launch_flet_process", lambda *args, **kwargs: _FakeProcess()
+    )
     monkeypatch.setattr(cli_main, "_stop_process", lambda process: None)
 
     with runner.isolated_filesystem() as temp_dir:
@@ -247,7 +299,9 @@ def test_run_fails_with_non_zero_exit_code_with_watchdog(monkeypatch) -> None:
             return 3
 
     monkeypatch.setattr(cli_main, "Observer", _FakeObserver)
-    monkeypatch.setattr(cli_main, "_launch_flet_process", lambda *args, **kwargs: _FakeProcess())
+    monkeypatch.setattr(
+        cli_main, "_launch_flet_process", lambda *args, **kwargs: _FakeProcess()
+    )
     monkeypatch.setattr(cli_main, "_stop_process", lambda process: None)
 
     with runner.isolated_filesystem() as temp_dir:
