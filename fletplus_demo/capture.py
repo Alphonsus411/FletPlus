@@ -2,13 +2,19 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict
 
 import flet as ft
+
+from fletplus.utils.flet_compat import (
+    safe_close_window,
+    safe_set_window_attr,
+    safe_take_screenshot,
+    safe_update_page,
+)
 
 from .app import DEMO_ROUTES, create_app
 
@@ -84,7 +90,7 @@ def capture_assets(
                 await asyncio.sleep(delay)
                 target_dir = screenshot_path or tmp_base
                 image_path = target_dir / f"{route.slug}.png"
-                await _take_screenshot(page, image_path)
+                await safe_take_screenshot(page, image_path)
                 if screenshot_path:
                     summary.screenshots[route.path] = image_path
                 if recording_path:
@@ -97,7 +103,7 @@ def capture_assets(
                     )
                     summary.recordings[route.path] = video_path
 
-        _close_hidden_window(page)
+        safe_close_window(page)
 
     async def _run_app() -> None:
         await ft.app_async(target=_session, view=ft.AppView.FLET_APP_HIDDEN)
@@ -112,41 +118,21 @@ def capture_assets(
 
 async def _prepare_page(page: ft.Page, viewport: tuple[int, int]) -> None:
     width, height = viewport
-    _set_window_attr(page, "width", float(width))
-    _set_window_attr(page, "height", float(height))
-    _set_window_attr(page, "resizable", False)
-    _set_window_attr(page, "left", -float(width) * 2)
-    _set_window_attr(page, "top", -float(height) * 2)
-    _set_window_attr(page, "visible", False)
-    _set_window_attr(page, "skip_taskbar", True)
+    safe_set_window_attr(page, "width", float(width))
+    safe_set_window_attr(page, "height", float(height))
+    safe_set_window_attr(page, "resizable", False)
+    safe_set_window_attr(page, "left", -float(width) * 2)
+    safe_set_window_attr(page, "top", -float(height) * 2)
+    safe_set_window_attr(page, "visible", False)
+    safe_set_window_attr(page, "skip_taskbar", True)
     page.bgcolor = ft.Colors.SURFACE
-    await _update_page(page)
+    await safe_update_page(page)
     await asyncio.sleep(0.1)
 
 
 async def _activate_route(app, path: str) -> None:
     app.router.go(path)
-    await _update_page(app.page)
-
-
-async def _take_screenshot(page: ft.Page, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    screenshot_async = getattr(page, "screenshot_async", None)
-    if callable(screenshot_async):
-        await screenshot_async(path=str(path))
-        return
-    screenshot = getattr(page, "screenshot", None)
-    if callable(screenshot):
-        result = screenshot(path=str(path))
-        if asyncio.iscoroutine(result):
-            await result
-        return
-    await page._invoke_method_async(
-        "screenshot",
-        {"path": str(path)},
-        wait_for_result=True,
-        wait_timeout=30,
-    )
+    await safe_update_page(app.page)
 
 
 def _build_recording(image_path: Path, video_path: Path, *, fps: int, duration: float) -> None:
@@ -171,28 +157,3 @@ __all__ = [
     "CaptureSummary",
     "capture_assets",
 ]
-
-
-def _set_window_attr(page: ft.Page, attr: str, value) -> None:
-    window = getattr(page, "window", None)
-    if window and hasattr(window, attr):
-        setattr(window, attr, value)
-
-
-def _close_hidden_window(page: ft.Page) -> None:
-    window = getattr(page, "window", None)
-    if not window:
-        return
-    for attr in ("destroy", "close"):
-        method = getattr(window, attr, None)
-        if callable(method):
-            with contextlib.suppress(Exception):
-                method()
-
-
-async def _update_page(page: ft.Page) -> None:
-    update_async = getattr(page, "update_async", None)
-    if callable(update_async):
-        await update_async()
-        return
-    page.update()
