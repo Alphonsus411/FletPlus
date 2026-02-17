@@ -63,6 +63,16 @@ pip install fletplus
 [gh-doc-components]: https://github.com/FletPlus/FletPlus/blob/main/docs/components.md
 [gh-doc-responsive]: https://github.com/FletPlus/FletPlus/blob/main/docs/responsive.md
 
+## 🧭 Política de versión de Flet
+
+Para reducir regresiones y hacer predecible cada salto de compatibilidad, FletPlus mantiene una política explícita sobre `flet`:
+
+- **Versión objetivo**: la versión objetivo vigente es **Flet 0.28.x** (mínimo soportado `>=0.28.0`).
+- **Cadencia de actualización**: se evalúan nuevas versiones de Flet en una ventana **mensual** o antes si hay correcciones críticas de seguridad/estabilidad.
+- **Criterios de rollback**: si un upgrade rompe APIs públicas de FletPlus, degrada demos oficiales, o introduce fallos en CI que no se pueden corregir en la ventana de release, se revierte temporalmente a la versión objetivo anterior y se documenta en `CHANGELOG.md`.
+
+> Referencia operativa: consulta el procedimiento detallado en [`docs/tooling.md`](docs/tooling.md#politica-de-upgrade-de-flet-y-release).
+
 [doc-tooling-workflow]: tooling.md#workflow-de-documentacion
 [gh-doc-tooling-workflow]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md#workflow-de-documentacion
 

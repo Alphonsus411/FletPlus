@@ -247,6 +247,50 @@ El módulo `fletplus.web.pwa` incluye tres utilidades clave:
 
 Una vez generados ambos archivos, sirve el directorio que los contiene y llama a `register_pwa(page)` durante la inicialización de tu app web para activar la experiencia instalable.
 
+## Política de upgrade de Flet y release
+
+Esta política define cómo mantenemos la compatibilidad de FletPlus con Flet y cómo hacemos trazable cada salto de versión.
+
+### Versión objetivo, cadencia y rollback
+
+- **Versión objetivo vigente**: `flet==0.28.x` (mínimo soportado `>=0.28.0`).
+- **Cadencia de actualización**: revisión **mensual** de nuevas versiones de Flet, con posibilidad de adelanto por seguridad o correcciones críticas.
+- **Rollback**: se revierte al objetivo anterior cuando ocurra cualquiera de estos escenarios:
+  1. Ruptura de API pública de FletPlus.
+  2. Fallo reproducible en demos oficiales.
+  3. Fallo en checks de CI sin mitigación dentro de la ventana de release.
+
+Todo upgrade/rollback debe registrarse en `CHANGELOG.md` indicando versión evaluada, decisión y motivo.
+
+### Procedimiento paso a paso para upgrade
+
+1. **Actualizar manifiestos y constraints**
+   - Ajustar versión objetivo en `pyproject.toml`, `requirements.txt`, `requirements-dev.txt` y documentación asociada.
+   - Si aplica, actualizar ejemplos o snippets que fijen versiones.
+2. **Ejecutar checks de calidad y compatibilidad**
+   - Ejecutar preflight de dependencias y suite de tests.
+   - Ejecutar checks estáticos/documentación que formen parte del pipeline de release.
+3. **Revisar deprecaciones y cambios breaking**
+   - Revisar changelog/notas de Flet para identificar APIs deprecadas.
+   - Eliminar o encapsular usos de APIs en desuso en módulos públicos.
+4. **Validar demos y flujos principales**
+   - Probar la demo oficial y los recorridos de UI/documentados.
+   - Confirmar que no haya regresiones visuales ni funcionales.
+5. **Validar tests y decidir publicación**
+   - Confirmar tests verdes.
+   - Si algo crítico falla, aplicar rollback y registrar la decisión en `CHANGELOG.md`.
+
+### Checklist obligatoria de release
+
+Antes de publicar una nueva versión de FletPlus, verificar:
+
+- [ ] La **versión objetivo de Flet** está validada explícitamente para la release (sin este punto, no se publica).
+- [ ] Manifiestos y documentación están alineados con la versión objetivo.
+- [ ] Se ejecutaron checks de QA/CI relevantes sin fallos críticos.
+- [ ] Demos principales verificadas manualmente.
+- [ ] Tests automatizados en verde.
+- [ ] `CHANGELOG.md` actualizado con el salto de versión (o rollback) y su justificación.
+
 ## Workflow de documentación
 
 El repositorio incluye el workflow [`.github/workflows/docs.yml`](../.github/workflows/docs.yml), que valida la documentación en `pull_request` (ramas `main` y `develop`) y la publica en GitHub Pages cuando hay `push` a `main`. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y ejecuta `mkdocs build --strict --site-dir site` antes de subir el resultado como artefacto de Pages:
