@@ -162,3 +162,57 @@ def test_adaptive_navigation_layout_secondary_panel():
     assert isinstance(secondary_container, ft.Container)
     assert isinstance(secondary_container.content, ft.Text)
     assert "Panel desktop" in secondary_container.content.value
+
+
+class DummyWindow:
+    def __init__(self, width: int = 0) -> None:
+        self.width = width
+
+
+class DummyPageWithWindow:
+    def __init__(self, width: int, height: int, platform: str = "android") -> None:
+        self.width = width
+        self.height = height
+        self.platform = platform
+        self.window = DummyWindow(width)
+        self.on_resize = None
+        self.theme = ft.Theme()
+        self.locale = None
+        self.focus_target = None
+        self.drawer = None
+        self.drawer_opened = 0
+        self.update_calls = 0
+
+    def update(self) -> None:
+        self.update_calls += 1
+
+
+def test_on_width_change_updates_window_width_api() -> None:
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, dev: ft.Text(f"Vista {idx}-{dev}"),
+    )
+    page = DummyPageWithWindow(480, 800)
+
+    layout.build(page)
+    layout._on_width_change(960)
+
+    assert page.window.width == 960
+
+
+def test_on_width_change_falls_back_to_legacy_window_width_api() -> None:
+    class LegacyPage(DummyPage):
+        def __init__(self, width: int, height: int) -> None:
+            super().__init__(width, height)
+            self.window_width = width
+
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, dev: ft.Text(f"Vista {idx}-{dev}"),
+    )
+    page = LegacyPage(480, 800)
+
+    layout.build(page)
+    layout._on_width_change(970)
+
+    assert page.window_width == 970

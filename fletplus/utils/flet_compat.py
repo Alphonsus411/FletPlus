@@ -42,6 +42,47 @@ def get_page_window(page: Any) -> Any | None:
     return getattr(page, "window", None)
 
 
+def get_page_width(page: Any, default: float = 0.0) -> float:
+    """Lee el ancho de página priorizando ``page.window.width``.
+
+    Fallbacks soportados:
+    1) ``page.window.width`` (API reciente)
+    2) ``page.window_width`` (API legacy)
+    3) ``page.width`` (medida de viewport)
+    """
+
+    window = get_page_window(page)
+    if window is not None:
+        width = getattr(window, "width", None)
+        if isinstance(width, (int, float)):
+            return float(width)
+
+    for attr in ("window_width", "width"):
+        width = getattr(page, attr, None)
+        if isinstance(width, (int, float)):
+            return float(width)
+
+    return default
+
+
+def set_page_width(page: Any, width: float) -> bool:
+    """Escribe el ancho usando la mejor API disponible sin lanzar excepción."""
+
+    window = get_page_window(page)
+    if window is not None and hasattr(window, "width"):
+        with contextlib.suppress(Exception):
+            setattr(window, "width", width)
+            return True
+
+    for attr in ("window_width", "width"):
+        if hasattr(page, attr):
+            with contextlib.suppress(Exception):
+                setattr(page, attr, width)
+                return True
+
+    return False
+
+
 def safe_set_window_attr(page: Any, attr: str, value: Any) -> bool:
     """Asigna un atributo de ``window`` cuando existe, sin lanzar excepción."""
 
