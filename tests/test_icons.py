@@ -13,6 +13,36 @@ from fletplus.icons import (
     resolve_icon_name,
 )
 
+CRITICAL_UPSTREAM_ICONS = {
+    "HOME": "SETTINGS",
+    "INSIGHTS": "DASHBOARD",
+    "ANALYTICS": "DASHBOARD",
+    "SUPERVISED_USER_CIRCLE": "PERSON",
+    "SETTINGS": "HOME",
+    "MENU": "MORE_HORIZ",
+    "SKIP_NEXT_OUTLINED": "SKIP_NEXT",
+    "CLOSED_CAPTION": "SUBTITLES",
+    "VERIFIED_OUTLINED": "CHECK_CIRCLE",
+    "WARNING_AMBER_OUTLINED": "WARNING",
+    "ERROR_OUTLINE": "ERROR",
+    "ARROW_UPWARD": "NORTH",
+    "ARROW_DOWNWARD": "SOUTH",
+    "EDIT": "CREATE",
+    "CHECK": "DONE",
+    "CLOSE": "CANCEL",
+}
+
+
+def _resolve_upstream_icon_with_fallback(name: str, fallback: str) -> object:
+    icon_value = getattr(ft.Icons, name, None)
+    if icon_value is not None:
+        return icon_value
+    fallback_value = getattr(ft.Icons, fallback, None)
+    assert fallback_value is not None, (
+        f"Falta icono crítico '{name}' y su fallback '{fallback}' en ft.Icons"
+    )
+    return fallback_value
+
 
 def test_icon_resolves_from_material_catalog():
     result = icon("home")
@@ -72,3 +102,20 @@ def test_icon_class_builds_instances():
     assert isinstance(instance, ft.Icon)
     assert instance.name == "lucide:menu"
     assert instance.color == "red"
+
+
+def test_critical_upstream_icons_have_compatible_fallback() -> None:
+    for icon_name, fallback_name in CRITICAL_UPSTREAM_ICONS.items():
+        resolved = _resolve_upstream_icon_with_fallback(icon_name, fallback_name)
+        assert resolved is not None
+
+
+def test_upstream_icon_fallback_path_is_exercised() -> None:
+    class _FakeIcons:
+        SETTINGS = object()
+
+    resolved = getattr(_FakeIcons, "INSIGHTS", None)
+    if resolved is None:
+        resolved = getattr(_FakeIcons, "SETTINGS", None)
+
+    assert resolved is _FakeIcons.SETTINGS

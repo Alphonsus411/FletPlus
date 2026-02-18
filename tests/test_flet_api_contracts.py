@@ -51,6 +51,39 @@ def test_page_transition_theme_contract() -> None:
     assert transitions.ios == none_transition
 
 
+def test_navigation_drawer_contract() -> None:
+    destination = ft.NavigationDrawerDestination(
+        icon=ft.Icons.HOME,
+        label="Inicio",
+    )
+    drawer = ft.NavigationDrawer(
+        controls=[destination],
+        selected_index=0,
+    )
+
+    assert len(drawer.controls) == 1
+    assert drawer.selected_index == 0
+
+
+def test_page_window_contract() -> None:
+    window_attr = _require_attr(ft.Page, "window")
+    assert isinstance(window_attr, property)
+
+
+def test_page_update_contract_methods_exist() -> None:
+    update_method = _require_attr(ft.Page, "update")
+    update_async_method = getattr(ft.Page, "update_async", None)
+
+    assert callable(update_method)
+    if update_async_method is not None:
+        assert callable(update_async_method)
+
+
+def test_page_transition_theme_enum_contract() -> None:
+    transition_enum = _require_attr(ft, "PageTransitionTheme")
+    _require_attr(transition_enum, "NONE")
+
+
 def test_navigation_rail_destination_contract() -> None:
     destination = ft.NavigationRailDestination(
         icon=ft.Icons.HOME,

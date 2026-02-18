@@ -57,3 +57,36 @@ jobs:
 
       - name: Run static/security checks
         run: bash tools/qa.sh --scope static-security
+
+  flet-version-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - label: baseline
+            flet-spec: flet==0.27.6
+            expected-minor: "0.27"
+          - label: migration-target
+            flet-spec: flet>=0.28,<0.29
+            expected-minor: "0.28"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies for Flet matrix
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install --upgrade "${{ matrix.flet-spec }}"
+
+      - name: Run Flet version matrix compatibility test
+        env:
+          FLET_MATRIX_EXPECTED_MINOR: ${{ matrix.expected-minor }}
+        run: python -m pytest tests/test_flet_version_matrix.py
