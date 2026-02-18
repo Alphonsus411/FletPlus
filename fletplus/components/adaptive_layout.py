@@ -16,7 +16,7 @@ from fletplus.utils.device_profiles import (
     iter_device_profiles,
     get_device_profile,
 )
-from fletplus.utils.flet_compat import set_page_width
+from fletplus.utils.flet_compat import get_page_width, safe_open_drawer, set_page_width
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
 
@@ -204,6 +204,10 @@ class AdaptiveNavigationLayout:
         """Configura la disposición en ``page`` y devuelve el control raíz."""
 
         self._page = page
+        current_width = get_page_width(page)
+        if current_width > 0:
+            set_page_width(page, current_width)
+            setattr(page, "width", current_width)
         self.accessibility.apply(page, self.theme)
         if self.drawer is not None:
             setattr(page, "drawer", self.drawer)
@@ -213,7 +217,7 @@ class AdaptiveNavigationLayout:
                 self.accessibility.enable_captions
                 and self.accessibility.caption_mode == "overlay"
             )
-        self._current_device = get_device_profile(page.width or 0, self.device_profiles).name
+        self._current_device = get_device_profile(get_page_width(page), self.device_profiles).name
         self._update_content()
 
         callbacks = {
@@ -565,6 +569,4 @@ class AdaptiveNavigationLayout:
     def _open_drawer(self, _event: ft.ControlEvent) -> None:
         if not self._page or self.drawer is None:
             return
-        open_drawer = getattr(self._page, "open_drawer", None)
-        if callable(open_drawer):
-            open_drawer()
+        safe_open_drawer(self._page)

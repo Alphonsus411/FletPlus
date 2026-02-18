@@ -7,11 +7,15 @@ from pathlib import Path
 import asyncio
 
 from fletplus.utils.flet_compat import (
+    get_page_height,
     get_page_width,
+    safe_close_drawer,
     safe_close_window,
+    safe_open_drawer,
     safe_set_window_attr,
     safe_take_screenshot,
     safe_update_page,
+    set_page_height,
     set_page_width,
 )
 
@@ -28,6 +32,18 @@ class _WindowWithAttrs:
 class _PageWithWindow:
     def __init__(self) -> None:
         self.window = _WindowWithAttrs()
+
+
+class _DrawerPage:
+    def __init__(self) -> None:
+        self.drawer_opened = False
+        self.drawer_closed = False
+
+    def open_drawer(self) -> None:
+        self.drawer_opened = True
+
+    def close_drawer(self) -> None:
+        self.drawer_closed = True
 
 
 def test_safe_set_window_attr_handles_absence_without_exception() -> None:
@@ -123,3 +139,43 @@ def test_set_page_width_falls_back_to_legacy_window_width() -> None:
 
     assert set_page_width(page, 900) is True
     assert page.window_width == 900
+
+
+def test_get_page_height_prioritizes_window_height() -> None:
+    page = _PageWithWindow()
+    page.window.height = 730
+    page.window_height = 700
+    page.height = 680
+
+    assert get_page_height(page) == 730.0
+
+
+def test_set_page_height_falls_back_to_legacy_window_height() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.window_height = 700
+
+    page = _Page()
+
+    assert set_page_height(page, 910) is True
+    assert page.window_height == 910
+
+
+def test_safe_open_drawer_and_close_drawer_work_when_available() -> None:
+    page = _DrawerPage()
+
+    assert safe_open_drawer(page) is True
+    assert safe_close_drawer(page) is True
+    assert page.drawer_opened is True
+    assert page.drawer_closed is True
+
+
+def test_safe_close_drawer_falls_back_to_drawer_open_flag() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.drawer = type("Drawer", (), {"open": True})()
+
+    page = _Page()
+
+    assert safe_close_drawer(page) is True
+    assert page.drawer.open is False

@@ -80,6 +80,17 @@ La tabla siguiente registra las APIs de Flet más sensibles para upgrades, su es
 
 ---
 
+
+### Inventario operativo de puntos sensibles (fuente de contratos)
+
+Este inventario se usa como referencia directa de los contratos de prueba:
+
+- **Navegación responsive (`fletplus/components/`)**: construcción y cambio de estado de `NavigationBar`, `NavigationRail`, `NavigationDrawer`, apertura/cierre de drawer y sincronización de índice seleccionado.
+- **Atributos `Page`/`window` (`fletplus/components/`, `fletplus/core_legacy.py`)**: lectura/escritura de ancho y alto mediante `page.window.width|height`, `page.window_width|window_height` y fallback a `page.width|height`.
+- **Navegación y rutas (`fletplus/router/`)**: contrato de `router.go/replace`, observadores, fallback cuando backends nativos no están disponibles y resolución determinista de rutas.
+- **Tema por plataforma (`fletplus/themes/`)**: lectura de `platform_brightness`/`platform_theme`, listeners de plataforma, aplicación de `theme_mode`, y no-regresión de tokens custom.
+- **Iconografía crítica (`fletplus/components/`, `fletplus/icons/`)**: uso de `ft.Icons.*` en navegación y overlays con fallback explícito cuando upstream renombra iconos.
+
 ## 3) Ejecución por fases (aislamiento de fallos)
 
 ### Fase 1 — Core utilidades (`themes` + `utils` + `core_legacy`)
@@ -145,7 +156,16 @@ Checklist:
 
 ## 6) Criterios de aceptación para cerrar la migración
 
-La migración a la versión objetivo de Flet solo puede cerrarse cuando todos los contratos siguientes están en verde:
+La migración a la versión objetivo de Flet **no se puede cerrar** hasta cumplir simultáneamente este criterio de corte:
+
+1. ✅ `tests/test_flet_api_contracts.py` en verde (contratos API sensibles).
+2. ✅ matriz CI de versiones (`tests/test_flet_version_matrix.py`) en verde para baseline y target.
+3. ✅ smoke de demo/plantilla (`tests/test_demo_template_smoke.py`) en verde.
+4. ✅ regresiones mínimas de CLI (`tests/test_cli_main.py`, `tests/test_cli_build.py`) en verde.
+
+Si cualquiera de estos puntos falla, el estado de migración se mantiene **abierto**.
+
+Además, deben quedar en verde los contratos siguientes:
 
 1. **Contratos API sensibles de Flet (`tests/test_flet_api_contracts.py`)**
    - `ft.NavigationDrawer` / `NavigationDrawerDestination` se pueden construir y mantienen `selected_index`.

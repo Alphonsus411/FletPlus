@@ -12,6 +12,7 @@ Atributos de compatibilidad actualmente cubiertos
   ``left``, ``top``, ``skip_taskbar``): no todos los atributos están
   presentes en todas las combinaciones de versión/OS.
 - ``Page.update_async`` vs ``Page.update``.
+- ``Page.open_drawer`` / ``Page.close_drawer`` pueden no existir según target.
 - ``Page.screenshot_async`` vs ``Page.screenshot`` vs invocación interna
   ``Page._invoke_method_async('screenshot', ...)``.
 - ``Window.destroy`` vs ``Window.close``.
@@ -80,6 +81,49 @@ def set_page_width(page: Any, width: float) -> bool:
                 setattr(page, attr, width)
                 return True
 
+    with contextlib.suppress(Exception):
+        setattr(page, "width", width)
+        return True
+
+    return False
+
+
+def get_page_height(page: Any, default: float = 0.0) -> float:
+    """Lee el alto de página priorizando ``page.window.height``."""
+
+    window = get_page_window(page)
+    if window is not None:
+        height = getattr(window, "height", None)
+        if isinstance(height, (int, float)):
+            return float(height)
+
+    for attr in ("window_height", "height"):
+        height = getattr(page, attr, None)
+        if isinstance(height, (int, float)):
+            return float(height)
+
+    return default
+
+
+def set_page_height(page: Any, height: float) -> bool:
+    """Escribe el alto usando la mejor API disponible sin lanzar excepción."""
+
+    window = get_page_window(page)
+    if window is not None and hasattr(window, "height"):
+        with contextlib.suppress(Exception):
+            setattr(window, "height", height)
+            return True
+
+    for attr in ("window_height", "height"):
+        if hasattr(page, attr):
+            with contextlib.suppress(Exception):
+                setattr(page, attr, height)
+                return True
+
+    with contextlib.suppress(Exception):
+        setattr(page, "height", height)
+        return True
+
     return False
 
 
@@ -122,6 +166,35 @@ async def safe_update_page(page: Any) -> None:
     update = getattr(page, "update", None)
     if callable(update):
         update()
+
+
+def safe_open_drawer(page: Any) -> bool:
+    """Abre el drawer si la API está disponible para la versión actual."""
+
+    open_drawer = getattr(page, "open_drawer", None)
+    if callable(open_drawer):
+        with contextlib.suppress(Exception):
+            open_drawer()
+            return True
+    return False
+
+
+def safe_close_drawer(page: Any) -> bool:
+    """Cierra el drawer con la API disponible (``close_drawer`` o ``drawer.open``)."""
+
+    close_drawer = getattr(page, "close_drawer", None)
+    if callable(close_drawer):
+        with contextlib.suppress(Exception):
+            close_drawer()
+            return True
+
+    drawer = getattr(page, "drawer", None)
+    if drawer is not None and hasattr(drawer, "open"):
+        with contextlib.suppress(Exception):
+            setattr(drawer, "open", False)
+            return True
+
+    return False
 
 
 async def safe_take_screenshot(page: Any, path: Path) -> None:
