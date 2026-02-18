@@ -235,14 +235,6 @@ def validate_workflow_permissions(path: Path) -> list[str]:
     if not isinstance(content, dict):
         return [f"{path}: el workflow debe ser un objeto YAML válido."]
 
-    workflow_permissions = content.get("permissions")
-    if isinstance(workflow_permissions, dict):
-        if workflow_permissions.get("contents") != "read":
-            errors.append(
-                f"{path}: permissions a nivel workflow debe definir contents: read."
-            )
-        return errors
-
     jobs = content.get("jobs")
     if not isinstance(jobs, dict) or not jobs:
         errors.append(
@@ -250,23 +242,41 @@ def validate_workflow_permissions(path: Path) -> list[str]:
         )
         return errors
 
+    workflow_permissions = content.get("permissions")
+    has_workflow_permissions = isinstance(workflow_permissions, dict)
+    if has_workflow_permissions and workflow_permissions.get("contents") != "read":
+        errors.append(
+            f"{path}: permissions a nivel workflow debe definir contents: read."
+        )
+
     missing_jobs: list[str] = []
+    invalid_overrides: list[str] = []
     for job_name, job_def in jobs.items():
         if not isinstance(job_name, str):
             continue
         if not isinstance(job_def, dict):
-            missing_jobs.append(job_name)
+            if not has_workflow_permissions:
+                missing_jobs.append(job_name)
             continue
+
         job_permissions = job_def.get("permissions")
-        if (
-            not isinstance(job_permissions, dict)
-            or job_permissions.get("contents") != "read"
-        ):
-            missing_jobs.append(job_name)
+
+        if not isinstance(job_permissions, dict):
+            if not has_workflow_permissions:
+                missing_jobs.append(job_name)
+            continue
+
+        if job_permissions.get("contents") != "read":
+            invalid_overrides.append(job_name)
 
     if missing_jobs:
         errors.append(
             f"{path}: los jobs {missing_jobs} deben definir permissions.contents: read o declararlo a nivel workflow."
+        )
+
+    if invalid_overrides:
+        errors.append(
+            f"{path}: los jobs {invalid_overrides} definen un override inválido; permissions.contents debe ser read."
         )
 
     return errors
