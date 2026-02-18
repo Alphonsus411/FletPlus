@@ -36,6 +36,10 @@ from pathlib import Path
 from typing import Any
 
 
+class ScreenshotNotSupportedError(RuntimeError):
+    """Señala que la página no expone ninguna API de captura compatible."""
+
+
 def get_page_window(page: Any) -> Any | None:
     """Devuelve ``page.window`` si existe; en caso contrario ``None``."""
 
@@ -106,3 +110,9 @@ async def safe_take_screenshot(page: Any, path: Path) -> None:
             wait_for_result=True,
             wait_timeout=30,
         )
+        return
+
+    raise ScreenshotNotSupportedError(
+        "No screenshot API available on page "
+        "(expected screenshot_async, screenshot or _invoke_method_async)."
+    )

@@ -10,6 +10,7 @@ from typing import Dict
 import flet as ft
 
 from fletplus.utils.flet_compat import (
+    ScreenshotNotSupportedError,
     safe_close_window,
     safe_set_window_attr,
     safe_take_screenshot,
@@ -90,7 +91,13 @@ def capture_assets(
                 await asyncio.sleep(delay)
                 target_dir = screenshot_path or tmp_base
                 image_path = target_dir / f"{route.slug}.png"
-                await safe_take_screenshot(page, image_path)
+                try:
+                    await safe_take_screenshot(page, image_path)
+                except ScreenshotNotSupportedError as exc:
+                    raise CaptureError(
+                        "La versión/target actual de Flet no soporta capturas "
+                        "(faltan screenshot_async/screenshot/_invoke_method_async)."
+                    ) from exc
                 if screenshot_path:
                     summary.screenshots[route.path] = image_path
                 if recording_path:
