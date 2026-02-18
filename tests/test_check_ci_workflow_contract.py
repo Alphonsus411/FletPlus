@@ -334,6 +334,29 @@ jobs:
     assert any("jobs ['lint']" in error for error in errors)
 
 
+def test_validate_workflow_permissions_fails_if_job_override_escalates_permissions(
+    contract_env: dict[str, Path],
+) -> None:
+    workflow = contract_env["workflows_dir"] / "job-permissions-override-write.yml"
+    workflow.write_text(
+        """
+name: Job Permissions Override
+permissions:
+  contents: read
+jobs:
+  qa:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/reusable-quality.yml
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_workflow_permissions(workflow)
+
+    assert any("override inválido" in error for error in errors)
+
+
 def test_validate_wrapper_workflow_fails_if_local_steps_exist(
     contract_env: dict[str, Path],
 ) -> None:
