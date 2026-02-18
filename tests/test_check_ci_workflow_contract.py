@@ -357,6 +357,28 @@ jobs:
     assert any("override inválido" in error for error in errors)
 
 
+def test_validate_workflow_permissions_fails_if_job_override_uses_string_shorthand(
+    contract_env: dict[str, Path],
+) -> None:
+    workflow = contract_env["workflows_dir"] / "job-permissions-override-shorthand.yml"
+    workflow.write_text(
+        """
+name: Job Permissions Override Shorthand
+permissions:
+  contents: read
+jobs:
+  qa:
+    permissions: write-all
+    uses: ./.github/workflows/reusable-quality.yml
+""",
+        encoding="utf-8",
+    )
+
+    errors = check_ci_workflow_contract.validate_workflow_permissions(workflow)
+
+    assert any("override inválido" in error for error in errors)
+
+
 def test_validate_wrapper_workflow_fails_if_local_steps_exist(
     contract_env: dict[str, Path],
 ) -> None:

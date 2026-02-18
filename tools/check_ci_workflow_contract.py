@@ -261,9 +261,13 @@ def validate_workflow_permissions(path: Path) -> list[str]:
 
         job_permissions = job_def.get("permissions")
 
-        if not isinstance(job_permissions, dict):
+        if job_permissions is None:
             if not has_workflow_permissions:
                 missing_jobs.append(job_name)
+            continue
+
+        if not isinstance(job_permissions, dict):
+            invalid_overrides.append(job_name)
             continue
 
         if job_permissions.get("contents") != "read":
