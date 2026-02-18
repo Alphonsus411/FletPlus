@@ -62,11 +62,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # Actualizar esta matriz de forma mensual o cuando haya un release crítico de Flet
+        # (breaking changes, deprecaciones relevantes o ajustes de política de soporte).
         include:
-          - label: baseline
+          - label: min-supported
             flet-spec: flet==0.27.6
             expected-minor: "0.27"
-          - label: migration-target
+          - label: latest-migration-target
             flet-spec: flet>=0.28,<0.29
             expected-minor: "0.28"
 
