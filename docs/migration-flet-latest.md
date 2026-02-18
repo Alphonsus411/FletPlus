@@ -69,7 +69,7 @@ La tabla siguiente registra las APIs de Flet más sensibles para upgrades, su es
 | `core_legacy` | `router.go(...)`, `router.replace(...)` (abstracción propia) | Vigente dentro de FletPlus | Equivale a navegación declarativa interna (no API Flet directa) | Mantener contrato y tests de rutas. |
 | `components` | `ft.NavigationRail` / `ft.NavigationBar` adaptativos | Vigente | Sin deprecación directa detectada | Mantener; validar breakpoints y cambio de layout. |
 | `components` | `ft.Icons.*` para iconografía | Vigente | Si un icono cambia en upstream, reemplazar por alias cercano | Añadir validación visual/funcional en tests de componentes. |
-| `components` | escritura de `page.window_width` en `adaptive_layout` | Sensible (API histórica) | En runtimes recientes suele preferirse `page.window.width` | Introducir normalización/adapter en fase de refactor de componentes. |
+| `components` | escritura de `page.window_width` en `adaptive_layout` | Sensible (API histórica) | En runtimes recientes suele preferirse `page.window.width` | Implementado mediante helpers de compatibilidad y reutilizado en componentes. |
 | `core_legacy` / `demo` | atributos directos de `page` (`title`, `scroll`, `controls`, `update`) | Vigente | Sin deprecación directa detectada | Mantener; reforzar tests de smoke de demo. |
 | `window/page attrs` | Gestión de ventana encapsulada en `WindowManager` | Vigente (sujeto a runtime) | Equivalencia recomendada: encapsular cambios en helper único | Mantener centralización en `WindowManager` y evitar acceso disperso. |
 
@@ -134,6 +134,6 @@ Checklist:
 
 ## 5) Acciones de seguimiento recomendadas
 
-1. Añadir un adaptador explícito para atributos de ventana (`page.window_width` ↔ `page.window.width`) y reutilizarlo desde componentes/core.
+1. ✅ Añadir un adaptador explícito para atributos de ventana (`page.window_width` ↔ `page.window.width`) y reutilizarlo desde componentes/core.
 2. Añadir pruebas específicas de compatibilidad de iconos críticos en demo (fallback controlado).
 3. Mantener una matriz de compatibilidad por versión de Flet en CI para detectar regresiones tempranas.

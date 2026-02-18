@@ -16,6 +16,7 @@ from fletplus.utils.device_profiles import (
     iter_device_profiles,
     get_device_profile,
 )
+from fletplus.utils.flet_compat import set_page_width
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
 
@@ -545,8 +546,8 @@ class AdaptiveNavigationLayout:
         return ft.Stack(controls=layers, expand=True)
 
     def _on_width_change(self, width: int) -> None:
-        if self._page and hasattr(self._page, "window_width"):
-            setattr(self._page, "window_width", width)
+        if self._page:
+            set_page_width(self._page, width)
 
     def _focus_content(self, _event: ft.ControlEvent) -> None:
         if not self._page:

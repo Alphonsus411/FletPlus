@@ -7,10 +7,12 @@ from pathlib import Path
 import asyncio
 
 from fletplus.utils.flet_compat import (
+    get_page_width,
     safe_close_window,
     safe_set_window_attr,
     safe_take_screenshot,
     safe_update_page,
+    set_page_width,
 )
 
 
@@ -84,3 +86,40 @@ def test_safe_take_screenshot_no_supported_api_does_not_raise() -> None:
 
     page = _Page()
     asyncio.run(safe_take_screenshot(page, Path("sample.png")))
+
+
+def test_get_page_width_prioritizes_window_width() -> None:
+    page = _PageWithWindow()
+    page.window.width = 1024
+    page.window_width = 800
+    page.width = 640
+
+    assert get_page_width(page) == 1024.0
+
+
+def test_get_page_width_falls_back_to_legacy_window_width() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.window_width = 720
+
+    page = _Page()
+
+    assert get_page_width(page) == 720.0
+
+
+def test_set_page_width_writes_window_width_when_available() -> None:
+    page = _PageWithWindow()
+
+    assert set_page_width(page, 1111) is True
+    assert page.window.width == 1111
+
+
+def test_set_page_width_falls_back_to_legacy_window_width() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.window_width = 700
+
+    page = _Page()
+
+    assert set_page_width(page, 900) is True
+    assert page.window_width == 900

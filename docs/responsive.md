@@ -102,13 +102,14 @@ nombre del perfil activo cada vez que cambia el ancho de la ventana.
 import flet as ft
 from fletplus.components import ResponsiveGrid, ResponsiveGridItem
 from fletplus.utils.device_profiles import columns_for_width, device_name
+from fletplus.utils.flet_compat import get_page_width
 
 
 def main(page: ft.Page) -> None:
     status = ft.Text()
 
     grid = ResponsiveGrid(
-        columns=columns_for_width(page.window_width or 0),
+        columns=columns_for_width(get_page_width(page)),
         spacing=16,
         items=[
             ResponsiveGridItem(
@@ -123,7 +124,7 @@ def main(page: ft.Page) -> None:
     )
 
     def sync_layout(_: ft.ControlEvent | None = None) -> None:
-        width = page.window_width or page.width or 0
+        width = get_page_width(page)
         grid.columns = columns_for_width(width)
         status.value = f"Perfil activo: {device_name(width)}"
         page.update()
