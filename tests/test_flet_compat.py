@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import asyncio
+import pytest
 
 from fletplus.utils.flet_compat import (
+    ScreenshotNotSupportedError,
     safe_close_window,
     safe_set_window_attr,
     safe_take_screenshot,
@@ -78,9 +80,10 @@ def test_safe_take_screenshot_uses_invoke_method_fallback() -> None:
     assert page.called is True
 
 
-def test_safe_take_screenshot_no_supported_api_does_not_raise() -> None:
+def test_safe_take_screenshot_no_supported_api_raises() -> None:
     class _Page:
         pass
 
     page = _Page()
-    asyncio.run(safe_take_screenshot(page, Path("sample.png")))
+    with pytest.raises(ScreenshotNotSupportedError):
+        asyncio.run(safe_take_screenshot(page, Path("sample.png")))
