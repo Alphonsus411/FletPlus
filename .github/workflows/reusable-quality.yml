@@ -86,7 +86,11 @@ jobs:
           pip install -r requirements-dev.txt
           pip install --upgrade "${{ matrix.flet-spec }}"
 
-      - name: Run Flet version matrix compatibility test
+      - name: Run Flet contract and matrix compatibility tests
         env:
           FLET_MATRIX_EXPECTED_MINOR: ${{ matrix.expected-minor }}
-        run: python -m pytest tests/test_flet_version_matrix.py
+        run: |
+          python -m pytest \
+            tests/test_flet_api_contracts.py \
+            tests/test_icons.py \
+            tests/test_flet_version_matrix.py
