@@ -2,6 +2,7 @@ import nox
 
 nox.options.sessions = [
     "pytest",
+    "pytest-flet-contracts",
     "ruff",
     "black",
     "mypy",
@@ -29,6 +30,19 @@ def pytest(session: nox.Session) -> None:
         "websocket",
     )
     session.run("python", "-m", "pytest")
+
+
+@nox.session(name="pytest-flet-contracts")
+def pytest_flet_contracts(session: nox.Session) -> None:
+    _install_deps(session)
+    session.run(
+        "python",
+        "-m",
+        "pytest",
+        "tests/test_flet_api_contracts.py",
+        "tests/test_icons.py",
+        "tests/test_flet_version_matrix.py",
+    )
 
 
 @nox.session

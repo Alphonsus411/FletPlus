@@ -135,5 +135,31 @@ Checklist:
 ## 5) Acciones de seguimiento recomendadas
 
 1. ✅ Añadir un adaptador explícito para atributos de ventana (`page.window_width` ↔ `page.window.width`) y reutilizarlo desde componentes/core.
-2. Añadir pruebas específicas de compatibilidad de iconos críticos en demo (fallback controlado).
-3. Mantener una matriz de compatibilidad por versión de Flet en CI para detectar regresiones tempranas.
+2. ✅ Añadir pruebas específicas de compatibilidad de iconos críticos en demo/componentes (fallback controlado).
+3. ✅ Mantener una matriz de compatibilidad por versión de Flet en CI para detectar regresiones tempranas.
+
+---
+
+## 6) Criterios de aceptación para cerrar la migración
+
+La migración a la versión objetivo de Flet solo puede cerrarse cuando todos los contratos siguientes están en verde:
+
+1. **Contratos API sensibles de Flet (`tests/test_flet_api_contracts.py`)**
+   - `ft.NavigationDrawer` / `NavigationDrawerDestination` se pueden construir y mantienen `selected_index`.
+   - `ft.Page.window` existe como acceso soportado.
+   - `ft.Page.update` existe y `ft.Page.update_async` se valida cuando está disponible (con fallback compatible en ausencia).
+   - `ft.PageTransitionsTheme` y `ft.PageTransitionTheme.NONE` permanecen disponibles.
+
+2. **Compatibilidad de iconos críticos (`tests/test_icons.py`)**
+   - Los iconos críticos usados por demo/componentes (`ft.Icons.*`) se resuelven en upstream.
+   - Si un icono deja de existir, debe funcionar una ruta de fallback explícita a un icono alternativo.
+
+3. **Matriz mínima por versión de Flet (`tests/test_flet_version_matrix.py`)**
+   - Deben pasar al menos dos ejecuciones de CI:
+     - **baseline**: `flet==0.27.6`
+     - **target migración**: `flet>=0.28,<0.29`
+   - Cada ejecución valida versión activa y presencia de contratos sensibles.
+
+4. **Integración en flujo de calidad**
+   - El workflow reusable de calidad debe ejecutar el job `flet-version-matrix` en cada push a ramas protegidas.
+   - Cualquier fallo en estos contratos es **bloqueante** para upgrades de Flet.
