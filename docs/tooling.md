@@ -253,12 +253,13 @@ Esta política define cómo mantenemos la compatibilidad de FletPlus con Flet y 
 
 ### Versión objetivo, cadencia y rollback
 
-- **Versión objetivo vigente**: `flet==0.28.x` (mínimo soportado `>=0.28.0`).
+- **Versión objetivo vigente**: `flet==0.29.x` (mínimo soportado `>=0.29.0`).
 - **Cadencia de actualización**: revisión **mensual** de nuevas versiones de Flet, con posibilidad de adelanto por seguridad o correcciones críticas.
 - **Rollback**: se revierte al objetivo anterior cuando ocurra cualquiera de estos escenarios:
   1. Ruptura de API pública de FletPlus.
   2. Fallo reproducible en demos oficiales.
   3. Fallo en checks de CI sin mitigación dentro de la ventana de release.
+  4. Regresión funcional en la matriz de compatibilidad (`baseline` o `target`) que bloquee contratos críticos de navegación, tema o demo.
 
 Todo upgrade/rollback debe registrarse en `CHANGELOG.md` indicando versión evaluada, decisión y motivo.
 

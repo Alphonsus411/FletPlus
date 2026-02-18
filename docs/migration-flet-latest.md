@@ -10,6 +10,9 @@ Este documento define una migración **controlada por fases** para compatibiliza
 - `fletplus/core_legacy.py`
 - `fletplus_demo/`
 
+**Versión baseline vigente**: `flet==0.28.3`  
+**Versión target vigente**: `flet>=0.29,<0.30`
+
 ---
 
 ## 1) Checklist de compatibilidad por áreas
@@ -156,10 +159,21 @@ La migración a la versión objetivo de Flet solo puede cerrarse cuando todos lo
 
 3. **Matriz mínima por versión de Flet (`tests/test_flet_version_matrix.py`)**
    - Deben pasar al menos dos ejecuciones de CI:
-     - **baseline**: `flet==0.27.6`
-     - **target migración**: `flet>=0.28,<0.29`
+     - **baseline**: `flet==0.28.3`
+     - **target migración**: `flet>=0.29,<0.30`
    - Cada ejecución valida versión activa y presencia de contratos sensibles.
 
 4. **Integración en flujo de calidad**
    - El workflow reusable de calidad debe ejecutar el job `flet-version-matrix` en cada push a ramas protegidas.
    - Cualquier fallo en estos contratos es **bloqueante** para upgrades de Flet.
+
+## 7) Tabla breve de auditoría (antes/después)
+
+| Ámbito | Antes | Después |
+|---|---|---|
+| Dependencia baseline (tests de compatibilidad) | `flet==0.27.6` | `flet==0.28.3` |
+| Dependencia target (upgrade activo) | `flet>=0.28,<0.29` | `flet>=0.29,<0.30` |
+| Política documentada en README/tooling | Objetivo `0.28.x` | Objetivo `0.29.x` |
+| CI (`flet-version-matrix` en reusable quality) | baseline `0.27` + target `0.28` | baseline `0.28` + target `0.29` |
+
+> Esta tabla se mantiene como resumen ejecutivo para auditoría de upgrades y rollbacks.
