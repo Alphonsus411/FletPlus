@@ -64,13 +64,21 @@ jobs:
       matrix:
         # Actualizar esta matriz de forma mensual o cuando haya un release crítico de Flet
         # (breaking changes, deprecaciones relevantes o ajustes de política de soporte).
+        # Política vigente:
+        # - baseline: menor mínimo soportado activamente por el proyecto.
+        # - target: última minor estable publicada en PyPI para validar migraciones.
+        # Procedimiento de actualización:
+        # 1) Revisar en PyPI la última minor estable de `flet`.
+        # 2) Mantener `min-supported` alineado con la baseline definida por el proyecto.
+        # 3) Actualizar `tools/flet_version_matrix_config.py` (ALLOWED_FLET_MINORS)
+        #    para reflejar exactamente los minors probados aquí.
         include:
           - label: min-supported
-            flet-spec: flet==0.27.6
-            expected-minor: "0.27"
+            flet-spec: flet>=0.29,<0.30
+            expected-minor: "0.29"
           - label: latest-migration-target
-            flet-spec: flet>=0.28,<0.29
-            expected-minor: "0.28"
+            flet-spec: flet>=0.80,<0.81
+            expected-minor: "0.80"
 
     steps:
       - name: Checkout
