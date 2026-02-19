@@ -89,7 +89,8 @@ def test_create_template_uses_main_flet_version_policy(
         requirements = (project / "requirements.txt").read_text(encoding="utf-8")
         readme = (project / "README.md").read_text(encoding="utf-8")
 
-    assert expected_flet_dependency in requirements
+    requirement_lines = {line.strip() for line in requirements.splitlines() if line.strip() and not line.startswith("#")}
+    assert expected_flet_dependency in requirement_lines
     assert f"Flet `{expected_flet_policy}`" in readme
 
 
