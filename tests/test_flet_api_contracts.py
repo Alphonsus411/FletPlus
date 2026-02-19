@@ -70,6 +70,18 @@ def test_page_window_contract() -> None:
     assert isinstance(window_attr, property)
 
 
+def test_page_window_dimension_contract() -> None:
+    window_attr = _require_attr(ft.Page, "window")
+    page_width_attr = getattr(ft.Page, "window_width", None)
+    page_height_attr = getattr(ft.Page, "window_height", None)
+    width_attr = getattr(ft.Page, "width", None)
+    height_attr = getattr(ft.Page, "height", None)
+
+    assert isinstance(window_attr, property)
+    assert (page_width_attr is not None or width_attr is not None)
+    assert (page_height_attr is not None or height_attr is not None)
+
+
 def test_page_update_contract_methods_exist() -> None:
     update_method = _require_attr(ft.Page, "update")
     update_async_method = getattr(ft.Page, "update_async", None)
@@ -77,6 +89,16 @@ def test_page_update_contract_methods_exist() -> None:
     assert callable(update_method)
     if update_async_method is not None:
         assert callable(update_async_method)
+
+
+def test_page_drawer_contract_methods_optional_but_consistent() -> None:
+    open_drawer = getattr(ft.Page, "open_drawer", None)
+    close_drawer = getattr(ft.Page, "close_drawer", None)
+
+    if open_drawer is not None:
+        assert callable(open_drawer)
+    if close_drawer is not None:
+        assert callable(close_drawer)
 
 
 def test_page_transition_theme_enum_contract() -> None:

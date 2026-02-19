@@ -69,3 +69,11 @@ def test_demo_module_importable_as_package_submodule() -> None:
 
     assert imported.__name__ == "fletplus_demo.app"
     assert callable(imported.main)
+
+
+def test_demo_main_module_exposes_run_callable() -> None:
+    sys.modules.pop("fletplus_demo.__main__", None)
+    module = __import__("fletplus_demo.__main__", fromlist=["*"])
+
+    assert hasattr(module, "run")
+    assert callable(module.run)

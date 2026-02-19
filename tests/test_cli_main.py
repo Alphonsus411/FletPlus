@@ -324,3 +324,36 @@ def test_profile_rejects_invalid_limit(monkeypatch) -> None:
 
     assert result.exit_code != 0
     assert "--limit debe ser un entero positivo" in result.output
+
+
+def test_run_resolves_relative_app_fallback_to_cwd_when_missing_in_watch(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+    runner = CliRunner()
+
+    launched_app_path: list[Path] = []
+
+    class _FakeProcess:
+        def poll(self) -> int:
+            return 0
+
+    def _fake_launch(app_path: Path, port: int, devtools: bool) -> _FakeProcess:
+        launched_app_path.append(app_path)
+        return _FakeProcess()
+
+    monkeypatch.setattr(cli_main, "_launch_flet_process", _fake_launch)
+    monkeypatch.setattr(cli_main, "_stop_process", lambda process: None)
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        app_file = base / "src" / "main.py"
+        app_file.parent.mkdir(parents=True, exist_ok=True)
+        app_file.write_text("print('cwd')", encoding="utf-8")
+
+        watch_root = base / "watch_root"
+        watch_root.mkdir(parents=True, exist_ok=True)
+
+        result = runner.invoke(cli_main.app, ["run", "--watch", str(watch_root)])
+
+    assert result.exit_code == 0, result.output
+    assert launched_app_path == [app_file.resolve()]

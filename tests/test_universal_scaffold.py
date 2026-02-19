@@ -104,3 +104,51 @@ def test_universal_scaffold_inline_captions_and_speak() -> None:
     assert "Mensaje importante" in scaffold._inline_caption_text.value
     assert scaffold._inline_caption_container.visible is True
     assert "Mensaje importante" in page.speak_messages
+
+
+class DummyWindow:
+    def __init__(self, width: int, height: int) -> None:
+        self.width = width
+        self.height = height
+
+
+class WindowOnlyPage(DummyPage):
+    def __init__(self, width: int, height: int, platform: str = "web") -> None:
+        super().__init__(width, height, platform=platform)
+        self.window = DummyWindow(width, height)
+        self.width = None
+        self.height = None
+
+
+def test_universal_scaffold_uses_window_dimensions_when_page_dimensions_missing() -> None:
+    items = [AdaptiveNavigationItem("tab-0", "Inicio", ft.Icons.HOME)]
+    page = WindowOnlyPage(1280, 800)
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=items,
+        content_builder=lambda item, idx: ft.Text(f"Contenido {item.id}-{idx}"),
+        accessibility=AccessibilityPreferences(enable_captions=False),
+    )
+
+    scaffold.build(page)
+
+    assert scaffold._current_device == "desktop"
+
+
+def test_universal_scaffold_open_drawer_is_tolerant_with_failing_runtime() -> None:
+    class FailingOpenDrawerPage(DummyPage):
+        def open_drawer(self) -> None:  # type: ignore[override]
+            raise RuntimeError("drawer API unavailable")
+
+    items = [AdaptiveNavigationItem("tab-0", "Inicio", ft.Icons.HOME)]
+    page = FailingOpenDrawerPage(520, 800)
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=items,
+        content_builder=lambda item, idx: ft.Text(f"Contenido {item.id}-{idx}"),
+        drawer=ft.NavigationDrawer(controls=[ft.Text("Menú")]),
+        accessibility=AccessibilityPreferences(enable_captions=False),
+    )
+
+    scaffold.build(page)
+    scaffold._open_drawer()
+
+    assert page.drawer is not None

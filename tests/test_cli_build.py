@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import re
 import importlib
 import sys
 import types
@@ -156,3 +157,30 @@ def test_build_normalizes_name_for_pyinstaller(monkeypatch, watchdog_available: 
         assert desktop_command[1:].count(sys.executable) == 0
         name_index = desktop_command.index("--name")
         assert desktop_command[name_index + 1] == "demo-app-name2024"
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_build_uses_directory_name_when_pyproject_missing(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        (base / "src").mkdir(parents=True, exist_ok=True)
+        (base / "src" / "main.py").write_text("print('demo')", encoding="utf-8")
+
+        calls: list[tuple[list[str], dict]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(([str(part) for part in command], kwargs))
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.cli.build.subprocess.run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", "desktop"])
+
+        assert result.exit_code == 0, result.output
+        desktop_command = next(command for command, _ in calls if "PyInstaller" in command)
+        name_index = desktop_command.index("--name")
+        expected_name = re.sub(r"[\\/\s]+", "-", base.name)
+        expected_name = re.sub(r"[^A-Za-z0-9_-]", "", expected_name).strip("-_") or "app"
+        assert desktop_command[name_index + 1] == expected_name

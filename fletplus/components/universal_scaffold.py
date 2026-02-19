@@ -24,6 +24,7 @@ from fletplus.utils.device_profiles import (
     get_device_profile,
     iter_device_profiles,
 )
+from fletplus.utils.flet_compat import get_page_height, get_page_width, safe_open_drawer
 from fletplus.utils.responsive_manager import ResponsiveManager
 
 if TYPE_CHECKING:
@@ -328,7 +329,7 @@ class UniversalAdaptiveScaffold:
             device_profiles=self.device_profiles,
         )
 
-        width = page.width or 0
+        width = get_page_width(page)
         device = get_device_profile(width, self.device_profiles).name
         self._apply_device_layout(device)
         return self._stack
@@ -486,13 +487,13 @@ class UniversalAdaptiveScaffold:
         if self.theme and self._page:
             orientation = (
                 "landscape"
-                if (self._page.width or 0) >= (self._page.height or 0)
+                if get_page_width(self._page) >= get_page_height(self._page)
                 else "portrait"
             )
             self.theme.apply_theme(
                 device=device_name,
                 orientation=orientation,
-                width=self._page.width or 0,
+                width=get_page_width(self._page),
             )
             self._refresh_app_bar_style()
         self._style_navigation(device_name)
@@ -603,7 +604,7 @@ class UniversalAdaptiveScaffold:
     def _handle_breakpoint_change(self, _: int) -> None:
         if not self._page:
             return
-        device = get_device_profile(self._page.width or 0, self.device_profiles).name
+        device = get_device_profile(get_page_width(self._page), self.device_profiles).name
         self._apply_device_layout(device)
 
     # ------------------------------------------------------------------
@@ -636,11 +637,8 @@ class UniversalAdaptiveScaffold:
 
     # ------------------------------------------------------------------
     def _open_drawer(self, _: ft.ControlEvent | None = None) -> None:
-        if self._page and hasattr(self._page, "open_drawer"):
-            try:
-                self._page.open_drawer()
-            except Exception:
-                pass
+        if self._page:
+            safe_open_drawer(self._page)
 
 
 __all__ = ["AdaptiveNavigationItem", "UniversalAdaptiveScaffold"]

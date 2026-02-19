@@ -296,3 +296,60 @@ def test_core_start_executes_cleanup_when_rebuild_layout_fails(monkeypatch):
     assert app.page is None
     assert app._unsubscribe is None
     assert page.controls == []
+
+
+def test_fletplus_app_uses_window_dimensions_when_page_dimensions_missing():
+    def home_view():
+        return ft.Text("Inicio")
+
+    class Window:
+        def __init__(self) -> None:
+            self.width = 1024
+            self.height = 768
+
+    page = DummyPage()
+    page.window = Window()
+    page.width = None
+    page.height = None
+    page.user = "Admin"
+    page.locale = "es-ES"
+
+    app = FletPlusApp(page, {"Inicio": home_view})
+    app.build()
+
+    assert page.window.width == 1024
+    assert page.window.height == 768
+    assert app._layout_mode == "tablet"
+
+    app.dispose()
+
+
+def test_fletplus_app_drawer_handlers_are_tolerant_without_close_drawer_method():
+    def home_view():
+        return ft.Text("Inicio")
+
+    class Drawer:
+        def __init__(self) -> None:
+            self.open = True
+
+    page = DummyPage()
+    page.drawer = Drawer()
+    page.width = 520
+    page.height = 800
+    page.user = "Admin"
+    page.locale = "es-ES"
+
+    app = FletPlusApp(page, {"Inicio": home_view})
+    app.build()
+
+    class EventControl:
+        selected_index = 0
+
+    class Event:
+        control = EventControl()
+
+    app._handle_drawer_change(Event())
+
+    assert page.drawer is None or getattr(page.drawer, "open", False) is False
+
+    app.dispose()

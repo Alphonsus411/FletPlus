@@ -29,6 +29,14 @@ from fletplus.styles import Style
 from fletplus.router import Route, Router, RouteMatch
 from fletplus.state import Store
 from fletplus.utils.preferences import PreferenceStorage
+from fletplus.utils.flet_compat import (
+    get_page_height,
+    get_page_width,
+    safe_close_drawer,
+    safe_open_drawer,
+    set_page_height,
+    set_page_width,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -449,10 +457,10 @@ class FletPlusApp:
             except Exception:
                 logger.debug("No hay ruta inicial disponible para '/'")
 
-        if not hasattr(self.page, "width") or self.page.width is None:
-            self.page.width = 1280
-        if not hasattr(self.page, "height") or self.page.height is None:
-            self.page.height = 800
+        if get_page_width(self.page) <= 0:
+            set_page_width(self.page, 1280)
+        if get_page_height(self.page) <= 0:
+            set_page_height(self.page, 800)
 
         breakpoint_values = {0, self.responsive_navigation.mobile_breakpoint, self.responsive_navigation.tablet_breakpoint, self.responsive_navigation.desktop_breakpoint}
         if self.responsive_navigation.floating_breakpoint is not None:
@@ -463,7 +471,7 @@ class FletPlusApp:
             self.page,
             breakpoints=sorted_breakpoints,
         )
-        self._apply_layout_mode(self._resolve_layout_mode(self.page.width or 0), force=True)
+        self._apply_layout_mode(self._resolve_layout_mode(get_page_width(self.page)), force=True)
 
     # ------------------------------------------------------------------
     def _create_navigation_shell(self) -> None:
@@ -699,7 +707,7 @@ class FletPlusApp:
     # ------------------------------------------------------------------
     def _handle_drawer_change(self, e: ft.ControlEvent) -> None:
         self._navigate_to_index(e.control.selected_index)
-        self.page.close_drawer()
+        safe_close_drawer(self.page)
 
     # ------------------------------------------------------------------
     def _handle_floating_item_click(self, index: int) -> None:
@@ -752,7 +760,7 @@ class FletPlusApp:
         if not self._nav_routes or self.responsive_navigation is None:
             return False
 
-        width = getattr(self.page, "width", 0) or 0
+        width = get_page_width(self.page)
         try:
             numeric_width = int(width)
         except (TypeError, ValueError):  # pragma: no cover - ancho proviene de Flet
@@ -762,7 +770,7 @@ class FletPlusApp:
     # ------------------------------------------------------------------
     def _open_drawer(self, _e: ft.ControlEvent | None = None) -> None:
         if self.page.drawer:
-            self.page.open_drawer()
+            safe_open_drawer(self.page)
 
     # ------------------------------------------------------------------
     def _toggle_theme(self, _e: ft.ControlEvent | None = None) -> None:

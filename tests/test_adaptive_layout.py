@@ -1,7 +1,5 @@
 import flet as ft
 
-import flet as ft
-
 from fletplus.components.adaptive_layout import (
     AdaptiveDestination,
     AdaptiveNavigationLayout,
@@ -216,3 +214,38 @@ def test_on_width_change_falls_back_to_legacy_window_width_api() -> None:
     layout._on_width_change(970)
 
     assert page.window_width == 970
+
+
+def test_build_uses_window_width_when_page_width_missing() -> None:
+    class WindowOnlyPage(DummyPageWithWindow):
+        def __init__(self, width: int, height: int) -> None:
+            super().__init__(width, height)
+            self.width = None
+
+    page = WindowOnlyPage(1360, 768)
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, dev: ft.Text(f"Vista {idx}-{dev}"),
+    )
+
+    layout.build(page)
+
+    assert layout.current_device == "desktop"
+
+
+def test_open_drawer_is_tolerant_when_method_not_available() -> None:
+    class PageWithoutOpenDrawer(DummyPage):
+        def open_drawer(self) -> None:  # type: ignore[override]
+            raise RuntimeError("no disponible")
+
+    page = PageWithoutOpenDrawer(520, 900)
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, dev: ft.Text(f"Vista {idx}-{dev}"),
+        drawer=ft.NavigationDrawer(controls=[ft.Text("Menú")]),
+    )
+
+    layout.build(page)
+    layout._open_drawer(None)
+
+    assert page.drawer is not None
