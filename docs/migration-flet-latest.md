@@ -10,8 +10,8 @@ Este documento define una migración **controlada por fases** para compatibiliza
 - `fletplus/core_legacy.py`
 - `fletplus_demo/`
 
-**Versión baseline vigente**: `flet==0.28.3`  
-**Versión target vigente**: `flet>=0.29,<0.30`
+**Versión mínima soportada (estado actual)**: `flet>=0.29,<0.30` (según `pyproject.toml` y job `min-supported` de CI).  
+**Versión objetivo de migración (estado objetivo)**: `flet>=0.80,<0.81` (según job `latest-migration-target` de CI).
 
 ---
 
@@ -154,46 +154,37 @@ Checklist:
 
 ---
 
-## 6) Criterios de aceptación para cerrar la migración
+## 6) Criterio de compatibilidad
 
-La migración a la versión objetivo de Flet **no se puede cerrar** hasta cumplir simultáneamente este criterio de corte:
+Se considera que la migración es compatible **sin ruptura** solo si se mantiene el contrato público y operativo de estos módulos:
 
-1. ✅ `tests/test_flet_api_contracts.py` en verde (contratos API sensibles).
-2. ✅ matriz CI de versiones (`tests/test_flet_version_matrix.py`) en verde para baseline y target.
-3. ✅ smoke de demo/plantilla (`tests/test_demo_template_smoke.py`) en verde.
-4. ✅ regresiones mínimas de CLI (`tests/test_cli_main.py`, `tests/test_cli_build.py`) en verde.
+- `fletplus/components`: navegación adaptativa, layout responsive e iconografía crítica.
+- `fletplus/themes`: `ThemeManager`, tokens, modo oscuro y sincronización por plataforma.
+- `fletplus/utils`: accesibilidad, responsive y utilidades de `Page`/`window`.
+- `fletplus_demo`: arranque, rutas principales y smoke de ejecución.
 
-Si cualquiera de estos puntos falla, el estado de migración se mantiene **abierto**.
+Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migración en estado **abierto** hasta corregir el contrato.
 
-Además, deben quedar en verde los contratos siguientes:
+## 7) Estado actual vs estado objetivo (única tabla de referencia)
 
-1. **Contratos API sensibles de Flet (`tests/test_flet_api_contracts.py`)**
-   - `ft.NavigationDrawer` / `NavigationDrawerDestination` se pueden construir y mantienen `selected_index`.
-   - `ft.Page.window` existe como acceso soportado.
-   - `ft.Page.update` existe y `ft.Page.update_async` se valida cuando está disponible (con fallback compatible en ausencia).
-   - `ft.PageTransitionsTheme` y `ft.PageTransitionTheme.NONE` permanecen disponibles.
+| Ámbito | Estado actual (observado en repo) | Estado objetivo de migración | Fuente de verdad |
+|---|---|---|---|
+| Manifiesto de paquete | `pyproject.toml`: `flet>=0.29.0` | Mantener mínimo `>=0.29` mientras se valida minor objetivo | `pyproject.toml` |
+| Dependencias de desarrollo | `requirements.txt`: `flet==0.27.6` (heredado y desalineado) | Alinear a baseline activa (`>=0.29,<0.30`) o eliminar pin legacy | `requirements.txt` |
+| CI baseline (`flet-version-matrix`) | `flet>=0.29,<0.30` (`min-supported`) | Mantener como baseline contractual | `.github/workflows/reusable-quality.yml` |
+| CI target (`flet-version-matrix`) | `flet>=0.80,<0.81` (`latest-migration-target`) | Consolidar compatibilidad funcional sobre `0.80.x` | `.github/workflows/reusable-quality.yml` |
+| Política de documentación | Aún hay referencias históricas 0.27/0.28 en documentos de migración | Documentación sin referencias heredadas fuera de contexto | `docs/migration-flet-latest.md` y docs relacionados |
 
-2. **Compatibilidad de iconos críticos (`tests/test_icons.py`)**
-   - Los iconos críticos usados por demo/componentes (`ft.Icons.*`) se resuelven en upstream.
-   - Si un icono deja de existir, debe funcionar una ruta de fallback explícita a un icono alternativo.
+> Regla operativa: esta tabla reemplaza cualquier resumen “antes/después” previo y se actualiza en cada cambio de baseline/target en CI.
 
-3. **Matriz mínima por versión de Flet (`tests/test_flet_version_matrix.py`)**
-   - Deben pasar al menos dos ejecuciones de CI:
-     - **baseline**: `flet==0.28.3`
-     - **target migración**: `flet>=0.29,<0.30`
-   - Cada ejecución valida versión activa y presencia de contratos sensibles.
+## 8) Checklist final de aceptación técnica
 
-4. **Integración en flujo de calidad**
-   - El workflow reusable de calidad debe ejecutar el job `flet-version-matrix` en cada push a ramas protegidas.
-   - Cualquier fallo en estos contratos es **bloqueante** para upgrades de Flet.
+La migración solo se puede cerrar cuando **todos** los puntos siguientes estén en verde:
 
-## 7) Tabla breve de auditoría (antes/después)
+- [ ] **Contratos de API sensible**: `tests/test_flet_api_contracts.py` valida navegación, `Page.window`, `update/update_async` y transiciones.
+- [ ] **Compatibilidad de iconos críticos**: `tests/test_icons.py` valida resolución de `ft.Icons.*` y fallback explícito.
+- [ ] **Smoke de demo**: `tests/test_demo_template_smoke.py` confirma arranque básico del flujo demo/template.
+- [ ] **Matriz CI de versiones Flet**: `tests/test_flet_version_matrix.py` en verde para `min-supported` y `latest-migration-target`.
+- [ ] **Regresión CLI mínima**: `tests/test_cli_main.py` y `tests/test_cli_build.py` en verde.
 
-| Ámbito | Antes | Después |
-|---|---|---|
-| Dependencia baseline (tests de compatibilidad) | `flet==0.27.6` | `flet==0.28.3` |
-| Dependencia target (upgrade activo) | `flet>=0.28,<0.29` | `flet>=0.29,<0.30` |
-| Política documentada en README/tooling | Objetivo `0.28.x` | Objetivo `0.29.x` |
-| CI (`flet-version-matrix` en reusable quality) | baseline `0.27` + target `0.28` | baseline `0.28` + target `0.29` |
-
-> Esta tabla se mantiene como resumen ejecutivo para auditoría de upgrades y rollbacks.
+Si cualquier ítem falla, el estado de migración permanece **abierto** y no se promueve la versión objetivo como estable.
