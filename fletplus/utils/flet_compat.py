@@ -36,6 +36,8 @@ import contextlib
 from pathlib import Path
 from typing import Any
 
+import flet as ft
+
 
 def get_page_window(page: Any) -> Any | None:
     """Devuelve ``page.window`` si existe; en caso contrario ``None``."""
@@ -166,6 +168,74 @@ async def safe_update_page(page: Any) -> None:
     update = getattr(page, "update", None)
     if callable(update):
         update()
+
+
+def safe_update_page_sync(page: Any) -> None:
+    """Actualiza la página en contexto síncrono sin propagar errores de compat."""
+
+    update = getattr(page, "update", None)
+    if callable(update):
+        with contextlib.suppress(Exception):
+            update()
+
+
+def get_flet_icons() -> Any | None:
+    """Devuelve el namespace de iconos soportado (`Icons` o `icons`)."""
+
+    return getattr(ft, "Icons", None) or getattr(ft, "icons", None)
+
+
+def get_flet_colors() -> Any | None:
+    """Devuelve el namespace de colores soportado (`Colors` o `colors`)."""
+
+    return getattr(ft, "Colors", None) or getattr(ft, "colors", None)
+
+
+def get_flet_icon(name: str, default: Any = None) -> Any:
+    """Obtiene un icono por nombre con fallback seguro."""
+
+    icons = get_flet_icons()
+    if icons is None:
+        return default
+    return getattr(icons, name, default)
+
+
+def get_flet_color(name: str, default: Any = None) -> Any:
+    """Obtiene un color por nombre con fallback seguro."""
+
+    colors = get_flet_colors()
+    if colors is None:
+        return default
+    return getattr(colors, name, default)
+
+
+def get_flet_enum(enum_name: str) -> Any | None:
+    """Devuelve un enum/namespace de Flet por nombre si existe."""
+
+    return getattr(ft, enum_name, None)
+
+
+def get_flet_enum_member(enum_name: str, member: str, default: Any = None) -> Any:
+    """Obtiene un miembro de enum de Flet con detección de presencia."""
+
+    enum_obj = get_flet_enum(enum_name)
+    if enum_obj is None:
+        return default
+    return getattr(enum_obj, member, default)
+
+
+def with_opacity(opacity: float, color: Any, default: Any = None) -> Any:
+    """Aplica opacidad usando la API de colores disponible (`with_opacity`)."""
+
+    colors = get_flet_colors()
+    if colors is None:
+        return default if default is not None else color
+    with_opacity_fn = getattr(colors, "with_opacity", None)
+    if not callable(with_opacity_fn):
+        return default if default is not None else color
+    with contextlib.suppress(Exception):
+        return with_opacity_fn(opacity, color)
+    return default if default is not None else color
 
 
 def safe_open_drawer(page: Any) -> bool:
