@@ -47,7 +47,7 @@ def _require_symbol(container: object, symbol_name: str, qualified_name: str) ->
 def test_flet_matrix_sensitive_contracts_still_exist() -> None:
     _require_symbol(ft, "NavigationDrawer", "ft.NavigationDrawer")
     _require_symbol(ft, "PageTransitionsTheme", "ft.PageTransitionsTheme")
-    _require_symbol(ft.Page, "window", "ft.Page.window")
+    _require_symbol(ft.Page, "run_task", "ft.Page.run_task")
     _require_symbol(ft.Page, "update", "ft.Page.update")
 
     update_async = getattr(ft.Page, "update_async", None)
