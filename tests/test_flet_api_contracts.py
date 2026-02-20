@@ -4,6 +4,13 @@ from __future__ import annotations
 
 import flet as ft
 
+from fletplus.components.adaptive_layout import AdaptiveDestination, AdaptiveNavigationLayout
+from fletplus.components.responsive_container import ResponsiveContainer
+from fletplus.components.responsive_grid import ResponsiveGrid, ResponsiveGridItem
+from fletplus.components.smart_table import SmartTable, SmartTableColumn
+from fletplus.styles import Style
+from fletplus.utils.responsive_style import ResponsiveStyle
+
 
 def _require_attr(obj: object, attr_name: str) -> object:
     assert hasattr(obj, attr_name), f"Falta atributo requerido: {attr_name}"
@@ -133,3 +140,104 @@ def test_navigation_bar_contract() -> None:
 
     assert len(nav_bar.destinations) == 1
     assert nav_bar.selected_index == 0
+
+
+def test_sensitive_flet_namespaces_contract() -> None:
+    icons_namespace = getattr(ft, "Icons", None) or getattr(ft, "icons", None)
+    colors_namespace = getattr(ft, "Colors", None) or getattr(ft, "colors", None)
+
+    assert icons_namespace is not None
+    assert colors_namespace is not None
+    assert getattr(colors_namespace, "with_opacity", None) is not None
+    assert callable(colors_namespace.with_opacity)
+
+
+def test_sensitive_page_runtime_methods_contract() -> None:
+    run_task_method = _require_attr(ft.Page, "run_task")
+    assert callable(run_task_method)
+
+
+def test_sensitive_layout_controls_contract() -> None:
+    for symbol in (
+        "Container",
+        "Column",
+        "Row",
+        "NavigationBar",
+        "NavigationRail",
+        "DataTable",
+    ):
+        cls = _require_attr(ft, symbol)
+        assert isinstance(cls, type)
+
+
+class _ContractPageNoOptionalApi:
+    def __init__(self, width: int) -> None:
+        self.width = width
+        self.height = 720
+        self.on_resize = None
+        self.platform = "web"
+        self.theme = ft.Theme()
+        self.locale = None
+        self.update_calls = 0
+
+    def update(self) -> None:
+        self.update_calls += 1
+
+
+def test_adaptive_layout_tolerates_missing_optional_page_apis() -> None:
+    page = _ContractPageNoOptionalApi(width=420)
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, device: ft.Text(f"{idx}-{device}"),
+        drawer=ft.NavigationDrawer(controls=[ft.Text("Menú")]),
+    )
+
+    root = layout.build(page)
+    layout._open_drawer(None)
+    layout._focus_content(None)
+
+    assert isinstance(root, ft.Column)
+    assert page.drawer is not None
+
+
+def test_responsive_components_tolerate_minimal_page_contract() -> None:
+    class _MinimalResponsivePage:
+        def __init__(self) -> None:
+            self.width = 900
+            self.height = 700
+            self.on_resize = None
+            self.update_calls = 0
+
+        def update(self) -> None:
+            self.update_calls += 1
+
+    page = _MinimalResponsivePage()
+
+    container = ResponsiveContainer(
+        content=ft.Text("contenido"),
+        styles=ResponsiveStyle(width={0: Style(width=320), 600: Style(width=640)}),
+    )
+    built_container = container.build(page)
+
+    grid = ResponsiveGrid(
+        items=[ResponsiveGridItem(control=ft.Text("item"), span=12)],
+        columns=12,
+    )
+    built_grid = grid.build(page.width)
+
+    assert isinstance(built_container, ft.Container)
+    assert isinstance(built_grid, ft.Control)
+
+
+def test_smart_table_refresh_and_build_without_gui_runtime() -> None:
+    table = SmartTable(
+        columns=[SmartTableColumn(key="name", label="Nombre", sortable=True, filterable=True)],
+        rows=[{"name": "Ada"}, {"name": "Linus"}],
+    )
+
+    control = table.build()
+    table.set_filter("name", "a")
+    table.toggle_sort("name")
+    table.refresh()
+
+    assert isinstance(control, ft.Control)
