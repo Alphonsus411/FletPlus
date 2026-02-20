@@ -74,8 +74,8 @@ jobs:
         #    para reflejar exactamente los minors probados aquí.
         include:
           - label: min-supported
-            flet-spec: flet>=0.29,<0.30
-            expected-minor: "0.29"
+            flet-spec: flet>=0.28,<0.29
+            expected-minor: "0.28"
           - label: latest-migration-target
             flet-spec: flet>=0.80,<0.81
             expected-minor: "0.80"

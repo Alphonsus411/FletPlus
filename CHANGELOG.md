@@ -8,3 +8,4 @@
 - Se actualiza la documentación (README y docs) para reflejar un único camino oficial de importación pública.
 - Se fija como URL pública canónica del repositorio `https://github.com/FletPlus/FletPlus` y se migra la metadata desde URLs históricas de `Alphonsus411/fletplus`.
 - Se documenta la política de versión objetivo de Flet (cadencia de actualización, criterios de rollback y checklist de release) en `README.md` y `docs/tooling.md`, y se adopta como referencia obligatoria para trazabilidad de próximos upgrades.
+- Se actualiza la matriz de compatibilidad de Flet en CI al baseline `0.28.x` y target estable `0.80.x`, alineando `reusable-quality.yml`, `tools/flet_version_matrix_config.py` y la política de versión en `README.md`.
