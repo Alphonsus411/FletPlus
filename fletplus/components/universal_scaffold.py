@@ -24,7 +24,15 @@ from fletplus.utils.device_profiles import (
     get_device_profile,
     iter_device_profiles,
 )
-from fletplus.utils.flet_compat import get_page_height, get_page_width, safe_open_drawer
+from fletplus.utils.flet_compat import (
+    get_flet_color,
+    get_flet_icon,
+    get_page_height,
+    get_page_width,
+    safe_open_drawer,
+    safe_update_page_sync,
+    with_opacity,
+)
 from fletplus.utils.responsive_manager import ResponsiveManager
 
 if TYPE_CHECKING:
@@ -169,12 +177,12 @@ class UniversalAdaptiveScaffold:
 
         self._skip_button = ft.TextButton(
             "Saltar al contenido principal",
-            icon=ft.Icons.SKIP_NEXT_OUTLINED,
+            icon=get_flet_icon("SKIP_NEXT_OUTLINED", "skip_next_outlined"),
             on_click=self._focus_main_content,
             tooltip="Ir directamente a la sección de contenido",
             style=ft.ButtonStyle(
-                color={"": ft.Colors.ON_PRIMARY},
-                bgcolor={"": ft.Colors.with_opacity(0.8, ft.Colors.PRIMARY)},
+                color={"": get_flet_color("ON_PRIMARY", "white")},
+                bgcolor={"": with_opacity(0.8, get_flet_color("PRIMARY", "#1976D2"))},
                 padding=ft.Padding(12, 6, 12, 6),
             ),
         )
@@ -196,14 +204,14 @@ class UniversalAdaptiveScaffold:
         )
 
         self._drawer_button = ft.IconButton(
-            icon=ft.Icons.MENU,
+            icon=get_flet_icon("MENU", "menu"),
             tooltip="Abrir navegación",
             on_click=self._open_drawer,
             visible=self.drawer is not None,
         )
 
         self._accessibility_button = ft.IconButton(
-            ft.Icons.ACCESSIBILITY_NEW,
+            get_flet_icon("ACCESSIBILITY_NEW", "accessibility_new"),
             tooltip="Abrir panel de accesibilidad",
             on_click=self._toggle_accessibility_panel,
         )
@@ -230,7 +238,7 @@ class UniversalAdaptiveScaffold:
 
         self._app_bar_padding_base = (16, 12, 16, 12)
         self._app_bar = ft.Container(
-            bgcolor=ft.Colors.with_opacity(0.94, ft.Colors.SURFACE),
+            bgcolor=with_opacity(0.94, get_flet_color("SURFACE", "#FFFFFF")),
             padding=ft.Padding(*self._app_bar_padding_base),
             content=ft.Column(
                 spacing=4,
@@ -254,7 +262,7 @@ class UniversalAdaptiveScaffold:
         self._inline_caption_text = ft.Text("", selectable=True)
         self._inline_caption_container = ft.Container(
             visible=False,
-            bgcolor=ft.Colors.with_opacity(0.06, ft.Colors.BLUE_GREY),
+            bgcolor=with_opacity(0.06, get_flet_color("BLUE_GREY", "#607D8B")),
             padding=ft.Padding(16, 12, 16, 12),
             content=self._inline_caption_text,
         )
@@ -356,7 +364,7 @@ class UniversalAdaptiveScaffold:
                 pass
 
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     # ------------------------------------------------------------------
     def select(self, index: int) -> None:
@@ -372,7 +380,7 @@ class UniversalAdaptiveScaffold:
         self._refresh_content()
         self._refresh_secondary_panel()
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     # ------------------------------------------------------------------
     def _handle_accessibility_change(self, preferences: AccessibilityPreferences) -> None:
@@ -381,7 +389,7 @@ class UniversalAdaptiveScaffold:
             preferences.apply(self._page, self.theme)
         self._refresh_caption_targets()
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     # ------------------------------------------------------------------
     def _refresh_caption_targets(self) -> None:
@@ -409,8 +417,8 @@ class UniversalAdaptiveScaffold:
         nav_bg: str | None = None
         rail_bg: str | None = None
         if isinstance(surface, str):
-            nav_bg = ft.Colors.with_opacity(0.95 if device_name == "mobile" else 0.9, surface)
-            rail_bg = ft.Colors.with_opacity(
+            nav_bg = with_opacity(0.95 if device_name == "mobile" else 0.9, surface)
+            rail_bg = with_opacity(
                 0.16 if device_name == "large_desktop" else 0.1,
                 surface,
             )
@@ -421,7 +429,7 @@ class UniversalAdaptiveScaffold:
             self._nav_rail.bgcolor = rail_bg
 
         if isinstance(accent, str):
-            indicator = ft.Colors.with_opacity(0.22, accent)
+            indicator = with_opacity(0.22, accent)
             self._nav_bar.indicator_color = indicator
             self._nav_rail.indicator_color = indicator
 
@@ -446,9 +454,9 @@ class UniversalAdaptiveScaffold:
                 or self.theme.get_color("background")
             )
             if isinstance(candidate, str):
-                return ft.Colors.with_opacity(0.96, candidate), None
+                return with_opacity(0.96, candidate), None
 
-        return ft.Colors.with_opacity(0.94, ft.Colors.SURFACE), None
+        return with_opacity(0.94, get_flet_color("SURFACE", "#FFFFFF")), None
 
     # ------------------------------------------------------------------
     def _refresh_app_bar_style(self) -> None:
@@ -462,7 +470,7 @@ class UniversalAdaptiveScaffold:
         content = self.content_builder(item, self._selected_index)
         self._content_host.content = content
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     # ------------------------------------------------------------------
     def _refresh_secondary_panel(self) -> None:
@@ -522,8 +530,8 @@ class UniversalAdaptiveScaffold:
         if is_mobile:
             self._body_container.content = central_column
             self._footer_container.content = ft.Container(
-                bgcolor=ft.Colors.with_opacity(0.98, ft.Colors.SURFACE),
-                border=ft.border.only(top=ft.BorderSide(1, ft.Colors.with_opacity(0.12, ft.Colors.BLACK))),
+                bgcolor=with_opacity(0.98, get_flet_color("SURFACE", "#FFFFFF")),
+                border=ft.border.only(top=ft.BorderSide(1, with_opacity(0.12, get_flet_color("BLACK", "#000000")))),
                 content=self._nav_bar,
             )
             self._show_desktop_accessibility_panel = False
@@ -531,11 +539,11 @@ class UniversalAdaptiveScaffold:
             self._accessibility_bottom_sheet.open = False
             rail_width = 110 if is_large_desktop else (92 if is_desktop else 80)
             rail_padding = ft.Padding(16, 16, 16, 16) if is_large_desktop else ft.Padding(12, 12, 12, 12)
-            rail_bg = ft.Colors.with_opacity(0.04, ft.Colors.BLUE_GREY)
+            rail_bg = with_opacity(0.04, get_flet_color("BLUE_GREY", "#607D8B"))
             if self.theme:
                 candidate = self.theme.get_color("surface_variant")
                 if isinstance(candidate, str):
-                    rail_bg = ft.Colors.with_opacity(0.18 if is_large_desktop else 0.08, candidate)
+                    rail_bg = with_opacity(0.18 if is_large_desktop else 0.08, candidate)
             rail_container = ft.Container(
                 width=rail_width,
                 bgcolor=rail_bg,
@@ -571,9 +579,9 @@ class UniversalAdaptiveScaffold:
             if is_desktop and self._show_desktop_accessibility_panel:
                 side_controls.append(
                     ft.Container(
-                        bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_GREY),
+                        bgcolor=with_opacity(0.04, get_flet_color("BLUE_GREY", "#607D8B")),
                         padding=ft.Padding(18, 16, 18, 16) if is_large_desktop else ft.Padding(16, 12, 16, 12),
-                        border=ft.border.only(left=ft.BorderSide(1, ft.Colors.with_opacity(0.1, ft.Colors.BLACK))),
+                        border=ft.border.only(left=ft.BorderSide(1, with_opacity(0.1, get_flet_color("BLACK", "#000000")))),
                         content=ft.Column(
                             tight=True,
                             spacing=12,
@@ -598,7 +606,7 @@ class UniversalAdaptiveScaffold:
             self._footer_container.content = ft.Container()
 
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     # ------------------------------------------------------------------
     def _handle_breakpoint_change(self, _: int) -> None:
@@ -633,7 +641,7 @@ class UniversalAdaptiveScaffold:
 
         self._accessibility_bottom_sheet.open = True
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     # ------------------------------------------------------------------
     def _open_drawer(self, _: ft.ControlEvent | None = None) -> None:

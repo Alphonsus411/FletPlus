@@ -16,7 +16,15 @@ from fletplus.utils.device_profiles import (
     iter_device_profiles,
     get_device_profile,
 )
-from fletplus.utils.flet_compat import get_page_width, safe_open_drawer, set_page_width
+from fletplus.utils.flet_compat import (
+    get_flet_color,
+    get_flet_icon,
+    safe_update_page_sync,
+    get_page_width,
+    safe_open_drawer,
+    set_page_width,
+    with_opacity,
+)
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
 
@@ -117,7 +125,7 @@ class AdaptiveNavigationLayout:
         self._caption_text = ft.Text("", selectable=True)
         self._caption_container = ft.Container(
             visible=self.accessibility.enable_captions,
-            bgcolor=ft.Colors.with_opacity(0.08, ft.Colors.BLUE_GREY),
+            bgcolor=with_opacity(0.08, get_flet_color("BLUE_GREY", "bluegrey")),
             padding=ft.Padding(12, 10, 12, 10),
             content=self._caption_text,
         )
@@ -127,7 +135,7 @@ class AdaptiveNavigationLayout:
             selected_index=self._selected_index,
             label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
             on_change=self._handle_nav_event,
-            bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.BLUE_GREY),
+            bgcolor=with_opacity(0.04, get_flet_color("BLUE_GREY", "bluegrey")),
         )
         self._nav_rail = ft.NavigationRail(
             destinations=[dest.as_navigation_rail() for dest in self.destinations],
@@ -138,7 +146,7 @@ class AdaptiveNavigationLayout:
 
         self._skip_button = ft.TextButton(
             "Saltar al contenido principal",
-            icon=ft.Icons.SKIP_NEXT_OUTLINED,
+            icon=get_flet_icon("SKIP_NEXT_OUTLINED", "skip_next_outlined"),
             on_click=self._focus_content,
             tooltip="Ir directamente al contenido",
         )
@@ -154,7 +162,7 @@ class AdaptiveNavigationLayout:
             content=self.floating_action_button,
         )
         self._drawer_button = ft.IconButton(
-            icon=ft.Icons.MENU,
+            icon=get_flet_icon("MENU", "menu"),
             tooltip="Abrir navegación",
             on_click=self._open_drawer,
             visible=self.drawer is not None,
@@ -283,7 +291,7 @@ class AdaptiveNavigationLayout:
                 container.shadow = ft.BoxShadow(
                     spread_radius=0,
                     blur_radius=18,
-                    color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+                    color=with_opacity(0.08, get_flet_color("BLACK", "#000000")),
                 )
             self._header_container = container
         else:
@@ -346,7 +354,7 @@ class AdaptiveNavigationLayout:
             bgcolor = background_override
 
         if gradient is None and bgcolor is None:
-            fallback = self.theme.get_color("primary") or ft.Colors.BLUE_GREY_500
+            fallback = self.theme.get_color("primary") or get_flet_color("BLUE_GREY_500", "#607D8B")
             bgcolor = fallback
 
         container.gradient = gradient
@@ -407,7 +415,7 @@ class AdaptiveNavigationLayout:
         self._update_content()
         self._announce_destination()
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     def _update_content(self) -> None:
         control = self.content_builder(self._selected_index, self._current_device)
@@ -530,7 +538,7 @@ class AdaptiveNavigationLayout:
 
         self._root.controls = controls
         if self._page:
-            self._page.update()
+            safe_update_page_sync(self._page)
 
     def _wrap_with_stack(self, control: ft.Control, overlay_active: bool) -> ft.Control:
         needs_fab = self.floating_action_button is not None

@@ -7,6 +7,12 @@ from pathlib import Path
 import asyncio
 
 from fletplus.utils.flet_compat import (
+    get_flet_color,
+    get_flet_colors,
+    get_flet_enum,
+    get_flet_enum_member,
+    get_flet_icon,
+    get_flet_icons,
     get_page_height,
     get_page_width,
     safe_close_drawer,
@@ -15,8 +21,10 @@ from fletplus.utils.flet_compat import (
     safe_set_window_attr,
     safe_take_screenshot,
     safe_update_page,
+    safe_update_page_sync,
     set_page_height,
     set_page_width,
+    with_opacity,
 )
 
 
@@ -179,3 +187,95 @@ def test_safe_close_drawer_falls_back_to_drawer_open_flag() -> None:
 
     assert safe_close_drawer(page) is True
     assert page.drawer.open is False
+
+
+def test_safe_update_page_sync_noop_when_update_absent() -> None:
+    class _Page:
+        pass
+
+    safe_update_page_sync(_Page())
+
+
+def test_safe_update_page_sync_calls_update_when_available() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.updated = False
+
+        def update(self) -> None:
+            self.updated = True
+
+    page = _Page()
+    safe_update_page_sync(page)
+
+    assert page.updated is True
+
+
+def test_get_flet_icons_presence_and_absence(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    fake = type("Icons", (), {"MENU": "menu"})()
+    monkeypatch.setattr(flet_compat.ft, "Icons", fake, raising=False)
+    monkeypatch.delattr(flet_compat.ft, "icons", raising=False)
+    assert get_flet_icons() is fake
+
+    monkeypatch.delattr(flet_compat.ft, "Icons", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "icons", raising=False)
+    assert get_flet_icons() is None
+
+
+def test_get_flet_colors_presence_and_absence(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    fake = type("Colors", (), {"PRIMARY": "#123"})()
+    monkeypatch.setattr(flet_compat.ft, "Colors", fake, raising=False)
+    monkeypatch.delattr(flet_compat.ft, "colors", raising=False)
+    assert get_flet_colors() is fake
+
+    monkeypatch.delattr(flet_compat.ft, "Colors", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "colors", raising=False)
+    assert get_flet_colors() is None
+
+
+def test_get_flet_icon_and_color_member_fallbacks(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    icons = type("Icons", (), {"MENU": "menu"})()
+    colors = type("Colors", (), {"PRIMARY": "#1976D2"})()
+    monkeypatch.setattr(flet_compat.ft, "Icons", icons, raising=False)
+    monkeypatch.setattr(flet_compat.ft, "Colors", colors, raising=False)
+
+    assert get_flet_icon("MENU", "fallback") == "menu"
+    assert get_flet_icon("MISSING", "fallback") == "fallback"
+    assert get_flet_color("PRIMARY", "fallback") == "#1976D2"
+    assert get_flet_color("MISSING", "fallback") == "fallback"
+
+
+def test_get_flet_enum_and_member_presence_and_absence(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    enum_obj = type("ControlState", (), {"DEFAULT": "default"})()
+    monkeypatch.setattr(flet_compat.ft, "ControlState", enum_obj, raising=False)
+
+    assert get_flet_enum("ControlState") is enum_obj
+    assert get_flet_enum_member("ControlState", "DEFAULT", "fallback") == "default"
+    assert get_flet_enum_member("ControlState", "HOVERED", "fallback") == "fallback"
+
+    monkeypatch.delattr(flet_compat.ft, "ControlState", raising=False)
+    assert get_flet_enum("ControlState") is None
+    assert get_flet_enum_member("ControlState", "DEFAULT", "fallback") == "fallback"
+
+
+def test_with_opacity_presence_and_absence(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    class _Colors:
+        @staticmethod
+        def with_opacity(opacity: float, color: str) -> str:
+            return f"{opacity}:{color}"
+
+    monkeypatch.setattr(flet_compat.ft, "Colors", _Colors, raising=False)
+    assert with_opacity(0.5, "#000") == "0.5:#000"
+
+    monkeypatch.delattr(flet_compat.ft, "Colors", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "colors", raising=False)
+    assert with_opacity(0.5, "#000", default="#111") == "#111"
