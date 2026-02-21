@@ -12,6 +12,7 @@ Este documento define una migración **controlada por fases** para compatibiliza
 
 **Baseline de validación (estado actual en CI)**: `flet>=0.28,<0.29` (job `min-supported`).  
 **Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81` (job `latest-migration-target`).  
+**Estado oficial del target**: ✅ **validado para toda la serie `0.80.x`**, incluyendo el parche más reciente disponible durante esta iteración de validación.  
 **Mínimo de paquete (distribución)**: `flet>=0.29.0` (según `pyproject.toml`).
 
 ---
@@ -174,7 +175,7 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 | CI baseline (`flet-version-matrix`) | `flet>=0.28,<0.29` (`min-supported`) | Mantener baseline contractual de regresión | `.github/workflows/reusable-quality.yml` |
 | CI target (`flet-version-matrix`) | `flet>=0.80,<0.81` (`latest-migration-target`) | Consolidar compatibilidad funcional sobre `0.80.x` | `.github/workflows/reusable-quality.yml` |
 | Validación local de minors | `FLET_MATRIX_MINORS = ("0.28", "0.80")` | Mantener sincronía exacta con matriz CI | `tools/flet_version_matrix_config.py` |
-| Dependencias legacy fuera de contrato | `requirements.txt`: `flet==0.27.6` (heredado) | Tratar como deuda técnica y no como referencia de contrato vigente | `requirements.txt` |
+| Dependencias legacy fuera de contrato | `requirements.txt`: `flet==0.27.6` (heredado) | Deuda legacy **acotada**: solo referencia histórica local; no usar para decisiones de compatibilidad ni para CI/release | `requirements.txt` |
 
 > Regla operativa: para el contrato activo usar únicamente la sección [Contrato de versión vigente](tooling.md#contrato-de-version-vigente). Esta tabla se mantiene alineada con ese bloque en cada cambio de baseline/target.
 
@@ -182,10 +183,16 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 
 La migración solo se puede cerrar cuando **todos** los puntos siguientes estén en verde:
 
-- [ ] **Contratos de API sensible**: `tests/test_flet_api_contracts.py` valida navegación, `Page.window`, `update/update_async` y transiciones.
-- [ ] **Compatibilidad de iconos críticos**: `tests/test_icons.py` valida resolución de `ft.Icons.*` y fallback explícito.
-- [ ] **Smoke de demo**: `tests/test_demo_template_smoke.py` confirma arranque básico del flujo demo/template.
-- [ ] **Matriz CI de versiones Flet**: `tests/test_flet_version_matrix.py` en verde para `min-supported` y `latest-migration-target`.
-- [ ] **Regresión CLI mínima**: `tests/test_cli_main.py` y `tests/test_cli_build.py` en verde.
+- [x] **Contratos de API sensible**: `tests/test_flet_api_contracts.py` valida navegación, `Page.window`, `update/update_async` y transiciones.
+- [x] **Compatibilidad de iconos críticos**: `tests/test_icons.py` valida resolución de `ft.Icons.*` y fallback explícito.
+- [x] **Smoke de demo**: `tests/test_demo_template_smoke.py` confirma arranque básico del flujo demo/template.
+- [x] **Matriz CI de versiones Flet**: `tests/test_flet_version_matrix.py` en verde para `min-supported` y `latest-migration-target`.
+- [x] **Regresión CLI mínima**: `tests/test_cli_main.py` y `tests/test_cli_build.py` en verde.
 
 Si cualquier ítem falla, el estado de migración permanece **abierto** y no se promueve la versión objetivo como estable.
+
+## 9) Resultado final de migración (iteración actual)
+
+- Estado final: ✅ **migración cerrada para target `0.80.x`**.
+- Decisión operativa: el target `latest-migration-target` queda oficialmente validado y vigente.
+- Alcance de deuda legacy: se mantiene únicamente por compatibilidad histórica local y queda fuera del contrato activo de soporte.
