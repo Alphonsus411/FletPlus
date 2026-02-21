@@ -17,11 +17,18 @@ from urllib.parse import urlparse
 import flet as ft
 
 
-def generate_service_worker(static_files: Iterable[str], output_dir: Path) -> Path:
+def generate_service_worker(
+    static_files: Iterable[str],
+    output_dir: Path,
+    cache_version: str = "v1",
+) -> Path:
     """Genera ``service_worker.js`` en ``output_dir``.
 
     :param static_files: Rutas relativas de los recursos a cachear.
     :param output_dir: Directorio donde guardar el archivo.
+    :param cache_version: Sufijo versionable para el nombre de caché.
+        Permite invalidar recursos en despliegues nuevos sin romper la API
+        existente.
     :return: Ruta al ``service_worker.js`` creado.
     """
     output_dir = Path(output_dir)
@@ -29,12 +36,22 @@ def generate_service_worker(static_files: Iterable[str], output_dir: Path) -> Pa
     sw_path = output_dir / "service_worker.js"
 
     files = list(static_files)
+    cache_name = f"fletplus-cache-{cache_version}"
     content = (
-        "const CACHE_NAME = 'fletplus-cache-v1';\n" +
+        f"const CACHE_NAME = {json.dumps(cache_name)};\n" +
         f"const STATIC_ASSETS = {json.dumps(files)};\n\n" +
         "self.addEventListener('install', event => {\n" +
         "  event.waitUntil(\n" +
         "    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))\n" +
+        "  );\n" +
+        "});\n\n" +
+        "self.addEventListener('activate', event => {\n" +
+        "  event.waitUntil(\n" +
+        "    caches.keys().then(keys => Promise.all(\n" +
+        "      keys\n" +
+        "        .filter(key => key !== CACHE_NAME)\n" +
+        "        .map(key => caches.delete(key))\n" +
+        "    ))\n" +
         "  );\n" +
         "});\n\n" +
         "self.addEventListener('fetch', event => {\n" +
