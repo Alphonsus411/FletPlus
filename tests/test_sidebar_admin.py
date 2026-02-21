@@ -1,5 +1,7 @@
 import flet as ft
+
 from fletplus.components.sidebar_admin import SidebarAdmin
+
 
 def test_sidebar_admin_build_and_selection():
     selected = []

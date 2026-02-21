@@ -1,7 +1,11 @@
 import flet as ft
 
 from fletplus.themes.theme_manager import ThemeManager
-from fletplus.utils.responsive_typography import ResponsiveTypography, responsive_text, responsive_spacing
+from fletplus.utils.responsive_typography import (
+    ResponsiveTypography,
+    responsive_spacing,
+    responsive_text,
+)
 
 
 class DummyPage:

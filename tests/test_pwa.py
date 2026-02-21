@@ -1,7 +1,9 @@
 import json
 import shutil
+
 import pytest
-from fletplus.web.pwa import generate_service_worker, generate_manifest, register_pwa
+
+from fletplus.web.pwa import generate_manifest, generate_service_worker, register_pwa
 
 
 class DummyPage:

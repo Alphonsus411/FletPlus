@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 QA_SCRIPT = REPO_ROOT / "tools" / "qa.sh"
 TOOLING_DOC = REPO_ROOT / "docs" / "tooling.md"

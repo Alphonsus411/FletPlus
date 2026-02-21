@@ -1,11 +1,16 @@
 import json
+
 import flet as ft
 import pytest
+
 from fletplus.themes.theme_manager import (
     ThemeManager,
     load_palette_from_file,
+)
+from fletplus.themes.theme_manager import (
     load_theme_from_json as load_theme_definition,
 )
+
 
 class DummyPage:
     def __init__(self):

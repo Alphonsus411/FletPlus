@@ -2,16 +2,16 @@ import flet as ft
 import pytest
 
 from fletplus.components.buttons import (
+    DangerButton,
+    FloatingActionButton,
+    IconButton,
+    InfoButton,
+    OutlinedButton,
     PrimaryButton,
     SecondaryButton,
     SuccessButton,
-    WarningButton,
-    DangerButton,
-    InfoButton,
-    IconButton,
-    OutlinedButton,
     TextButton,
-    FloatingActionButton,
+    WarningButton,
 )
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager

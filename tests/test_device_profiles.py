@@ -1,11 +1,11 @@
 import pytest
 
 from fletplus.utils.device_profiles import (
-    DeviceProfile,
     DEFAULT_DEVICE_PROFILES,
-    get_device_profile,
-    device_name,
+    DeviceProfile,
     columns_for_width,
+    device_name,
+    get_device_profile,
     iter_device_profiles,
 )
 

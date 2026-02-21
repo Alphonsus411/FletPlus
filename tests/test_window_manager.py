@@ -1,5 +1,6 @@
-import flet as ft
 from unittest.mock import MagicMock
+
+import flet as ft
 
 from fletplus.desktop.window_manager import WindowManager
 

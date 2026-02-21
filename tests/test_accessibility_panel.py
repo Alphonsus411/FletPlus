@@ -2,7 +2,10 @@ import flet as ft
 import pytest
 
 from fletplus.components.accessibility_panel import AccessibilityPanel
-from fletplus.components.adaptive_layout import AdaptiveDestination, AdaptiveNavigationLayout
+from fletplus.components.adaptive_layout import (
+    AdaptiveDestination,
+    AdaptiveNavigationLayout,
+)
 from fletplus.utils.accessibility import AccessibilityPreferences
 
 

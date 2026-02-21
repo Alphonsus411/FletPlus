@@ -7,11 +7,11 @@ from fletplus.components.smart_table import (
     SmartTable,
     SmartTableColumn,
     filter_eq,
-    filter_neq,
-    filter_lt,
-    filter_lte,
     filter_gt,
     filter_gte,
+    filter_lt,
+    filter_lte,
+    filter_neq,
 )
 
 backend = pytest.importorskip("fletplus.components.smart_table_rs")

@@ -1,8 +1,9 @@
 import flet as ft
+
+from fletplus.components.responsive_grid import ResponsiveGrid
 from fletplus.styles import Style
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.responsive_style import ResponsiveStyle
-from fletplus.components.responsive_grid import ResponsiveGrid
 
 
 class DummyPage:

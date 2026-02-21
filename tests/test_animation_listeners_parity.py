@@ -4,10 +4,15 @@ import gc
 
 import pytest
 
-from fletplus.animation.controller import _PythonListenerContainer, _RustListenerContainer
+from fletplus.animation.controller import (
+    _PythonListenerContainer,
+    _RustListenerContainer,
+)
 
 try:
-    from fletplus.animation.listeners_pr_rs import ListenerContainer as _NativeListener  # type: ignore
+    from fletplus.animation.listeners_pr_rs import (
+        ListenerContainer as _NativeListener,  # type: ignore
+    )
 except Exception:  # pragma: no cover - backend opcional
     _NativeListener = None
 

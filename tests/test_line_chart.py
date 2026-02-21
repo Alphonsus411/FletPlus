@@ -1,6 +1,8 @@
-import flet as ft
-from fletplus.components.charts import LineChart
 from types import SimpleNamespace
+
+import flet as ft
+
+from fletplus.components.charts import LineChart
 
 
 def test_line_chart_build_and_interactions():

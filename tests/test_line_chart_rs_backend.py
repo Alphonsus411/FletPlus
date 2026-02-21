@@ -1,4 +1,5 @@
 import pytest
+
 from fletplus.components.charts import line_chart as lc
 
 backend = pytest.importorskip("fletplus.components.charts.line_chart_rs")

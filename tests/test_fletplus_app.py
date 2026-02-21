@@ -1,10 +1,10 @@
 import flet as ft
 import pytest
 
-from fletplus.core import AppState
-from fletplus.core.app import FletPlusApp as CoreFletPlusApp
 from fletplus.animation import AnimationController
 from fletplus.context import locale_context, theme_context, user_context
+from fletplus.core import AppState
+from fletplus.core.app import FletPlusApp as CoreFletPlusApp
 from fletplus.core_legacy import FletPlusApp
 from fletplus.router import Route
 from fletplus.state import Store

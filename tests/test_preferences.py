@@ -1,5 +1,6 @@
 import json
 import os
+
 import pytest
 
 from fletplus.utils.preferences import PreferenceStorage, _ClientStorageBackend

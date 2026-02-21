@@ -1,7 +1,5 @@
 import flet as ft
 
-import flet as ft
-
 from fletplus.utils.accessibility import AccessibilityPreferences
 
 

@@ -5,9 +5,7 @@ import flet as ft
 from fletplus.components.smart_table import (
     SmartTable,
     SmartTableColumn,
-    SmartTableFilter,
     SmartTableQuery,
-    SmartTableSort,
 )
 
 

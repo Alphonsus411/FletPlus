@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import flet as ft
 
-from fletplus.components.adaptive_layout import AdaptiveDestination, AdaptiveNavigationLayout
+from fletplus.components.adaptive_layout import (
+    AdaptiveDestination,
+    AdaptiveNavigationLayout,
+)
 from fletplus.components.responsive_container import ResponsiveContainer
 from fletplus.components.responsive_grid import ResponsiveGrid, ResponsiveGridItem
 from fletplus.components.smart_table import SmartTable, SmartTableColumn

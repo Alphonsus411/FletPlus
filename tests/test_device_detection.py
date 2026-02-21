@@ -1,6 +1,5 @@
 from enum import Enum
 
-import flet as ft
 import pytest
 
 from fletplus.utils.device import is_desktop, is_mobile, is_web

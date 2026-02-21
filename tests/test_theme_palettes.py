@@ -1,5 +1,7 @@
 import json
+
 import pytest
+
 from fletplus.themes.theme_manager import load_palette_from_file
 
 

@@ -15,7 +15,8 @@ import pytest
 @pytest.mark.aggregate_contract
 def test_public_state_imports() -> None:
     from fletplus import State as PublicState
-    from fletplus.core import AppState, State as CoreState
+    from fletplus.core import AppState
+    from fletplus.core import State as CoreState
 
     assert PublicState is AppState
     assert CoreState is AppState
@@ -46,7 +47,9 @@ def test_public_component_entrypoints() -> None:
         SmartTable,
         ThemeManager,
     )
-    from fletplus.components.responsive_grid import ResponsiveGrid as DirectResponsiveGrid
+    from fletplus.components.responsive_grid import (
+        ResponsiveGrid as DirectResponsiveGrid,
+    )
     from fletplus.components.sidebar_admin import SidebarAdmin as DirectSidebarAdmin
     from fletplus.components.smart_table import SmartTable as DirectSmartTable
     from fletplus.core_legacy import FletPlusApp as DirectFletPlusApp

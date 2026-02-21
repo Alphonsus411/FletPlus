@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
-import asyncio
-
 from fletplus.utils.flet_compat import (
+    append_page_overlay,
+    build_flet_control,
     get_flet_color,
     get_flet_colors,
-    build_flet_control,
     get_flet_enum,
     get_flet_enum_member,
     get_flet_icon,
     get_flet_icons,
     get_page_height,
     get_page_width,
+    has_page_overlay_control,
     make_navigation_bar_destination,
     make_navigation_drawer_destination,
     make_navigation_rail_destination,
-    has_page_overlay_control,
     safe_close_drawer,
     safe_close_window,
     safe_open_drawer,
@@ -35,7 +35,6 @@ from fletplus.utils.flet_compat import (
     set_page_title,
     set_page_width,
     with_opacity,
-    append_page_overlay,
 )
 
 

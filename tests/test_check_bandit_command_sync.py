@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 MODULE_PATH = Path(__file__).resolve().parents[1] / 'tools/check_bandit_command_sync.py'
 SPEC = importlib.util.spec_from_file_location('check_bandit_command_sync', MODULE_PATH)
 assert SPEC and SPEC.loader

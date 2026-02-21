@@ -4,7 +4,6 @@ import os
 
 import pytest
 
-
 REQUIRE_NATIVE = os.getenv("FLETPLUS_REQUIRE_ROUTER_PR_RS_NATIVE", "0") == "1"
 
 if not REQUIRE_NATIVE:

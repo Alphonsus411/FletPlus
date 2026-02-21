@@ -1,7 +1,7 @@
 import importlib
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def _ensure_tests_importable() -> None:

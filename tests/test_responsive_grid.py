@@ -7,8 +7,8 @@ from fletplus.components.responsive_grid import (
     ResponsiveGridItem,
 )
 from fletplus.styles import Style
-from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.themes.theme_manager import ThemeManager
+from fletplus.utils.responsive_style import ResponsiveStyle
 
 
 @pytest.fixture

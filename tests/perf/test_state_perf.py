@@ -12,7 +12,11 @@ from fletplus.state import Signal
 def _available_backends() -> Iterable[str]:
     backends = ["python"]
     try:
-        from fletplus.state.signal_pr_rs import SignalState, notify, snapshot  # type: ignore
+        from fletplus.state.signal_pr_rs import (  # type: ignore
+            SignalState,
+            notify,
+            snapshot,
+        )
     except Exception:
         SignalState = None
         notify = None

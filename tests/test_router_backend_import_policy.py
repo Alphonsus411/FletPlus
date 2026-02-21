@@ -5,7 +5,6 @@ import sys
 
 import pytest
 
-
 ROUTER_MODULE = "fletplus.router.router"
 BACKEND_MODULES = {
     "fletplus.router.router_pr",

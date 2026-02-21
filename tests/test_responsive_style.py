@@ -4,8 +4,8 @@ import sys
 import flet as ft
 import pytest
 
-from fletplus.styles import Style
 import fletplus.utils.responsive_style as responsive_style_module
+from fletplus.styles import Style
 
 
 class DummyPage:
