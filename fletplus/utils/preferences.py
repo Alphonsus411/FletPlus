@@ -174,19 +174,26 @@ class _FileBackend(_BaseBackend):
                 if not self._validate_save_target():
                     return
                 payload = self._read_all()
-                payload[self._key] = dict(data)
+                current_entry = payload.get(self._key)
+                if isinstance(current_entry, Mapping):
+                    merged_entry = dict(current_entry)
+                    merged_entry.update(dict(data))
+                else:
+                    merged_entry = dict(data)
+                payload[self._key] = merged_entry
 
                 tmp_path: Path | None = None
+                tmp_fd: int | None = None
                 try:
-                    with tempfile.NamedTemporaryFile(
-                        "w",
-                        delete=False,
+                    tmp_fd, tmp_name = tempfile.mkstemp(
                         dir=self._path.parent,
                         prefix=f"{self._path.name}.",
                         suffix=".tmp",
-                        encoding="utf-8",
-                    ) as fh:
-                        tmp_path = Path(fh.name)
+                        text=False,
+                    )
+                    tmp_path = Path(tmp_name)
+                    with os.fdopen(tmp_fd, "w", encoding="utf-8") as fh:
+                        tmp_fd = None
 
                         if hasattr(os, "O_NOFOLLOW"):
                             flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | os.O_NOFOLLOW
@@ -207,6 +214,8 @@ class _FileBackend(_BaseBackend):
                     os.replace(tmp_path, self._path)
                     os.chmod(self._path, 0o600)
                 finally:
+                    if tmp_fd is not None:
+                        os.close(tmp_fd)
                     if tmp_path is not None and tmp_path.exists():
                         tmp_path.unlink(missing_ok=True)
         except Exception:  # pragma: no cover - errores inesperados
