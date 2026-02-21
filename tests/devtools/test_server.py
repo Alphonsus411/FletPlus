@@ -131,20 +131,18 @@ async def test_rejects_connection_with_invalid_header_token():
 
 
 @pytest.mark.anyio
-async def test_authorizes_connection_with_token_in_query_string_as_deprecated_fallback(caplog):
+async def test_rejects_connection_with_token_only_in_query_string():
     server = DevToolsServer(auth_token="secret")
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
         uri = f"ws://127.0.0.1:{port}?token=secret"
 
-        caplog.clear()
-        with caplog.at_level("WARNING"):
-            async with websockets.connect(uri) as allowed_client:
-                ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
-                assert ready == "server:ready"
+        with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
+            async with websockets.connect(uri) as denied_client:
+                await denied_client.recv()
 
-        assert "método deprecado" in caplog.text
+        assert denied.value.rcvd.code == 1008
 
 
 @pytest.mark.anyio
