@@ -142,6 +142,11 @@ await cliente.get("https://api.example.com/items")
 
 Puede deshabilitarse el almacenamiento por petición con `cache=False`.
 
+Cuando la petición incluye credenciales (`Authorization`, `Cookie` o
+`X-API-Key`), el cliente no cachea por defecto aunque se pase `cache=True`.
+Este comportamiento de seguridad puede habilitarse de forma explícita con
+`allow_sensitive_cache=True` en `request()` y en atajos como `get()`.
+
 ### Política de `Cache-Control`
 
 La política actual del cliente para respuestas `GET` exitosas es:

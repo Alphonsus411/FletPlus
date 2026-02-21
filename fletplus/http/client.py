@@ -371,6 +371,7 @@ class HttpClient:
         url: str,
         *,
         cache: bool | None = None,
+        allow_sensitive_cache: bool = False,
         context: MutableMapping[str, Any] | None = None,
         stream: bool = False,
         **kwargs: Any,
@@ -384,8 +385,9 @@ class HttpClient:
 
         Nota sobre caché: si los headers incluyen credenciales (`authorization`,
         `cookie` o `x-api-key`), la caché se desactiva automáticamente para evitar
-        persistir respuestas sensibles. Puedes sobrescribir este comportamiento
-        pasando `cache=True` de forma explícita. También se respetan las cabeceras
+        persistir respuestas sensibles. Para permitirlo debes habilitarlo
+        explícitamente con `allow_sensitive_cache=True`. También se respetan
+        las cabeceras
         de la petición `Cache-Control`/`Pragma` con `no-store` o `no-cache`
         (a menos que se pase `cache=True`), y en la respuesta se consideran
         `Cache-Control`/`Pragma` con `no-store` o `private`, la presencia de
@@ -436,7 +438,7 @@ class HttpClient:
 
             credential_headers = {"authorization", "cookie", "x-api-key"}
             has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
-            if has_credentials and cache is not True:
+            if has_credentials and not allow_sensitive_cache:
                 use_cache = False
 
             if self._cache and use_cache and request.method.upper() == "GET":
@@ -558,6 +560,7 @@ class HttpClient:
         params: MutableMapping[str, Any] | None = None,
         headers: MutableMapping[str, str] | None = None,
         cache: bool | None = None,
+        allow_sensitive_cache: bool = False,
         context: MutableMapping[str, Any] | None = None,
         stream: bool = False,
         **kwargs: Any,
@@ -569,6 +572,7 @@ class HttpClient:
             params=params,
             headers=headers,
             cache=cache,
+            allow_sensitive_cache=allow_sensitive_cache,
             context=context,
             stream=stream,
             **kwargs,
@@ -582,6 +586,7 @@ class HttpClient:
         data: Any = None,
         json_data: Any = None,
         headers: MutableMapping[str, str] | None = None,
+        allow_sensitive_cache: bool = False,
         context: MutableMapping[str, Any] | None = None,
         stream: bool = False,
         **kwargs: Any,
@@ -594,7 +599,15 @@ class HttpClient:
             payload["json"] = json_data
         if headers is not None:
             payload["headers"] = headers
-        return await self.request("POST", url, cache=False, context=context, stream=stream, **payload)
+        return await self.request(
+            "POST",
+            url,
+            cache=False,
+            allow_sensitive_cache=allow_sensitive_cache,
+            context=context,
+            stream=stream,
+            **payload,
+        )
 
     # ------------------------------------------------------------------
     async def ws_connect(self, url: str, *, context: MutableMapping[str, Any] | None = None, **kwargs: Any):
