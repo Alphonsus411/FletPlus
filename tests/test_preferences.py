@@ -99,6 +99,12 @@ def _save_preferences_entry(path: str, key: str, value: str) -> None:
     prefs.save({"value": value})
 
 
+def _save_preferences_partial(path: str, field: str, value: str) -> None:
+    os.environ["FLETPLUS_PREFS_FILE"] = path
+    prefs = PreferenceStorage(DummyPage(None))
+    prefs.save({field: value})
+
+
 def test_file_backend_parallel_writes_keep_all_keys(tmp_path):
     target_path = tmp_path / "preferences.json"
     total_writers = 8
@@ -120,3 +126,27 @@ def test_file_backend_parallel_writes_keep_all_keys(tmp_path):
     assert len(stored) == total_writers
     for index in range(total_writers):
         assert stored[f"worker-{index}"] == {"value": f"value-{index}"}
+
+
+def test_file_backend_parallel_writes_merge_same_entry(tmp_path):
+    target_path = tmp_path / "preferences.json"
+    total_writers = 8
+
+    with ProcessPoolExecutor(max_workers=total_writers) as executor:
+        futures = [
+            executor.submit(
+                _save_preferences_partial,
+                str(target_path),
+                f"field-{index}",
+                f"value-{index}",
+            )
+            for index in range(total_writers)
+        ]
+        for future in futures:
+            future.result()
+
+    stored = json.loads(target_path.read_text(encoding="utf-8"))
+    entry = stored[PreferenceStorage.DEFAULT_KEY]
+    assert len(entry) == total_writers
+    for index in range(total_writers):
+        assert entry[f"field-{index}"] == f"value-{index}"
