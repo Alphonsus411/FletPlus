@@ -28,7 +28,25 @@ def test_generate_service_worker_and_manifest(tmp_path):
     sw = generate_service_worker(["/", "/main.css"], output_dir)
     assert sw.exists()
     assert output_dir.exists()
-    assert "CACHE_NAME" in sw.read_text()
+    sw_content = sw.read_text()
+    assert "CACHE_NAME" in sw_content
+    assert 'const CACHE_NAME = "fletplus-cache-v1";' in sw_content
+    assert "self.addEventListener('activate'" in sw_content
+    assert "caches.keys()" in sw_content
+    assert "caches.delete(key)" in sw_content
+
+
+def test_generate_service_worker_cache_name_changes_with_version(tmp_path):
+    output_dir = tmp_path / "pwa"
+
+    sw_v1 = generate_service_worker(["/main.css"], output_dir, cache_version="v1")
+    v1_content = sw_v1.read_text()
+    assert 'const CACHE_NAME = "fletplus-cache-v1";' in v1_content
+
+    sw_v2 = generate_service_worker(["/main.css"], output_dir, cache_version="v2")
+    v2_content = sw_v2.read_text()
+    assert 'const CACHE_NAME = "fletplus-cache-v2";' in v2_content
+    assert v1_content != v2_content
 
     shutil.rmtree(output_dir)
     assert not output_dir.exists()
