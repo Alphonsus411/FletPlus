@@ -148,7 +148,9 @@ Archivos de referencia en esta política:
 
 Para integrarlo en tu proyecto, arranca `DevToolsServer().listen()` dentro de un `asyncio.Task` y comparte la URL en tus herramientas de depuración o paneles administrativos.
 
-Si necesitas restringir el acceso, puedes configurar `auth_token` y/o `allowed_origins`. Con `auth_token`, el cliente debe enviar el secreto en un header dedicado (`Authorization: Bearer <token>` o `X-DevTools-Token: <token>`). La query string `?token=...` sigue disponible solo como fallback temporal deprecado y emite un warning en logs. Además, el header `Origin` debe coincidir con alguno de los orígenes permitidos cuando se configure `allowed_origins`. Las conexiones que no cumplan estos requisitos se rechazan con un cierre de política.
+Si necesitas restringir el acceso, puedes configurar `auth_token` y opcionalmente `allowed_origins`. Con `auth_token`, el cliente debe enviar el secreto en un header dedicado (`Authorization: Bearer <token>` o `X-DevTools-Token: <token>`). Además, el header `Origin` debe coincidir con alguno de los orígenes permitidos cuando se configure `allowed_origins`. Las conexiones que no cumplan estos requisitos se rechazan con un cierre de política.
+
+Cuando el servidor se expone fuera de loopback (`0.0.0.0`, `::` o IP no local), `auth_token` pasa a ser obligatorio. En ese escenario, `allowed_origins` por sí solo no basta para habilitar la exposición remota.
 
 ## Recarga en caliente desde la CLI
 

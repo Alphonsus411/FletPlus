@@ -78,18 +78,14 @@ class DevToolsServer:
         cierre de política.
 
         Para exponer el servidor fuera de loopback (por ejemplo ``0.0.0.0``,
-        ``::`` o una IP pública) es obligatorio configurar ``auth_token`` o
-        ``allowed_origins``. Esta restricción evita exponer el canal de DevTools
-        sin control de acceso.
+        ``::`` o una IP pública) es obligatorio configurar ``auth_token``.
+        ``allowed_origins`` puede añadirse como capa extra, pero no reemplaza
+        al token para exposición remota.
         """
-        if (
-            not self._is_loopback_host(host)
-            and self._auth_token is None
-            and self._allowed_origins is None
-        ):
+        if not self._is_loopback_host(host) and self._auth_token is None:
             raise RuntimeError(
-                "No se puede iniciar DevTools sin auth_token ni allowed_origins "
-                "cuando se expone fuera de loopback."
+                "No se puede iniciar DevTools fuera de loopback sin auth_token. "
+                "allowed_origins por sí solo no es suficiente para exposición remota."
             )
 
         return serve(

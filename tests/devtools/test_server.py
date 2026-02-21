@@ -218,6 +218,33 @@ def test_allowed_origins_normalizes_valid_origin_with_implicit_port():
     assert server._allowed_origins == {"https://host:443"}
 
 
+def test_listen_rejects_remote_host_with_only_allowed_origins():
+    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+
+    with pytest.raises(
+        RuntimeError,
+        match="allowed_origins por sí solo no es suficiente para exposición remota",
+    ):
+        server.listen("0.0.0.0", 0)
+
+
+def test_listen_allows_remote_host_when_auth_token_is_configured():
+    server = DevToolsServer(auth_token="secret")
+
+    listener = server.listen("0.0.0.0", 0)
+    assert listener is not None
+
+
+def test_listen_allows_remote_host_when_auth_token_and_allowed_origins_are_configured():
+    server = DevToolsServer(
+        auth_token="secret",
+        allowed_origins={"https://trusted.example"},
+    )
+
+    listener = server.listen("0.0.0.0", 0)
+    assert listener is not None
+
+
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "origin",
