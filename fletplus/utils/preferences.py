@@ -5,8 +5,15 @@ from __future__ import annotations
 import json
 import logging
 import os
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterator, Mapping
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +90,25 @@ class _FileBackend(_BaseBackend):
             base_dir = Path.home() / ".fletplus"
             self._path = base_dir / "preferences.json"
             self._expected_base_dir = base_dir
+        self._lock_path = self._path.with_suffix(f"{self._path.suffix}.lock")
+
+    @contextmanager
+    def _file_lock(self) -> Iterator[None]:
+        self._lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self._lock_path, "a+b") as lock_file:
+            if os.name == "nt":
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                if os.name == "nt":
+                    lock_file.seek(0)
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
     def _is_path_secure(self, path: Path, *, label: str) -> bool:
         if path.exists() and path.is_symlink():
@@ -142,37 +168,47 @@ class _FileBackend(_BaseBackend):
         return None
 
     def save(self, data: Mapping[str, Any]) -> None:
-        payload = self._read_all()
-        payload[self._key] = dict(data)
         try:
-            self._path.parent.mkdir(parents=True, exist_ok=True)
-            if not self._validate_save_target():
-                return
-            tmp_path = self._path.with_name(f"{self._path.name}.tmp")
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-            flags |= getattr(os, "O_NOFOLLOW", 0)
-            flags |= getattr(os, "O_CLOEXEC", 0)
-            try:
-                fd = os.open(tmp_path, flags, 0o600)
-            except FileExistsError:
-                tmp_path.unlink(missing_ok=True)
-                fd = os.open(tmp_path, flags, 0o600)
-            try:
-                with os.fdopen(fd, "w", encoding="utf-8") as fh:
-                    json.dump(payload, fh, ensure_ascii=False, indent=2)
-                    fh.flush()
-                    os.fsync(fh.fileno())
-                if not self._validate_save_target() or not self._is_path_secure(
-                    tmp_path,
-                    label="archivo temporal de preferencias",
-                ):
-                    tmp_path.unlink(missing_ok=True)
+            with self._file_lock():
+                self._path.parent.mkdir(parents=True, exist_ok=True)
+                if not self._validate_save_target():
                     return
-                os.replace(tmp_path, self._path)
-                os.chmod(self._path, 0o600)
-            finally:
-                if tmp_path.exists():
-                    tmp_path.unlink(missing_ok=True)
+                payload = self._read_all()
+                payload[self._key] = dict(data)
+
+                tmp_path: Path | None = None
+                try:
+                    with tempfile.NamedTemporaryFile(
+                        "w",
+                        delete=False,
+                        dir=self._path.parent,
+                        prefix=f"{self._path.name}.",
+                        suffix=".tmp",
+                        encoding="utf-8",
+                    ) as fh:
+                        tmp_path = Path(fh.name)
+
+                        if hasattr(os, "O_NOFOLLOW"):
+                            flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | os.O_NOFOLLOW
+                            check_fd = os.open(tmp_path, flags)
+                            os.close(check_fd)
+
+                        json.dump(payload, fh, ensure_ascii=False, indent=2)
+                        fh.flush()
+                        os.fsync(fh.fileno())
+                    if tmp_path is None:
+                        return
+                    if not self._validate_save_target() or not self._is_path_secure(
+                        tmp_path,
+                        label="archivo temporal de preferencias",
+                    ):
+                        tmp_path.unlink(missing_ok=True)
+                        return
+                    os.replace(tmp_path, self._path)
+                    os.chmod(self._path, 0o600)
+                finally:
+                    if tmp_path is not None and tmp_path.exists():
+                        tmp_path.unlink(missing_ok=True)
         except Exception:  # pragma: no cover - errores inesperados
             logger.exception("No se pudieron guardar preferencias en %s", self._path)
 
