@@ -596,7 +596,7 @@ def validate_single_source_of_truth_sync() -> list[str]:
     return validate_critical_commands_sync()
 
 
-def extract_flet_matrix_from_workflow(path: Path) -> dict[str, str]:
+def extract_flet_matrix_from_workflow(path: Path) -> dict[str, tuple[str, str]]:
     try:
         content = yaml.safe_load(path.read_text(encoding="utf-8"))
     except yaml.YAMLError:
@@ -621,14 +621,19 @@ def extract_flet_matrix_from_workflow(path: Path) -> dict[str, str]:
     if not isinstance(include_rows, list):
         return {}
 
-    minors_by_label: dict[str, str] = {}
+    minors_by_label: dict[str, tuple[str, str]] = {}
     for row in include_rows:
         if not isinstance(row, dict):
             continue
         label = row.get("label")
         minor = row.get("expected-minor")
-        if isinstance(label, str) and isinstance(minor, str):
-            minors_by_label[label] = minor
+        flet_spec = row.get("flet-spec")
+        if (
+            isinstance(label, str)
+            and isinstance(minor, str)
+            and isinstance(flet_spec, str)
+        ):
+            minors_by_label[label] = (minor, flet_spec)
     return minors_by_label
 
 
@@ -643,19 +648,39 @@ def extract_flet_matrix_from_config(path: Path) -> tuple[str, str] | None:
     return match.group("baseline"), match.group("target")
 
 
+def _extract_first_minor(
+    text: str, patterns: tuple[str, ...], group_name: str
+) -> str | None:
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(group_name)
+    return None
+
+
 def extract_flet_matrix_from_migration_doc(path: Path) -> tuple[str, str] | None:
     text = path.read_text(encoding="utf-8")
-    baseline_match = re.search(
-        r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet>=(?P<baseline>\d+\.\d+),<\d+\.\d+`",
+
+    baseline = _extract_first_minor(
         text,
+        (
+            r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet>=(?P<baseline>\d+\.\d+),<\d+\.\d+`",
+            r"\*\*Baseline de validación \(estado actual en CI\)\*\*: `flet>=(?P<baseline>\d+\.\d+),<\d+\.\d+`",
+        ),
+        "baseline",
     )
-    target_match = re.search(
-        r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=(?P<target>\d+\.\d+),<\d+\.\d+`",
+    target = _extract_first_minor(
         text,
+        (
+            r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=(?P<target>\d+\.\d+),<\d+\.\d+`",
+            r"\*\*Versión objetivo de migración \(estado objetivo en CI\)\*\*: `flet>=(?P<target>\d+\.\d+),<\d+\.\d+`",
+        ),
+        "target",
     )
-    if not baseline_match or not target_match:
+
+    if not baseline or not target:
         return None
-    return baseline_match.group("baseline"), target_match.group("target")
+    return baseline, target
 
 
 def validate_flet_baseline_target_contract() -> list[str]:
@@ -689,14 +714,31 @@ def validate_flet_baseline_target_contract() -> list[str]:
     config_baseline, config_target = config_versions
     doc_baseline, doc_target = doc_versions
 
-    if (workflow_baseline, workflow_target) != (config_baseline, config_target):
+    workflow_baseline_minor, workflow_baseline_spec = workflow_baseline
+    workflow_target_minor, workflow_target_spec = workflow_target
+
+    if (workflow_baseline_minor, workflow_target_minor) != (
+        config_baseline,
+        config_target,
+    ):
         errors.append(
             "workflow y tools/flet_version_matrix_config.py no coinciden en baseline/target de Flet."
         )
 
-    if (workflow_baseline, workflow_target) != (doc_baseline, doc_target):
+    if (workflow_baseline_minor, workflow_target_minor) != (doc_baseline, doc_target):
         errors.append(
             "workflow y docs/migration-flet-latest.md no coinciden en baseline/target de Flet."
+        )
+
+    expected_baseline_spec = f"flet>={config_baseline},<{config_baseline.split('.')[0]}.{int(config_baseline.split('.')[1]) + 1}"
+    expected_target_spec = f"flet>={config_target},<{config_target.split('.')[0]}.{int(config_target.split('.')[1]) + 1}"
+
+    if (
+        workflow_baseline_spec != expected_baseline_spec
+        or workflow_target_spec != expected_target_spec
+    ):
+        errors.append(
+            "reusable-quality.yml debe derivar flet-spec exactamente desde tools/flet_version_matrix_config.py."
         )
 
     return errors

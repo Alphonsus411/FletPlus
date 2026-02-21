@@ -1153,8 +1153,10 @@ def test_validate_flet_baseline_target_contract_passes_when_synced(
       matrix:
         include:
           - label: min-supported
+            flet-spec: flet>=0.28,<0.29
             expected-minor: "0.28"
           - label: latest-migration-target
+            flet-spec: flet>=0.80,<0.81
             expected-minor: "0.80"
 """,
         encoding="utf-8",
@@ -1201,8 +1203,10 @@ def test_validate_flet_baseline_target_contract_fails_when_docs_drift(
       matrix:
         include:
           - label: min-supported
+            flet-spec: flet>=0.28,<0.29
             expected-minor: "0.28"
           - label: latest-migration-target
+            flet-spec: flet>=0.80,<0.81
             expected-minor: "0.80"
 """,
         encoding="utf-8",
@@ -1236,3 +1240,53 @@ def test_validate_flet_baseline_target_contract_fails_when_docs_drift(
     assert any(
         "workflow y docs/migration-flet-latest.md no coinciden" in e for e in errors
     )
+
+
+def test_validate_flet_baseline_target_contract_fails_when_flet_spec_drift(
+    contract_env: dict[str, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    contract_env["reusable"].write_text(
+        contract_env["reusable"].read_text(encoding="utf-8")
+        + """
+  flet-version-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - label: min-supported
+            flet-spec: flet>=0.28,<0.30
+            expected-minor: "0.28"
+          - label: latest-migration-target
+            flet-spec: flet>=0.80,<0.81
+            expected-minor: "0.80"
+""",
+        encoding="utf-8",
+    )
+
+    (contract_env["tmp_path"] / "tools" / "flet_version_matrix_config.py").write_text(
+        'FLET_MATRIX_MINORS: tuple[str, ...] = ("0.28", "0.80")\n',
+        encoding="utf-8",
+    )
+    (contract_env["tmp_path"] / "docs" / "migration-flet-latest.md").write_text(
+        """
+**Baseline de validación (estado actual en CI)**: `flet>=0.28,<0.29`
+**Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81`
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        check_ci_workflow_contract,
+        "FLET_MATRIX_CONFIG",
+        contract_env["tmp_path"] / "tools" / "flet_version_matrix_config.py",
+    )
+    monkeypatch.setattr(
+        check_ci_workflow_contract,
+        "MIGRATION_DOC",
+        contract_env["tmp_path"] / "docs" / "migration-flet-latest.md",
+    )
+
+    errors = check_ci_workflow_contract.validate_flet_baseline_target_contract()
+
+    assert any("debe derivar flet-spec exactamente" in e for e in errors)
