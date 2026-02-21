@@ -241,3 +241,37 @@ def test_smart_table_refresh_and_build_without_gui_runtime() -> None:
     table.refresh()
 
     assert isinstance(control, ft.Control)
+
+
+def test_icons_namespace_contract_supports_pascal_or_snake_case() -> None:
+    icons_namespace = getattr(ft, "Icons", None) or getattr(ft, "icons", None)
+
+    assert icons_namespace is not None
+    home_icon = getattr(icons_namespace, "HOME", None) or getattr(icons_namespace, "home", None)
+    assert home_icon is not None
+
+
+def test_colors_namespace_contract_supports_pascal_or_snake_case() -> None:
+    colors_namespace = getattr(ft, "Colors", None) or getattr(ft, "colors", None)
+
+    assert colors_namespace is not None
+    opacity_method = getattr(colors_namespace, "with_opacity", None)
+    assert callable(opacity_method)
+
+
+def test_page_update_contract_supports_sync_or_async_paths() -> None:
+    update = getattr(ft.Page, "update", None)
+    update_async = getattr(ft.Page, "update_async", None)
+
+    assert callable(update)
+    if update_async is not None:
+        assert callable(update_async)
+
+
+def test_page_window_dimensions_contract_has_modern_or_legacy_attributes() -> None:
+    assert hasattr(ft.Page, "window")
+    has_width = hasattr(ft.Page, "window_width") or hasattr(ft.Page, "width")
+    has_height = hasattr(ft.Page, "window_height") or hasattr(ft.Page, "height")
+
+    assert has_width is True
+    assert has_height is True

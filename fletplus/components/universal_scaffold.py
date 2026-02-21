@@ -29,8 +29,14 @@ from fletplus.utils.flet_compat import (
     get_flet_icon,
     get_page_height,
     get_page_width,
+    append_page_overlay,
     safe_open_drawer,
+    has_page_overlay_control,
+    safe_page_set_focus,
+    safe_page_speak,
     safe_update_page_sync,
+    set_page_drawer,
+    set_page_title,
     with_opacity,
 )
 from fletplus.utils.responsive_manager import ResponsiveManager
@@ -303,9 +309,9 @@ class UniversalAdaptiveScaffold:
 
         self._page = page
         if self.page_title:
-            page.title = self.page_title
+            set_page_title(page, self.page_title)
         if self.drawer is not None:
-            setattr(page, "drawer", self.drawer)
+            set_page_drawer(page, self.drawer)
 
         # Reemplazamos el contenido vacío del BottomSheet por la versión real
         panel_control = self.accessibility_panel.build(page)
@@ -316,8 +322,8 @@ class UniversalAdaptiveScaffold:
             expand=False,
         )
         self._accessibility_bottom_sheet.content = sheet_content
-        if self._accessibility_bottom_sheet not in page.overlay:
-            page.overlay.append(self._accessibility_bottom_sheet)
+        if not has_page_overlay_control(page, self._accessibility_bottom_sheet):
+            append_page_overlay(page, self._accessibility_bottom_sheet)
 
         self.caption_overlay.build(page)
 
@@ -356,12 +362,8 @@ class UniversalAdaptiveScaffold:
                 self._inline_caption_text.value = message
                 self._inline_caption_container.visible = True
 
-        if self._page and hasattr(self._page, "speak"):
-            try:
-                self._page.speak(message)
-            except Exception:
-                # Ignorar fallos de ``speak`` en plataformas no compatibles.
-                pass
+        if self._page:
+            safe_page_speak(self._page, message)
 
         if self._page:
             safe_update_page_sync(self._page)
@@ -626,11 +628,8 @@ class UniversalAdaptiveScaffold:
 
     # ------------------------------------------------------------------
     def _focus_main_content(self, _: ft.ControlEvent | None = None) -> None:
-        if self._page and hasattr(self._page, "set_focus"):
-            try:
-                self._page.set_focus(self._content_host)
-            except Exception:
-                pass
+        if self._page:
+            safe_page_set_focus(self._page, self._content_host)
 
     # ------------------------------------------------------------------
     def _toggle_accessibility_panel(self, _: ft.ControlEvent | None = None) -> None:

@@ -75,7 +75,9 @@ def set_page_width(page: Any, width: float) -> bool:
     if window is not None and hasattr(window, "width"):
         with contextlib.suppress(Exception):
             setattr(window, "width", width)
-            return True
+        with contextlib.suppress(Exception):
+            setattr(page, "width", width)
+        return True
 
     for attr in ("window_width", "width"):
         if hasattr(page, attr):
@@ -114,7 +116,9 @@ def set_page_height(page: Any, height: float) -> bool:
     if window is not None and hasattr(window, "height"):
         with contextlib.suppress(Exception):
             setattr(window, "height", height)
-            return True
+        with contextlib.suppress(Exception):
+            setattr(page, "height", height)
+        return True
 
     for attr in ("window_height", "height"):
         if hasattr(page, attr):
@@ -177,6 +181,73 @@ def safe_update_page_sync(page: Any) -> None:
     if callable(update):
         with contextlib.suppress(Exception):
             update()
+
+
+def set_page_title(page: Any, title: str) -> bool:
+    """Asigna ``page.title`` de forma defensiva."""
+
+    with contextlib.suppress(Exception):
+        setattr(page, "title", title)
+        return True
+    return False
+
+
+def set_page_drawer(page: Any, drawer: Any) -> bool:
+    """Asigna ``page.drawer`` sin propagar errores de compatibilidad."""
+
+    with contextlib.suppress(Exception):
+        setattr(page, "drawer", drawer)
+        return True
+    return False
+
+
+def append_page_overlay(page: Any, control: Any) -> bool:
+    """Añade un control a ``page.overlay`` cuando la colección está disponible."""
+
+    overlay = getattr(page, "overlay", None)
+    if overlay is None:
+        return False
+
+    append = getattr(overlay, "append", None)
+    if callable(append):
+        with contextlib.suppress(Exception):
+            append(control)
+            return True
+    return False
+
+
+
+
+def has_page_overlay_control(page: Any, control: Any) -> bool:
+    """Comprueba si un control ya está en ``page.overlay`` de forma segura."""
+
+    overlay = getattr(page, "overlay", None)
+    if overlay is None:
+        return False
+    with contextlib.suppress(Exception):
+        return control in overlay
+    return False
+
+def safe_page_set_focus(page: Any, control: Any) -> bool:
+    """Ejecuta ``page.set_focus(control)`` si existe, con fallback seguro."""
+
+    focus = getattr(page, "set_focus", None)
+    if callable(focus):
+        with contextlib.suppress(Exception):
+            focus(control)
+            return True
+    return False
+
+
+def safe_page_speak(page: Any, message: str) -> bool:
+    """Ejecuta ``page.speak(message)`` cuando esté disponible."""
+
+    speak = getattr(page, "speak", None)
+    if callable(speak):
+        with contextlib.suppress(Exception):
+            speak(message)
+            return True
+    return False
 
 
 def get_flet_icons() -> Any | None:

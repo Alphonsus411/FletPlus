@@ -152,3 +152,62 @@ def test_universal_scaffold_open_drawer_is_tolerant_with_failing_runtime() -> No
     scaffold._open_drawer()
 
     assert page.drawer is not None
+
+
+def test_universal_scaffold_tolerates_missing_overlay_list() -> None:
+    class PageWithoutOverlay(DummyPage):
+        def __init__(self, width: int, height: int) -> None:
+            super().__init__(width, height)
+            self.overlay = None
+
+    items = [AdaptiveNavigationItem("tab-0", "Inicio", ft.Icons.HOME)]
+    page = PageWithoutOverlay(520, 800)
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=items,
+        content_builder=lambda item, idx: ft.Text(f"Contenido {item.id}-{idx}"),
+        accessibility=AccessibilityPreferences(enable_captions=False),
+    )
+
+    root = scaffold.build(page)
+
+    assert isinstance(root, ft.Control)
+
+
+def test_universal_scaffold_announce_tolerates_missing_speak_api() -> None:
+    class PageWithoutSpeak(DummyPage):
+        def __init__(self, width: int, height: int) -> None:
+            super().__init__(width, height)
+            self.speak = None
+
+    items = [AdaptiveNavigationItem("tab-0", "Inicio", ft.Icons.HOME)]
+    page = PageWithoutSpeak(520, 800)
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=items,
+        content_builder=lambda item, idx: ft.Text(f"Contenido {item.id}-{idx}"),
+        accessibility=AccessibilityPreferences(enable_captions=True, caption_mode="inline"),
+    )
+
+    scaffold.build(page)
+    scaffold.announce("Mensaje sin API speak")
+
+    assert "Mensaje sin API speak" in scaffold._inline_caption_text.value
+
+
+def test_universal_scaffold_focus_tolerates_missing_set_focus() -> None:
+    class PageWithoutSetFocus(DummyPage):
+        def __init__(self, width: int, height: int) -> None:
+            super().__init__(width, height)
+            self.set_focus = None
+
+    items = [AdaptiveNavigationItem("tab-0", "Inicio", ft.Icons.HOME)]
+    page = PageWithoutSetFocus(520, 800)
+    scaffold = UniversalAdaptiveScaffold(
+        navigation_items=items,
+        content_builder=lambda item, idx: ft.Text(f"Contenido {item.id}-{idx}"),
+        accessibility=AccessibilityPreferences(enable_captions=False),
+    )
+
+    scaffold.build(page)
+    scaffold._focus_main_content()
+
+    assert scaffold.root is not None
