@@ -21,6 +21,7 @@ from fletplus.utils.flet_compat import (
     safe_open_drawer,
     safe_page_set_focus,
     safe_page_speak,
+    safe_request_page_update,
     safe_set_window_attr,
     safe_take_screenshot,
     safe_update_page,
@@ -373,3 +374,26 @@ def test_page_attribute_helpers_for_title_drawer_focus_and_speak() -> None:
     assert page.drawer is control
     assert page.focused is control
     assert page.spoken == ["hola"]
+
+
+def test_safe_request_page_update_uses_run_task_update_async_when_needed() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.updated_async = False
+            self.run_task_calls = 0
+
+        def update(self) -> None:
+            raise RuntimeError("update no permitido")
+
+        async def update_async(self) -> None:
+            self.updated_async = True
+
+        def run_task(self, callback):
+            self.run_task_calls += 1
+            asyncio.run(callback())
+
+    page = _Page()
+    safe_request_page_update(page)
+
+    assert page.run_task_calls == 1
+    assert page.updated_async is True
