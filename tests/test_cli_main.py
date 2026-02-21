@@ -169,6 +169,7 @@ def test_reload_handler_debounces_consecutive_events_for_same_path(monkeypatch) 
     trigger_calls: list[str] = []
     handler = cli_main._ReloadHandler(
         lambda: trigger_calls.append("trigger"),
+        watch_path=Path.cwd(),
         patterns=(".py",),
         debounce_window_seconds=0.3,
     )
@@ -191,6 +192,7 @@ def test_reload_handler_allows_events_after_debounce_window(monkeypatch) -> None
     trigger_calls: list[str] = []
     handler = cli_main._ReloadHandler(
         lambda: trigger_calls.append("trigger"),
+        watch_path=Path.cwd(),
         patterns=(".py",),
         debounce_window_seconds=0.3,
     )
@@ -203,6 +205,59 @@ def test_reload_handler_allows_events_after_debounce_window(monkeypatch) -> None
     handler.on_any_event(event)
 
     assert trigger_calls == ["trigger", "trigger"]
+
+
+def test_should_ignore_does_not_match_external_parent_segments(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    watch_path = Path('/tmp/workspace/proyecto')
+    external_file = Path('/tmp/dist/proyecto/src/main.py')
+
+    assert cli_main._should_ignore(external_file, watch_path=watch_path) is False
+
+
+def test_should_ignore_matches_internal_excluded_directories(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    watch_path = Path('/tmp/workspace/proyecto')
+
+    assert cli_main._should_ignore(watch_path / 'dist' / 'bundle.js', watch_path=watch_path) is True
+    assert cli_main._should_ignore(watch_path / 'build' / 'artifact.bin', watch_path=watch_path) is True
+
+
+def test_reload_handler_ignores_event_outside_watch_root(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    trigger_calls: list[str] = []
+    handler = cli_main._ReloadHandler(
+        lambda: trigger_calls.append('trigger'),
+        watch_path=Path('/tmp/workspace/proyecto'),
+        patterns=(".py",),
+    )
+
+    handler.on_any_event(SimpleNamespace(is_directory=False, src_path='/tmp/other/main.py'))
+
+    assert trigger_calls == []
+
+
+def test_reload_handler_ignores_internal_dist_directory(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    trigger_calls: list[str] = []
+    watch_path = Path('/tmp/workspace/proyecto')
+    handler = cli_main._ReloadHandler(
+        lambda: trigger_calls.append('trigger'),
+        watch_path=watch_path,
+        patterns=(".py",),
+    )
+
+    handler.on_any_event(SimpleNamespace(is_directory=False, src_path=str(watch_path / 'dist' / 'main.py')))
+
+    assert trigger_calls == []
 
 
 def test_run_propagates_subprocess_failure_without_watchdog(monkeypatch) -> None:
