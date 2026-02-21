@@ -45,10 +45,21 @@ def _require_symbol(container: object, symbol_name: str, qualified_name: str) ->
 
 
 def test_flet_matrix_sensitive_contracts_still_exist() -> None:
+    # Símbolos clave para componentes/router/tema.
+    _require_symbol(ft, "Theme", "ft.Theme")
+    _require_symbol(ft, "ThemeMode", "ft.ThemeMode")
+    _require_symbol(ft, "NavigationBar", "ft.NavigationBar")
+    _require_symbol(ft, "NavigationRail", "ft.NavigationRail")
     _require_symbol(ft, "NavigationDrawer", "ft.NavigationDrawer")
     _require_symbol(ft, "PageTransitionsTheme", "ft.PageTransitionsTheme")
+
+    icons_namespace = getattr(ft, "Icons", None) or getattr(ft, "icons", None)
+    assert icons_namespace is not None, "Símbolo sensible faltante: ft.Icons/ft.icons."
+    _require_symbol(icons_namespace, "HOME", "ft.Icons.HOME")
+
     _require_symbol(ft.Page, "run_task", "ft.Page.run_task")
     _require_symbol(ft.Page, "update", "ft.Page.update")
+    _require_symbol(ft.Page, "go", "ft.Page.go")
 
     update_async = getattr(ft.Page, "update_async", None)
     if update_async is not None:

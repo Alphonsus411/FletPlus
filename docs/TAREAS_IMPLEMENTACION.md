@@ -43,3 +43,13 @@ Se considera completado cuando:
 - Workflows de `.github/workflows` validados.
 - Documentación compile con `mkdocs build --strict`.
 - El estado quede reflejado en `informe_tests.md`.
+
+
+## Registro interno — cierre de migración Flet 0.80.x
+
+- Estado: ✅ **target `0.80.x` validado oficialmente** (incluyendo el parche más reciente validado en la iteración).
+- Evidencia técnica registrada en:
+  - `docs/migration-flet-latest.md` (estado oficial + checklist final cerrado).
+  - `docs/tooling.md` (contrato vigente y deuda legacy acotada).
+  - `tests/test_flet_version_matrix.py` (símbolos sensibles reforzados para componentes/router/tema).
+- Decisión: mantener baseline `0.28.x` y target `0.80.x` hasta nueva revisión mensual o evento extraordinario de upstream.

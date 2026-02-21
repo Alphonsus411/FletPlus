@@ -50,18 +50,32 @@ def update_config(text: str, baseline_minor: str, target_minor: str) -> str:
     )
 
 
+def _replace_first_matching(patterns: tuple[str, ...], repl: str, text: str) -> str:
+    for pattern in patterns:
+        updated, count = re.subn(pattern, repl, text, count=1, flags=re.MULTILINE)
+        if count == 1:
+            return updated
+    raise ValueError(f"Ningún patrón encontrado para reemplazo: {patterns}")
+
+
 def update_docs(text: str, baseline_minor: str, target_minor: str) -> str:
     baseline_upper = _minor_to_upper_bound(baseline_minor)
     target_upper = _minor_to_upper_bound(target_minor)
 
-    text = _replace_once(
-        r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet>=[^`]+`",
-        f"**Versión mínima soportada (estado actual)**: `flet>={baseline_minor},<{baseline_upper}`",
+    text = _replace_first_matching(
+        (
+            r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet>=[^`]+`",
+            r"\*\*Baseline de validación \(estado actual en CI\)\*\*: `flet>=[^`]+`",
+        ),
+        f"**Baseline de validación (estado actual en CI)**: `flet>={baseline_minor},<{baseline_upper}`",
         text,
     )
-    text = _replace_once(
-        r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=[^`]+`",
-        f"**Versión objetivo de migración (estado objetivo)**: `flet>={target_minor},<{target_upper}`",
+    text = _replace_first_matching(
+        (
+            r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=[^`]+`",
+            r"\*\*Versión objetivo de migración \(estado objetivo en CI\)\*\*: `flet>=[^`]+`",
+        ),
+        f"**Versión objetivo de migración (estado objetivo en CI)**: `flet>={target_minor},<{target_upper}`",
         text,
     )
 
