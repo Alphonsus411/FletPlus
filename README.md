@@ -258,6 +258,10 @@ cython_modules:
     path: fletplus/router/router_cy.pyx
   - name: fletplus.http.disk_cache
     path: fletplus/http/disk_cache.pyx
+  - name: fletplus.state.state
+    path: fletplus/state/state.pyx
+  - name: fletplus.utils.responsive_manager
+    path: fletplus/utils/responsive_manager.pyx
 ```
 
 Modifica `build_config.yaml` para añadir o quitar módulos sin tocar la configuración de empaquetado declarada en `pyproject.toml`. Durante la construcción, los módulos listados se cythonizan si Cython está disponible; si no, se usan los artefactos `.c` existentes como respaldo. Los paquetes publicados incluyen estos `.c` precompilados para que `pip install fletplus` funcione sin dependencias adicionales.
@@ -266,15 +270,25 @@ Modifica `build_config.yaml` para añadir o quitar módulos sin tocar la configu
 
 > 🧰 Si necesitas regenerar los artefactos C (por ejemplo, tras modificar un `.pyx`), instala el extra opcional `build` con `pip install .[build]` (incluye `build` y `cython`) o `pip install "fletplus[build]"`.
 
-## 🚀 Router acelerado con Rust
+## 🚀 Componentes acelerados con Rust
 
-El router cuenta ahora con un backend compilado con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) y PyO3 (`router_pr_rs`), además de la variante previa `router_rs`. Durante la importación se intenta cargar `router_pr` primero, luego `router_rs`, después el backend de Cython y, en último término, la versión pura en Python.
+FletPlus incluye extensiones nativas opcionales compiladas con [`pyrust-native`](https://github.com/pyrust-dev/pyrust) para acelerar puntos críticos. Durante la importación, se intenta cargar la extensión compilada (`*_rs` o `*_pr_rs`); si no está disponible, se utiliza automáticamente la implementación en Python puro.
 
-- Ruta opt-in: el flujo estándar de instalación (`pip install fletplus` o `pip install .`) no intenta compilar Rust. Si quieres los binarios nativos, instala el extra `rust`: `pip install .[rust]`.
-- Requisitos: toolchain de Rust estable, `pyrust-native` y `maturin` (puedes instalarlos con el extra `rust`: `pip install .[rust]`).
-- Construcción local: `make build-rust` compila todos los manifests listados (incluyendo `fletplus/router/router_pr_rs/Cargo.toml`) y registra las ruedas resultantes en el entorno activo.
-- Instalación desde fuente: `pip install .[rust]` hace que `pyrust-native` lea la sección `[tool.pyrust-native]` de `pyproject.toml` y ejecute `maturin` para cada crate declarado, de modo que el backend nativo quede disponible sin pasos extra.
-- Fallback seguro: si ninguna variante nativa está disponible, el router sigue funcionando con las implementaciones existentes.
+Módulos acelerados:
+- **Router**: `router_pr_rs` / `router_rs`
+- **Animaciones**: `listeners_pr_rs` (AnimationController)
+- **Componentes**: `smart_table_rs`, `responsive_grid_rs`, `command_palette_rs`, `line_chart_rs`
+- **Temas**: `theme_merge_rs`, `token_merge_rs`, `palette_flatten_rs`
+- **HTTP**: `disk_cache_pr_rs`
+- **Estado**: `signal_pr_rs`
+- **Utilidades**: `breakpoint_rs`, `responsive_manager_rs`
+
+### Instalación y compilación
+
+- **Ruta opt-in**: el flujo estándar (`pip install fletplus`) no compila Rust. Para incluir los binarios nativos, instala el extra `rust`: `pip install .[rust]`.
+- **Requisitos**: toolchain de Rust estable, `pyrust-native` y `maturin`.
+- **Construcción local**: `make build-rust` compila todos los manifests y registra las ruedas resultantes.
+- **Fallback seguro**: si ninguna variante nativa está disponible, el sistema sigue funcionando con las implementaciones en Python.
 
 ### 🤖 Auto-rustificación con pyrust-native
 
@@ -728,6 +742,8 @@ def main(page: ft.Page):
 
 ft.app(target=main)
 ```
+
+> ⚠️ **Nota sobre breakpoints**: `ResponsiveNavigationConfig` utiliza por defecto `mobile=720`, `tablet=1100` y `desktop=1440` para la lógica de navegación. Estos valores son independientes de los perfiles definidos en `fletplus.utils.device_profiles` (donde `mobile` termina en 599px), permitiendo mayor flexibilidad para el shell de la aplicación.
 
 - Puedes cambiar el icono, colores y desplazamiento del panel flotante.
 - El panel se cierra automáticamente al navegar, manteniendo el foco en el

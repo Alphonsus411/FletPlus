@@ -1,10 +1,37 @@
+import importlib
 import logging
 from typing import Callable, Dict, List, Tuple
 
 import flet as ft
 
-from fletplus.components.command_palette_rs import filter_commands
 from fletplus.context import locale_context, user_context
+
+_rs_filter: Callable[[List[str], str], List[int]] | None = None
+
+def filter_commands(names: List[str], query: str) -> List[int]:
+    global _rs_filter
+    if _rs_filter is None:
+        try:
+            spec = importlib.util.find_spec("fletplus.components.command_palette_rs")
+        except Exception:
+            spec = None
+        if spec is not None:
+            try:
+                mod = importlib.import_module("fletplus.components.command_palette_rs")
+                impl = getattr(mod, "filter_commands", None)
+            except Exception:
+                impl = None
+            _rs_filter = impl
+    if _rs_filter is not None:
+        return _rs_filter(names, query)
+    q = (query or "").strip().lower()
+    if not q:
+        return list(range(len(names)))
+    result: List[int] = []
+    for i, name in enumerate(names):
+        if q in (name or "").lower():
+            result.append(i)
+    return result
 
 
 class CommandPalette:

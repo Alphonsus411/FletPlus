@@ -43,9 +43,9 @@ def _is_verbose_logging_enabled(verbose: bool | None = None) -> bool:
 
 
 def _escape_powershell(text: str) -> str:
-    """Escapa cadenas para scripts de PowerShell."""
-
-    return text.replace("'", "''")
+    s = text.replace("\r", " ").replace("\n", " ").replace("\x00", "")
+    s = s.replace("'", "''")
+    return s
 
 
 def _notify_windows(title: str, body: str) -> bool:
