@@ -104,6 +104,23 @@ class ResponsiveNavigationConfig:
         return bool(self.floating_breakpoint is not None and width <= self.floating_breakpoint)
 
 
+@dataclass(slots=True)
+class LegacyPageAdapterConfig:
+    """Configura la compatibilidad opcional con atributos legacy sobre ``page``."""
+
+    enabled: bool = False
+    state_attr: str = "state"
+    contexts_attr: str = "contexts"
+
+
+@dataclass(slots=True)
+class AppContext:
+    """Contenedor explícito del estado compartido de la app legacy."""
+
+    state: Store
+    contexts: dict[str, object]
+
+
 class FletPlusApp:
     """Aplicación legacy de FletPlus.
 
@@ -127,14 +144,16 @@ class FletPlusApp:
         use_window_manager: bool = False,
         state: Store | None = None,
         responsive_navigation: ResponsiveNavigationConfig | None = None,
+        legacy_page_adapter: LegacyPageAdapterConfig | None = None,
     ) -> None:
         self.page = page
         self.state = state or Store()
+        self.app_context = AppContext(state=self.state, contexts={})
+        self.legacy_page_adapter = legacy_page_adapter or LegacyPageAdapterConfig()
+        self._legacy_bound_attrs: set[str] = set()
         self._disposed = False
         self._close_hook_attached = False
         self._previous_page_close_handler: Callable | None = None
-        if not hasattr(self.page, "state"):
-            setattr(self.page, "state", self.state)
         raw_sidebar = list(sidebar_items or [])
         self.title = title
 
@@ -208,8 +227,10 @@ class FletPlusApp:
             "locale": locale_context,
             "animation": animation_controller_context,
         }
+        self.app_context.contexts = self.contexts
         self._context_providers: dict[str, ContextProvider] = {}
         self._activate_contexts()
+        self._activate_legacy_page_adapter()
 
         self.command_palette = CommandPalette(commands or {})
         self.shortcuts = ShortcutManager(page)
@@ -328,7 +349,20 @@ class FletPlusApp:
         for provider in providers.values():
             provider.__enter__()
         self._context_providers = providers
-        setattr(self.page, "contexts", self.contexts)
+
+    # ------------------------------------------------------------------
+    def _activate_legacy_page_adapter(self) -> None:
+        if not self.legacy_page_adapter.enabled:
+            return
+        self._bind_legacy_page_attr(self.legacy_page_adapter.state_attr, self.app_context.state)
+        self._bind_legacy_page_attr(self.legacy_page_adapter.contexts_attr, self.app_context.contexts)
+
+    # ------------------------------------------------------------------
+    def _bind_legacy_page_attr(self, attr_name: str, value: object) -> None:
+        if hasattr(self.page, attr_name):
+            return
+        setattr(self.page, attr_name, value)
+        self._legacy_bound_attrs.add(attr_name)
 
     # ------------------------------------------------------------------
     def _restore_theme_preferences(self) -> None:
@@ -463,8 +497,10 @@ class FletPlusApp:
             except Exception:  # pragma: no cover - limpieza tolerante a fallos
                 logger.exception("Error al cerrar un proveedor de contexto")
         self._context_providers.clear()
-        if getattr(self.page, "contexts", None) is self.contexts:
-            setattr(self.page, "contexts", {})
+        for attr_name in tuple(self._legacy_bound_attrs):
+            if hasattr(self.page, attr_name):
+                delattr(self.page, attr_name)
+            self._legacy_bound_attrs.discard(attr_name)
 
     # ------------------------------------------------------------------
     def set_user(self, user: object) -> None:
