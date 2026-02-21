@@ -32,7 +32,7 @@ def _connect_with_headers(uri: str, headers: dict[str, str] | None = None):
 
 @pytest.mark.anyio
 async def test_broadcast_excludes_sender_and_reaches_peers():
-    server = DevToolsServer()
+    server = DevToolsServer(allow_unauthenticated_loopback=True)
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -54,7 +54,7 @@ async def test_broadcast_excludes_sender_and_reaches_peers():
 
 @pytest.mark.anyio
 async def test_ignores_binary_messages():
-    server = DevToolsServer()
+    server = DevToolsServer(allow_unauthenticated_loopback=True)
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -73,7 +73,7 @@ async def test_ignores_binary_messages():
 
 @pytest.mark.anyio
 async def test_late_client_receives_last_snapshot_immediately():
-    server = DevToolsServer()
+    server = DevToolsServer(allow_unauthenticated_loopback=True)
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -226,6 +226,37 @@ def test_listen_rejects_remote_host_with_only_allowed_origins():
         match="allowed_origins por sí solo no es suficiente para exposición remota",
     ):
         server.listen("0.0.0.0", 0)
+
+
+def test_listen_rejects_loopback_without_auth_or_origins_by_default():
+    server = DevToolsServer()
+
+    with pytest.raises(
+        RuntimeError,
+        match="loopback sin autenticación u orígenes permitidos",
+    ):
+        server.listen("127.0.0.1", 0)
+
+
+def test_listen_allows_loopback_when_auth_token_is_configured():
+    server = DevToolsServer(auth_token="secret")
+
+    listener = server.listen("127.0.0.1", 0)
+    assert listener is not None
+
+
+def test_listen_allows_loopback_when_allowed_origins_are_configured():
+    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+
+    listener = server.listen("127.0.0.1", 0)
+    assert listener is not None
+
+
+def test_listen_allows_unauthenticated_loopback_only_in_explicit_insecure_mode():
+    server = DevToolsServer(allow_unauthenticated_loopback=True)
+
+    listener = server.listen("127.0.0.1", 0)
+    assert listener is not None
 
 
 def test_listen_allows_remote_host_when_auth_token_is_configured():

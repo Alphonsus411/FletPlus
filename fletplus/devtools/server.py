@@ -46,6 +46,7 @@ class DevToolsServer:
         allowed_snapshot_types: set[str] | None = None,
         auth_token: str | None = None,
         allowed_origins: set[str] | None = None,
+        allow_unauthenticated_loopback: bool = False,
     ) -> None:
         if _WEBSOCKETS_IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -67,25 +68,46 @@ class DevToolsServer:
         )
         self._auth_token = auth_token
         self._allowed_origins = self._normalize_allowed_origins(allowed_origins)
+        self._allow_unauthenticated_loopback = allow_unauthenticated_loopback
 
     def listen(self, host: str = "127.0.0.1", port: int = 0):
         """Crea el servidor y comienza a escuchar conexiones.
 
+        De forma predeterminada, incluso en loopback se requiere configurar
+        ``auth_token`` o ``allowed_origins`` antes de aceptar conexiones.
+        Para desarrollo local con riesgo explícitamente aceptado, se puede
+        desactivar esta protección con ``allow_unauthenticated_loopback=True``.
+
         Si se configura ``auth_token`` o ``allowed_origins``, las conexiones
         entrantes deben incluir el token en un header dedicado
-        (``Authorization: Bearer <token>`` o ``X-DevTools-Token: <token>``) y/o
-        un header ``Origin`` permitido; en caso contrario se rechazan con un
-        cierre de política.
+        (``Authorization: Bearer <token>`` o ``X-DevTools-Token: <token>``)
+        y/o un header ``Origin`` permitido; en caso contrario se rechazan con
+        un cierre de política.
 
         Para exponer el servidor fuera de loopback (por ejemplo ``0.0.0.0``,
         ``::`` o una IP pública) es obligatorio configurar ``auth_token``.
         ``allowed_origins`` puede añadirse como capa extra, pero no reemplaza
         al token para exposición remota.
         """
-        if not self._is_loopback_host(host) and self._auth_token is None:
+        is_loopback = self._is_loopback_host(host)
+
+        if not is_loopback and self._auth_token is None:
             raise RuntimeError(
                 "No se puede iniciar DevTools fuera de loopback sin auth_token. "
                 "allowed_origins por sí solo no es suficiente para exposición remota."
+            )
+
+        if (
+            is_loopback
+            and not self._allow_unauthenticated_loopback
+            and self._auth_token is None
+            and self._allowed_origins is None
+        ):
+            raise RuntimeError(
+                "No se puede iniciar DevTools en loopback sin autenticación u "
+                "orígenes permitidos. Configura auth_token o allowed_origins; "
+                "si deseas omitir esta protección para desarrollo local, usa "
+                "allow_unauthenticated_loopback=True (modo inseguro)."
             )
 
         return serve(
