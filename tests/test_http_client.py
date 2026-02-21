@@ -140,6 +140,29 @@ async def test_http_client_keeps_cache_behavior_without_credentials(tmp_path: Pa
 
 
 @pytest.mark.anyio
+async def test_http_client_does_not_cache_sensitive_query_params_by_default(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"value": call_count})
+
+    transport = httpx.MockTransport(handler)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport)
+
+    respuesta1 = await client.get("https://example.org/secure?api_key=secret", cache=True)
+    respuesta2 = await client.get("https://example.org/secure?api_key=secret", cache=True)
+
+    await client.aclose()
+
+    assert respuesta1.json() == {"value": 1}
+    assert respuesta2.json() == {"value": 2}
+    assert call_count == 2
+
+
+@pytest.mark.anyio
 async def test_http_client_interceptors(tmp_path: Path):
     captured_header = {}
 
@@ -983,3 +1006,26 @@ def test_disk_cache_rejects_invalid_max_age(tmp_path: Path):
         DiskCache(tmp_path, max_age=-1)
     with pytest.raises(ValueError, match="max_age debe ser None o un número positivo"):
         DiskCache(tmp_path, max_age="30")  # type: ignore[arg-type]
+
+
+@pytest.mark.anyio
+async def test_http_client_allows_configuring_sensitive_query_params(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"value": call_count})
+
+    transport = httpx.MockTransport(handler)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport, sensitive_query_params=())
+
+    respuesta1 = await client.get("https://example.org/secure?api_key=secret", cache=True)
+    respuesta2 = await client.get("https://example.org/secure?api_key=secret", cache=True)
+
+    await client.aclose()
+
+    assert respuesta1.json() == {"value": 1}
+    assert respuesta2.json() == {"value": 1}
+    assert call_count == 1
