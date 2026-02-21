@@ -17,6 +17,22 @@ Este documento define una migración **controlada por fases** para compatibiliza
 
 ---
 
+## Dependencias necesarias
+
+Para evitar drift entre CI, desarrollo local y plantillas CLI, esta tabla fija la política de rangos activos:
+
+| Dependencia | Versión mínima | Versión máxima (exclusiva) | Referencia contractual |
+|---|---:|---:|---|
+| `flet` | `0.28` (matriz CI baseline) / `0.29.0` (paquete distribuible) | `0.81` | `pyproject.toml`, `requirements-dev.txt`, `fletplus/cli/templates/app/requirements.txt` |
+| `websockets` | `13` | `14` | `pyproject.toml`, `requirements-dev.txt` |
+| `httpx` | `0.28` | `1` | `pyproject.toml`, `requirements-dev.txt` |
+| `watchdog` | `3` | `7` | `pyproject.toml` (`optional-dependencies.dev`), `requirements-dev.txt` |
+| `pytest` | `7.4` | `9` | `pyproject.toml` (`optional-dependencies.dev`), `requirements-dev.txt` |
+
+> Nota operacional: en `flet-version-matrix`, el job `min-supported` fuerza `flet>=0.28,<0.29` para verificar baseline, mientras el paquete publicado mantiene mínimo `flet>=0.29.0`.
+
+---
+
 ## 1) Checklist de compatibilidad por áreas
 
 > Estado: `✅ completado`, `🟡 en progreso`, `⬜ pendiente`.

@@ -11,6 +11,11 @@ from pathlib import Path
 
 import yaml
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python <3.11
+    import tomli as tomllib
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REUSABLE_WORKFLOW = REPO_ROOT / ".github/workflows/reusable-quality.yml"
 QA_SCRIPT = REPO_ROOT / "tools/qa.sh"
@@ -64,6 +69,12 @@ CRITICAL_COMMANDS = {
 
 FLET_BASELINE_LABEL = "min-supported"
 FLET_TARGET_LABEL = "latest-migration-target"
+
+CONTRACT_PACKAGES = ("flet", "websockets", "httpx", "watchdog", "pytest")
+
+REQUIREMENTS_DEV = REPO_ROOT / "requirements-dev.txt"
+PYPROJECT_FILE = REPO_ROOT / "pyproject.toml"
+CLI_TEMPLATE_REQUIREMENTS = REPO_ROOT / "fletplus/cli/templates/app/requirements.txt"
 
 
 def normalize_command(command: str) -> str:
@@ -683,6 +694,129 @@ def extract_flet_matrix_from_migration_doc(path: Path) -> tuple[str, str] | None
     return baseline, target
 
 
+def _normalize_req_name(name: str) -> str:
+    return name.strip().lower().replace("_", "-")
+
+
+def _extract_spec_from_requirement_line(line: str) -> tuple[str, str] | None:
+    clean = line.split("#", 1)[0].strip()
+    if not clean or clean.startswith("-"):
+        return None
+
+    match = re.match(
+        r"^(?P<name>[A-Za-z0-9_.-]+)(?:\[[^\]]+\])?(?P<spec>(?:\s*[<>=!~]{1,2}[^;,\s]+(?:\s*,\s*[<>=!~]{1,2}[^;,\s]+)*)?)",
+        clean,
+    )
+    if not match:
+        return None
+
+    name = _normalize_req_name(match.group("name"))
+    spec = re.sub(r"\s+", "", match.group("spec") or "")
+    return name, spec
+
+
+def _load_requirements_specs(path: Path) -> dict[str, str]:
+    specs: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        parsed = _extract_spec_from_requirement_line(raw_line)
+        if parsed is None:
+            continue
+        name, spec = parsed
+        specs[name] = spec
+    return specs
+
+
+def _load_pyproject_specs(path: Path) -> tuple[dict[str, str], dict[str, str]]:
+    content = tomllib.loads(path.read_text(encoding="utf-8"))
+    project = content.get("project", {}) if isinstance(content, dict) else {}
+
+    dependencies = project.get("dependencies", []) if isinstance(project, dict) else []
+    optional = project.get("optional-dependencies", {}) if isinstance(project, dict) else {}
+    dev_dependencies = optional.get("dev", []) if isinstance(optional, dict) else []
+
+    dep_specs: dict[str, str] = {}
+    for item in dependencies:
+        if not isinstance(item, str):
+            continue
+        parsed = _extract_spec_from_requirement_line(item)
+        if parsed is None:
+            continue
+        name, spec = parsed
+        dep_specs[name] = spec
+
+    dev_specs: dict[str, str] = {}
+    for item in dev_dependencies:
+        if not isinstance(item, str):
+            continue
+        parsed = _extract_spec_from_requirement_line(item)
+        if parsed is None:
+            continue
+        name, spec = parsed
+        dev_specs[name] = spec
+
+    return dep_specs, dev_specs
+
+
+def validate_dependency_policy_contract() -> list[str]:
+    errors: list[str] = []
+
+    pyproject_deps, pyproject_dev = _load_pyproject_specs(PYPROJECT_FILE)
+    requirements_dev = _load_requirements_specs(REQUIREMENTS_DEV)
+    cli_template = _load_requirements_specs(CLI_TEMPLATE_REQUIREMENTS)
+
+    for package in CONTRACT_PACKAGES:
+        pyproject_spec = pyproject_dev.get(package) or pyproject_deps.get(package)
+        req_dev_spec = requirements_dev.get(package)
+
+        if pyproject_spec is None:
+            errors.append(
+                f"pyproject.toml debe declarar {package!r} en dependencies u optional-dependencies.dev."
+            )
+            continue
+
+        if req_dev_spec is None:
+            errors.append(
+                f"requirements-dev.txt debe declarar {package!r} con rango compatible."
+            )
+            continue
+
+        if pyproject_spec != req_dev_spec:
+            errors.append(
+                f"Rango contradictorio para {package}: pyproject={pyproject_spec!r} vs requirements-dev={req_dev_spec!r}."
+            )
+
+    template_flet = cli_template.get("flet")
+    if template_flet is None:
+        errors.append("fletplus/cli/templates/app/requirements.txt debe declarar flet con rango.")
+    else:
+        pyproject_flet = pyproject_deps.get("flet")
+        if pyproject_flet is None:
+            errors.append("pyproject.toml debe declarar flet en [project].dependencies.")
+        else:
+            pyproject_lower = pyproject_flet.split(",", 1)[0]
+            template_lower = template_flet.split(",", 1)[0]
+            if pyproject_lower != template_lower:
+                errors.append(
+                    "La plantilla CLI debe usar el mismo mínimo de flet que [project].dependencies en pyproject.toml."
+                )
+
+    workflow_commands = load_workflow_run_commands(REUSABLE_WORKFLOW)
+    if normalize_command("pip install -r requirements-dev.txt") not in workflow_commands:
+        errors.append(
+            "reusable-quality.yml debe instalar requirements-dev.txt como set contractual de dependencias."
+        )
+
+    matrix_commands = load_workflow_run_commands_for_jobs(
+        REUSABLE_WORKFLOW, ("flet-version-matrix",)
+    ).get("flet-version-matrix", [])
+    if not any("${{ matrix.flet-spec }}" in command for command in matrix_commands):
+        errors.append(
+            "flet-version-matrix debe instalar explícitamente matrix.flet-spec para validar baseline/target contractuales."
+        )
+
+    return errors
+
+
 def validate_flet_baseline_target_contract() -> list[str]:
     errors: list[str] = []
 
@@ -781,6 +915,7 @@ def main() -> int:
     errors.extend(validate_docs_workflow_contract(DOCS_WORKFLOW))
     errors.extend(validate_perf_workflow_contract(PERF_WORKFLOW))
     errors.extend(validate_flet_baseline_target_contract())
+    errors.extend(validate_dependency_policy_contract())
 
     for wrapper in WRAPPER_WORKFLOWS:
         errors.extend(validate_wrapper_workflow(wrapper))
