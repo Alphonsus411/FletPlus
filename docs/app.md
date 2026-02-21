@@ -26,11 +26,15 @@ def main(page: ft.Page):
         commands={"Abrir ajustes": lambda: app.router.go("/settings")},
     )
 
+    # Patrón recomendado: cierre determinista con on_close.
+    page.on_close = lambda _e: app.dispose()
     app.build()
 
 
 ft.app(target=main)
 ```
+
+> ⚠️ **Obligatorio en desmontaje/cierre**: debes invocar `app.dispose()` cuando la vista o la aplicación termine. `__del__` existe sólo como salvaguarda defensiva y no debe considerarse parte del flujo normal de negocio.
 
 Durante la construcción, la clase:
 
@@ -99,6 +103,7 @@ def main(page: ft.Page):
         commands=commands,
     )
 
+    page.on_close = lambda _e: app.dispose()
     app.build()
 
 

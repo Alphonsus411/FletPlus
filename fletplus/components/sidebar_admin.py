@@ -98,7 +98,7 @@ class SidebarAdmin:
         self.selected_index = index
         for i, (tile, icon, text) in enumerate(self._tile_entries):
             self._apply_tile_state(i, tile, icon, text)
-            if tile.page:
+            if self._is_attached_to_page(tile):
                 tile.update()
 
     def _apply_tile_state(self, index: int, tile: ft.Container, icon: ft.Icon, text: ft.Text) -> None:
@@ -115,5 +115,12 @@ class SidebarAdmin:
         self.select(index)
         if self.on_select:
             self.on_select(index)
-        if e and e.control and e.control.page:
+        if e and e.control and self._is_attached_to_page(e.control):
             e.control.page.update()
+
+    @staticmethod
+    def _is_attached_to_page(control: ft.Control) -> bool:
+        try:
+            return bool(control.page)
+        except RuntimeError:
+            return False

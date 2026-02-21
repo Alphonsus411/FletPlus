@@ -583,11 +583,14 @@ def counter_view():
 
 def main(page: ft.Page):
     app = FletPlusApp(page, {"Inicio": counter_view}, state=store)
+    page.on_close = lambda _e: app.dispose()
     app.build()
 
 
 ft.app(target=main)
 ```
+
+> ⚠️ Llama siempre a `app.dispose()` al desmontar/cerrar la app para liberar suscripciones y atajos de forma determinista. El `__del__` interno es sólo un fallback defensivo.
 
 - `Signal` expone los métodos `.get()` y `.set()` junto con `signal.bind_control`
   para sincronizar atributos de controles Flet y ejecutar `update()`

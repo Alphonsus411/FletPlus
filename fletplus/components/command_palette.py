@@ -105,7 +105,7 @@ class CommandPalette:
             )
             for name, cb in self.filtered
         ]
-        if self.list_view.page:
+        if self._is_attached_to_page(self.list_view):
             self.list_view.update()
 
     def _execute(self, cb: Callable):
@@ -115,7 +115,7 @@ class CommandPalette:
             logging.exception("Error al ejecutar el comando")
         finally:
             self.dialog.open = False
-            if self.dialog.page:
+            if self._is_attached_to_page(self.dialog):
                 self.dialog.update()
 
     def open(self, page: ft.Page):
@@ -147,7 +147,7 @@ class CommandPalette:
         }
         key = (locale or "es").lower()[:2]
         self.search.hint_text = hints.get(key, hints["es"])
-        if self.search.page:
+        if self._is_attached_to_page(self.search):
             self.search.update()
 
     # ------------------------------------------------------------------
@@ -160,8 +160,16 @@ class CommandPalette:
             self.dialog.title.value = title
         else:
             self.dialog.title = ft.Text(title)
-        if self.dialog.page:
+        if self._is_attached_to_page(self.dialog):
             self.dialog.update()
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _is_attached_to_page(control: ft.Control) -> bool:
+        try:
+            return bool(control.page)
+        except RuntimeError:
+            return False
 
     # ------------------------------------------------------------------
     def dispose(self) -> None:
@@ -179,9 +187,24 @@ class CommandPalette:
         self._disposed = True
 
     # ------------------------------------------------------------------
+    def __enter__(self) -> "CommandPalette":
+        return self
+
+    # ------------------------------------------------------------------
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.dispose()
+
+    # ------------------------------------------------------------------
     def __del__(self):  # pragma: no cover - liberación defensiva
         try:
-            if not getattr(self, "_disposed", True):
-                self.dispose()
+            subscriptions = getattr(self, "_subscriptions", None)
+            if subscriptions:
+                for unsubscribe in list(subscriptions):
+                    try:
+                        unsubscribe()
+                    except Exception:
+                        continue
+                subscriptions.clear()
+            setattr(self, "_disposed", True)
         except Exception:
-            logging.exception("Error durante la liberación defensiva de CommandPalette")
+            pass

@@ -48,11 +48,25 @@ def _default_menu_padding() -> ft.Padding:
     return ft.Padding(20, 20, 20, 20)
 
 
+def _default_menu_alignment() -> object:
+    center = getattr(ft.alignment, "center", None)
+    if center is not None:
+        return center
+    return ft.Alignment(0, 0)
+
+
+def _top_left_alignment() -> object:
+    top_left = getattr(ft.alignment, "top_left", None)
+    if top_left is not None:
+        return top_left
+    return ft.Alignment(-1, -1)
+
+
 @dataclass(slots=True)
 class FloatingMenuOptions:
     """Opciones visuales y de comportamiento del menú flotante móvil."""
 
-    alignment: object = field(default_factory=lambda: ft.alignment.center)
+    alignment: object = field(default_factory=_default_menu_alignment)
     horizontal_margin: float = 24
     vertical_margin: float = 28
     width: float = 320
@@ -116,6 +130,9 @@ class FletPlusApp:
     ) -> None:
         self.page = page
         self.state = state or Store()
+        self._disposed = False
+        self._close_hook_attached = False
+        self._previous_page_close_handler: Callable | None = None
         if not hasattr(self.page, "state"):
             setattr(self.page, "state", self.state)
         raw_sidebar = list(sidebar_items or [])
@@ -251,6 +268,28 @@ class FletPlusApp:
         self._floating_button: ft.FloatingActionButton | None = None
         self._floating_button_host: ft.Container | None = None
         self._floating_tiles: list[ft.ListTile] = []
+        self._attach_page_close_hook()
+
+    # ------------------------------------------------------------------
+    def _attach_page_close_hook(self) -> None:
+        """Registra un hook de cierre para forzar dispose() de forma determinista."""
+        if self._close_hook_attached:
+            return
+        if not hasattr(self.page, "on_close"):
+            return
+
+        previous_handler = getattr(self.page, "on_close", None)
+
+        def _on_close(event):
+            try:
+                self.dispose()
+            finally:
+                if callable(previous_handler):
+                    previous_handler(event)
+
+        self._previous_page_close_handler = previous_handler if callable(previous_handler) else None
+        setattr(self.page, "on_close", _on_close)
+        self._close_hook_attached = True
 
     # ------------------------------------------------------------------
     def _create_sidebar_style(self) -> Style:
@@ -351,6 +390,10 @@ class FletPlusApp:
 
     # ------------------------------------------------------------------
     def dispose(self) -> None:
+        if self._disposed:
+            return
+        self._disposed = True
+
         if hasattr(self, "_preference_storage") and hasattr(self, "theme"):
             try:
                 self._persist_theme_preferences()
@@ -379,7 +422,34 @@ class FletPlusApp:
                     logger.exception("Error al limpiar un render reactivo")
         if hasattr(self, "_reactive_renders"):
             self._reactive_renders.clear()
+
+        if hasattr(self, "shortcuts") and self.shortcuts:
+            try:
+                self.shortcuts.dispose()
+            except Exception:  # pragma: no cover - limpieza tolerante a fallos
+                logger.exception("Error al liberar atajos de teclado")
+
+        if hasattr(self, "command_palette") and self.command_palette:
+            try:
+                self.command_palette.dispose()
+            except Exception:  # pragma: no cover - limpieza tolerante a fallos
+                logger.exception("Error al liberar la paleta de comandos")
+
+        if self._close_hook_attached and getattr(self.page, "on_close", None):
+            current_handler = getattr(self.page, "on_close", None)
+            if callable(current_handler) and current_handler is not self._previous_page_close_handler:
+                setattr(self.page, "on_close", self._previous_page_close_handler)
+            self._close_hook_attached = False
+
         self._cleanup_contexts()
+
+    # ------------------------------------------------------------------
+    def __enter__(self) -> "FletPlusApp":
+        return self
+
+    # ------------------------------------------------------------------
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.dispose()
 
     # ------------------------------------------------------------------
     def _cleanup_contexts(self) -> None:
@@ -422,9 +492,10 @@ class FletPlusApp:
     # ------------------------------------------------------------------
     def __del__(self):  # pragma: no cover - método defensivo
         try:
-            self.dispose()
+            if not getattr(self, "_disposed", True):
+                self.dispose()
         except Exception:
-            logger.exception("Error liberando recursos de FletPlusApp")
+            pass
 
     # ------------------------------------------------------------------
     def build(self) -> None:
@@ -538,7 +609,7 @@ class FletPlusApp:
         self._sidebar_container = ft.Container(
             content=sidebar_control,
             padding=ft.Padding(12, 18, 12, 18),
-            alignment=ft.alignment.top_left
+            alignment=_top_left_alignment(),
         )
 
         self._content_area_container = ft.Container(
