@@ -10,7 +10,7 @@ Este documento define una migración **controlada por fases** para compatibiliza
 - `fletplus/core_legacy.py`
 - `fletplus_demo/`
 
-**Versión mínima soportada (estado actual)**: `flet>=0.29,<0.30` (según `pyproject.toml` y job `min-supported` de CI).  
+**Versión mínima soportada (estado actual)**: `flet>=0.28,<0.29` (según job `min-supported` de CI).  
 **Versión objetivo de migración (estado objetivo)**: `flet>=0.80,<0.81` (según job `latest-migration-target` de CI).
 
 ---
@@ -170,12 +170,14 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 | Ámbito | Estado actual (observado en repo) | Estado objetivo de migración | Fuente de verdad |
 |---|---|---|---|
 | Manifiesto de paquete | `pyproject.toml`: `flet>=0.29.0` | Mantener mínimo `>=0.29` mientras se valida minor objetivo | `pyproject.toml` |
-| Dependencias de desarrollo | `requirements.txt`: `flet==0.27.6` (heredado y desalineado) | Alinear a baseline activa (`>=0.29,<0.30`) o eliminar pin legacy | `requirements.txt` |
-| CI baseline (`flet-version-matrix`) | `flet>=0.29,<0.30` (`min-supported`) | Mantener como baseline contractual | `.github/workflows/reusable-quality.yml` |
+| Dependencias de desarrollo | `requirements.txt`: `flet==0.27.6` (heredado y desalineado) | Alinear a baseline activa (`>=0.28,<0.29`) o eliminar pin legacy | `requirements.txt` |
+| CI baseline (`flet-version-matrix`) | `flet>=0.28,<0.29` (`min-supported`) | Mantener como baseline contractual | `.github/workflows/reusable-quality.yml` |
 | CI target (`flet-version-matrix`) | `flet>=0.80,<0.81` (`latest-migration-target`) | Consolidar compatibilidad funcional sobre `0.80.x` | `.github/workflows/reusable-quality.yml` |
-| Política de documentación | Aún hay referencias históricas 0.27/0.28 en documentos de migración | Documentación sin referencias heredadas fuera de contexto | `docs/migration-flet-latest.md` y docs relacionados |
+| Fuente de verdad para minors de matriz | `tools/flet_version_matrix_config.py` (`FLET_MATRIX_MINORS`) | Mantener workflow/docs sincronizados con ese archivo único | `tools/flet_version_matrix_config.py` |
 
 > Regla operativa: esta tabla reemplaza cualquier resumen “antes/después” previo y se actualiza en cada cambio de baseline/target en CI.
+
+> **FUENTE DE VERDAD ÚNICA** para los minors de la matriz: `tools/flet_version_matrix_config.py` (`FLET_MATRIX_MINORS`). El workflow de CI y esta guía deben copiar exactamente ese set.
 
 ## 8) Checklist final de aceptación técnica
 
