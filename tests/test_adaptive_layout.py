@@ -249,3 +249,55 @@ def test_open_drawer_is_tolerant_when_method_not_available() -> None:
     layout._open_drawer(None)
 
     assert page.drawer is not None
+
+
+def test_adaptive_layout_focus_is_tolerant_without_set_focus_api() -> None:
+    class PageWithoutFocus(DummyPage):
+        def __init__(self, width: int, height: int) -> None:
+            super().__init__(width, height)
+            self.set_focus = None
+
+    page = PageWithoutFocus(520, 900)
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, dev: ft.Text(f"Vista {idx}-{dev}"),
+    )
+
+    layout.build(page)
+    layout._focus_content(None)
+
+    assert layout.root is not None
+
+
+def test_adaptive_layout_build_is_tolerant_with_failing_drawer_assignment() -> None:
+    class PageWithDrawerSetterFailure:
+        def __init__(self) -> None:
+            self.width = 540
+            self.height = 900
+            self.platform = "android"
+            self.on_resize = None
+            self.theme = ft.Theme()
+            self.locale = None
+            self.update_calls = 0
+
+        @property
+        def drawer(self):
+            return getattr(self, "_drawer", None)
+
+        @drawer.setter
+        def drawer(self, value):
+            raise RuntimeError("drawer unavailable")
+
+        def update(self) -> None:
+            self.update_calls += 1
+
+    page = PageWithDrawerSetterFailure()
+    layout = AdaptiveNavigationLayout(
+        [AdaptiveDestination(label="Inicio", icon=ft.Icons.HOME_OUTLINED)],
+        lambda idx, dev: ft.Text(f"Vista {idx}-{dev}"),
+        drawer=ft.NavigationDrawer(controls=[ft.Text("Menú")]),
+    )
+
+    root = layout.build(page)
+
+    assert isinstance(root, ft.Column)

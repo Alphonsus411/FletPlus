@@ -15,16 +15,22 @@ from fletplus.utils.flet_compat import (
     get_flet_icons,
     get_page_height,
     get_page_width,
+    has_page_overlay_control,
     safe_close_drawer,
     safe_close_window,
     safe_open_drawer,
+    safe_page_set_focus,
+    safe_page_speak,
     safe_set_window_attr,
     safe_take_screenshot,
     safe_update_page,
     safe_update_page_sync,
+    set_page_drawer,
     set_page_height,
+    set_page_title,
     set_page_width,
     with_opacity,
+    append_page_overlay,
 )
 
 
@@ -279,3 +285,91 @@ def test_with_opacity_presence_and_absence(monkeypatch) -> None:
     monkeypatch.delattr(flet_compat.ft, "Colors", raising=False)
     monkeypatch.delattr(flet_compat.ft, "colors", raising=False)
     assert with_opacity(0.5, "#000", default="#111") == "#111"
+
+
+def test_safe_update_page_uses_update_async_when_available() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.async_updated = False
+            self.sync_updated = False
+
+        async def update_async(self) -> None:
+            self.async_updated = True
+
+        def update(self) -> None:
+            self.sync_updated = True
+
+    page = _Page()
+    asyncio.run(safe_update_page(page))
+
+    assert page.async_updated is True
+    assert page.sync_updated is False
+
+
+def test_get_flet_icons_falls_back_to_lowercase_namespace(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    fake_icons = type("icons", (), {"MENU": "menu"})()
+    monkeypatch.delattr(flet_compat.ft, "Icons", raising=False)
+    monkeypatch.setattr(flet_compat.ft, "icons", fake_icons, raising=False)
+
+    assert get_flet_icons() is fake_icons
+
+
+def test_get_flet_colors_falls_back_to_lowercase_namespace(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    class _Colors:
+        @staticmethod
+        def with_opacity(opacity: float, color: str) -> str:
+            return f"{opacity}:{color}"
+
+    monkeypatch.delattr(flet_compat.ft, "Colors", raising=False)
+    monkeypatch.setattr(flet_compat.ft, "colors", _Colors, raising=False)
+
+    assert get_flet_colors() is _Colors
+
+
+def test_page_overlay_helpers_cover_presence_and_absence() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.overlay = []
+
+    page = _Page()
+    control = object()
+
+    assert has_page_overlay_control(page, control) is False
+    assert append_page_overlay(page, control) is True
+    assert has_page_overlay_control(page, control) is True
+
+    class _PageWithoutOverlay:
+        pass
+
+    assert append_page_overlay(_PageWithoutOverlay(), control) is False
+
+
+def test_page_attribute_helpers_for_title_drawer_focus_and_speak() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.title = ""
+            self.drawer = None
+            self.focused = None
+            self.spoken = []
+
+        def set_focus(self, control: object) -> None:
+            self.focused = control
+
+        def speak(self, message: str) -> None:
+            self.spoken.append(message)
+
+    page = _Page()
+    control = object()
+
+    assert set_page_title(page, "Nuevo título") is True
+    assert set_page_drawer(page, control) is True
+    assert safe_page_set_focus(page, control) is True
+    assert safe_page_speak(page, "hola") is True
+    assert page.title == "Nuevo título"
+    assert page.drawer is control
+    assert page.focused is control
+    assert page.spoken == ["hola"]

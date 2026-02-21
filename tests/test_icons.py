@@ -33,13 +33,20 @@ CRITICAL_UPSTREAM_ICONS = {
 }
 
 
+def _icons_namespace() -> object:
+    namespace = getattr(ft, "Icons", None) or getattr(ft, "icons", None)
+    assert namespace is not None, "No existe namespace de iconos compatible en Flet"
+    return namespace
+
+
 def _resolve_upstream_icon_with_fallback(name: str, fallback: str) -> object:
-    icon_value = getattr(ft.Icons, name, None)
+    icons = _icons_namespace()
+    icon_value = getattr(icons, name, None)
     if icon_value is not None:
         return icon_value
-    fallback_value = getattr(ft.Icons, fallback, None)
+    fallback_value = getattr(icons, fallback, None)
     assert fallback_value is not None, (
-        f"Falta icono crítico '{name}' y su fallback '{fallback}' en ft.Icons"
+        f"Falta icono crítico '{name}' y su fallback '{fallback}' en namespace de iconos"
     )
     return fallback_value
 
@@ -119,3 +126,18 @@ def test_upstream_icon_fallback_path_is_exercised() -> None:
         resolved = getattr(_FakeIcons, "SETTINGS", None)
 
     assert resolved is _FakeIcons.SETTINGS
+
+
+def test_critical_upstream_icon_name_resolution_for_component_catalog() -> None:
+    for icon_name, fallback_name in CRITICAL_UPSTREAM_ICONS.items():
+        fallback = fallback_name.lower() if has_icon(fallback_name.lower()) else "home"
+        resolved_icon = icon(icon_name.lower(), fallback=fallback)
+
+        assert isinstance(resolved_icon, ft.Icon)
+        assert isinstance(resolved_icon.name, str)
+        assert resolved_icon.name
+
+
+def test_upstream_icon_namespace_supports_pascal_or_snake_case() -> None:
+    icons = _icons_namespace()
+    assert getattr(icons, "HOME", None) is not None

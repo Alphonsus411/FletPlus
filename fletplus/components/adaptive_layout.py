@@ -19,6 +19,8 @@ from fletplus.utils.device_profiles import (
 from fletplus.utils.flet_compat import (
     get_flet_color,
     get_flet_icon,
+    safe_page_set_focus,
+    set_page_drawer,
     safe_update_page_sync,
     get_page_width,
     safe_open_drawer,
@@ -215,10 +217,9 @@ class AdaptiveNavigationLayout:
         current_width = get_page_width(page)
         if current_width > 0:
             set_page_width(page, current_width)
-            setattr(page, "width", current_width)
         self.accessibility.apply(page, self.theme)
         if self.drawer is not None:
-            setattr(page, "drawer", self.drawer)
+            set_page_drawer(page, self.drawer)
         if self.caption_overlay is not None:
             self._caption_overlay_control = self.caption_overlay.build(page)
             self.caption_overlay.set_enabled(
@@ -564,9 +565,8 @@ class AdaptiveNavigationLayout:
     def _focus_content(self, _event: ft.ControlEvent) -> None:
         if not self._page:
             return
-        focus = getattr(self._page, "set_focus", None)
-        if callable(focus) and self._content_container.content is not None:
-            focus(self._content_container.content)
+        if self._content_container.content is not None:
+            safe_page_set_focus(self._page, self._content_container.content)
 
     @property
     def accessibility_panel_control(self) -> ft.Control | None:
