@@ -48,6 +48,8 @@ class FileStorageProvider(StorageProvider[Any]):
         deserializer: Deserializer | None = None,
         encoding: str = "utf-8",
     ) -> None:
+        self._serializer_fn: Serializer = serializer or json.dumps
+        self._deserializer_fn: Deserializer = deserializer or json.loads
         self._path = Path(path)
         self._lock_path = self._path.with_suffix(f"{self._path.suffix}.lock")
         self._encoding = encoding
@@ -58,8 +60,8 @@ class FileStorageProvider(StorageProvider[Any]):
         self._clear_requested = False
         self._load_cache()
         super().__init__(
-            serializer=serializer or json.dumps,
-            deserializer=deserializer or json.loads,
+            serializer=self._serializer_fn,
+            deserializer=self._deserializer_fn,
         )
 
     # ------------------------------------------------------------------
@@ -112,8 +114,8 @@ class FileStorageProvider(StorageProvider[Any]):
             return {}
         try:
             text = self._path.read_text(encoding=self._encoding)
-            data = json.loads(text)
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            data = self._deserializer_fn(text)
+        except (OSError, UnicodeDecodeError, TypeError, ValueError):
             return {}
         if not isinstance(data, dict):
             return {}
@@ -146,13 +148,17 @@ class FileStorageProvider(StorageProvider[Any]):
                     encoding=self._encoding,
                 ) as fp:
                     tmp_path = Path(fp.name)
-                    json.dump(
-                        merged_data,
-                        fp,
-                        ensure_ascii=False,
-                        indent=2,
-                        sort_keys=True,
-                    )
+                    serialized = self._serializer_fn(merged_data)
+                    if isinstance(serialized, str):
+                        payload = serialized
+                    else:
+                        payload = json.dumps(
+                            serialized,
+                            ensure_ascii=False,
+                            indent=2,
+                            sort_keys=True,
+                        )
+                    fp.write(payload)
                     fp.flush()
                     os.fsync(fp.fileno())
                 if tmp_path is None:

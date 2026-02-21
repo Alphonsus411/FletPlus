@@ -198,6 +198,61 @@ def test_file_storage_provider_persists_data(tmp_path: Path) -> None:
     assert json.loads(path.read_text("utf-8")) == {}
 
 
+def test_file_storage_provider_uses_custom_serializer_deserializer(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "custom-storage.json"
+    serializer_calls: list[Any] = []
+    deserializer_calls: list[Any] = []
+
+    def serializer(value: Any) -> Any:
+        serializer_calls.append(value)
+        if isinstance(value, dict):
+            return json.dumps(value, separators=(",", ":"))
+        return f"encoded:{value}"
+
+    def deserializer(value: Any) -> Any:
+        deserializer_calls.append(value)
+        if isinstance(value, str) and value.startswith("{"):
+            return json.loads(value)
+        if isinstance(value, str) and value.startswith("encoded:"):
+            return value.removeprefix("encoded:")
+        return value
+
+    provider = FileStorageProvider(
+        path,
+        serializer=serializer,
+        deserializer=deserializer,
+    )
+
+    provider.set("token", "abc")
+
+    assert serializer_calls[-2:] == ["abc", {"token": "encoded:abc"}]
+
+    provider2 = FileStorageProvider(
+        path,
+        serializer=serializer,
+        deserializer=deserializer,
+    )
+    assert provider2.get("token") == "abc"
+    assert any(
+        isinstance(call, str) and call.startswith("{") for call in deserializer_calls
+    )
+
+
+def test_file_storage_provider_defaults_keep_json_read_write(tmp_path: Path) -> None:
+    path = tmp_path / "defaults-storage.json"
+    provider = FileStorageProvider(path)
+
+    provider.set("answer", 42)
+
+    raw = path.read_text("utf-8")
+    assert json.loads(raw) == {"answer": json.dumps(42)}
+
+    reloaded = FileStorageProvider(path)
+    assert reloaded.get("answer") == 42
+
+
 def test_file_storage_provider_refreshes_reads_between_instances(tmp_path: Path) -> None:
     path = tmp_path / "shared-storage-refresh.json"
     provider_writer = FileStorageProvider(path)
