@@ -328,6 +328,69 @@ def get_flet_enum_member(enum_name: str, member: str, default: Any = None) -> An
     return getattr(enum_obj, member, default)
 
 
+def build_flet_control(name: str, /, **kwargs: Any) -> Any:
+    """Construye un control de Flet por nombre con detección defensiva.
+
+    Devuelve ``None`` cuando el símbolo no existe o la construcción falla.
+    """
+
+    control_cls = getattr(ft, name, None)
+    if control_cls is None:
+        return None
+    with contextlib.suppress(Exception):
+        return control_cls(**kwargs)
+    return None
+
+
+def make_navigation_bar_destination(
+    *,
+    icon: Any,
+    label: str,
+    selected_icon: Any | None = None,
+    tooltip: str | None = None,
+) -> Any:
+    """Crea un destino de ``NavigationBar`` con fallback seguro."""
+
+    destination = build_flet_control(
+        "NavigationBarDestination",
+        icon=icon,
+        label=label,
+        selected_icon=selected_icon if selected_icon is not None else icon,
+        tooltip=tooltip,
+    )
+    if destination is not None:
+        return destination
+    return ft.Container(content=ft.Text(label))
+
+
+def make_navigation_rail_destination(
+    *,
+    icon: Any,
+    label: str,
+    selected_icon: Any | None = None,
+) -> Any:
+    """Crea un destino de ``NavigationRail`` con fallback seguro."""
+
+    destination = build_flet_control(
+        "NavigationRailDestination",
+        icon=icon,
+        selected_icon=selected_icon if selected_icon is not None else icon,
+        label=label,
+    )
+    if destination is not None:
+        return destination
+    return ft.Container(content=ft.Text(label))
+
+
+def make_navigation_drawer_destination(*, icon: Any, label: str) -> Any:
+    """Crea un destino de ``NavigationDrawer`` con fallback seguro."""
+
+    destination = build_flet_control("NavigationDrawerDestination", icon=icon, label=label)
+    if destination is not None:
+        return destination
+    return ft.Container(content=ft.Text(label))
+
+
 def with_opacity(opacity: float, color: Any, default: Any = None) -> Any:
     """Aplica opacidad usando la API de colores disponible (`with_opacity`)."""
 

@@ -18,7 +18,10 @@ from fletplus.utils.device_profiles import (
 )
 from fletplus.utils.flet_compat import (
     get_flet_color,
+    get_flet_enum_member,
     get_flet_icon,
+    make_navigation_bar_destination,
+    make_navigation_rail_destination,
     safe_page_set_focus,
     set_page_drawer,
     safe_update_page_sync,
@@ -45,7 +48,7 @@ class AdaptiveDestination:
     tooltip: str | None = None
 
     def as_navigation_bar(self) -> ft.NavigationBarDestination:
-        return ft.NavigationBarDestination(
+        return make_navigation_bar_destination(
             label=self.label,
             icon=self.icon,
             selected_icon=self.selected_icon or self.icon,
@@ -53,7 +56,7 @@ class AdaptiveDestination:
         )
 
     def as_navigation_rail(self) -> ft.NavigationRailDestination:
-        return ft.NavigationRailDestination(
+        return make_navigation_rail_destination(
             icon=self.icon,
             selected_icon=self.selected_icon or self.icon,
             label=self.label,
@@ -135,14 +138,14 @@ class AdaptiveNavigationLayout:
         self._nav_bar = ft.NavigationBar(
             destinations=[dest.as_navigation_bar() for dest in self.destinations],
             selected_index=self._selected_index,
-            label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
+            label_behavior=get_flet_enum_member("NavigationBarLabelBehavior", "ALWAYS_SHOW"),
             on_change=self._handle_nav_event,
             bgcolor=with_opacity(0.04, get_flet_color("BLUE_GREY", "bluegrey")),
         )
         self._nav_rail = ft.NavigationRail(
             destinations=[dest.as_navigation_rail() for dest in self.destinations],
             selected_index=self._selected_index,
-            label_type=ft.NavigationRailLabelType.ALL,
+            label_type=get_flet_enum_member("NavigationRailLabelType", "ALL"),
             on_change=self._handle_nav_event,
         )
 

@@ -9,12 +9,16 @@ import asyncio
 from fletplus.utils.flet_compat import (
     get_flet_color,
     get_flet_colors,
+    build_flet_control,
     get_flet_enum,
     get_flet_enum_member,
     get_flet_icon,
     get_flet_icons,
     get_page_height,
     get_page_width,
+    make_navigation_bar_destination,
+    make_navigation_drawer_destination,
+    make_navigation_rail_destination,
     has_page_overlay_control,
     safe_close_drawer,
     safe_close_window,
@@ -397,3 +401,54 @@ def test_safe_request_page_update_uses_run_task_update_async_when_needed() -> No
 
     assert page.run_task_calls == 1
     assert page.updated_async is True
+
+
+def test_build_flet_control_returns_none_when_symbol_missing(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    monkeypatch.delattr(flet_compat.ft, "NavigationBarDestination", raising=False)
+    assert build_flet_control("NavigationBarDestination", label="Inicio", icon="home") is None
+
+
+def test_navigation_destination_factories_fallback_when_symbol_missing(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    monkeypatch.delattr(flet_compat.ft, "NavigationBarDestination", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "NavigationRailDestination", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "NavigationDrawerDestination", raising=False)
+
+    nav_bar = make_navigation_bar_destination(icon="home", label="Inicio")
+    nav_rail = make_navigation_rail_destination(icon="home", label="Inicio")
+    nav_drawer = make_navigation_drawer_destination(icon="home", label="Inicio")
+
+    assert isinstance(nav_bar, flet_compat.ft.Container)
+    assert isinstance(nav_rail, flet_compat.ft.Container)
+    assert isinstance(nav_drawer, flet_compat.ft.Container)
+
+
+def test_navigation_destination_factories_use_symbols_when_present(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    class _Bar:
+        def __init__(self, **kwargs) -> None:
+            self.kwargs = kwargs
+
+    class _Rail:
+        def __init__(self, **kwargs) -> None:
+            self.kwargs = kwargs
+
+    class _Drawer:
+        def __init__(self, **kwargs) -> None:
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(flet_compat.ft, "NavigationBarDestination", _Bar, raising=False)
+    monkeypatch.setattr(flet_compat.ft, "NavigationRailDestination", _Rail, raising=False)
+    monkeypatch.setattr(flet_compat.ft, "NavigationDrawerDestination", _Drawer, raising=False)
+
+    nav_bar = make_navigation_bar_destination(icon="home", label="Inicio")
+    nav_rail = make_navigation_rail_destination(icon="home", label="Inicio")
+    nav_drawer = make_navigation_drawer_destination(icon="home", label="Inicio")
+
+    assert isinstance(nav_bar, _Bar)
+    assert isinstance(nav_rail, _Rail)
+    assert isinstance(nav_drawer, _Drawer)
