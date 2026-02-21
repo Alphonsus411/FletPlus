@@ -64,3 +64,29 @@ def test_flet_matrix_sensitive_contracts_still_exist() -> None:
     update_async = getattr(ft.Page, "update_async", None)
     if update_async is not None:
         assert callable(update_async), "Símbolo sensible inválido: ft.Page.update_async no es callable."
+
+
+def test_flet_compat_helpers_tolerate_missing_sensitive_symbols(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    monkeypatch.delattr(flet_compat.ft, "NavigationBarDestination", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "NavigationRailDestination", raising=False)
+    monkeypatch.delattr(flet_compat.ft, "NavigationDrawerDestination", raising=False)
+
+    nav_bar = flet_compat.make_navigation_bar_destination(icon="home", label="Inicio")
+    nav_rail = flet_compat.make_navigation_rail_destination(icon="home", label="Inicio")
+    nav_drawer = flet_compat.make_navigation_drawer_destination(icon="home", label="Inicio")
+
+    assert isinstance(nav_bar, flet_compat.ft.Container)
+    assert isinstance(nav_rail, flet_compat.ft.Container)
+    assert isinstance(nav_drawer, flet_compat.ft.Container)
+
+
+def test_flet_compat_icon_resolution_falls_back_when_icons_namespace_changes(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    monkeypatch.delattr(flet_compat.ft, "Icons", raising=False)
+    monkeypatch.setattr(flet_compat.ft, "icons", type("icons", (), {"MENU": "menu"})(), raising=False)
+
+    assert flet_compat.get_flet_icon("MENU", "fallback") == "menu"
+    assert flet_compat.get_flet_icon("MISSING", "fallback") == "fallback"

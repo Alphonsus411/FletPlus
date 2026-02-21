@@ -26,7 +26,10 @@ from fletplus.utils.device_profiles import (
 )
 from fletplus.utils.flet_compat import (
     get_flet_color,
+    get_flet_enum_member,
     get_flet_icon,
+    make_navigation_bar_destination,
+    make_navigation_rail_destination,
     get_page_height,
     get_page_width,
     append_page_overlay,
@@ -57,7 +60,7 @@ class AdaptiveNavigationItem:
     def navigation_bar_destination(self) -> ft.NavigationBarDestination:
         """Devuelve el destino listo para un :class:`ft.NavigationBar`."""
 
-        return ft.NavigationBarDestination(
+        return make_navigation_bar_destination(
             label=self.label,
             icon=self.icon,
             selected_icon=self.selected_icon or self.icon,
@@ -67,7 +70,7 @@ class AdaptiveNavigationItem:
     def navigation_rail_destination(self) -> ft.NavigationRailDestination:
         """Devuelve el destino listo para un :class:`ft.NavigationRail`."""
 
-        return ft.NavigationRailDestination(
+        return make_navigation_rail_destination(
             icon=self.icon,
             selected_icon=self.selected_icon or self.icon,
             label=self.label,
@@ -166,7 +169,7 @@ class UniversalAdaptiveScaffold:
             destinations=[item.navigation_bar_destination() for item in self.navigation_items],
             on_change=self._on_navigation_bar_change,
             selected_index=self._selected_index,
-            label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
+            label_behavior=get_flet_enum_member("NavigationBarLabelBehavior", "ALWAYS_SHOW"),
         )
         self._nav_rail = ft.NavigationRail(
             destinations=[item.navigation_rail_destination() for item in self.navigation_items],

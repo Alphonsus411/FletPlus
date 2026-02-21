@@ -30,8 +30,12 @@ from fletplus.router import Route, Router, RouteMatch
 from fletplus.state import Store
 from fletplus.utils.preferences import PreferenceStorage
 from fletplus.utils.flet_compat import (
+    get_flet_enum_member,
+    get_flet_icon,
     get_page_height,
     get_page_width,
+    make_navigation_bar_destination,
+    make_navigation_drawer_destination,
     safe_close_drawer,
     safe_open_drawer,
     set_page_height,
@@ -61,7 +65,7 @@ class FloatingMenuOptions:
     backdrop_opacity: float = 0.35
     animation_duration: int = 280
     animation_curve: ft.AnimationCurve = ft.AnimationCurve.DECELERATE
-    fab_icon: str = ft.Icons.MENU
+    fab_icon: str = field(default_factory=lambda: get_flet_icon("MENU", "menu"))
     fab_bgcolor: str | None = None
     fab_icon_color: str | None = None
 
@@ -131,7 +135,7 @@ class FletPlusApp:
             if isinstance(item, dict) and item.get("match"):
                 match_value = item.get("match")
             resolved_title = title_value or name_value or path_value.strip("/").replace("-", " ").title() or "Inicio"
-            resolved_icon = icon_value or ft.Icons.CIRCLE
+            resolved_icon = icon_value or get_flet_icon("CIRCLE", "circle")
             nav_entry = {"title": resolved_title, "icon": resolved_icon, "path": path_value}
             self._nav_routes.append(nav_entry)
             self._nav_index_by_path[path_value] = index
@@ -479,18 +483,18 @@ class FletPlusApp:
         header_bg = None if gradient else self.theme.get_color("primary", ft.Colors.PRIMARY)
 
         self._menu_button = ft.IconButton(
-            icon=ft.Icons.MENU,
+            icon=get_flet_icon("MENU", "menu"),
             tooltip="Abrir menú de navegación",
             on_click=self._open_drawer,
             visible=False,
         )
         self._theme_button = ft.IconButton(
-            icon=ft.Icons.LIGHT_MODE if self.theme.dark_mode else ft.Icons.DARK_MODE,
+            icon=get_flet_icon("LIGHT_MODE", "light_mode") if self.theme.dark_mode else get_flet_icon("DARK_MODE", "dark_mode"),
             tooltip="Alternar modo claro/oscuro",
             on_click=self._toggle_theme,
         )
         self._command_button = ft.IconButton(
-            icon=ft.Icons.SEARCH,
+            icon=get_flet_icon("SEARCH", "search"),
             tooltip="Abrir paleta de comandos",
             on_click=lambda _: self.command_palette.open(self.page),
             visible=bool(self.command_palette.commands),
@@ -571,8 +575,8 @@ class FletPlusApp:
             return
 
         destinations = [
-            ft.NavigationBarDestination(
-                icon=item.get("icon", ft.Icons.CIRCLE),
+            make_navigation_bar_destination(
+                icon=item.get("icon", get_flet_icon("CIRCLE", "circle")),
                 label=item.get("title", ""),
             )
             for item in self._nav_routes
@@ -581,19 +585,23 @@ class FletPlusApp:
         nav_bg = self.theme.get_color("surface_variant")
         if not nav_bg:
             nav_bg = ft.Colors.with_opacity(0.08, indicator if isinstance(indicator, str) else ft.Colors.PRIMARY)
+        nav_label_behavior = get_flet_enum_member(
+            "NavigationBarLabelBehavior",
+            "ALWAYS_SHOW",
+        )
         self._mobile_nav = ft.NavigationBar(
             destinations=destinations,
             on_change=self._handle_mobile_nav_change,
             selected_index=getattr(self.sidebar, "selected_index", 0),
-            label_behavior=ft.NavigationBarLabelBehavior.ALWAYS_SHOW,
+            label_behavior=nav_label_behavior,
             indicator_color=indicator,
             bgcolor=nav_bg,
         )
 
         drawer_controls = [
-            ft.NavigationDrawerDestination(
+            make_navigation_drawer_destination(
                 label=item.get("title", ""),
-                icon=item.get("icon", ft.Icons.CIRCLE),
+                icon=item.get("icon", get_flet_icon("CIRCLE", "circle")),
             )
             for item in self._nav_routes
         ]
@@ -626,7 +634,7 @@ class FletPlusApp:
             tile = ft.ListTile(
                 dense=True,
                 data=index,
-                leading=ft.Icon(item.get("icon", ft.Icons.CIRCLE), color=muted, size=22),
+                leading=ft.Icon(item.get("icon", get_flet_icon("CIRCLE", "circle")), color=muted, size=22),
                 title=ft.Text(item.get("title", ""), color=on_surface, weight=ft.FontWeight.W_500),
                 on_click=lambda _e, idx=index: self._handle_floating_item_click(idx),
                 selected=index == getattr(self.sidebar, "selected_index", 0),
@@ -803,7 +811,7 @@ class FletPlusApp:
         if self._menu_button is not None:
             self._menu_button.icon_color = icon_color
         if self._theme_button is not None:
-            self._theme_button.icon = ft.Icons.LIGHT_MODE if self.theme.dark_mode else ft.Icons.DARK_MODE
+            self._theme_button.icon = get_flet_icon("LIGHT_MODE", "light_mode") if self.theme.dark_mode else get_flet_icon("DARK_MODE", "dark_mode")
             self._theme_button.icon_color = icon_color
         if self._command_button is not None:
             self._command_button.icon_color = icon_color
