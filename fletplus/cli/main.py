@@ -216,18 +216,26 @@ def create(nombre: str, directorio_base: Path | None) -> None:
     click.echo(f"Proyecto creado en {proyecto}")
 
 
-def _should_ignore(path: Path) -> bool:
-    return any(part in EXCLUDED_DIRS for part in path.parts)
+def _should_ignore(path: Path, watch_path: Path | None = None) -> bool:
+    candidate = path
+    if watch_path is not None:
+        try:
+            candidate = path.relative_to(watch_path)
+        except ValueError:
+            return False
+    return any(part in EXCLUDED_DIRS for part in candidate.parts)
 
 
 class _ReloadHandler(FileSystemEventHandler):
     def __init__(
         self,
         trigger: Callable[[], None],
+        watch_path: Path,
         patterns: Iterable[str] | None = None,
         debounce_window_seconds: float = 0.3,
     ) -> None:
         self._trigger = trigger
+        self._watch_path = watch_path.resolve()
         self._patterns = tuple(patterns or ())
         self._debounce_window_seconds = debounce_window_seconds
         self._last_event_by_path: dict[str, float] = {}
@@ -236,15 +244,20 @@ class _ReloadHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
-        path = Path(event.src_path)
-        if _should_ignore(path):
+        path = Path(event.src_path).resolve()
+        try:
+            relative_path = path.relative_to(self._watch_path)
+        except ValueError:
             return
 
-        if self._patterns and path.suffix not in self._patterns:
+        if _should_ignore(relative_path):
+            return
+
+        if self._patterns and relative_path.suffix not in self._patterns:
             return
 
         now = time.monotonic()
-        path_key = event.src_path
+        path_key = str(path)
         last_event_time = self._last_event_by_path.get(path_key)
         if (
             last_event_time is not None
@@ -398,7 +411,11 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
         return
 
     observer = Observer()
-    handler = _ReloadHandler(solicitar_reinicio, patterns={".py", ".json", ".yaml", ".yml"})
+    handler = _ReloadHandler(
+        solicitar_reinicio,
+        watch_path=watch_path,
+        patterns={".py", ".json", ".yaml", ".yml"},
+    )
     observer.schedule(handler, str(watch_path), recursive=True)
     observer.start()
 
