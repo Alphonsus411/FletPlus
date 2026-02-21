@@ -59,6 +59,87 @@ async def test_http_client_hooks_and_cache(tmp_path: Path):
 
 
 @pytest.mark.anyio
+async def test_http_client_does_not_cache_sensitive_headers_by_default(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"value": call_count})
+
+    transport = httpx.MockTransport(handler)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport)
+
+    headers = {"Authorization": "Bearer token"}
+    respuesta1 = await client.get("https://example.org/secure", headers=headers, cache=True)
+    respuesta2 = await client.get("https://example.org/secure", headers=headers, cache=True)
+
+    await client.aclose()
+
+    assert respuesta1.json() == {"value": 1}
+    assert respuesta2.json() == {"value": 2}
+    assert call_count == 2
+
+
+@pytest.mark.anyio
+async def test_http_client_allows_sensitive_cache_with_explicit_flag(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"value": call_count})
+
+    transport = httpx.MockTransport(handler)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport)
+
+    headers = {"Authorization": "Bearer token"}
+    respuesta1 = await client.get(
+        "https://example.org/secure",
+        headers=headers,
+        cache=True,
+        allow_sensitive_cache=True,
+    )
+    respuesta2 = await client.get(
+        "https://example.org/secure",
+        headers=headers,
+        cache=True,
+        allow_sensitive_cache=True,
+    )
+
+    await client.aclose()
+
+    assert respuesta1.json() == {"value": 1}
+    assert respuesta2.json() == {"value": 1}
+    assert call_count == 1
+
+
+@pytest.mark.anyio
+async def test_http_client_keeps_cache_behavior_without_credentials(tmp_path: Path):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"value": call_count})
+
+    transport = httpx.MockTransport(handler)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport)
+
+    respuesta1 = await client.get("https://example.org/public", cache=True)
+    respuesta2 = await client.get("https://example.org/public", cache=True)
+
+    await client.aclose()
+
+    assert respuesta1.json() == {"value": 1}
+    assert respuesta2.json() == {"value": 1}
+    assert call_count == 1
+
+
+@pytest.mark.anyio
 async def test_http_client_interceptors(tmp_path: Path):
     captured_header = {}
 
