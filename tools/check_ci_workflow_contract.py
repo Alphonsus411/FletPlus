@@ -17,6 +17,8 @@ QA_SCRIPT = REPO_ROOT / "tools/qa.sh"
 NOXFILE = REPO_ROOT / "noxfile.py"
 TOOLING_DOC = REPO_ROOT / "docs/tooling.md"
 README_DOC = REPO_ROOT / "README.md"
+MIGRATION_DOC = REPO_ROOT / "docs/migration-flet-latest.md"
+FLET_MATRIX_CONFIG = REPO_ROOT / "tools/flet_version_matrix_config.py"
 WRAPPER_WORKFLOWS = (
     REPO_ROOT / ".github/workflows/qa.yml",
     REPO_ROOT / ".github/workflows/quality.yml",
@@ -58,6 +60,10 @@ CRITICAL_COMMANDS = {
     "pip-audit": "python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json",
     "safety": "python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml",
 }
+
+
+FLET_BASELINE_LABEL = "min-supported"
+FLET_TARGET_LABEL = "latest-migration-target"
 
 
 def normalize_command(command: str) -> str:
@@ -590,6 +596,112 @@ def validate_single_source_of_truth_sync() -> list[str]:
     return validate_critical_commands_sync()
 
 
+def extract_flet_matrix_from_workflow(path: Path) -> dict[str, str]:
+    try:
+        content = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        return {}
+
+    if not isinstance(content, dict):
+        return {}
+
+    jobs = content.get("jobs")
+    if not isinstance(jobs, dict):
+        return {}
+
+    matrix_job = jobs.get("flet-version-matrix")
+    if not isinstance(matrix_job, dict):
+        return {}
+
+    include_rows = (
+        matrix_job.get("strategy", {}).get("matrix", {}).get("include")
+        if isinstance(matrix_job.get("strategy"), dict)
+        else None
+    )
+    if not isinstance(include_rows, list):
+        return {}
+
+    minors_by_label: dict[str, str] = {}
+    for row in include_rows:
+        if not isinstance(row, dict):
+            continue
+        label = row.get("label")
+        minor = row.get("expected-minor")
+        if isinstance(label, str) and isinstance(minor, str):
+            minors_by_label[label] = minor
+    return minors_by_label
+
+
+def extract_flet_matrix_from_config(path: Path) -> tuple[str, str] | None:
+    text = path.read_text(encoding="utf-8")
+    match = re.search(
+        r'FLET_MATRIX_MINORS:\s*tuple\[str,\s*\.\.\.\]\s*=\s*\("(?P<baseline>\d+\.\d+)",\s*"(?P<target>\d+\.\d+)"\)',
+        text,
+    )
+    if not match:
+        return None
+    return match.group("baseline"), match.group("target")
+
+
+def extract_flet_matrix_from_migration_doc(path: Path) -> tuple[str, str] | None:
+    text = path.read_text(encoding="utf-8")
+    baseline_match = re.search(
+        r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet>=(?P<baseline>\d+\.\d+),<\d+\.\d+`",
+        text,
+    )
+    target_match = re.search(
+        r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=(?P<target>\d+\.\d+),<\d+\.\d+`",
+        text,
+    )
+    if not baseline_match or not target_match:
+        return None
+    return baseline_match.group("baseline"), target_match.group("target")
+
+
+def validate_flet_baseline_target_contract() -> list[str]:
+    errors: list[str] = []
+
+    workflow_versions = extract_flet_matrix_from_workflow(REUSABLE_WORKFLOW)
+    config_versions = extract_flet_matrix_from_config(FLET_MATRIX_CONFIG)
+    doc_versions = extract_flet_matrix_from_migration_doc(MIGRATION_DOC)
+
+    workflow_baseline = workflow_versions.get(FLET_BASELINE_LABEL)
+    workflow_target = workflow_versions.get(FLET_TARGET_LABEL)
+
+    if not workflow_baseline or not workflow_target:
+        errors.append(
+            "reusable-quality.yml debe declarar labels min-supported y latest-migration-target con expected-minor."
+        )
+        return errors
+
+    if config_versions is None:
+        errors.append(
+            "tools/flet_version_matrix_config.py debe definir FLET_MATRIX_MINORS con baseline/target."
+        )
+        return errors
+
+    if doc_versions is None:
+        errors.append(
+            "docs/migration-flet-latest.md debe documentar baseline/target con rangos flet>=X.Y,<X.Z."
+        )
+        return errors
+
+    config_baseline, config_target = config_versions
+    doc_baseline, doc_target = doc_versions
+
+    if (workflow_baseline, workflow_target) != (config_baseline, config_target):
+        errors.append(
+            "workflow y tools/flet_version_matrix_config.py no coinciden en baseline/target de Flet."
+        )
+
+    if (workflow_baseline, workflow_target) != (doc_baseline, doc_target):
+        errors.append(
+            "workflow y docs/migration-flet-latest.md no coinciden en baseline/target de Flet."
+        )
+
+    return errors
+
+
 def validate_pages_docs_wording() -> list[str]:
     errors: list[str] = []
     docs = {
@@ -626,6 +738,7 @@ def main() -> int:
     errors.extend(validate_pages_docs_wording())
     errors.extend(validate_docs_workflow_contract(DOCS_WORKFLOW))
     errors.extend(validate_perf_workflow_contract(PERF_WORKFLOW))
+    errors.extend(validate_flet_baseline_target_contract())
 
     for wrapper in WRAPPER_WORKFLOWS:
         errors.extend(validate_wrapper_workflow(wrapper))

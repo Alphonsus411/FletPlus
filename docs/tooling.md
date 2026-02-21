@@ -41,6 +41,29 @@ Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse
 
 > ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía. En CI, el reusable usa `bash tools/qa.sh --scope tests-matrix` y `bash tools/qa.sh --scope static-security`; localmente puedes ejecutar `bash tools/qa.sh` (scope `all`) para correr todo. Además, `tools/check_bandit_command_sync.py` valida que `tools/qa.sh` mantenga el comando canónico de Bandit y que el reusable siga delegando en `tools/qa.sh`.
 
+### Política formal de actualización de baseline/target de Flet
+
+La matriz `flet-version-matrix` sigue una política de revisión **obligatoria y periódica**:
+
+- **Cadencia mínima:** revisión mensual del target (`latest-migration-target`).
+- **Cadencia extraordinaria:** actualización inmediata ante un release crítico de Flet (breaking fixes, deprecaciones relevantes o seguridad).
+
+Definiciones contractuales:
+
+- **baseline (`min-supported`)**: minor mínimo soportado activamente por el proyecto.
+- **target (`latest-migration-target`)**: última minor estable validada para migración progresiva.
+
+Fuente de verdad y automatización:
+
+1. La fuente de verdad de minors de CI es `tools/flet_version_matrix_config.py` (`FLET_MATRIX_MINORS`).
+2. Cualquier cambio debe realizarse con `python tools/update_flet_target.py --baseline-minor <X.Y> --target-minor <A.B>`.
+3. El script actualiza de forma centralizada:
+   - `.github/workflows/reusable-quality.yml`
+   - `tools/flet_version_matrix_config.py`
+   - `docs/migration-flet-latest.md`
+4. El contrato CI (`python tools/check_ci_workflow_contract.py`) falla si workflow/config/docs no coinciden en baseline/target.
+5. Todo salto de target debe registrarse en `CHANGELOG.md` con fecha y motivo (breaking fixes/deprecaciones/seguridad).
+
 
 ### Validación local de workflows (GitHub Actions)
 
