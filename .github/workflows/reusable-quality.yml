@@ -70,8 +70,9 @@ jobs:
         # Procedimiento de actualización:
         # 1) Revisar en PyPI la última minor estable de `flet`.
         # 2) Mantener `min-supported` alineado con la baseline definida por el proyecto.
-        # 3) Actualizar `tools/flet_version_matrix_config.py` (ALLOWED_FLET_MINORS)
-        #    para reflejar exactamente los minors probados aquí.
+        # 3) FUENTE DE VERDAD ÚNICA: `tools/flet_version_matrix_config.py`
+        #    (FLET_MATRIX_MINORS / ALLOWED_FLET_MINORS).
+        # 4) Reflejar exactamente ese mismo set de minors en esta matriz.
         include:
           - label: min-supported
             flet-spec: flet>=0.28,<0.29
