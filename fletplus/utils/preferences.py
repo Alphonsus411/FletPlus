@@ -82,14 +82,17 @@ class _ClientStorageBackend(_BaseBackend):
 class _FileBackend(_BaseBackend):
     def __init__(self, key: str) -> None:
         self._key = key
+        self._allow_arbitrary_path = (
+            os.environ.get("FLETPLUS_PREFS_ALLOW_ARBITRARY_PATH") == "1"
+        )
+        configured_root = os.environ.get("FLETPLUS_PREFS_TRUSTED_ROOT")
+        trusted_root = Path(configured_root).expanduser() if configured_root else Path.home() / ".fletplus"
+        self._trusted_root = trusted_root
         env_path = os.environ.get("FLETPLUS_PREFS_FILE")
         if env_path:
             self._path = Path(env_path)
-            self._expected_base_dir: Path | None = None
         else:
-            base_dir = Path.home() / ".fletplus"
-            self._path = base_dir / "preferences.json"
-            self._expected_base_dir = base_dir
+            self._path = self._trusted_root / "preferences.json"
         self._lock_path = self._path.with_suffix(f"{self._path.suffix}.lock")
 
     @contextmanager
@@ -116,33 +119,62 @@ class _FileBackend(_BaseBackend):
             return False
         return True
 
-    def _is_default_path_inside_expected_base(self) -> bool:
-        if self._expected_base_dir is None:
-            return True
+    def _has_symlink_component(self, path: Path) -> bool:
+        candidate = path.expanduser()
+        if not candidate.is_absolute():
+            candidate = Path.cwd() / candidate
+
+        probe = Path(candidate.anchor)
+        for part in candidate.parts[1:]:
+            probe = probe / part
+            if probe.exists() and probe.is_symlink():
+                return True
+        return False
+
+    def _is_path_inside_trusted_root(self) -> bool:
         try:
-            expected_base = self._expected_base_dir.resolve()
-            resolved_target = self._path.resolve(strict=False)
+            trusted_root = self._trusted_root.expanduser().resolve(strict=False)
+            resolved_target = self._path.expanduser().resolve(strict=False)
         except OSError:
             logger.exception(
                 "Guardado de preferencias abortado: no se pudo resolver ruta segura %s",
                 self._path,
             )
             return False
-        if not resolved_target.is_relative_to(expected_base):
-            logger.error(
-                "Guardado de preferencias abortado: ruta fuera del directorio esperado (%s -> %s)",
+
+        if resolved_target.is_relative_to(trusted_root):
+            return True
+
+        if self._allow_arbitrary_path:
+            logger.warning(
+                "Guardado de preferencias permitido fuera del directorio confiable por "
+                "FLETPLUS_PREFS_ALLOW_ARBITRARY_PATH=1 (%s -> %s)",
                 self._path,
                 resolved_target,
             )
-            return False
-        return True
+            return True
+
+        logger.error(
+            "Guardado de preferencias abortado: ruta fuera del directorio confiable "
+            "(%s -> %s, root=%s)",
+            self._path,
+            resolved_target,
+            trusted_root,
+        )
+        return False
 
     def _validate_save_target(self) -> bool:
+        if self._has_symlink_component(self._path):
+            logger.error(
+                "Guardado de preferencias abortado: la ruta contiene symlinks (%s)",
+                self._path,
+            )
+            return False
         if not self._is_path_secure(self._path.parent, label="directorio padre"):
             return False
         if not self._is_path_secure(self._path, label="archivo de preferencias"):
             return False
-        return self._is_default_path_inside_expected_base()
+        return self._is_path_inside_trusted_root()
 
     def _read_all(self) -> dict[str, Any]:
         try:

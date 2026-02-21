@@ -831,6 +831,13 @@ disponible, utiliza un archivo local (`~/.fletplus/preferences.json`). Al reinic
 las preferencias se restauran antes de construir la interfaz y los toggles del tema se
 sincronizan con el modo guardado.
 
+En backend de archivo, FletPlus aplica una política segura por defecto: solo se permite
+guardar bajo un directorio confiable (`~/.fletplus` o el definido por
+`FLETPLUS_PREFS_TRUSTED_ROOT`). Si defines `FLETPLUS_PREFS_FILE` con una ruta fuera de
+ese root, el guardado se rechaza salvo que habilites explícitamente
+`FLETPLUS_PREFS_ALLOW_ARBITRARY_PATH=1` (modo opt-in para mantener integraciones
+existentes mientras migras).
+
 ### Sincronización con el tema del sistema
 
 Desde ahora `ThemeManager` detecta el brillo inicial de la plataforma mediante
