@@ -18,10 +18,10 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 dependencies = [
-  "flet>=0.29.0",
+  "flet>=0.29.0,<0.81",
   "click>=8.1",
-  "websockets>=13.0",
-  "httpx>=0.28",
+  "websockets>=13,<14",
+  "httpx>=0.28,<1",
   "tomli>=2.0; python_version < \"3.11\"",
 ]
 
@@ -46,9 +46,11 @@ rust = ["pyrust-native>=0.0.4", "maturin>=1.7"]
 build = ["build>=1.2", "cython>=3.0"]
 cli = ["watchdog>=3.0"]
 dev = [
+  "flet>=0.28,<0.81",
   "pytest>=7.4,<9",
-  "websockets>=13.0",
-  "watchdog>=3.0",
+  "websockets>=13,<14",
+  "httpx>=0.28,<1",
+  "watchdog>=3,<7",
   "ruff>=0.5,<1",
   "black>=24.0,<25",
   "mypy>=1.7,<2",

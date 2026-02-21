@@ -85,7 +85,7 @@ def test_flet_compat_helpers_tolerate_missing_sensitive_symbols(monkeypatch) -> 
 def test_flet_compat_icon_resolution_falls_back_when_icons_namespace_changes(monkeypatch) -> None:
     from fletplus.utils import flet_compat
 
-    monkeypatch.delattr(flet_compat.ft, "Icons", raising=False)
+    monkeypatch.setattr(flet_compat.ft, "Icons", None, raising=False)
     monkeypatch.setattr(flet_compat.ft, "icons", type("icons", (), {"MENU": "menu"})(), raising=False)
 
     assert flet_compat.get_flet_icon("MENU", "fallback") == "menu"

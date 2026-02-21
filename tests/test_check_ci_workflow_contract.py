@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 MODULE_PATH = (
     Path(__file__).resolve().parents[1] / "tools/check_ci_workflow_contract.py"
 )
@@ -1290,3 +1289,148 @@ def test_validate_flet_baseline_target_contract_fails_when_flet_spec_drift(
     errors = check_ci_workflow_contract.validate_flet_baseline_target_contract()
 
     assert any("debe derivar flet-spec exactamente" in e for e in errors)
+
+
+def test_validate_dependency_policy_contract_passes_when_synced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """
+[project]
+dependencies = [
+  "flet>=0.29.0,<0.81",
+  "websockets>=13,<14",
+  "httpx>=0.28,<1",
+]
+[project.optional-dependencies]
+dev = [
+  "flet>=0.28,<0.81",
+  "pytest>=7.4,<9",
+  "websockets>=13,<14",
+  "httpx>=0.28,<1",
+  "watchdog>=3,<7",
+]
+""",
+        encoding="utf-8",
+    )
+
+    requirements_dev = tmp_path / "requirements-dev.txt"
+    requirements_dev.write_text(
+        """
+flet>=0.28,<0.81
+websockets>=13,<14
+httpx>=0.28,<1
+watchdog>=3,<7
+pytest>=7.4,<9
+""",
+        encoding="utf-8",
+    )
+
+    template_req = tmp_path / "template-requirements.txt"
+    template_req.write_text("flet>=0.29.0,<0.81\nfletplus\n", encoding="utf-8")
+
+    workflow = tmp_path / "reusable-quality.yml"
+    workflow.write_text(
+        """
+name: Reusable Quality
+jobs:
+  tests-matrix:
+    steps:
+      - run: pip install -r requirements-dev.txt
+  static-security:
+    steps:
+      - run: pip install -r requirements-dev.txt
+  flet-version-matrix:
+    steps:
+      - run: pip install --upgrade "${{ matrix.flet-spec }}"
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(check_ci_workflow_contract, "PYPROJECT_FILE", pyproject)
+    monkeypatch.setattr(
+        check_ci_workflow_contract, "REQUIREMENTS_DEV", requirements_dev
+    )
+    monkeypatch.setattr(
+        check_ci_workflow_contract, "CLI_TEMPLATE_REQUIREMENTS", template_req
+    )
+    monkeypatch.setattr(check_ci_workflow_contract, "REUSABLE_WORKFLOW", workflow)
+
+    errors = check_ci_workflow_contract.validate_dependency_policy_contract()
+
+    assert errors == []
+
+
+def test_validate_dependency_policy_contract_detects_contradictions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """
+[project]
+dependencies = [
+  "flet>=0.29.0,<0.81",
+  "websockets>=13,<14",
+  "httpx>=0.28,<1",
+]
+[project.optional-dependencies]
+dev = [
+  "flet>=0.28,<0.81",
+  "pytest>=7.4,<9",
+  "websockets>=13,<14",
+  "httpx>=0.28,<1",
+  "watchdog>=3,<7",
+]
+""",
+        encoding="utf-8",
+    )
+
+    requirements_dev = tmp_path / "requirements-dev.txt"
+    requirements_dev.write_text(
+        """
+flet>=0.28,<0.81
+websockets>=12,<13
+httpx>=0.28,<1
+watchdog>=3,<7
+pytest>=7.4,<9
+""",
+        encoding="utf-8",
+    )
+
+    template_req = tmp_path / "template-requirements.txt"
+    template_req.write_text("flet>=0.30,<0.81\n", encoding="utf-8")
+
+    workflow = tmp_path / "reusable-quality.yml"
+    workflow.write_text(
+        """
+name: Reusable Quality
+jobs:
+  tests-matrix:
+    steps:
+      - run: python -m pytest
+  static-security:
+    steps:
+      - run: python -m pytest
+  flet-version-matrix:
+    steps:
+      - run: python -m pytest tests/test_flet_version_matrix.py
+""",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(check_ci_workflow_contract, "PYPROJECT_FILE", pyproject)
+    monkeypatch.setattr(
+        check_ci_workflow_contract, "REQUIREMENTS_DEV", requirements_dev
+    )
+    monkeypatch.setattr(
+        check_ci_workflow_contract, "CLI_TEMPLATE_REQUIREMENTS", template_req
+    )
+    monkeypatch.setattr(check_ci_workflow_contract, "REUSABLE_WORKFLOW", workflow)
+
+    errors = check_ci_workflow_contract.validate_dependency_policy_contract()
+
+    assert any("Rango contradictorio para websockets" in e for e in errors)
+    assert any("plantilla CLI" in e for e in errors)
+    assert any("requirements-dev.txt" in e for e in errors)
+    assert any("matrix.flet-spec" in e for e in errors)

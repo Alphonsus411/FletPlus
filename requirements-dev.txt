@@ -1,7 +1,8 @@
--r requirements.txt
-pytest>=7.4,<9
+flet>=0.28,<0.81
 websockets>=13,<14
-watchdog>=3.0
+httpx>=0.28,<1
+watchdog>=3,<7
+pytest>=7.4,<9
 ruff>=0.5,<1
 black>=24.0,<25
 mypy>=1.7,<2
