@@ -146,8 +146,22 @@ async def test_rejects_connection_with_token_only_in_query_string():
 
 
 @pytest.mark.anyio
-async def test_authorizes_connection_with_allowed_origin():
+async def test_rejects_connection_when_only_allowed_origin_is_configured_in_secure_mode():
     server = DevToolsServer(allowed_origins={"https://trusted.example"})
+
+    with pytest.raises(
+        RuntimeError,
+        match="loopback sin auth_token en modo seguro",
+    ):
+        server.listen("127.0.0.1", 0)
+
+
+@pytest.mark.anyio
+async def test_authorizes_connection_with_valid_token_and_allowed_origin():
+    server = DevToolsServer(
+        auth_token="secret",
+        allowed_origins={"https://trusted.example"},
+    )
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -155,7 +169,10 @@ async def test_authorizes_connection_with_allowed_origin():
 
         async with _connect_with_headers(
             uri,
-            {"Origin": "https://trusted.example"},
+            {
+                "Authorization": "Bearer secret",
+                "Origin": "https://trusted.example",
+            },
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
@@ -163,7 +180,10 @@ async def test_authorizes_connection_with_allowed_origin():
         with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
             async with _connect_with_headers(
                 uri,
-                {"Origin": "https://blocked.example"},
+                {
+                    "Authorization": "Bearer secret",
+                    "Origin": "https://blocked.example",
+                },
             ) as denied_client:
                 await denied_client.recv()
 
@@ -171,8 +191,8 @@ async def test_authorizes_connection_with_allowed_origin():
 
 
 @pytest.mark.anyio
-async def test_authorizes_semantically_equivalent_origin_with_trailing_slash_and_uppercase_host():
-    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+async def test_authorizes_connection_with_valid_token_without_origin_constraint():
+    server = DevToolsServer(auth_token="secret")
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -180,7 +200,32 @@ async def test_authorizes_semantically_equivalent_origin_with_trailing_slash_and
 
         async with _connect_with_headers(
             uri,
-            {"Origin": "https://TRUSTED.EXAMPLE/"},
+            {
+                "Authorization": "Bearer secret",
+                "Origin": "https://blocked.example",
+            },
+        ) as allowed_client:
+            ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
+            assert ready == "server:ready"
+
+
+@pytest.mark.anyio
+async def test_authorizes_semantically_equivalent_origin_with_trailing_slash_and_uppercase_host():
+    server = DevToolsServer(
+        auth_token="secret",
+        allowed_origins={"https://trusted.example"},
+    )
+
+    async with server.listen("127.0.0.1", 0) as ws_server:
+        port = ws_server.sockets[0].getsockname()[1]
+        uri = f"ws://127.0.0.1:{port}"
+
+        async with _connect_with_headers(
+            uri,
+            {
+                "Authorization": "Bearer secret",
+                "Origin": "https://TRUSTED.EXAMPLE/",
+            },
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
@@ -188,7 +233,10 @@ async def test_authorizes_semantically_equivalent_origin_with_trailing_slash_and
 
 @pytest.mark.anyio
 async def test_authorizes_semantically_equivalent_origin_when_allowed_origin_has_trailing_slash():
-    server = DevToolsServer(allowed_origins={"https://trusted.example/"})
+    server = DevToolsServer(
+        auth_token="secret",
+        allowed_origins={"https://trusted.example/"},
+    )
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -196,7 +244,10 @@ async def test_authorizes_semantically_equivalent_origin_when_allowed_origin_has
 
         async with _connect_with_headers(
             uri,
-            {"Origin": "https://trusted.example"},
+            {
+                "Authorization": "Bearer secret",
+                "Origin": "https://trusted.example",
+            },
         ) as allowed_client:
             ready = await asyncio.wait_for(allowed_client.recv(), timeout=2)
             assert ready == "server:ready"
@@ -233,44 +284,53 @@ def test_listen_rejects_loopback_without_auth_or_origins_by_default():
 
     with pytest.raises(
         RuntimeError,
-        match="loopback sin autenticación u orígenes permitidos",
+        match="loopback sin auth_token en modo seguro",
     ):
         server.listen("127.0.0.1", 0)
 
 
-def test_listen_allows_loopback_when_auth_token_is_configured():
+def test_listen_allows_loopback_when_auth_token_is_configured(monkeypatch):
     server = DevToolsServer(auth_token="secret")
+    monkeypatch.setattr("fletplus.devtools.server.serve", lambda *args, **kwargs: object())
 
     listener = server.listen("127.0.0.1", 0)
     assert listener is not None
 
 
-def test_listen_allows_loopback_when_allowed_origins_are_configured():
+def test_listen_rejects_loopback_when_only_allowed_origins_are_configured():
     server = DevToolsServer(allowed_origins={"https://trusted.example"})
 
-    listener = server.listen("127.0.0.1", 0)
-    assert listener is not None
+    with pytest.raises(
+        RuntimeError,
+        match="loopback sin auth_token en modo seguro",
+    ):
+        server.listen("127.0.0.1", 0)
 
 
-def test_listen_allows_unauthenticated_loopback_only_in_explicit_insecure_mode():
+def test_listen_allows_unauthenticated_loopback_only_in_explicit_insecure_mode(monkeypatch):
     server = DevToolsServer(allow_unauthenticated_loopback=True)
+    monkeypatch.setattr("fletplus.devtools.server.serve", lambda *args, **kwargs: object())
 
     listener = server.listen("127.0.0.1", 0)
     assert listener is not None
 
 
-def test_listen_allows_remote_host_when_auth_token_is_configured():
+def test_listen_allows_remote_host_when_auth_token_is_configured(monkeypatch):
     server = DevToolsServer(auth_token="secret")
+    monkeypatch.setattr("fletplus.devtools.server.serve", lambda *args, **kwargs: object())
 
     listener = server.listen("0.0.0.0", 0)
     assert listener is not None
 
 
-def test_listen_allows_remote_host_when_auth_token_and_allowed_origins_are_configured():
+def test_listen_allows_remote_host_when_auth_token_and_allowed_origins_are_configured(
+    monkeypatch,
+):
     server = DevToolsServer(
         auth_token="secret",
         allowed_origins={"https://trusted.example"},
     )
+    monkeypatch.setattr("fletplus.devtools.server.serve", lambda *args, **kwargs: object())
 
     listener = server.listen("0.0.0.0", 0)
     assert listener is not None
@@ -285,7 +345,10 @@ def test_listen_allows_remote_host_when_auth_token_and_allowed_origins_are_confi
     ],
 )
 async def test_rejects_origins_with_different_port_or_scheme(origin: str):
-    server = DevToolsServer(allowed_origins={"https://trusted.example"})
+    server = DevToolsServer(
+        auth_token="secret",
+        allowed_origins={"https://trusted.example"},
+    )
 
     async with server.listen("127.0.0.1", 0) as ws_server:
         port = ws_server.sockets[0].getsockname()[1]
@@ -294,7 +357,10 @@ async def test_rejects_origins_with_different_port_or_scheme(origin: str):
         with pytest.raises(websockets.exceptions.ConnectionClosedError) as denied:
             async with _connect_with_headers(
                 uri,
-                {"Origin": origin},
+                {
+                    "Authorization": "Bearer secret",
+                    "Origin": origin,
+                },
             ) as denied_client:
                 await denied_client.recv()
 

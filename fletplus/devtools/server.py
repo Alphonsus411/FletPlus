@@ -74,15 +74,14 @@ class DevToolsServer:
         """Crea el servidor y comienza a escuchar conexiones.
 
         De forma predeterminada, incluso en loopback se requiere configurar
-        ``auth_token`` o ``allowed_origins`` antes de aceptar conexiones.
-        Para desarrollo local con riesgo explícitamente aceptado, se puede
-        desactivar esta protección con ``allow_unauthenticated_loopback=True``.
+        ``auth_token`` antes de aceptar conexiones. Para desarrollo local con
+        riesgo explícitamente aceptado, se puede desactivar esta protección con
+        ``allow_unauthenticated_loopback=True`` (modo inseguro).
 
-        Si se configura ``auth_token`` o ``allowed_origins``, las conexiones
-        entrantes deben incluir el token en un header dedicado
-        (``Authorization: Bearer <token>`` o ``X-DevTools-Token: <token>``)
-        y/o un header ``Origin`` permitido; en caso contrario se rechazan con
-        un cierre de política.
+        ``auth_token`` autentica al cliente (``Authorization: Bearer <token>``
+        o ``X-DevTools-Token: <token>``). ``allowed_origins`` es una capa
+        complementaria de validación de origen/CSRF y no autentica identidad
+        del cliente por sí sola.
 
         Para exponer el servidor fuera de loopback (por ejemplo ``0.0.0.0``,
         ``::`` o una IP pública) es obligatorio configurar ``auth_token``.
@@ -101,11 +100,10 @@ class DevToolsServer:
             is_loopback
             and not self._allow_unauthenticated_loopback
             and self._auth_token is None
-            and self._allowed_origins is None
         ):
             raise RuntimeError(
-                "No se puede iniciar DevTools en loopback sin autenticación u "
-                "orígenes permitidos. Configura auth_token o allowed_origins; "
+                "No se puede iniciar DevTools en loopback sin auth_token en modo "
+                "seguro. allowed_origins no autentica identidad del cliente; "
                 "si deseas omitir esta protección para desarrollo local, usa "
                 "allow_unauthenticated_loopback=True (modo inseguro)."
             )
@@ -222,17 +220,28 @@ class DevToolsServer:
 
         if self._allowed_origins is not None:
             if headers is None:
-                _LOGGER.warning("No se pudieron leer headers del request para validar Origin")
+                _LOGGER.warning(
+                    "No se pudieron leer headers del request para validar Origin "
+                    "(capa CSRF complementaria, no autenticación de identidad)"
+                )
                 return False
 
             origin = headers.get("Origin")
             normalized_origin = self._normalize_origin(origin)
             if normalized_origin is None:
-                _LOGGER.warning("Origin inválido al conectar DevTools: %s", origin)
+                _LOGGER.warning(
+                    "Origin inválido al conectar DevTools: %s "
+                    "(Origin no autentica identidad del cliente)",
+                    origin,
+                )
                 return False
 
             if normalized_origin not in self._allowed_origins:
-                _LOGGER.warning("Origen no permitido al conectar DevTools: %s", origin)
+                _LOGGER.warning(
+                    "Origen no permitido al conectar DevTools: %s "
+                    "(control de origen/CSRF complementario)",
+                    origin,
+                )
                 return False
 
         return True
