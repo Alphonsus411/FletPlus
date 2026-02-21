@@ -31,6 +31,9 @@ jobs:
       - name: Validate CI/docs contract
         run: python tools/check_ci_workflow_contract.py
 
+      - name: Validate Flet baseline/target drift
+        run: python tools/check_flet_target_drift.py
+
       - name: Run tests and compatibility checks
         run: bash tools/qa.sh --scope tests-matrix
 
@@ -55,6 +58,9 @@ jobs:
       - name: Validate CI/docs contract
         run: python tools/check_ci_workflow_contract.py
 
+      - name: Validate Flet baseline/target drift
+        run: python tools/check_flet_target_drift.py
+
       - name: Run static/security checks
         run: bash tools/qa.sh --scope static-security
 
@@ -73,6 +79,7 @@ jobs:
         # 3) FUENTE DE VERDAD ÚNICA: `tools/flet_version_matrix_config.py`
         #    (FLET_MATRIX_MINORS / ALLOWED_FLET_MINORS).
         # 4) Reflejar exactamente ese mismo set de minors en esta matriz.
+        # 5) Verificar drift con `python tools/check_flet_target_drift.py`.
         include:
           - label: min-supported
             flet-spec: flet>=0.28,<0.29

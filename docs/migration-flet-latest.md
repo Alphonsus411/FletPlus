@@ -12,7 +12,7 @@ Este documento define una migración **controlada por fases** para compatibiliza
 
 **Baseline de validación (estado actual en CI)**: `flet>=0.28,<0.29` (job `min-supported`).  
 **Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81` (job `latest-migration-target`).  
-**Estado oficial del target**: ✅ **validado para toda la serie `0.80.x`**, incluyendo el parche más reciente disponible durante esta iteración de validación.  
+**Estado oficial del target**: ✅ **validado para toda la serie del minor objetivo vigente**, incluyendo el parche más reciente disponible durante esta iteración de validación.  
 **Mínimo de paquete (distribución)**: `flet>=0.29.0` (según `pyproject.toml`).
 
 ---
@@ -179,7 +179,36 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 
 > Regla operativa: para el contrato activo usar únicamente la sección [Contrato de versión vigente](tooling.md#contrato-de-version-vigente). Esta tabla se mantiene alineada con ese bloque en cada cambio de baseline/target.
 
-## 8) Checklist final de aceptación técnica
+
+## 8) Procedimiento operacional mensual (actualización de target)
+
+> Fuente de verdad única para mover baseline/target: `tools/update_flet_target.py`.
+
+1. Detectar la nueva **minor estable** publicada en PyPI para `flet` (ignorando pre-releases).
+2. Definir valores de trabajo:
+   - `--baseline-minor X.Y` = minor baseline contractual vigente.
+   - `--target-minor A.B` = minor estable nueva que se quiere validar como target.
+3. Ejecutar la actualización atómica (workflow + config + documento):
+
+   ```bash
+   python tools/update_flet_target.py --baseline-minor X.Y --target-minor A.B
+   ```
+
+4. Validar que no exista drift y que la matriz CI refleje exactamente `tools/flet_version_matrix_config.py`:
+
+   ```bash
+   python tools/check_flet_target_drift.py
+   ```
+
+5. Ejecutar la validación de contrato CI/docs antes de abrir PR:
+
+   ```bash
+   python tools/check_ci_workflow_contract.py
+   ```
+
+6. Correr la batería de QA del proyecto (`bash tools/qa.sh --scope tests-matrix` o pipeline completo) y actualizar este documento solo para evidencias/resultados de la iteración.
+
+## 9) Checklist final de aceptación técnica
 
 La migración solo se puede cerrar cuando **todos** los puntos siguientes estén en verde:
 
@@ -191,8 +220,8 @@ La migración solo se puede cerrar cuando **todos** los puntos siguientes estén
 
 Si cualquier ítem falla, el estado de migración permanece **abierto** y no se promueve la versión objetivo como estable.
 
-## 9) Resultado final de migración (iteración actual)
+## 10) Resultado final de migración (iteración actual)
 
-- Estado final: ✅ **migración cerrada para target `0.80.x`**.
+- Estado final: ✅ **migración cerrada para el minor target vigente**.
 - Decisión operativa: el target `latest-migration-target` queda oficialmente validado y vigente.
 - Alcance de deuda legacy: se mantiene únicamente por compatibilidad histórica local y queda fuera del contrato activo de soporte.
