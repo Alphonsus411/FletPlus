@@ -276,7 +276,8 @@ def _launch_flet_process(app_path: Path, port: int | None, devtools: bool) -> su
     if devtools_env_removed:
         mensaje_arranque += " (FLET_DEVTOOLS eliminado del entorno porque --no-devtools está activo)"
     click.echo(mensaje_arranque)
-    return subprocess.Popen(command, env=env, cwd=str(app_path.parent))
+    from fletplus.utils.safe_subprocess import safe_popen
+    return safe_popen(command, env=env, cwd=str(app_path.parent))
 
 
 def _stop_process(process: subprocess.Popen) -> None:

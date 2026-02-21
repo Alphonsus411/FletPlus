@@ -79,11 +79,10 @@ def _notify_windows(title: str, body: str) -> bool:
         )
 
         try:
-            result = subprocess.run(
+            from fletplus.utils.safe_subprocess import safe_run
+            result = safe_run(
                 [ps_executable, "-NoProfile", "-Command", script],
                 check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
                 timeout=4,
             )
             return result.returncode == 0
@@ -119,11 +118,10 @@ def _notify_macos(title: str, body: str) -> bool:
     script = f"display notification {json.dumps(body)} with title {json.dumps(title)}"
 
     try:
-        result = subprocess.run(
+        from fletplus.utils.safe_subprocess import safe_run
+        result = safe_run(
             [osa, "-e", script],
             check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
             timeout=4,
         )
         return result.returncode == 0
@@ -158,11 +156,10 @@ def _notify_linux(title: str, body: str) -> bool:
     notify_send = shutil.which("notify-send")
     if notify_send:
         try:
-            result = subprocess.run(
+            from fletplus.utils.safe_subprocess import safe_run
+            result = safe_run(
                 [notify_send, title, body],
                 check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
                 timeout=4,
             )
             return result.returncode == 0

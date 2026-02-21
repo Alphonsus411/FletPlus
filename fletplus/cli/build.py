@@ -211,7 +211,8 @@ def _write_metadata(metadata: BuildMetadata, destination: Path) -> Path:
 def _run_command(command: List[str], cwd: Path | None = None) -> None:
     click.echo(f"Ejecutando: {' '.join(command)}")
     try:
-        subprocess.run(command, cwd=str(cwd) if cwd else None, check=True)
+        from fletplus.utils.safe_subprocess import safe_run
+        safe_run(command, cwd=str(cwd) if cwd else None, check=True)
     except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
         missing_tool = command[0]
         raise PackagingError(
@@ -333,7 +334,8 @@ class MobileAdapter(_BaseAdapter):
         ]
         click.echo("Preparando paquete móvil (android)")
         try:
-            subprocess.run(command, cwd=str(self.context.project_dir), check=True, env=env)
+            from fletplus.utils.safe_subprocess import safe_run
+            safe_run(command, cwd=str(self.context.project_dir), check=True, env=env)
         except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
             missing_tool = command[0]
             raise PackagingError(
