@@ -157,3 +157,27 @@ def test_spacer_adjusts_size_per_breakpoint():
 
     page.resize(900)
     assert control.height == 10
+
+
+def test_flex_row_uses_window_width_fallback_when_page_width_missing():
+    class _Window:
+        def __init__(self, width: int) -> None:
+            self.width = width
+
+    class _WindowPage(DummyPage):
+        def __init__(self, width: int, height: int):
+            super().__init__(width, height)
+            self.window = _Window(width)
+            self.width = None
+
+    page = _WindowPage(700, 800)
+    row = FlexRow(
+        [ft.Text("A")],
+        breakpoints={
+            0: {"spacing": 5},
+            600: {"spacing": 20},
+        },
+    )
+
+    layout = row.init_responsive(page)
+    assert layout.spacing == 20

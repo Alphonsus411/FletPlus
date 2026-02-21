@@ -11,6 +11,7 @@ from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.components.responsive_container import (
     ResponsiveContainer as _CanonicalResponsiveContainer,
 )
+from fletplus.utils.flet_compat import get_page_width, safe_update_page_sync
 
 
 # Alias para mantener compatibilidad con la ruta histórica.
@@ -41,7 +42,7 @@ class FlexRow(_FlexBase):
     """Fila flexible que recalcula espaciado, alineación y envoltura."""
 
     def init_responsive(self, page: ft.Page) -> ft.Control:
-        cfg = self._get_config(page.width or 0)
+        cfg = self._get_config(get_page_width(page))
         row = ft.Row(
             controls=self.controls,
             spacing=cfg.get("spacing", 0),
@@ -56,7 +57,7 @@ class FlexRow(_FlexBase):
             target.spacing = cfg.get("spacing", target.spacing)
             target.alignment = cfg.get("alignment", target.alignment)
             target.wrap = cfg.get("wrap", target.wrap)
-            page.update()
+            safe_update_page_sync(page)
 
         callbacks = {bp: rebuild for bp in self.breakpoints}
         ResponsiveManager(page, callbacks)
@@ -67,7 +68,7 @@ class FlexColumn(_FlexBase):
     """Columna flexible que recalcula espaciado y alineación."""
 
     def init_responsive(self, page: ft.Page) -> ft.Control:
-        cfg = self._get_config(page.width or 0)
+        cfg = self._get_config(get_page_width(page))
         column = ft.Column(
             controls=self.controls,
             spacing=cfg.get("spacing", 0),
@@ -82,7 +83,7 @@ class FlexColumn(_FlexBase):
             target.spacing = cfg.get("spacing", target.spacing)
             target.alignment = cfg.get("alignment", target.alignment)
             target.scroll = cfg.get("wrap", target.scroll)
-            page.update()
+            safe_update_page_sync(page)
 
         callbacks = {bp: rebuild for bp in self.breakpoints}
         ResponsiveManager(page, callbacks)
@@ -149,21 +150,21 @@ class Stack:
     def init_responsive(self, page: ft.Page) -> ft.Stack:
         stack = ft.Stack(
             controls=[item.control for item in self.items],
-            alignment=self._resolve_alignment(page.width or 0),
+            alignment=self._resolve_alignment(get_page_width(page)),
         )
 
         def rebuild(width: int) -> None:
             stack.alignment = self._resolve_alignment(width)
             for item in self.items:
                 item.control.visible = item.is_visible(width)
-            page.update()
+            safe_update_page_sync(page)
 
         breakpoints = self._collect_breakpoints()
         if not breakpoints:
             breakpoints = {0}
         callbacks = {bp: rebuild for bp in breakpoints}
         ResponsiveManager(page, callbacks)
-        rebuild(page.width or 0)
+        rebuild(get_page_width(page))
         return stack
 
 
@@ -248,7 +249,7 @@ class Grid:
     def init_responsive(self, page: ft.Page) -> ft.ResponsiveRow:
         row = ft.ResponsiveRow(spacing=self.spacing, run_spacing=self.spacing)
         wrappers: list[tuple[GridItem, ft.Container]] = []
-        width = page.width or 0
+        width = get_page_width(page)
         for item in self.items:
             wrapper = ft.Container(content=item.control)
             wrapper.col = item.resolve_span(width)
@@ -263,7 +264,7 @@ class Grid:
             for item, wrapper in wrappers:
                 wrapper.col = item.resolve_span(current_width)
                 wrapper.visible = item.is_visible(current_width)
-            page.update()
+            safe_update_page_sync(page)
 
         breakpoints = self._collect_breakpoints()
         if not breakpoints:
@@ -286,7 +287,7 @@ class Wrap(_FlexBase):
         super().__init__(controls, breakpoints=breakpoints, style=style)
 
     def init_responsive(self, page: ft.Page) -> ft.Control:
-        cfg = self._get_config(page.width or 0)
+        cfg = self._get_config(get_page_width(page))
         row = ft.Row(
             controls=self.controls,
             wrap=True,
@@ -302,7 +303,7 @@ class Wrap(_FlexBase):
             target.spacing = cfg.get("spacing", target.spacing)
             target.run_spacing = cfg.get("run_spacing", target.run_spacing)
             target.alignment = cfg.get("alignment", target.alignment)
-            page.update()
+            safe_update_page_sync(page)
 
         callbacks = {bp: rebuild for bp in self.breakpoints}
         ResponsiveManager(page, callbacks)
@@ -326,7 +327,7 @@ class Spacer:
         )
 
     def init_responsive(self, page: ft.Page) -> ft.Container:
-        width = page.width or 0
+        width = get_page_width(page)
         size = self._resolve_size(width)
         container = ft.Container(width=size if self._is_horizontal else None)
         if not self._is_horizontal:
@@ -338,7 +339,7 @@ class Spacer:
                 container.width = value
             else:
                 container.height = value
-            page.update()
+            safe_update_page_sync(page)
 
         callbacks = {bp: rebuild for bp in self.breakpoints}
         ResponsiveManager(page, callbacks)

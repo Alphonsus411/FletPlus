@@ -13,6 +13,11 @@ from fletplus.utils.device_profiles import (
     DEFAULT_DEVICE_PROFILES,
     get_device_profile,
 )
+from fletplus.utils.flet_compat import (
+    get_page_height,
+    get_page_width,
+    safe_request_page_update,
+)
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager_rs import apply_styles as _apply_styles_rs
 from fletplus.utils.responsive_style import ResponsiveStyle
@@ -235,8 +240,8 @@ else:
         # ------------------------------------------------------------------
         def _handle_resize(self, _event: ft.ControlEvent | None = None) -> None:
             page = self.page
-            width = page.width if page.width is not None else 0
-            height = page.height if page.height is not None else 0
+            width = int(get_page_width(page))
+            height = int(get_page_height(page))
 
             bp_w = None
             bp_h = None
@@ -297,7 +302,7 @@ else:
                 for control, attr, value in updates:
                     self._safe_setattr(control, attr, value)
 
-            page.update()
+            safe_request_page_update(page)
 
 
 __all__ = ["ResponsiveManager"]

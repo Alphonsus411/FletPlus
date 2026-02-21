@@ -34,6 +34,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from pathlib import Path
+from threading import current_thread, main_thread
 from typing import Any
 
 import flet as ft
@@ -181,6 +182,38 @@ def safe_update_page_sync(page: Any) -> None:
     if callable(update):
         with contextlib.suppress(Exception):
             update()
+
+
+def safe_request_page_update(page: Any) -> None:
+    """Solicita un refresh tolerante a contexto/hilo y API disponible.
+
+    Estrategia:
+    1) En hilo principal intenta ``page.update()`` directo.
+    2) Si existe ``page.run_task``, delega ``update_async`` o ``update``.
+    3) Como último fallback, intenta ``update`` de forma protegida.
+    """
+
+    if current_thread() is main_thread():
+        update = getattr(page, "update", None)
+        if callable(update):
+            with contextlib.suppress(Exception):
+                update()
+                return
+
+    run_task = getattr(page, "run_task", None)
+    if callable(run_task):
+        update_async = getattr(page, "update_async", None)
+        if callable(update_async):
+            with contextlib.suppress(Exception):
+                run_task(update_async)
+                return
+        update = getattr(page, "update", None)
+        if callable(update):
+            with contextlib.suppress(Exception):
+                run_task(update)
+                return
+
+    safe_update_page_sync(page)
 
 
 def set_page_title(page: Any, title: str) -> bool:

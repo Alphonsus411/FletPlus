@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from threading import current_thread, main_thread
 from typing import Any
 
 import flet as ft
 
 from .layout import Layout, LayoutBuilder, LayoutComposition
 from .state import State, StateProtocol
+from fletplus.utils.flet_compat import safe_request_page_update
 
 
 LifecycleHook = Callable[[ft.Page, StateProtocol], None]
@@ -167,22 +167,4 @@ class FletPlusApp:
 
     @staticmethod
     def _safe_page_update(page: ft.Page) -> None:
-        if current_thread() is main_thread():
-            try:
-                page.update()
-                return
-            except Exception:
-                pass
-        if hasattr(page, "run_task"):
-            try:
-                if hasattr(page, "update_async"):
-                    page.run_task(page.update_async)
-                else:
-                    page.run_task(page.update)
-                return
-            except Exception:
-                pass
-        try:
-            page.update()
-        except Exception:
-            pass
+        safe_request_page_update(page)
