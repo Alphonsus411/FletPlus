@@ -1,5 +1,6 @@
 import json
 import os
+from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 
@@ -90,3 +91,32 @@ def test_file_backend_writes_preferences_normally(tmp_path, monkeypatch):
 
     stored = json.loads(target_path.read_text(encoding="utf-8"))
     assert stored[PreferenceStorage.DEFAULT_KEY] == {"theme": "dark"}
+
+
+def _save_preferences_entry(path: str, key: str, value: str) -> None:
+    os.environ["FLETPLUS_PREFS_FILE"] = path
+    prefs = PreferenceStorage(DummyPage(None), key=key)
+    prefs.save({"value": value})
+
+
+def test_file_backend_parallel_writes_keep_all_keys(tmp_path):
+    target_path = tmp_path / "preferences.json"
+    total_writers = 8
+
+    with ProcessPoolExecutor(max_workers=total_writers) as executor:
+        futures = [
+            executor.submit(
+                _save_preferences_entry,
+                str(target_path),
+                f"worker-{index}",
+                f"value-{index}",
+            )
+            for index in range(total_writers)
+        ]
+        for future in futures:
+            future.result()
+
+    stored = json.loads(target_path.read_text(encoding="utf-8"))
+    assert len(stored) == total_writers
+    for index in range(total_writers):
+        assert stored[f"worker-{index}"] == {"value": f"value-{index}"}
