@@ -263,34 +263,52 @@ Esta política define cómo mantenemos la compatibilidad de FletPlus con Flet y 
 
 Todo upgrade/rollback debe registrarse en `CHANGELOG.md` indicando versión evaluada, decisión y motivo.
 
-### Procedimiento paso a paso para upgrade
+### Upgrade de Flet (paso a paso)
 
-1. **Actualizar manifiestos y constraints**
-   - Ajustar versión objetivo en `pyproject.toml`, `requirements.txt`, `requirements-dev.txt` y documentación asociada.
-   - Si aplica, actualizar ejemplos o snippets que fijen versiones.
-2. **Ejecutar checks de calidad y compatibilidad**
-   - Ejecutar preflight de dependencias y suite de tests.
-   - Ejecutar checks estáticos/documentación que formen parte del pipeline de release.
-3. **Revisar deprecaciones y cambios breaking**
-   - Revisar changelog/notas de Flet para identificar APIs deprecadas.
-   - Eliminar o encapsular usos de APIs en desuso en módulos públicos.
-4. **Validar demos y flujos principales**
-   - Probar la demo oficial y los recorridos de UI/documentados.
-   - Confirmar que no haya regresiones visuales ni funcionales.
-5. **Validar tests y decidir publicación**
-   - Confirmar tests verdes.
-   - Si algo crítico falla, aplicar rollback y registrar la decisión en `CHANGELOG.md`.
+1. **Actualizar manifiestos de dependencias**
+   - Ajustar la versión objetivo en `pyproject.toml` y en los `requirements*` usados por desarrollo/CI (`requirements.txt`, `requirements-dev.txt`, `requirements-docs.txt` si aplica).
+   - Confirmar que las restricciones mínimas siguen siendo coherentes con la baseline soportada en CI.
+2. **Actualizar la matriz de CI**
+   - Revisar workflows (`.github/workflows/*.yml`) para asegurar que la matriz `baseline/target` refleja la nueva minor objetivo.
+   - Verificar que los jobs de QA ejecuten la combinación mínima y la objetivo antes de aprobar release.
+3. **Revisión de `flet_compat`**
+   - Auditar `fletplus/flet_compat.py` y cualquier capa de compatibilidad asociada.
+   - Mantener wrappers/guards para APIs de Flet deprecadas hasta que dejen de ser necesarias por política de soporte.
+4. **Ejecutar suites mínimas de contrato**
+   - Ejecutar como mínimo la suite de contrato y una pasada rápida de regresión sobre CLI/demo.
+   - Comandos recomendados:
 
-### Checklist obligatoria de release
+```bash
+python -m pytest tests/contracts -q
+python -m pytest tests/cli -q
+python -m pytest tests/demo -q
+```
 
-Antes de publicar una nueva versión de FletPlus, verificar:
+### Checklist de aceptación para upgrade de Flet
 
-- [ ] La **versión objetivo de Flet** está validada explícitamente para la release (sin este punto, no se publica).
-- [ ] Manifiestos y documentación están alineados con la versión objetivo.
-- [ ] Se ejecutaron checks de QA/CI relevantes sin fallos críticos.
-- [ ] Demos principales verificadas manualmente.
-- [ ] Tests automatizados en verde.
-- [ ] `CHANGELOG.md` actualizado con el salto de versión (o rollback) y su justificación.
+Antes de cerrar el upgrade, verificar:
+
+- [ ] No se rompe ninguna API pública de FletPlus.
+- [ ] La demo oficial no presenta regresiones funcionales ni visuales críticas.
+- [ ] La CLI principal (`fletplus`) mantiene comandos y comportamiento documentado.
+- [ ] Los tests de contrato pasan en baseline y target de la matriz.
+- [ ] `CHANGELOG.md` documenta versión evaluada, decisión (upgrade o rollback) y motivo.
+
+### Criterio de rollback y reversión rápida de minor
+
+Se activa rollback inmediato si aparece cualquiera de estos casos tras subir la minor objetivo:
+
+1. Ruptura de API pública de FletPlus.
+2. Regresión crítica en demo o CLI sin mitigación en la ventana de release.
+3. Fallo consistente en tests de contrato (baseline o target) que comprometa compatibilidad.
+
+Para revertir rápidamente la minor objetivo:
+
+1. Restablecer la versión anterior en `pyproject.toml` y `requirements*`.
+2. Restaurar la matriz de CI previa (`baseline/target`) en workflows.
+3. Revertir ajustes de `flet_compat` introducidos exclusivamente para la minor fallida.
+4. Ejecutar de nuevo `tests/contracts`, `tests/cli` y `tests/demo` para confirmar estabilización.
+5. Registrar rollback en `CHANGELOG.md` con causa raíz y plan de reintento.
 
 ## Workflow de documentación
 
