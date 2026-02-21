@@ -40,11 +40,20 @@ def _inject_powershell_flags(args: list[str]) -> list[str]:
     return args
 
 
+def _filter_env(base: Mapping[str, str] | None, whitelist: Sequence[str] | None) -> Mapping[str, str] | None:
+    if whitelist is None:
+        return dict(base) if base is not None else None
+    base_env = os.environ if base is None else base
+    allowed = {k: v for k, v in base_env.items() if k in set(whitelist)}
+    return allowed
+
+
 def safe_run(
     args: Sequence[str],
     *,
     cwd: str | os.PathLike[str] | None = None,
     env: Mapping[str, str] | None = None,
+    env_whitelist: Sequence[str] | None = None,
     check: bool = False,
     timeout: float | None = None,
     capture_output: bool = False,
@@ -52,10 +61,11 @@ def safe_run(
     norm = _normalize_args(args)
     norm = _inject_powershell_flags(norm)
     effective_cwd = _ensure_cwd(cwd)
+    effective_env = _filter_env(env if env is not None else os.environ, env_whitelist)
     return subprocess.run(
         norm,
         cwd=effective_cwd,
-        env=dict(env) if env is not None else None,
+        env=effective_env,
         check=check,
         timeout=timeout,
         stdout=subprocess.PIPE if capture_output else None,
@@ -68,12 +78,14 @@ def safe_popen(
     *,
     cwd: str | os.PathLike[str] | None = None,
     env: Mapping[str, str] | None = None,
+    env_whitelist: Sequence[str] | None = None,
 ) -> subprocess.Popen:
     norm = _normalize_args(args)
     norm = _inject_powershell_flags(norm)
     effective_cwd = _ensure_cwd(cwd)
+    effective_env = _filter_env(env if env is not None else os.environ, env_whitelist)
     return subprocess.Popen(
         norm,
         cwd=effective_cwd,
-        env=dict(env) if env is not None else None,
+        env=effective_env,
     )

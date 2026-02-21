@@ -335,7 +335,26 @@ class MobileAdapter(_BaseAdapter):
         click.echo("Preparando paquete móvil (android)")
         try:
             from fletplus.utils.safe_subprocess import safe_run
-            safe_run(command, cwd=str(self.context.project_dir), check=True, env=env)
+            whitelist = [
+                "PATH",
+                "SystemRoot",
+                "WINDIR",
+                "COMSPEC",
+                "TEMP",
+                "TMP",
+                "HOME",
+                "USERPROFILE",
+                "PATHEXT",
+                "FLETPLUS_METADATA",
+                "FLETPLUS_ICON",
+            ]
+            safe_run(
+                command,
+                cwd=str(self.context.project_dir),
+                check=True,
+                env=env,
+                env_whitelist=whitelist,
+            )
         except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
             missing_tool = command[0]
             raise PackagingError(
