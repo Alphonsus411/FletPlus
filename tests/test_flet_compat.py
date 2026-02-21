@@ -210,6 +210,39 @@ def test_safe_update_page_sync_calls_update_when_available() -> None:
     assert page.updated is True
 
 
+def test_safe_update_page_sync_calls_update_async_when_available() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.updated = False
+
+        async def update_async(self) -> None:
+            self.updated = True
+
+    page = _Page()
+    safe_update_page_sync(page)
+
+    assert page.updated is True
+
+
+def test_safe_update_page_sync_schedules_update_async_with_running_loop() -> None:
+    class _Page:
+        def __init__(self) -> None:
+            self.updated = False
+
+        async def update_async(self) -> None:
+            self.updated = True
+
+    page = _Page()
+
+    async def _run() -> None:
+        safe_update_page_sync(page)
+        await asyncio.sleep(0)
+
+    asyncio.run(_run())
+
+    assert page.updated is True
+
+
 def test_get_flet_icons_presence_and_absence(monkeypatch) -> None:
     from fletplus.utils import flet_compat
 

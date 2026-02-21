@@ -173,6 +173,19 @@ async def safe_update_page(page: Any) -> None:
 def safe_update_page_sync(page: Any) -> None:
     """Actualiza la página en contexto síncrono sin propagar errores de compat."""
 
+    update_async = getattr(page, "update_async", None)
+    if callable(update_async):
+        with contextlib.suppress(Exception):
+            coro = update_async()
+            if asyncio.iscoroutine(coro):
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    asyncio.run(coro)
+                else:
+                    loop.create_task(coro)
+            return
+
     update = getattr(page, "update", None)
     if callable(update):
         with contextlib.suppress(Exception):
