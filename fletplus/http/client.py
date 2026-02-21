@@ -26,6 +26,17 @@ ResponseInterceptor = Callable[[httpx.Response], Awaitable[httpx.Response | None
 
 logger = logging.getLogger(__name__)
 
+_WS_REQUEST_KWARGS = {"headers", "params", "cookies", "auth"}
+_WS_BUILD_REQUEST_KWARGS = {"headers", "params", "cookies"}
+_WS_UNSUPPORTED_HTTPX_KWARGS = {
+    "content",
+    "data",
+    "files",
+    "json",
+    "method",
+    "url",
+}
+
 
 def _parse_cache_control_max_age(cache_control: str) -> int | None:
     if not cache_control:
@@ -611,7 +622,32 @@ class HttpClient:
 
     # ------------------------------------------------------------------
     async def ws_connect(self, url: str, *, context: MutableMapping[str, Any] | None = None, **kwargs: Any):
-        request = self._client.build_request("GET", url, **{k: v for k, v in kwargs.items() if k in {"headers", "params"}})
+        unsupported_httpx_kwargs = sorted(key for key in kwargs if key in _WS_UNSUPPORTED_HTTPX_KWARGS)
+        if unsupported_httpx_kwargs:
+            supported = ", ".join(sorted(_WS_REQUEST_KWARGS))
+            unsupported = ", ".join(unsupported_httpx_kwargs)
+            raise TypeError(
+                "ws_connect() no soporta payload HTTP tradicional para el handshake websocket. "
+                f"Argumentos no soportados: {unsupported}. Usa solamente kwargs de request compatibles "
+                f"({supported}) y opciones nativas de websockets.connect."
+            )
+
+        request_kwargs = {key: value for key, value in kwargs.items() if key in _WS_REQUEST_KWARGS}
+        build_request_kwargs = {key: value for key, value in request_kwargs.items() if key in _WS_BUILD_REQUEST_KWARGS}
+        request = self._client.build_request("GET", url, **build_request_kwargs)
+
+        auth = request_kwargs.get("auth")
+        if auth is not None:
+            if isinstance(auth, tuple) and len(auth) == 2:
+                auth = httpx.BasicAuth(auth[0], auth[1])
+            if isinstance(auth, httpx.BasicAuth):
+                auth_request_flow = auth.auth_flow(request)
+                request = next(auth_request_flow)
+            else:
+                raise TypeError(
+                    "ws_connect() solo soporta auth de tipo Basic para preparar el handshake. "
+                    "Usa una tupla (usuario, contraseña) o httpx.BasicAuth."
+                )
         request_context: MutableMapping[str, Any] = context if context is not None else {}
         request_context.setdefault("websocket", True)
         event = RequestEvent(request=request, context=request_context, cache_key=None)
@@ -637,18 +673,20 @@ class HttpClient:
             connect_kwargs = dict(kwargs)
             connect_kwargs.pop("headers", None)
             connect_kwargs.pop("params", None)
-            user_headers = connect_kwargs.pop("additional_headers", None)
+            additional_headers = connect_kwargs.pop("additional_headers", None)
             legacy_headers = connect_kwargs.pop("extra_headers", None)
-            extra_headers = list(request.headers.multi_items())
-            if user_headers:
-                extra_headers.extend(httpx.Headers(user_headers).multi_items())
-            if legacy_headers:
-                extra_headers.extend(httpx.Headers(legacy_headers).multi_items())
+            # Precedencia determinística: request.headers < extra_headers < additional_headers
+            merged_headers = httpx.Headers(request.headers)
+            if legacy_headers is not None:
+                merged_headers.update(legacy_headers)
+            if additional_headers is not None:
+                merged_headers.update(additional_headers)
+
             websocket_connect = _load_websocket_connect()
             headers_arg = _resolve_websocket_headers_arg(websocket_connect)
             websocket = await websocket_connect(
                 str(request.url),
-                **{headers_arg: extra_headers},
+                **{headers_arg: list(merged_headers.multi_items())},
                 **connect_kwargs,
             )
             response = _build_websocket_response(request, websocket)
