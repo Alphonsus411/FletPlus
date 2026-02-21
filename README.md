@@ -12,9 +12,9 @@ pip install fletplus
 ```
 - Tras la instalación tendrás disponible el comando `fletplus` para crear, ejecutar y perfilar proyectos desde la terminal.
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
-- **Requiere Python 3.9+, flet>=0.28.0 y httpx>=0.28**
+- **Requiere Python 3.9+, flet>=0.29.0 (mínimo de paquete) y httpx>=0.28**
 
-> ℹ️ Desde la versión 0.2.3, FletPlus adopta oficialmente Python 3.9 como versión mínima, depende de `flet` 0.28.0 o superior para garantizar compatibilidad con los nuevos componentes y usa `httpx` (>=0.28) como cliente HTTP base.
+> ℹ️ FletPlus adopta oficialmente Python 3.9 como versión mínima, publica `flet>=0.29.0` en `pyproject.toml` como requisito de paquete y usa `httpx` (>=0.28) como cliente HTTP base.
 
 ## 📚 Documentación
 
@@ -67,11 +67,13 @@ pip install fletplus
 
 Para reducir regresiones y hacer predecible cada salto de compatibilidad, FletPlus mantiene una política explícita sobre `flet`:
 
-- **Versión objetivo**: la versión objetivo vigente es **Flet 0.80.x** y la baseline mínima soportada en CI es **Flet 0.28.x** (`>=0.28.0`).
+- **Versión objetivo**: la versión objetivo vigente es **Flet 0.80.x** y la baseline mínima de validación en CI es **Flet 0.28.x** (`>=0.28,<0.29`).
 - **Cadencia de actualización**: se evalúan nuevas versiones de Flet en una ventana **mensual** o antes si hay correcciones críticas de seguridad/estabilidad.
 - **Criterios de rollback**: si un upgrade rompe APIs públicas de FletPlus, degrada demos oficiales, o introduce fallos en CI que no se pueden corregir en la ventana de release, se revierte temporalmente a la versión objetivo anterior y se documenta en `CHANGELOG.md`.
 
 > Referencia operativa: consulta la sección ["Upgrade de Flet (paso a paso)"](docs/tooling.md#upgrade-de-flet-paso-a-paso) dentro de la [Política de upgrade de Flet y release](docs/tooling.md#politica-de-upgrade-de-flet-y-release).
+
+> Contrato de versión vigente: ver [Contrato de versión vigente](docs/tooling.md#contrato-de-version-vigente) para la definición única y sincronizada entre empaquetado, CI y validación local.
 
 [doc-tooling-workflow]: tooling.md#workflow-de-documentacion
 [gh-doc-tooling-workflow]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md#workflow-de-documentacion
