@@ -46,6 +46,33 @@ EXCLUDED_DIRS = {".git", "__pycache__", "build", "dist", "node_modules", ".venv"
 TEMPLATE_PACKAGE = "fletplus.cli"
 PACKAGE_NAME_REGEX = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+# Variables permitidas para la ejecución de `flet run`.
+# Se mantiene un enfoque de lista blanca por seguridad, pero incluyendo
+# variables clave para que intérpretes Python/virtualenvs funcionen de forma
+# consistente en Linux/macOS/Windows.
+FLET_RUN_ENV_WHITELIST = (
+    "PATH",
+    "SystemRoot",
+    "WINDIR",
+    "COMSPEC",
+    "PATHEXT",
+    "TEMP",
+    "TMP",
+    "HOME",
+    "USERPROFILE",
+    "APPDATA",
+    "LOCALAPPDATA",
+    "VIRTUAL_ENV",
+    "PYTHONPATH",
+    "PYTHONHOME",
+    "PYTHONUTF8",
+    "PYTHONDONTWRITEBYTECODE",
+    "PYTHONUNBUFFERED",
+    "LD_LIBRARY_PATH",
+    "DYLD_LIBRARY_PATH",
+    "FLET_DEVTOOLS",
+)
+
 
 @click.group()
 def app() -> None:
@@ -290,19 +317,12 @@ def _launch_flet_process(app_path: Path, port: int | None, devtools: bool) -> su
         mensaje_arranque += " (FLET_DEVTOOLS eliminado del entorno porque --no-devtools está activo)"
     click.echo(mensaje_arranque)
     from fletplus.utils.safe_subprocess import safe_popen
-    whitelist = [
-        "PATH",
-        "SystemRoot",
-        "WINDIR",
-        "COMSPEC",
-        "TEMP",
-        "TMP",
-        "HOME",
-        "USERPROFILE",
-        "PATHEXT",
-        "FLET_DEVTOOLS",
-    ]
-    return safe_popen(command, env=env, env_whitelist=whitelist, cwd=str(app_path.parent))
+    return safe_popen(
+        command,
+        env=env,
+        env_whitelist=FLET_RUN_ENV_WHITELIST,
+        cwd=str(app_path.parent),
+    )
 
 
 def _stop_process(process: subprocess.Popen) -> None:

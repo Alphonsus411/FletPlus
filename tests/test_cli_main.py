@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from click.testing import CliRunner
+from fletplus.utils import safe_subprocess
 
 
 def _configure_watchdog(monkeypatch, *, available: bool) -> None:
@@ -412,3 +413,70 @@ def test_run_resolves_relative_app_fallback_to_cwd_when_missing_in_watch(monkeyp
 
     assert result.exit_code == 0, result.output
     assert launched_app_path == [app_file.resolve()]
+
+
+def test_launch_flet_process_preserves_critical_python_env_vars(monkeypatch, tmp_path) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    app_file = tmp_path / "src" / "main.py"
+    app_file.parent.mkdir(parents=True, exist_ok=True)
+    app_file.write_text("print('ok')", encoding="utf-8")
+
+    monkeypatch.setenv("VIRTUAL_ENV", "/tmp/venv")
+    monkeypatch.setenv("PYTHONPATH", "/tmp/pythonpath")
+    monkeypatch.setenv("PYTHONHOME", "/tmp/pythonhome")
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/tmp/ld")
+    monkeypatch.setenv("DYLD_LIBRARY_PATH", "/tmp/dyld")
+    monkeypatch.setenv("APPDATA", "C:/Users/Test/AppData/Roaming")
+
+    captured: dict[str, object] = {}
+
+    def _fake_popen(command, *, env, env_whitelist, cwd):
+        captured["command"] = command
+        captured["env"] = env
+        captured["env_whitelist"] = env_whitelist
+        captured["cwd"] = cwd
+        return SimpleNamespace(poll=lambda: 0)
+
+    monkeypatch.setattr(safe_subprocess, "safe_popen", _fake_popen)
+
+    cli_main._launch_flet_process(app_file, port=None, devtools=False)
+
+    assert captured["env"]["VIRTUAL_ENV"] == "/tmp/venv"
+    assert captured["env"]["PYTHONPATH"] == "/tmp/pythonpath"
+    assert captured["env"]["PYTHONHOME"] == "/tmp/pythonhome"
+    assert captured["env"]["LD_LIBRARY_PATH"] == "/tmp/ld"
+    assert captured["env"]["DYLD_LIBRARY_PATH"] == "/tmp/dyld"
+    assert captured["env"]["APPDATA"] == "C:/Users/Test/AppData/Roaming"
+    assert "VIRTUAL_ENV" in captured["env_whitelist"]
+    assert "PYTHONPATH" in captured["env_whitelist"]
+    assert "PYTHONHOME" in captured["env_whitelist"]
+    assert "LD_LIBRARY_PATH" in captured["env_whitelist"]
+    assert "DYLD_LIBRARY_PATH" in captured["env_whitelist"]
+    assert "APPDATA" in captured["env_whitelist"]
+
+
+def test_launch_flet_process_keeps_devtools_toggle_in_whitelist(monkeypatch, tmp_path) -> None:
+    _configure_watchdog(monkeypatch, available=False)
+    cli_main = _load_cli_main_module()
+
+    app_file = tmp_path / "src" / "main.py"
+    app_file.parent.mkdir(parents=True, exist_ok=True)
+    app_file.write_text("print('ok')", encoding="utf-8")
+
+    monkeypatch.setenv("FLET_DEVTOOLS", "1")
+
+    captured: dict[str, object] = {}
+
+    def _fake_popen(command, *, env, env_whitelist, cwd):
+        captured["env"] = env
+        captured["env_whitelist"] = env_whitelist
+        return SimpleNamespace(poll=lambda: 0)
+
+    monkeypatch.setattr(safe_subprocess, "safe_popen", _fake_popen)
+
+    cli_main._launch_flet_process(app_file, port=None, devtools=False)
+
+    assert "FLET_DEVTOOLS" not in captured["env"]
+    assert "FLET_DEVTOOLS" in captured["env_whitelist"]
