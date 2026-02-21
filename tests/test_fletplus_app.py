@@ -5,7 +5,7 @@ from fletplus.animation import AnimationController
 from fletplus.context import locale_context, theme_context, user_context
 from fletplus.core import AppState
 from fletplus.core.app import FletPlusApp as CoreFletPlusApp
-from fletplus.core_legacy import FletPlusApp
+from fletplus.core_legacy import AppContext, FletPlusApp, LegacyPageAdapterConfig
 from fletplus.router import Route
 from fletplus.state import Store
 
@@ -89,8 +89,11 @@ def test_fletplus_app_initialization_and_routing():
     assert app.content_container.content.value == "Inicio"
     assert app.router.current_path == "/inicio"
     assert isinstance(app.state, Store)
-    assert page.state is app.state
-    assert page.contexts["theme"] is theme_context
+    assert isinstance(app.app_context, AppContext)
+    assert app.app_context.state is app.state
+    assert app.app_context.contexts["theme"] is theme_context
+    assert not hasattr(page, "state")
+    assert not hasattr(page, "contexts")
     assert theme_context.get() is app.theme
     assert user_context.get() == "Admin"
     assert locale_context.get() == "en-US"
@@ -131,7 +134,7 @@ def test_fletplus_app_context_lifecycle_multiple_instances():
     app_second = FletPlusApp(page, routes, title="Segunda")
     app_second.build()
 
-    assert page.contexts["theme"] is theme_context
+    assert app_second.app_context.contexts["theme"] is theme_context
     assert theme_context.get() is app_second.theme
     assert user_context.get() == "Maria"
     assert locale_context.get() == "es-MX"
@@ -145,6 +148,48 @@ def test_fletplus_app_without_routes():
     app.build()
     assert app.content_container.content is None
     app.dispose()
+
+
+def test_fletplus_app_legacy_adapter_optional_mode():
+    page = DummyPage()
+    adapter = LegacyPageAdapterConfig(enabled=True)
+    app = FletPlusApp(
+        page,
+        {"Inicio": lambda: ft.Text("Inicio")},
+        legacy_page_adapter=adapter,
+    )
+
+    assert page.state is app.state
+    assert page.contexts["theme"] is theme_context
+
+    app.dispose()
+
+    assert not hasattr(page, "state")
+    assert not hasattr(page, "contexts")
+
+
+def test_fletplus_app_legacy_adapter_does_not_override_existing_page_attrs():
+    page = DummyPage()
+    existing_state = object()
+    existing_contexts = {"existing": True}
+    page.state = existing_state
+    page.contexts = existing_contexts
+
+    app = FletPlusApp(
+        page,
+        {"Inicio": lambda: ft.Text("Inicio")},
+        legacy_page_adapter=LegacyPageAdapterConfig(enabled=True),
+    )
+
+    assert page.state is existing_state
+    assert page.contexts is existing_contexts
+    assert app.app_context.state is app.state
+    assert app.app_context.contexts["theme"] is theme_context
+
+    app.dispose()
+
+    assert page.state is existing_state
+    assert page.contexts is existing_contexts
 
 
 def test_fletplus_app_lifecycle_dispose_releases_subscriptions_and_is_idempotent():
