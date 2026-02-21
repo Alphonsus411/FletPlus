@@ -533,7 +533,8 @@ class HttpClient:
                 error=error,
             )
             await self._emit_after_with_guard(response_event, primary_error=error)
-        assert response is not None
+        if response is None:
+            raise RuntimeError("La respuesta HTTP es None después de ejecutar la petición.")
         return response
 
     # ------------------------------------------------------------------
