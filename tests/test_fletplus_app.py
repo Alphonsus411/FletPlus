@@ -147,6 +147,39 @@ def test_fletplus_app_without_routes():
     app.dispose()
 
 
+def test_fletplus_app_lifecycle_dispose_releases_subscriptions_and_is_idempotent():
+    page = DummyPage()
+    app = FletPlusApp(page, {"Inicio": lambda: ft.Text("Inicio")})
+
+    assert len(app._preference_unsubscribers) == 2
+    assert len(app.command_palette._subscriptions) == 2
+    assert app._disposed is False
+
+    app.dispose()
+
+    assert app._preference_unsubscribers == []
+    assert app.command_palette._subscriptions == []
+    assert app.command_palette._disposed is True
+    assert app._disposed is True
+
+    app.dispose()
+
+    assert app._preference_unsubscribers == []
+    assert app.command_palette._subscriptions == []
+    assert app._disposed is True
+
+
+def test_fletplus_app_context_manager_disposes():
+    page = DummyPage()
+
+    with FletPlusApp(page, {"Inicio": lambda: ft.Text("Inicio")}) as app:
+        assert app._disposed is False
+        assert len(app._preference_unsubscribers) == 2
+
+    assert app._disposed is True
+    assert app._preference_unsubscribers == []
+
+
 def test_fletplus_app_invalid_route_index():
     def home_view():
         return ft.Text("Inicio")

@@ -2,6 +2,7 @@ import logging
 
 from fletplus.components import command_palette as command_palette_module
 from fletplus.components.command_palette import CommandPalette
+from fletplus.context import locale_context, user_context
 
 
 def test_command_palette_filters_and_executes():
@@ -84,3 +85,26 @@ def test_command_palette_dispose_is_idempotent():
     assert calls == ["called"]
     assert palette._subscriptions == []
     assert palette._disposed is True
+
+
+def test_command_palette_lifecycle_subscriptions_with_contexts():
+    with locale_context.provide("es-ES"), user_context.provide("Admin"):
+        palette = CommandPalette({})
+
+        assert len(palette._subscriptions) == 2
+        assert palette._disposed is False
+
+        palette.dispose()
+
+        assert palette._subscriptions == []
+        assert palette._disposed is True
+
+
+def test_command_palette_context_manager_calls_dispose():
+    with locale_context.provide("en-US"), user_context.provide("Ana"):
+        with CommandPalette({}) as palette:
+            assert len(palette._subscriptions) == 2
+            assert palette._disposed is False
+
+        assert palette._subscriptions == []
+        assert palette._disposed is True
