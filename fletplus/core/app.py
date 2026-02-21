@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import Any
 
 import flet as ft
 
-from .layout import Layout, LayoutBuilder, LayoutComposition
-from .state import State, StateProtocol
 from fletplus.utils.flet_compat import safe_request_page_update
 
+from .layout import Layout, LayoutBuilder, LayoutComposition
+from .state import State, StateProtocol
 
 LifecycleHook = Callable[[ft.Page, StateProtocol], None]
 UpdateHook = Callable[[StateProtocol], None]
@@ -69,7 +70,8 @@ class FletPlusApp:
         previous_page = self._page
         previous_unsubscribe = self._unsubscribe
         local_page = page
-        local_refresher = lambda: self._safe_page_update(local_page)
+        def local_refresher() -> None:
+            self._safe_page_update(local_page)
         local_unsubscribe: Callable[[], None] | None = None
         ui_mounted = False
 
@@ -91,7 +93,7 @@ class FletPlusApp:
                 try:
                     local_unsubscribe()
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).warning("Fallo al desuscribir durante start()", exc_info=True)
 
             self.state.bind_refresher(None)
             self._page = previous_page
@@ -102,7 +104,7 @@ class FletPlusApp:
                     local_page.controls.clear()
                     self._safe_page_update(local_page)
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).warning("Fallo al limpiar UI tras error en start()", exc_info=True)
 
             raise
 

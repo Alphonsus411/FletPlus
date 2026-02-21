@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
-import logging
 from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)

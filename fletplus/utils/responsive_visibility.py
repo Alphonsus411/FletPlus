@@ -4,9 +4,9 @@ from typing import Dict
 
 import flet as ft
 
+from fletplus.utils.breakpoint_rs import select_breakpoint
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager import ResponsiveManager
-from fletplus.utils.breakpoint_rs import select_breakpoint
 
 
 class ResponsiveVisibility:

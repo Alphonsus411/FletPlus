@@ -9,18 +9,20 @@ import flet as ft
 
 from fletplus.components.responsive_grid_rs import (
     plan_items as _plan_grid_items_native,
+)
+from fletplus.components.responsive_grid_rs import (
     plan_items_from_objects as _plan_grid_items_native_from_objects,
 )
 from fletplus.styles import Style
-from fletplus.utils.responsive_breakpoints import BreakpointRegistry
-from fletplus.utils.responsive_manager import ResponsiveManager
-from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.utils.device_profiles import (
-    DeviceProfile,
     EXTENDED_DEVICE_PROFILES,
+    DeviceProfile,
     get_device_profile,
     iter_device_profiles,
 )
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
+from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.utils.responsive_style import ResponsiveStyle
 
 if TYPE_CHECKING:
     from fletplus.themes.theme_manager import ThemeManager

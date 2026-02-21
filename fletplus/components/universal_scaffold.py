@@ -18,23 +18,22 @@ import flet as ft
 from fletplus.components.caption_overlay import CaptionOverlay, CaptionTone
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.device_profiles import (
-    DeviceProfile,
-    DEFAULT_DEVICE_PROFILES,
     EXTENDED_DEVICE_PROFILES,
+    DeviceProfile,
     get_device_profile,
     iter_device_profiles,
 )
 from fletplus.utils.flet_compat import (
+    append_page_overlay,
     get_flet_color,
     get_flet_enum_member,
     get_flet_icon,
-    make_navigation_bar_destination,
-    make_navigation_rail_destination,
     get_page_height,
     get_page_width,
-    append_page_overlay,
-    safe_open_drawer,
     has_page_overlay_control,
+    make_navigation_bar_destination,
+    make_navigation_rail_destination,
+    safe_open_drawer,
     safe_page_set_focus,
     safe_page_speak,
     safe_update_page_sync,
@@ -46,6 +45,7 @@ from fletplus.utils.responsive_manager import ResponsiveManager
 
 if TYPE_CHECKING:
     from fletplus.themes.theme_manager import ThemeManager
+    from fletplus.components.accessibility_panel import AccessibilityPanel
 
 @dataclass(frozen=True, slots=True)
 class AdaptiveNavigationItem:
@@ -317,7 +317,7 @@ class UniversalAdaptiveScaffold:
             set_page_drawer(page, self.drawer)
 
         # Reemplazamos el contenido vacío del BottomSheet por la versión real
-        panel_control = self.accessibility_panel.build(page)
+        _ = self.accessibility_panel.build(page)
         sheet_panel_control = self._sheet_accessibility_panel.build(page)
         sheet_content = ft.Container(
             padding=ft.Padding(16, 16, 16, 32),

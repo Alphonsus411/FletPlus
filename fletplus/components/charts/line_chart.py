@@ -1,12 +1,14 @@
-from typing import List, Tuple, Optional
+import logging
+from typing import List, Optional, Tuple
 
 import flet as ft
 import flet.canvas as cv
 
 from fletplus.styles import Style
+
+from .line_chart_rs import line_segments as rs_line_segments
 from .line_chart_rs import nearest_point as rs_nearest_point
 from .line_chart_rs import screen_points as rs_screen_points
-from .line_chart_rs import line_segments as rs_line_segments
 
 
 def _screen_points_py(
@@ -61,7 +63,7 @@ def _screen_points(
                 )
             )
         except Exception:
-            pass
+            logging.getLogger(__name__).warning("rs_screen_points falló", exc_info=True)
 
     return _screen_points_py(data, x_min, x_max, y_min, y_max, width, height, scale)
 
@@ -74,7 +76,7 @@ def _nearest_point(points: List[Tuple[float, float]], x: float, y: float) -> Opt
         try:  # pragma: no cover - backend opcional
             return rs_nearest_point(points, float(x), float(y))
         except Exception:
-            pass
+            logging.getLogger(__name__).warning("rs_nearest_point falló", exc_info=True)
 
     return _nearest_point_py(points, x, y)
 
@@ -91,7 +93,7 @@ def _line_segments(points: List[Tuple[float, float]]) -> List[Tuple[float, float
         try:  # pragma: no cover - backend opcional
             return list(rs_line_segments(points))
         except Exception:
-            pass
+            logging.getLogger(__name__).warning("rs_line_segments falló", exc_info=True)
 
     return _line_segments_py(points)
 

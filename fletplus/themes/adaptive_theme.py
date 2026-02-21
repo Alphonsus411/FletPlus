@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Callable, Mapping, Sequence
 
@@ -11,8 +11,8 @@ import flet as ft
 
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.device_profiles import (
-    DeviceProfile,
     EXTENDED_DEVICE_PROFILES,
+    DeviceProfile,
     iter_device_profiles,
 )
 from fletplus.utils.responsive_manager import ResponsiveManager

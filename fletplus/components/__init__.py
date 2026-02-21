@@ -58,23 +58,23 @@ if TYPE_CHECKING:
         AdaptiveNavigationLayout,
     )
     from fletplus.components.buttons import (
+        DangerButton,
+        FloatingActionButton,
+        IconButton,
+        InfoButton,
+        OutlinedButton,
         PrimaryButton,
         SecondaryButton,
         SuccessButton,
-        WarningButton,
-        DangerButton,
-        InfoButton,
-        IconButton,
-        OutlinedButton,
         TextButton,
-        FloatingActionButton,
+        WarningButton,
     )
     from fletplus.components.caption_overlay import CaptionOverlay
     from fletplus.components.charts import LineChart
     from fletplus.components.command_palette import CommandPalette
     from fletplus.components.layouts import (
-        FlexRow,
         FlexColumn,
+        FlexRow,
         Grid,
         GridItem,
         Spacer,

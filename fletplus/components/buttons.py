@@ -1,4 +1,5 @@
 import flet as ft
+
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
 

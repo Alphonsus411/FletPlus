@@ -9,8 +9,8 @@ import flet as ft
 
 from fletplus.styles import Style
 from fletplus.utils.device_profiles import (
-    DeviceProfile,
     DEFAULT_DEVICE_PROFILES,
+    DeviceProfile,
     get_device_profile,
 )
 from fletplus.utils.flet_compat import (

@@ -6,7 +6,6 @@ from typing import Literal
 
 import flet as ft
 
-
 CaptionTone = Literal["info", "success", "warning", "error"]
 
 _TONE_COLORS: dict[CaptionTone, str] = {

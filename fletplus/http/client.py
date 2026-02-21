@@ -7,7 +7,6 @@ import email.utils
 import importlib
 import inspect
 import logging
-import os
 import time
 from dataclasses import dataclass, field
 from datetime import timezone
@@ -16,9 +15,9 @@ from typing import Any, Awaitable, Callable, Iterable, MutableMapping
 
 import httpx
 
-from .disk_cache_py import DiskCache as _PyDiskCache
-
 from fletplus.state import Signal
+
+from .disk_cache_py import DiskCache as _PyDiskCache
 
 RequestHook = Callable[["RequestEvent"], Awaitable[None] | None]
 ResponseHook = Callable[["ResponseEvent"], Awaitable[None] | None]

@@ -17,9 +17,10 @@ import importlib.util
 import inspect
 import json
 import logging
-from typing import TYPE_CHECKING
 from collections.abc import Callable, Mapping
 from copy import deepcopy
+from typing import TYPE_CHECKING
+
 import flet as ft
 
 from fletplus.themes.palettes import (

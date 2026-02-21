@@ -1,7 +1,8 @@
 import asyncio
 import inspect
-import flet as ft
 from typing import Awaitable, Callable, Dict, Tuple
+
+import flet as ft
 
 
 class ShortcutManager:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Mapping, Sequence
 
@@ -11,22 +12,22 @@ from fletplus.components.caption_overlay import CaptionOverlay
 from fletplus.styles import Style
 from fletplus.utils.accessibility import AccessibilityPreferences
 from fletplus.utils.device_profiles import (
-    DeviceProfile,
     DEFAULT_DEVICE_PROFILES,
-    iter_device_profiles,
+    DeviceProfile,
     get_device_profile,
+    iter_device_profiles,
 )
 from fletplus.utils.flet_compat import (
     get_flet_color,
     get_flet_enum_member,
     get_flet_icon,
+    get_page_width,
     make_navigation_bar_destination,
     make_navigation_rail_destination,
-    safe_page_set_focus,
-    set_page_drawer,
-    safe_update_page_sync,
-    get_page_width,
     safe_open_drawer,
+    safe_page_set_focus,
+    safe_update_page_sync,
+    set_page_drawer,
     set_page_width,
     with_opacity,
 )
@@ -180,7 +181,7 @@ class AdaptiveNavigationLayout:
                 try:
                     self.theme.set_device_tokens(device, tokens_map, refresh=False)
                 except Exception:  # pragma: no cover - errores defensivos
-                    continue
+                    logging.getLogger(__name__).warning("Fallo al aplicar tokens de dispositivo", exc_info=True)
             self.theme.apply_theme()
 
     # Propiedades públicas ----------------------------------------------
@@ -455,7 +456,7 @@ class AdaptiveNavigationLayout:
             try:
                 self.theme.apply_theme(device=device)
             except Exception:  # pragma: no cover - manejo defensivo
-                pass
+                logging.getLogger(__name__).warning("Fallo al aplicar tema por dispositivo", exc_info=True)
         self._update_content()
 
         body_controls: list[ft.Control] = []

@@ -9,8 +9,9 @@ from __future__ import annotations
 from typing import Callable, Dict
 
 import flet as ft
-from fletplus.utils.responsive_style import ResponsiveStyle
+
 from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.utils.responsive_style import ResponsiveStyle
 
 
 class ResponsiveContainer:

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import logging
+from dataclasses import dataclass, field
 from typing import Any, Optional
-
-logger = logging.getLogger(__name__)
 
 import flet as ft
 
+logger = logging.getLogger(__name__)
 
 _NOT_SET = object()
 

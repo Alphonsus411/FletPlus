@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Callable, Dict, Iterable, Mapping, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, Mapping, Optional
 
 import flet as ft
 
@@ -66,6 +66,10 @@ class RouteMatch:
 
 # Import diferido para evitar dependencia circular en tiempo de importación
 from . import router as _router  # noqa: E402  # pylint: disable=wrong-import-position
+
+if TYPE_CHECKING:
+    # Solo para comprobación de tipos; evita dependencia en tiempo de import.
+    from .router import _RouteNode
 
 Router = _router.Router
 """Alias para evitar dependencias circulares en anotaciones."""

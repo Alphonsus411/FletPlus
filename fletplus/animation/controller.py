@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import weakref
 from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, Literal, Optional, Protocol
-import weakref
 
 import flet as ft
 

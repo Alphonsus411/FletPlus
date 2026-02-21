@@ -5,14 +5,13 @@ from typing import Mapping, Sequence
 
 import flet as ft
 
-from fletplus.styles import Style
-from fletplus.utils.responsive_breakpoints import BreakpointRegistry
-from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.components.responsive_container import (
     ResponsiveContainer as _CanonicalResponsiveContainer,
 )
+from fletplus.styles import Style
 from fletplus.utils.flet_compat import get_page_width, safe_update_page_sync
-
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
+from fletplus.utils.responsive_manager import ResponsiveManager
 
 # Alias para mantener compatibilidad con la ruta histórica.
 ResponsiveContainer = _CanonicalResponsiveContainer

@@ -15,11 +15,11 @@ estas capacidades.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import asyncio
 import importlib
 import importlib.util
-import asyncio
 import inspect
+from dataclasses import dataclass, field
 from typing import (
     Any,
     AsyncIterable,
@@ -38,7 +38,6 @@ from typing import (
 import flet as ft
 
 from fletplus.styles import Style
-
 
 # ---------------------------------------------------------------------------
 # Modelos declarativos

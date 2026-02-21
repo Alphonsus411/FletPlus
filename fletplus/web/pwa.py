@@ -8,11 +8,11 @@ Flet.
 
 from __future__ import annotations
 
-from pathlib import Path
 import json
-from urllib.parse import urlparse
 from html import escape
-from typing import Iterable, List, Dict
+from pathlib import Path
+from typing import Dict, Iterable, List
+from urllib.parse import urlparse
 
 import flet as ft
 

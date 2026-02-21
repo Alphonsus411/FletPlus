@@ -15,8 +15,16 @@ LAZY_IMPORTS = {
 }
 
 if TYPE_CHECKING:
-    from fletplus.animation.controller import AnimationController, animation_controller_context
-    from fletplus.animation.wrappers import AnimatedContainer, FadeIn, Scale, SlideTransition
+    from fletplus.animation.controller import (
+        AnimationController,
+        animation_controller_context,
+    )
+    from fletplus.animation.wrappers import (
+        AnimatedContainer,
+        FadeIn,
+        Scale,
+        SlideTransition,
+    )
 
 __all__ = [
     "AnimationController",

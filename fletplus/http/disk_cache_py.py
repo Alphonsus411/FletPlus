@@ -6,10 +6,11 @@ import base64
 import contextlib
 import hashlib
 import json
+import logging
 import os
 import stat
-import time
 import tempfile
+import time
 import warnings
 from pathlib import Path
 from typing import Any, Literal
@@ -17,7 +18,8 @@ from typing import Any, Literal
 import httpx
 
 try:  # pragma: no cover - acelerador opcional
-    from .disk_cache_pr import build_key as _build_key_rs, cleanup as _cleanup_rs
+    from .disk_cache_pr import build_key as _build_key_rs
+    from .disk_cache_pr import cleanup as _cleanup_rs
 except Exception:  # pragma: no cover - fallback limpio
     _build_key_rs = None
     _cleanup_rs = None
@@ -98,7 +100,7 @@ class DiskCache:
             try:
                 return _build_key_rs(request)
             except Exception:
-                pass
+                logging.getLogger(__name__).warning("DiskCache.build_key acelerador falló", exc_info=True)
 
         body = request.content or b""
         if isinstance(body, str):
@@ -238,7 +240,7 @@ class DiskCache:
                 _cleanup_rs(str(self.directory), self.max_entries, self.max_age)
                 return
             except Exception:
-                pass
+                logging.getLogger(__name__).warning("DiskCache._cleanup acelerador falló", exc_info=True)
 
         cutoff = (time.time() - self.max_age) if self.max_age is not None else None
         files: list[tuple[Path, float]] = []

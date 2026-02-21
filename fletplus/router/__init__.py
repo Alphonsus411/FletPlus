@@ -14,7 +14,12 @@ LAZY_IMPORTS = {
 }
 
 if TYPE_CHECKING:
-    from fletplus.router.route import Route, RouteMatch, LayoutInstance, layout_from_attribute
+    from fletplus.router.route import (
+        LayoutInstance,
+        Route,
+        RouteMatch,
+        layout_from_attribute,
+    )
     from fletplus.router.router import Router
 
 __all__ = [

@@ -11,24 +11,20 @@ from typing import Callable, Iterable, Mapping
 import flet as ft
 
 from fletplus.animation import AnimationController, animation_controller_context
-
+from fletplus.components.command_palette import CommandPalette
+from fletplus.components.sidebar_admin import SidebarAdmin
 from fletplus.context import (
     ContextProvider,
     locale_context,
     theme_context,
     user_context,
 )
-from fletplus.themes.theme_manager import ThemeManager
-from fletplus.components.sidebar_admin import SidebarAdmin
 from fletplus.desktop.window_manager import WindowManager
-from fletplus.utils.shortcut_manager import ShortcutManager
-from fletplus.components.command_palette import CommandPalette
-from fletplus.utils.device import is_mobile, is_web, is_desktop
-from fletplus.utils.responsive_manager import ResponsiveManager
-from fletplus.styles import Style
-from fletplus.router import Route, Router, RouteMatch
+from fletplus.router import Route, RouteMatch, Router
 from fletplus.state import Store
-from fletplus.utils.preferences import PreferenceStorage
+from fletplus.styles import Style
+from fletplus.themes.theme_manager import ThemeManager
+from fletplus.utils.device import is_desktop, is_mobile, is_web
 from fletplus.utils.flet_compat import (
     get_flet_enum_member,
     get_flet_icon,
@@ -41,6 +37,9 @@ from fletplus.utils.flet_compat import (
     set_page_height,
     set_page_width,
 )
+from fletplus.utils.preferences import PreferenceStorage
+from fletplus.utils.responsive_manager import ResponsiveManager
+from fletplus.utils.shortcut_manager import ShortcutManager
 
 logger = logging.getLogger(__name__)
 

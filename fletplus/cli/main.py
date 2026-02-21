@@ -11,14 +11,17 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 import threading
+import time
 from importlib import resources, util
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Callable, Dict, Iterable
 
 import click
+
+from .build import PackagingError, run_build
+
 
 def _watchdog_available() -> bool:
     try:
@@ -38,9 +41,6 @@ else:  # pragma: no cover - depende de watchdog opcional
         """Fallback cuando watchdog no está instalado."""
 
     Observer = None  # type: ignore[assignment]
-
-from .build import PackagingError, run_build
-
 
 EXCLUDED_DIRS = {".git", "__pycache__", "build", "dist", "node_modules", ".venv", "venv"}
 TEMPLATE_PACKAGE = "fletplus.cli"
@@ -78,8 +78,9 @@ def _copy_template_tree(template_root: Traversable, destination: Path, context: 
 
 
 def _profile_router_navigation() -> None:
-    from fletplus.router import Route, Router
     import flet as ft
+
+    from fletplus.router import Route, Router
 
     router = Router(
         routes=[

@@ -21,10 +21,10 @@ ninguno activo se devuelve el valor por defecto.
 
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
 import contextvars
 import weakref
-from typing import Any, Callable, Generic, Optional, Tuple, TypeVar, TYPE_CHECKING
+from contextlib import AbstractContextManager
+from typing import TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar
 
 if TYPE_CHECKING:
     from fletplus.state import Signal
