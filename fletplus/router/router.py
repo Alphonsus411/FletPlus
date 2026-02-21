@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import importlib
+import warnings
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
-import warnings
+
+import flet as ft
+from .route import LayoutInstance, Route, RouteMatch
 
 
 def _import_optional_backend(module_name: str):
@@ -27,9 +30,7 @@ if _router_pr is None and _router_rs is None and _router_cy is None:
         stacklevel=2,
     )
 
-import flet as ft
-
-from .route import LayoutInstance, Route, RouteMatch
+ 
 
 
 @dataclass(slots=True)
@@ -252,7 +253,11 @@ class Router:
                 self._layouts[node_key] = cache
             cache.instance.mount(content)
             content = cache.instance.root
-        assert content is not None  # pragma: no cover - nunca debería ser None
+        if content is None:  # pragma: no cover - defensivo ante layouts defectuosos
+            raise RuntimeError(
+                "La composición de layouts no produjo contenido. "
+                "Verifica que los builders de LayoutInstance asignen 'root'."
+            )
         return content
 
     # ------------------------------------------------------------------

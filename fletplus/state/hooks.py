@@ -259,7 +259,10 @@ def use_state(initial: Any) -> Signal:
     """Crea o recupera una señal local asociada al render actual."""
 
     context = _current_context(required=True)
-    assert context is not None  # for type-checkers
+    if context is None:  # defensivo
+        raise _ReactiveRuntimeError(
+            "Hooks reactivos requieren un contexto activo (@reactive)."
+        )
     return context.next_state(initial)
 
 
@@ -267,7 +270,10 @@ def use_signal(signal: Signal) -> Signal:
     """Registra una señal externa como dependencia del render actual."""
 
     context = _current_context(required=True)
-    assert context is not None
+    if context is None:  # defensivo
+        raise _ReactiveRuntimeError(
+            "Hooks reactivos requieren un contexto activo (@reactive)."
+        )
     context.track(signal)
     return signal
 

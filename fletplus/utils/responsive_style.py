@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, Mapping, Optional
 
 import flet as ft
 
 from fletplus.styles import Style
-from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.breakpoint_rs import select_breakpoint
+from fletplus.utils.responsive_breakpoints import BreakpointRegistry
+
+logger = logging.getLogger(__name__)
 
 try:  # soporte opcional para detección de dispositivo
     _device_module = __import__("fletplus.utils.device", fromlist=["device"])
@@ -22,8 +25,8 @@ def _is_mobile(page: ft.Page) -> bool:
     if _device_module and hasattr(_device_module, "is_mobile"):
         try:
             return bool(_device_module.is_mobile(page))
-        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
-            pass
+        except Exception as err:  # pragma: no cover - defensivo ante implementaciones externas
+            logger.debug("is_mobile externo falló: %s", err)
     return getattr(page, "platform", None) in {"android", "ios"}
 
 
@@ -33,8 +36,8 @@ def _is_tablet(page: ft.Page) -> bool:
     if _device_module and hasattr(_device_module, "is_tablet"):
         try:
             return bool(_device_module.is_tablet(page))
-        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
-            pass
+        except Exception as err:  # pragma: no cover - defensivo ante implementaciones externas
+            logger.debug("is_tablet externo falló: %s", err)
     width = page.width or 0
     return 600 <= width < 1024 and getattr(page, "platform", None) not in {"windows", "macos", "linux"}
 
@@ -45,8 +48,8 @@ def _is_web(page: ft.Page) -> bool:
     if _device_module and hasattr(_device_module, "is_web"):
         try:
             return bool(_device_module.is_web(page))
-        except Exception:  # pragma: no cover - defensivo
-            pass
+        except Exception as err:  # pragma: no cover - defensivo
+            logger.debug("is_web externo falló: %s", err)
     return getattr(page, "platform", None) == "web"
 
 
@@ -56,8 +59,8 @@ def _is_desktop(page: ft.Page) -> bool:
     if _device_module and hasattr(_device_module, "is_desktop"):
         try:
             return bool(_device_module.is_desktop(page))
-        except Exception:  # pragma: no cover - defensivo
-            pass
+        except Exception as err:  # pragma: no cover - defensivo
+            logger.debug("is_desktop externo falló: %s", err)
     return getattr(page, "platform", None) in {"windows", "macos", "linux"}
 
 
@@ -67,8 +70,8 @@ def _is_large_desktop(page: ft.Page) -> bool:
     if _device_module and hasattr(_device_module, "is_large_desktop"):
         try:
             return bool(_device_module.is_large_desktop(page))
-        except Exception:  # pragma: no cover - defensivo ante implementaciones externas
-            pass
+        except Exception as err:  # pragma: no cover - defensivo ante implementaciones externas
+            logger.debug("is_large_desktop externo falló: %s", err)
     width = page.width or 0
     return width >= 1440 and _is_desktop(page)
 
