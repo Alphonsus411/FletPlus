@@ -209,6 +209,26 @@ def test_file_storage_provider_refreshes_reads_between_instances(tmp_path: Path)
     assert provider_reader.get("shared") == {"version": 1}
     assert "shared" in provider_reader.keys()
 
+
+def test_file_storage_provider_remove_uses_fresh_cache_between_instances(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "shared-storage-remove.json"
+    provider_a = FileStorageProvider(path)
+    provider_b = FileStorageProvider(path)
+
+    provider_a.set("shared", {"version": 1})
+
+    # B elimina sin recarga manual explícita.
+    provider_b._remove_raw("shared")
+
+    assert provider_b.get("shared") is None
+    assert json.loads(path.read_text("utf-8")) == {}
+
+    provider_c = FileStorageProvider(path)
+    assert provider_c.get("shared") is None
+
+
 def test_file_storage_provider_write_always_valid_json(tmp_path: Path) -> None:
     path = tmp_path / "storage.json"
     provider = FileStorageProvider(path)

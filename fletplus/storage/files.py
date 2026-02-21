@@ -207,6 +207,7 @@ class FileStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _write_raw(self, key: str, value: Any) -> None:
+        self._refresh_cache_if_changed()
         self._cache[key] = value
         self._dirty_keys.add(key)
         self._deleted_keys.discard(key)
@@ -214,6 +215,10 @@ class FileStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _remove_raw(self, key: str) -> None:
+        self._refresh_cache_if_changed()
+        if key not in self._cache:
+            raise KeyError(key)
+        self._refresh_cache_if_changed()
         if key not in self._cache:
             raise KeyError(key)
         self._cache.pop(key)
@@ -223,6 +228,7 @@ class FileStorageProvider(StorageProvider[Any]):
 
     # ------------------------------------------------------------------
     def _clear_raw(self) -> None:
+        self._refresh_cache_if_changed()
         self._cache.clear()
         self._dirty_keys.clear()
         self._deleted_keys.clear()
