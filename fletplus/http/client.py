@@ -37,6 +37,10 @@ _WS_UNSUPPORTED_HTTPX_KWARGS = {
     "url",
 }
 
+_DEFAULT_SENSITIVE_QUERY_PARAMS = frozenset(
+    {"token", "access_token", "api_key", "apikey", "auth", "signature", "sig"}
+)
+
 
 def _parse_cache_control_max_age(cache_control: str) -> int | None:
     if not cache_control:
@@ -339,6 +343,7 @@ class HttpClient:
         base_url: str | None = None,
         timeout: httpx.Timeout | float | None = None,
         cache: DiskCache | None = None,
+        sensitive_query_params: Iterable[str] | None = None,
         interceptors: Iterable[HttpInterceptor] | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
@@ -352,6 +357,12 @@ class HttpClient:
         self._cache = cache
         self._hooks = _HookManager()
         self._interceptors: list[HttpInterceptor] = list(interceptors or [])
+        if sensitive_query_params is None:
+            self._sensitive_query_params = _DEFAULT_SENSITIVE_QUERY_PARAMS
+        else:
+            self._sensitive_query_params = frozenset(
+                key.strip().lower() for key in sensitive_query_params if key and key.strip()
+            )
 
     # ------------------------------------------------------------------
     @property
@@ -395,7 +406,8 @@ class HttpClient:
         - Si `emit_after` falla y no existe error principal, el error del hook se propaga.
 
         Nota sobre caché: si los headers incluyen credenciales (`authorization`,
-        `cookie` o `x-api-key`), la caché se desactiva automáticamente para evitar
+        `cookie` o `x-api-key`) o la URL contiene parámetros sensibles
+        (p. ej. `api_key`, `token`), la caché se desactiva automáticamente para evitar
         persistir respuestas sensibles. Para permitirlo debes habilitarlo
         explícitamente con `allow_sensitive_cache=True`. También se respetan
         las cabeceras
@@ -449,7 +461,10 @@ class HttpClient:
 
             credential_headers = {"authorization", "cookie", "x-api-key"}
             has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
-            if has_credentials and not allow_sensitive_cache:
+            has_sensitive_query_params = any(
+                key.lower() in self._sensitive_query_params for key in request.url.params.keys()
+            )
+            if (has_credentials or has_sensitive_query_params) and not allow_sensitive_cache:
                 use_cache = False
 
             if self._cache and use_cache and request.method.upper() == "GET":
