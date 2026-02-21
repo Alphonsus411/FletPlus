@@ -276,7 +276,9 @@ Esta política define cómo mantenemos la compatibilidad de FletPlus con Flet y 
 
 ### Versión objetivo, cadencia y rollback
 
-- **Versión objetivo vigente**: `flet==0.29.x` (mínimo soportado `>=0.29.0`).
+- **Versión objetivo vigente**: `flet==0.80.x` (target de migración en CI).
+- **Baseline de validación en CI**: `flet>=0.28,<0.29` (`min-supported`).
+- **Mínimo de empaquetado**: `flet>=0.29.0` (publicado en `pyproject.toml`).
 - **Cadencia de actualización**: revisión **mensual** de nuevas versiones de Flet, con posibilidad de adelanto por seguridad o correcciones críticas.
 - **Rollback**: se revierte al objetivo anterior cuando ocurra cualquiera de estos escenarios:
   1. Ruptura de API pública de FletPlus.
@@ -285,6 +287,16 @@ Esta política define cómo mantenemos la compatibilidad de FletPlus con Flet y 
   4. Regresión funcional en la matriz de compatibilidad (`baseline` o `target`) que bloquee contratos críticos de navegación, tema o demo.
 
 Todo upgrade/rollback debe registrarse en `CHANGELOG.md` indicando versión evaluada, decisión y motivo.
+
+### Contrato de versión vigente
+
+Este bloque es la referencia **única** para evitar desalineaciones entre documentación, CI y validación local:
+
+- **Mínimo de paquete (distribución)**: `pyproject.toml` declara `flet>=0.29.0`.
+- **Baseline/target en CI**: `.github/workflows/reusable-quality.yml` valida `min-supported` (`flet>=0.28,<0.29`) y `latest-migration-target` (`flet>=0.80,<0.81`).
+- **Validación local de minors permitidos**: `tools/flet_version_matrix_config.py` define `FLET_MATRIX_MINORS = ("0.28", "0.80")` y `ALLOWED_FLET_MINORS`.
+
+Regla operativa: cualquier cambio de baseline o target se realiza primero en `tools/flet_version_matrix_config.py` y luego se replica de forma idéntica en el workflow de CI y documentación asociada.
 
 ### Upgrade de Flet (paso a paso)
 

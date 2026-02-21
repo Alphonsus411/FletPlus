@@ -10,8 +10,9 @@ Este documento define una migración **controlada por fases** para compatibiliza
 - `fletplus/core_legacy.py`
 - `fletplus_demo/`
 
-**Versión mínima soportada (estado actual)**: `flet>=0.28,<0.29` (según job `min-supported` de CI).  
-**Versión objetivo de migración (estado objetivo)**: `flet>=0.80,<0.81` (según job `latest-migration-target` de CI).
+**Baseline de validación (estado actual en CI)**: `flet>=0.28,<0.29` (job `min-supported`).  
+**Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81` (job `latest-migration-target`).  
+**Mínimo de paquete (distribución)**: `flet>=0.29.0` (según `pyproject.toml`).
 
 ---
 
@@ -169,15 +170,13 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 
 | Ámbito | Estado actual (observado en repo) | Estado objetivo de migración | Fuente de verdad |
 |---|---|---|---|
-| Manifiesto de paquete | `pyproject.toml`: `flet>=0.29.0` | Mantener mínimo `>=0.29` mientras se valida minor objetivo | `pyproject.toml` |
-| Dependencias de desarrollo | `requirements.txt`: `flet==0.27.6` (heredado y desalineado) | Alinear a baseline activa (`>=0.28,<0.29`) o eliminar pin legacy | `requirements.txt` |
-| CI baseline (`flet-version-matrix`) | `flet>=0.28,<0.29` (`min-supported`) | Mantener como baseline contractual | `.github/workflows/reusable-quality.yml` |
+| Manifiesto de paquete | `pyproject.toml`: `flet>=0.29.0` | Mantener este mínimo de distribución hasta nuevo contrato | `pyproject.toml` |
+| CI baseline (`flet-version-matrix`) | `flet>=0.28,<0.29` (`min-supported`) | Mantener baseline contractual de regresión | `.github/workflows/reusable-quality.yml` |
 | CI target (`flet-version-matrix`) | `flet>=0.80,<0.81` (`latest-migration-target`) | Consolidar compatibilidad funcional sobre `0.80.x` | `.github/workflows/reusable-quality.yml` |
-| Fuente de verdad para minors de matriz | `tools/flet_version_matrix_config.py` (`FLET_MATRIX_MINORS`) | Mantener workflow/docs sincronizados con ese archivo único | `tools/flet_version_matrix_config.py` |
+| Validación local de minors | `FLET_MATRIX_MINORS = ("0.28", "0.80")` | Mantener sincronía exacta con matriz CI | `tools/flet_version_matrix_config.py` |
+| Dependencias legacy fuera de contrato | `requirements.txt`: `flet==0.27.6` (heredado) | Tratar como deuda técnica y no como referencia de contrato vigente | `requirements.txt` |
 
-> Regla operativa: esta tabla reemplaza cualquier resumen “antes/después” previo y se actualiza en cada cambio de baseline/target en CI.
-
-> **FUENTE DE VERDAD ÚNICA** para los minors de la matriz: `tools/flet_version_matrix_config.py` (`FLET_MATRIX_MINORS`). El workflow de CI y esta guía deben copiar exactamente ese set.
+> Regla operativa: para el contrato activo usar únicamente la sección [Contrato de versión vigente](tooling.md#contrato-de-version-vigente). Esta tabla se mantiene alineada con ese bloque en cada cambio de baseline/target.
 
 ## 8) Checklist final de aceptación técnica
 
