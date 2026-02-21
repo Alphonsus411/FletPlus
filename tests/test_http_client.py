@@ -308,6 +308,97 @@ async def test_http_client_websocket_headers_use_additional_headers(monkeypatch:
 
 
 @pytest.mark.anyio
+async def test_http_client_ws_connect_forwards_headers_and_params(monkeypatch: pytest.MonkeyPatch):
+    captured = {}
+
+    class DummyWebSocket:
+        response_headers = {}
+        response_status = 101
+
+        async def close(self) -> None:
+            return None
+
+    async def modern_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        captured["url"] = url
+        captured["headers"] = {k.lower(): v for k, v in dict(additional_headers or []).items()}
+        return DummyWebSocket()
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: modern_connect)
+
+    ws = await client.ws_connect(
+        "https://example.org/ws",
+        headers={"X-From-Request": "1"},
+        params={"channel": "chat"},
+    )
+    await ws.aclose()
+    await client.aclose()
+
+    assert captured["url"] == "https://example.org/ws?channel=chat"
+    assert captured["headers"]["x-from-request"] == "1"
+
+
+@pytest.mark.anyio
+async def test_http_client_ws_connect_forwards_auth_and_cookies(monkeypatch: pytest.MonkeyPatch):
+    captured_headers = {}
+
+    class DummyWebSocket:
+        response_headers = {}
+        response_status = 101
+
+        async def close(self) -> None:
+            return None
+
+    async def modern_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        captured_headers.update({k.lower(): v for k, v in dict(additional_headers or []).items()})
+        return DummyWebSocket()
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: modern_connect)
+
+    ws = await client.ws_connect(
+        "https://example.org/ws",
+        auth=("alice", "secret"),
+        cookies={"session": "abc123"},
+    )
+    await ws.aclose()
+    await client.aclose()
+
+    assert captured_headers["authorization"].startswith("Basic ")
+    assert captured_headers["cookie"] == "session=abc123"
+
+
+@pytest.mark.anyio
+async def test_http_client_ws_connect_additional_headers_override_extra_headers(monkeypatch: pytest.MonkeyPatch):
+    captured_headers = {}
+
+    class DummyWebSocket:
+        response_headers = {}
+        response_status = 101
+
+        async def close(self) -> None:
+            return None
+
+    async def modern_connect(url: str, additional_headers: Any = None, **kwargs: Any):
+        captured_headers.update({k.lower(): v for k, v in dict(additional_headers or []).items()})
+        return DummyWebSocket()
+
+    client = HttpClient()
+    monkeypatch.setattr("fletplus.http.client._load_websocket_connect", lambda: modern_connect)
+
+    ws = await client.ws_connect(
+        "https://example.org/ws",
+        headers={"X-Conflict": "request"},
+        extra_headers={"X-Conflict": "legacy"},
+        additional_headers={"X-Conflict": "additional"},
+    )
+    await ws.aclose()
+    await client.aclose()
+
+    assert captured_headers["x-conflict"] == "additional"
+
+
+@pytest.mark.anyio
 async def test_http_client_websocket_headers_use_extra_headers_fallback(monkeypatch: pytest.MonkeyPatch):
     captured_headers = {}
 
