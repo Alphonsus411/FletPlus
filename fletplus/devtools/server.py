@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
+import ipaddress
 import json
 import logging
-import ipaddress
 from collections import OrderedDict
 from collections.abc import Iterable
 from typing import Any
@@ -206,7 +207,14 @@ class DevToolsServer:
                         "usa Authorization Bearer o X-DevTools-Token"
                     )
 
-            if token != self._auth_token:
+            try:
+                # Comparación en tiempo constante para evitar ataques de timing
+                match = hmac.compare_digest(
+                    token.encode("utf-8"), self._auth_token.encode("utf-8")
+                )
+            except Exception:
+                match = False
+            if not match:
                 _LOGGER.warning("Token inválido o ausente al conectar DevTools")
                 return False
 
