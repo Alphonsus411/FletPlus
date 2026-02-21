@@ -8,7 +8,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Iterable
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
 try:
     from websockets.asyncio.server import ServerProtocol, serve
@@ -75,8 +75,7 @@ class DevToolsServer:
         entrantes deben incluir el token en un header dedicado
         (``Authorization: Bearer <token>`` o ``X-DevTools-Token: <token>``) y/o
         un header ``Origin`` permitido; en caso contrario se rechazan con un
-        cierre de política. Durante una ventana de deprecación, también se
-        admite ``?token=...`` como fallback legacy.
+        cierre de política.
 
         Para exponer el servidor fuera de loopback (por ejemplo ``0.0.0.0``,
         ``::`` o una IP pública) es obligatorio configurar ``auth_token`` o
@@ -181,7 +180,7 @@ class DevToolsServer:
             await self._unregister(websocket)
 
     def _is_authorized(self, websocket: ServerProtocol) -> bool:
-        path, headers = self._get_request_path_and_headers(websocket)
+        _, headers = self._get_request_path_and_headers(websocket)
 
         if self._auth_token is not None:
             if headers is None:
@@ -191,21 +190,6 @@ class DevToolsServer:
                 return False
 
             token = self._extract_token_from_headers(headers)
-
-            if token is None:
-                if path is None:
-                    _LOGGER.warning(
-                        "No se pudo leer path del request para validar token legacy"
-                    )
-                    return False
-
-                parsed = urlparse(path)
-                token = parse_qs(parsed.query).get("token", [None])[0]
-                if token is not None:
-                    _LOGGER.warning(
-                        "Se usó token por query string (?token=...): método deprecado; "
-                        "usa Authorization Bearer o X-DevTools-Token"
-                    )
 
             try:
                 # Comparación en tiempo constante para evitar ataques de timing
