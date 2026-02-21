@@ -931,7 +931,7 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
-    "aurora": {
+    "aurora_neon": {
         "description": "Inspirada en auroras boreales: contrastes vibrantes y neones suaves.",
         "light": {
             "colors": {

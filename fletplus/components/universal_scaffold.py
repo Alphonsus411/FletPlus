@@ -44,8 +44,8 @@ from fletplus.utils.flet_compat import (
 from fletplus.utils.responsive_manager import ResponsiveManager
 
 if TYPE_CHECKING:
-    from fletplus.themes.theme_manager import ThemeManager
     from fletplus.components.accessibility_panel import AccessibilityPanel
+    from fletplus.themes.theme_manager import ThemeManager
 
 @dataclass(frozen=True, slots=True)
 class AdaptiveNavigationItem:
