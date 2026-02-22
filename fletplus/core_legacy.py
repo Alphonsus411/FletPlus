@@ -531,7 +531,7 @@ class FletPlusApp:
             if not getattr(self, "_disposed", True):
                 self.dispose()
         except Exception:
-            pass
+            logger.debug("Error al limpiar FletPlusApp en __del__", exc_info=True)
 
     # ------------------------------------------------------------------
     def build(self) -> None:

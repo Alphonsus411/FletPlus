@@ -203,8 +203,8 @@ class CommandPalette:
                     try:
                         unsubscribe()
                     except Exception:
-                        continue
+                        logging.debug("Error al cancelar una subscripción en __del__", exc_info=True)
                 subscriptions.clear()
             setattr(self, "_disposed", True)
         except Exception:
-            pass
+            logging.debug("Error al liberar CommandPalette en __del__", exc_info=True)

@@ -140,7 +140,8 @@ class _PythonListenerContainer:
                 alive.append(wrapper)
             except Exception:  # pragma: no cover - errores de usuario
                 # Evitamos que un error en un listener bloquee el resto.
-                continue
+                import logging
+                logging.debug("Error en listener de AnimationController", exc_info=True)
         if alive:
             self._listeners[name] = alive
         else:
@@ -290,10 +291,12 @@ class AnimationController:
                 target.update()
                 return
             except Exception:  # pragma: no cover - errores del usuario
-                pass
+                import logging
+                logging.debug("Error al actualizar control en AnimationController", exc_info=True)
         if self.page is not None and hasattr(self.page, "update"):
             try:
                 self.page.update()
             except Exception:  # pragma: no cover - errores del usuario
-                pass
+                import logging
+                logging.debug("Error al actualizar página en AnimationController", exc_info=True)
 
