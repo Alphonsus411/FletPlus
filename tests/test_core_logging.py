@@ -1,24 +1,9 @@
-import importlib
 import logging
-import sys
-from pathlib import Path
-
-
-def _ensure_tests_importable() -> None:
-    """Garantiza que ``tests`` sea importable aunque se ejecute el archivo directamente."""
-
-    project_root = Path(__file__).resolve().parent.parent
-    project_root_str = str(project_root)
-    if project_root_str not in sys.path:
-        sys.path.insert(0, project_root_str)
-
-
-_ensure_tests_importable()
-DummyPage = importlib.import_module("tests.test_fletplus_app").DummyPage
 
 import flet as ft
 
 from fletplus.core_legacy import FletPlusApp
+from tests.test_fletplus_app import DummyPage
 
 
 def test_load_route_invalid_index_logs_error(caplog):

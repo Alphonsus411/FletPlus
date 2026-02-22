@@ -8,7 +8,7 @@ El punto de entrada de la aplicación está en `src/main.py`, donde se define la
 ## Requisitos
 
 - Python 3.9 o superior
-- Flet `>=0.29.0` (misma política de versión que `fletplus`)
+- Flet `>=0.29.0,<0.81` (misma política de versión que `fletplus`)
 - Dependencias listadas en `requirements.txt`
 
 ## Ejecución en modo desarrollo

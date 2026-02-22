@@ -1,3 +1,5 @@
+import os
+import pytest
 from fletplus.utils.dragdrop import FileDropZone
 
 
@@ -43,7 +45,12 @@ def test_file_drop_zone_rejects_traversal_and_symlinks(tmp_path):
     outside = tmp_path / "outside.txt"
     outside.write_text("no")
     link = base / "link.txt"
-    link.symlink_to(outside)
+    try:
+        link.symlink_to(outside)
+    except OSError as e:
+        if getattr(e, "winerror", 0) == 1314:
+            pytest.skip("Symlinks not allowed on Windows without admin/dev mode")
+        raise
 
     zone = FileDropZone(allowed_extensions=[".txt"], base_directory=str(base))
 

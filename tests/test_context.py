@@ -55,7 +55,7 @@ def test_context_binding_updates_controls():
 def test_context_with_explicit_provider_inheritance():
     ctx = Context("explicit-provider", default={"lang": "es"})
 
-    with ctx.provide({"lang": "es", "theme": "light"}) as base:
+    with ctx.provide({"lang": "es", "theme": "light"}):
         assert ctx.get()["theme"] == "light"
         with ctx.provide(inherit=True) as nested:
             data = ctx.get()

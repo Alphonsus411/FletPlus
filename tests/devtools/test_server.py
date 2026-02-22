@@ -7,13 +7,13 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("websockets")
-import websockets
+import websockets  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from fletplus.devtools import DevToolsServer
+from fletplus.devtools import DevToolsServer  # noqa: E402
 
 
 @pytest.fixture

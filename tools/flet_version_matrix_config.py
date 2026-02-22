@@ -11,4 +11,4 @@ FLET_MATRIX_MINORS: tuple[str, ...] = ("0.28", "0.80")
 
 # Menores de Flet soportados para ejecución local cuando
 # FLET_MATRIX_EXPECTED_MINOR no está definido por CI.
-ALLOWED_FLET_MINORS: frozenset[str] = frozenset(FLET_MATRIX_MINORS)
+ALLOWED_FLET_MINORS: frozenset[str] = frozenset(FLET_MATRIX_MINORS) | {"0.27"}

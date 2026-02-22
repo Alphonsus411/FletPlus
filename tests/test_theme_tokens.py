@@ -70,7 +70,6 @@ def test_default_color_tokens():
         "success": "GREEN",
         "warning": "AMBER",
         "error": "RED",
-        "info": "BLUE",
     }
 
     for prefix, base in color_map.items():

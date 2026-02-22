@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from click.testing import CliRunner
+
 from fletplus.utils import safe_subprocess
 
 

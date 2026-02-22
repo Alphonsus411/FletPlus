@@ -62,7 +62,7 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
             calls.append(([str(part) for part in command], kwargs))
             return subprocess.CompletedProcess(command, 0)
 
-        with patch("fletplus.cli.build.subprocess.run", side_effect=fake_run):
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
             result = runner.invoke(app, ["build"])
 
         assert result.exit_code == 0, result.output
@@ -118,7 +118,7 @@ def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> N
                 raise subprocess.CalledProcessError(returncode=1, cmd=command)
             return subprocess.CompletedProcess(command, 0)
 
-        with patch("fletplus.cli.build.subprocess.run", side_effect=fake_run):
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
             result = runner.invoke(app, ["build", "--target", "desktop"])
 
         assert result.exit_code != 0
@@ -148,7 +148,7 @@ def test_build_normalizes_name_for_pyinstaller(monkeypatch, watchdog_available: 
             calls.append(([str(part) for part in command], kwargs))
             return subprocess.CompletedProcess(command, 0)
 
-        with patch("fletplus.cli.build.subprocess.run", side_effect=fake_run):
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
             result = runner.invoke(app, ["build", "--target", "desktop"])
 
         assert result.exit_code == 0, result.output
@@ -176,7 +176,7 @@ def test_build_uses_directory_name_when_pyproject_missing(monkeypatch, watchdog_
             calls.append(([str(part) for part in command], kwargs))
             return subprocess.CompletedProcess(command, 0)
 
-        with patch("fletplus.cli.build.subprocess.run", side_effect=fake_run):
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
             result = runner.invoke(app, ["build", "--target", "desktop"])
 
         assert result.exit_code == 0, result.output
