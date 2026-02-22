@@ -56,7 +56,12 @@ def test_file_backend_rejects_when_target_file_is_symlink(tmp_path, monkeypatch,
     real_target = tmp_path / "real-preferences.json"
     real_target.write_text("{}", encoding="utf-8")
     symlink_target = tmp_path / "preferences.json"
-    symlink_target.symlink_to(real_target)
+    try:
+        symlink_target.symlink_to(real_target)
+    except OSError as e:
+        if getattr(e, "winerror", 0) == 1314:
+            pytest.skip("Symlinks not allowed on Windows without admin/dev mode")
+        raise
     monkeypatch.setenv("FLETPLUS_PREFS_TRUSTED_ROOT", str(tmp_path))
     monkeypatch.setenv("FLETPLUS_PREFS_FILE", str(symlink_target))
 
@@ -72,7 +77,12 @@ def test_file_backend_rejects_when_parent_is_symlink(tmp_path, monkeypatch, capl
     real_parent = tmp_path / "real"
     real_parent.mkdir()
     symlink_parent = tmp_path / "prefs"
-    symlink_parent.symlink_to(real_parent, target_is_directory=True)
+    try:
+        symlink_parent.symlink_to(real_parent, target_is_directory=True)
+    except OSError as e:
+        if getattr(e, "winerror", 0) == 1314:
+            pytest.skip("Symlinks not allowed on Windows without admin/dev mode")
+        raise
     target_path = symlink_parent / "preferences.json"
     monkeypatch.setenv("FLETPLUS_PREFS_TRUSTED_ROOT", str(tmp_path))
     monkeypatch.setenv("FLETPLUS_PREFS_FILE", str(target_path))
