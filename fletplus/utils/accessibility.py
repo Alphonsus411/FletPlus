@@ -60,18 +60,21 @@ class AccessibilityPreferences:
         if self.high_contrast:
             theme_obj.focus_color = ft.Colors.AMBER_300
             theme_obj.highlight_color = ft.Colors.AMBER_200
-            theme_obj.color_scheme = ft.ColorScheme(
+            scheme = ft.ColorScheme(
                 primary=ft.Colors.BLACK,
                 on_primary=ft.Colors.WHITE,
                 secondary=ft.Colors.BLUE_GREY_700,
                 on_secondary=ft.Colors.WHITE,
-                background=ft.Colors.BLACK,
-                on_background=ft.Colors.WHITE,
                 surface=ft.Colors.BLACK,
                 on_surface=ft.Colors.WHITE,
                 error=ft.Colors.RED_400,
                 on_error=ft.Colors.WHITE,
             )
+            try:
+                setattr(scheme, "on_background", ft.Colors.WHITE)
+            except Exception:
+                pass
+            theme_obj.color_scheme = scheme
             theme_obj.scaffold_bgcolor = ft.Colors.BLACK
         else:
             # Reset a valores acordes a Material 3 pero conservando la escala

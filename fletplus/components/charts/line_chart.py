@@ -194,8 +194,11 @@ class LineChart:
         data_pt = self.data[index]
         self.tooltip.value = f"{data_pt[0]}, {data_pt[1]}"
         self.tooltip.visible = True
-        if self.tooltip.page:
-            self.tooltip.update()
+        try:
+            if self.tooltip.page:
+                self.tooltip.update()
+        except RuntimeError:
+            pass
 
     # ------------------------------------------------------------------
     def _screen_points(self) -> List[Tuple[float, float]]:

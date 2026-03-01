@@ -182,10 +182,7 @@ class SmartTableColumn:
         if sort_order is None:
             return base_label
 
-        icon = ft.Icon(
-            name=ft.Icons.ARROW_UPWARD if ascending else ft.Icons.ARROW_DOWNWARD,
-            size=14,
-        )
+        icon = ft.Icon(ft.Icons.ARROW_UPWARD if ascending else ft.Icons.ARROW_DOWNWARD, size=14)
         order_badge = ft.Container(
             content=ft.Text(str(sort_order), size=12),
             padding=ft.padding.symmetric(horizontal=4, vertical=2),
@@ -382,10 +379,20 @@ class SmartTable:
             return
         self._table.columns = self._build_columns()
         self._table.rows = self._build_rows_view()
-        if self._container is not None and self._container.page is not None:
-            self._container.update()
-        elif self._table.page is not None:
-            self._table.update()
+        updated = False
+        if self._container is not None:
+            try:
+                if self._container.page:
+                    self._container.update()
+                    updated = True
+            except RuntimeError:
+                pass
+        if not updated and self._table is not None:
+            try:
+                if self._table.page:
+                    self._table.update()
+            except RuntimeError:
+                pass
 
     def set_filter(self, key: str, value: Any, predicate: Optional[Callable[[Any, Any], bool]] = None) -> None:
         """Configura un filtro para la columna ``key``."""

@@ -354,4 +354,10 @@ class Style:
         if self.max_height is not None:
             container.max_height = self.max_height
 
+        if "shadow" not in self._declared_fields and getattr(container, "shadow", None) is None:
+            try:
+                container.shadow = []
+            except Exception:
+                pass
+
         return container

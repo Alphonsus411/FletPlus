@@ -31,7 +31,11 @@ def _get_button_tokens(theme: ThemeManager | None, color_key: str):
         if pressed is not None:
             bgcolor[ft.ControlState.PRESSED] = pressed
 
-    text_style = ft.TextStyle(size=text_size) if text_size is not None else None
+    text_style = (
+        {ft.ControlState.DEFAULT: ft.TextStyle(size=text_size)}
+        if text_size is not None
+        else None
+    )
     icon_size_style = (
         {ft.ControlState.DEFAULT: icon_size} if icon_size is not None else None
     )
@@ -67,7 +71,9 @@ class PrimaryButton(ft.ElevatedButton):
         if icon is not None and icon_position == "end":
             text_param = None
             icon_param = None
-            text_size = text_style.size if text_style else None
+            text_size = (
+                text_style[ft.ControlState.DEFAULT].size if text_style else None
+            )
             icon_size = icon_size_style[ft.ControlState.DEFAULT] if icon_size_style else None
             content = ft.Row(
                 [
@@ -77,13 +83,8 @@ class PrimaryButton(ft.ElevatedButton):
                 spacing=5,
                 alignment=ft.MainAxisAlignment.CENTER,
             )
-        super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
-            **kwargs,
-        )
+        content_arg = content if content is not None else text_param
+        super().__init__(content=content_arg, icon=icon_param, style=button_style, **kwargs)
 
     def build(self):
         return self._style.apply(self) if self._style else self
@@ -123,7 +124,9 @@ class SecondaryButton(ft.ElevatedButton):
         if icon is not None and icon_position == "end":
             text_param = None
             icon_param = None
-            text_size = text_style.size if text_style else None
+            text_size = (
+                text_style[ft.ControlState.DEFAULT].size if text_style else None
+            )
             icon_size = icon_size_style[ft.ControlState.DEFAULT] if icon_size_style else None
             content = ft.Row(
                 [
@@ -134,13 +137,8 @@ class SecondaryButton(ft.ElevatedButton):
                 alignment=ft.MainAxisAlignment.CENTER,
             )
 
-        super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
-            **kwargs,
-        )
+        content_arg = content if content is not None else text_param
+        super().__init__(content=content_arg, icon=icon_param, style=button_style, **kwargs)
 
     def build(self):
         return self._style.apply(self) if self._style else self
@@ -174,7 +172,9 @@ class _StatusButton(ft.ElevatedButton):
         if icon is not None and icon_position == "end":
             text_param = None
             icon_param = None
-            text_size = text_style.size if text_style else None
+            text_size = (
+                text_style[ft.ControlState.DEFAULT].size if text_style else None
+            )
             icon_size = (
                 icon_size_style[ft.ControlState.DEFAULT]
                 if icon_size_style
@@ -185,13 +185,8 @@ class _StatusButton(ft.ElevatedButton):
                 spacing=5,
                 alignment=ft.MainAxisAlignment.CENTER,
             )
-        super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
-            **kwargs,
-        )
+        content_arg = content if content is not None else text_param
+        super().__init__(content=content_arg, icon=icon_param, style=button_style, **kwargs)
 
     def build(self):
         return self._style.apply(self) if self._style else self
@@ -361,7 +356,9 @@ class OutlinedButton(ft.OutlinedButton):
         if icon is not None and icon_position == "end":
             text_param = None
             icon_param = None
-            text_size = text_style.size if text_style else None
+            text_size = (
+                text_style[ft.ControlState.DEFAULT].size if text_style else None
+            )
             icon_size = icon_size_style[ft.ControlState.DEFAULT] if icon_size_style else None
             content = ft.Row(
                 [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
@@ -369,13 +366,8 @@ class OutlinedButton(ft.OutlinedButton):
                 alignment=ft.MainAxisAlignment.CENTER,
             )
 
-        super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
-            **kwargs,
-        )
+        content_arg = content if content is not None else text_param
+        super().__init__(content=content_arg, icon=icon_param, style=button_style, **kwargs)
 
     def build(self):
         return self._style.apply(self) if self._style else self
@@ -414,7 +406,9 @@ class TextButton(ft.TextButton):
         if icon is not None and icon_position == "end":
             text_param = None
             icon_param = None
-            text_size = text_style.size if text_style else None
+            text_size = (
+                text_style[ft.ControlState.DEFAULT].size if text_style else None
+            )
             icon_size = icon_size_style[ft.ControlState.DEFAULT] if icon_size_style else None
             content = ft.Row(
                 [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
@@ -422,13 +416,8 @@ class TextButton(ft.TextButton):
                 alignment=ft.MainAxisAlignment.CENTER,
             )
 
-        super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
-            **kwargs,
-        )
+        content_arg = content if content is not None else text_param
+        super().__init__(content=content_arg, icon=icon_param, style=button_style, **kwargs)
 
     def build(self):
         return self._style.apply(self) if self._style else self
@@ -462,7 +451,9 @@ class FloatingActionButton(ft.ElevatedButton):
         if icon_position == "end" and label:
             text_param = None
             icon_param = None
-            text_size = text_style.size if text_style else None
+            text_size = (
+                text_style[ft.ControlState.DEFAULT].size if text_style else None
+            )
             icon_size = icon_size_style[ft.ControlState.DEFAULT] if icon_size_style else None
             content = ft.Row(
                 [ft.Text(label, size=text_size), ft.Icon(icon, size=icon_size)],
@@ -470,13 +461,8 @@ class FloatingActionButton(ft.ElevatedButton):
                 alignment=ft.MainAxisAlignment.CENTER,
             )
 
-        super().__init__(
-            text=text_param,
-            icon=icon_param,
-            content=content,
-            style=button_style,
-            **kwargs,
-        )
+        content_arg = content if content is not None else text_param
+        super().__init__(content=content_arg, icon=icon_param, style=button_style, **kwargs)
 
     def build(self):
         return self._style.apply(self) if self._style else self

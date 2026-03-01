@@ -135,7 +135,17 @@ def icon(
         fallback=fallback,
         fallback_set=fallback_set,
     )
-    return ft.Icon(name=resolved_name, **icon_kwargs)
+    try:
+        inst = ft.Icon(resolved_name, **icon_kwargs)
+    except TypeError:
+        # Compatibilidad con versiones antiguas que esperan 'name='
+        inst = ft.Icon(name=resolved_name, **icon_kwargs)
+    # Normaliza atributo 'name' para compatibilidad con tests y APIs previas
+    try:
+        setattr(inst, "name", resolved_name)
+    except Exception:
+        pass
+    return inst
 
 
 @dataclass(slots=True)
@@ -157,7 +167,15 @@ class Icon:
             fallback=self.fallback,
             fallback_set=self.fallback_set,
         )
-        return ft.Icon(name=resolved_name, **(self.kwargs or {}))
+        try:
+            inst = ft.Icon(resolved_name, **(self.kwargs or {}))
+        except TypeError:
+            inst = ft.Icon(name=resolved_name, **(self.kwargs or {}))
+        try:
+            setattr(inst, "name", resolved_name)
+        except Exception:
+            pass
+        return inst
 
     def __call__(self) -> ft.Icon:
         return self.build()
