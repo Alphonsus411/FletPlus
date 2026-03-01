@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from flet.core.client_storage import ClientStorage
+try:
+    from flet.core.client_storage import ClientStorage  # type: ignore[attr-defined]
+except Exception:
+    try:
+        from flet.client_storage import ClientStorage  # type: ignore[attr-defined]
+    except Exception:
+        from typing import Any as ClientStorage
 
 from . import Deserializer, Serializer, StorageProvider
 

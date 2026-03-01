@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from flet.core.session_storage import SessionStorage
+try:
+    from flet.core.session_storage import SessionStorage  # type: ignore[attr-defined]
+except Exception:
+    try:
+        from flet.session_storage import SessionStorage  # type: ignore[attr-defined]
+    except Exception:
+        from typing import Any as SessionStorage
 
 from . import Deserializer, Serializer, StorageProvider
 

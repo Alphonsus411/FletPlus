@@ -42,7 +42,7 @@ Documentation = "https://github.com/FletPlus/FletPlus#readme"
 # ------------ OPTIONAL SPEEDUPS (Cython) ------------
 [project.optional-dependencies]
 speedups = ["cython>=3.0"]
-rust = ["pyrust-native>=0.0.4", "maturin>=1.7"]
+rust = ["pyrust-native>=0.0.5", "maturin>=1.7"]
 build = ["build>=1.2", "cython>=3.0"]
 cli = ["watchdog>=3.0"]
 dev = [

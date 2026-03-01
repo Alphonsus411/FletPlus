@@ -12,6 +12,9 @@ from fletplus.animation import (
     animation_controller_context,
 )
 
+Transform = getattr(ft, "transform", None)
+Offset = getattr(Transform, "Offset", None) or getattr(ft, "Offset")
+ScaleT = getattr(Transform, "Scale", None) or getattr(ft, "Scale")
 
 @pytest.fixture()
 def controller() -> AnimationController:
@@ -35,8 +38,8 @@ def test_fade_in_plays_on_mount(controller: AnimationController) -> None:
 
 
 def test_slide_transition_updates_offset(controller: AnimationController) -> None:
-    begin = ft.transform.Offset(-0.5, 0)
-    end = ft.transform.Offset(0, 0)
+    begin = Offset(-0.5, 0)
+    end = Offset(0, 0)
     with animation_controller_context.provide(controller, inherit=False):
         slide = SlideTransition(
             ft.Container(),
@@ -56,12 +59,12 @@ def test_slide_transition_updates_offset(controller: AnimationController) -> Non
 
 def test_scale_reacts_to_unmount(controller: AnimationController) -> None:
     with animation_controller_context.provide(controller, inherit=False):
-        scale = Scale(ft.Container(), begin=ft.transform.Scale(1.0, 1.0), end=ft.transform.Scale(1.2, 1.2))
+        scale = Scale(ft.Container(), begin=ScaleT(1.0, 1.0), end=ScaleT(1.2, 1.2))
     controller.trigger("mount")
-    assert scale.scale == ft.transform.Scale(1.2, 1.2)
+    assert scale.scale == ScaleT(1.2, 1.2)
 
     controller.trigger("unmount")
-    assert scale.scale == ft.transform.Scale(1.0, 1.0)
+    assert scale.scale == ScaleT(1.0, 1.0)
 
 
 def test_animated_container_switches_styles(controller: AnimationController) -> None:

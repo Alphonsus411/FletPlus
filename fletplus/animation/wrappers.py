@@ -10,6 +10,12 @@ from .controller import AnimationController, animation_controller_context
 
 __all__ = ["FadeIn", "SlideTransition", "Scale", "AnimatedContainer"]
 
+if hasattr(ft, "transform"):
+    _OffsetType = ft.transform.Offset
+    _ScaleType = ft.transform.Scale
+else:
+    _OffsetType = ft.Offset
+    _ScaleType = ft.Scale
 
 def _resolve_controller(explicit: AnimationController | None = None) -> AnimationController | None:
     if explicit is not None:
@@ -116,8 +122,8 @@ class SlideTransition(_BaseAnimatedContainer):
         *,
         duration: int = 300,
         curve: ft.AnimationCurve = ft.AnimationCurve.DECELERATE,
-        begin: ft.transform.Offset = ft.transform.Offset(0, 0.1),
-        end: ft.transform.Offset = ft.transform.Offset(0, 0),
+        begin: _OffsetType = _OffsetType(0, 0.1),
+        end: _OffsetType = _OffsetType(0, 0),
         trigger: str = "mount",
         reverse_trigger: str | None = "unmount",
         controller: AnimationController | None = None,
@@ -155,8 +161,8 @@ class Scale(_BaseAnimatedContainer):
         *,
         duration: int = 260,
         curve: ft.AnimationCurve = ft.AnimationCurve.EASE_OUT_BACK,
-        begin: ft.transform.Scale = ft.transform.Scale(0.92, 0.92),
-        end: ft.transform.Scale = ft.transform.Scale(1, 1),
+        begin: _ScaleType = _ScaleType(0.92, 0.92),
+        end: _ScaleType = _ScaleType(1, 1),
         trigger: str = "mount",
         reverse_trigger: str | None = "unmount",
         controller: AnimationController | None = None,
