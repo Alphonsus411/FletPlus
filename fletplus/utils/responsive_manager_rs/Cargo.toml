@@ -12,4 +12,3 @@ pyo3 = { version = "0.21", features = ["extension-module"] }
 
 [package.metadata.maturin]
 name = "fletplus.utils.responsive_manager_rs._native"
-module-name = "_native"

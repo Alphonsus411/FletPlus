@@ -1,8 +1,3 @@
-"""Backend opcional en Rust para filtrar la paleta de comandos.
-
-Cuando la extensión nativa no está disponible, se usa un filtro
-implementado en Python para mantener la compatibilidad.
-"""
 from __future__ import annotations
 
 import importlib
@@ -16,29 +11,29 @@ def filter_commands_python(names: List[str], query: str) -> List[int]:
     query_normalized = (query or "").lower()
     if not query_normalized:
         return list(range(len(names)))
-
-    return [
-        index
-        for index, name in enumerate(names)
-        if query_normalized in (name or "").lower()
-    ]
+    return [i for i, name in enumerate(names) if query_normalized in (name or "").lower()]
 
 
-_spec = importlib.util.find_spec("fletplus.components.command_palette_rs._native")
-if _spec is None:
-    _native: Optional[object] = None
-else:
+def _load_native() -> Optional[object]:
+    spec = importlib.util.find_spec("fletplus.components.command_palette_rs._native")
+    if spec is not None:
+        try:
+            return importlib.import_module("fletplus.components.command_palette_rs._native")
+        except Exception:
+            return None
+    # Fallback para entornos de `maturin develop` que instalan un módulo toplevel `_native`
     try:
-        _native = importlib.import_module("fletplus.components.command_palette_rs._native")
-    except (ImportError, OSError, RuntimeError):
-        _native = None
+        top = importlib.import_module("_native")
+        # Validar que exponga la función esperada
+        if hasattr(top, "filter_commands"):
+            return top
     except Exception:
-        _native = None
+        return None
+    return None
 
-if _native is not None:
-    native_filter_commands = _native.filter_commands
-else:
-    native_filter_commands = None
+
+_native = _load_native()
+native_filter_commands = getattr(_native, "filter_commands", None) if _native else None
 
 
 def filter_commands(names: List[str], query: str) -> List[int]:
