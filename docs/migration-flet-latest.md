@@ -10,10 +10,10 @@ Este documento define una migración **controlada por fases** para compatibiliza
 - `fletplus/core_legacy.py`
 - `fletplus_demo/`
 
-**Baseline de validación (estado actual en CI)**: `flet>=0.28,<0.29` (job `min-supported`).  
+**Baseline de validación (estado actual en CI)**: `flet>=0.29,<0.30` (job `min-supported`).  
 **Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81` (job `latest-migration-target`).  
 **Estado oficial del target**: ✅ **validado para toda la serie del minor objetivo vigente**, incluyendo el parche más reciente disponible durante esta iteración de validación.  
-**Mínimo de paquete (distribución)**: `flet>=0.29.0` (según `pyproject.toml`).
+**Rango contractual de paquete (distribución/dev/plantillas)**: `flet>=0.29,<0.81` (según `pyproject.toml`, `requirements-dev.txt` y template CLI).
 
 ---
 
@@ -23,13 +23,13 @@ Para evitar drift entre CI, desarrollo local y plantillas CLI, esta tabla fija l
 
 | Dependencia | Versión mínima | Versión máxima (exclusiva) | Referencia contractual |
 |---|---:|---:|---|
-| `flet` | `0.28` (matriz CI baseline) / `0.29.0` (paquete distribuible) | `0.81` | `pyproject.toml`, `requirements-dev.txt`, `fletplus/cli/templates/app/requirements.txt` |
+| `flet` | `0.29` (baseline contractual y paquete distribuible) | `0.81` | `pyproject.toml`, `requirements-dev.txt`, `fletplus/cli/templates/app/requirements.txt` |
 | `websockets` | `13` | `14` | `pyproject.toml`, `requirements-dev.txt` |
 | `httpx` | `0.28` | `1` | `pyproject.toml`, `requirements-dev.txt` |
 | `watchdog` | `3` | `7` | `pyproject.toml` (`optional-dependencies.dev`), `requirements-dev.txt` |
 | `pytest` | `7.4` | `9` | `pyproject.toml` (`optional-dependencies.dev`), `requirements-dev.txt` |
 
-> Nota operacional: en `flet-version-matrix`, el job `min-supported` fuerza `flet>=0.28,<0.29` para verificar baseline, mientras el paquete publicado mantiene mínimo `flet>=0.29.0`.
+> Nota operacional: con el contrato vigente no hay dualidad baseline/paquete para `flet`; tanto baseline CI como manifiestos de distribución y desarrollo parten de `0.29`.
 
 ---
 
@@ -187,11 +187,11 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 
 | Ámbito | Estado actual (observado en repo) | Estado objetivo de migración | Fuente de verdad |
 |---|---|---|---|
-| Manifiesto de paquete | `pyproject.toml`: `flet>=0.29.0` | Mantener este mínimo de distribución hasta nuevo contrato | `pyproject.toml` |
-| CI baseline (`flet-version-matrix`) | `flet>=0.28,<0.29` (`min-supported`) | Mantener baseline contractual de regresión | `.github/workflows/reusable-quality.yml` |
+| Manifiesto de paquete | `pyproject.toml`: `flet>=0.29,<0.81` | Mantener rango contractual de distribución/desarrollo hasta nuevo contrato | `pyproject.toml` |
+| CI baseline (`flet-version-matrix`) | `flet>=0.29,<0.30` (`min-supported`) | Mantener baseline contractual de regresión | `.github/workflows/reusable-quality.yml` |
 | CI target (`flet-version-matrix`) | `flet>=0.80,<0.81` (`latest-migration-target`) | Consolidar compatibilidad funcional sobre `0.80.x` | `.github/workflows/reusable-quality.yml` |
-| Validación local de minors | `FLET_MATRIX_MINORS = ("0.28", "0.80")` | Mantener sincronía exacta con matriz CI | `tools/flet_version_matrix_config.py` |
-| Dependencias legacy fuera de contrato | `requirements.txt`: `flet==0.27.6` (heredado) | Deuda legacy **acotada**: solo referencia histórica local; no usar para decisiones de compatibilidad ni para CI/release | `requirements.txt` |
+| Validación local de minors | `FLET_MATRIX_MINORS = ("0.29", "0.80")` y `ALLOWED_FLET_MINORS = frozenset(FLET_MATRIX_MINORS)` | Mantener sincronía exacta con matriz CI sin tolerancias legacy | `tools/flet_version_matrix_config.py` |
+| Dependencias legacy fuera de contrato | Cualquier pin histórico fuera de baseline/target activo | No permitido en contrato vigente; eliminar tolerancias locales y en pruebas | Revisión en PR + checks contractuales |
 
 > Regla operativa: para el contrato activo usar únicamente la sección [Contrato de versión vigente](tooling.md#contrato-de-version-vigente). Esta tabla se mantiene alineada con ese bloque en cada cambio de baseline/target.
 

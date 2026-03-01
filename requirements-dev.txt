@@ -1,4 +1,4 @@
-flet>=0.28,<0.81
+flet>=0.29,<0.81
 websockets>=13,<14
 httpx>=0.28,<1
 watchdog>=3,<7
