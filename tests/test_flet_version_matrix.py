@@ -7,7 +7,7 @@ from importlib import metadata
 
 import flet as ft
 
-from tools.flet_version_matrix_config import ALLOWED_FLET_MINORS
+from tools.flet_version_matrix_config import ALLOWED_FLET_MINORS, FLET_MATRIX_MINORS
 
 
 def _read_flet_version() -> str:
@@ -35,6 +35,12 @@ def test_flet_version_in_supported_matrix() -> None:
             f"detectada={version!r} (minor={current_minor!r}), permitidas={allowed_sorted!r}."
         )
 
+
+def test_allowed_minors_match_active_contract() -> None:
+    assert ALLOWED_FLET_MINORS == frozenset(FLET_MATRIX_MINORS), (
+        "ALLOWED_FLET_MINORS no debe incluir minors legacy fuera del contrato activo. "
+        f"contrato={FLET_MATRIX_MINORS!r}, permitidos={sorted(ALLOWED_FLET_MINORS)!r}."
+    )
 
 def _require_symbol(container: object, symbol_name: str, qualified_name: str) -> object:
     assert hasattr(container, symbol_name), (

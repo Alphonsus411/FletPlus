@@ -7,8 +7,8 @@ from __future__ import annotations
 # Cualquier cambio aquí debe reflejarse en:
 # - .github/workflows/reusable-quality.yml (flet-version-matrix)
 # - docs/migration-flet-latest.md
-FLET_MATRIX_MINORS: tuple[str, ...] = ("0.28", "0.80")
+FLET_MATRIX_MINORS: tuple[str, ...] = ("0.29", "0.80")
 
 # Menores de Flet soportados para ejecución local cuando
 # FLET_MATRIX_EXPECTED_MINOR no está definido por CI.
-ALLOWED_FLET_MINORS: frozenset[str] = frozenset(FLET_MATRIX_MINORS) | {"0.27"}
+ALLOWED_FLET_MINORS: frozenset[str] = frozenset(FLET_MATRIX_MINORS)
