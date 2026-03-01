@@ -61,9 +61,11 @@ if not _patched:
         _OriginalTextButton = ft.TextButton
         class _TextButtonCompat(_OriginalTextButton):
             def __init__(self, *args, text: Any = None, content: Any = None, **kwargs):
-                if text is not None and content is None:
-                    content = text
-                super().__init__(content=content, **kwargs)
+                if content is not None and "content" not in kwargs:
+                    kwargs["content"] = content
+                if not args and text is not None and "content" not in kwargs:
+                    kwargs["content"] = text
+                super().__init__(*args, **kwargs)
         ft.TextButton = _TextButtonCompat  # type: ignore[assignment]
     except Exception:
         pass
@@ -73,6 +75,8 @@ if not _patched:
             def __init__(self, *args, name: Any = None, icon: Any = None, **kwargs):
                 if name is not None and not args:
                     args = (name,)
+                elif icon is not None and not args:
+                    args = (icon,)
                 super().__init__(*args, **kwargs)
         ft.Icon = _IconCompat  # type: ignore[assignment]
     except Exception:

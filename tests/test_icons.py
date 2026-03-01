@@ -1,5 +1,9 @@
+import importlib
+
 import flet as ft
 import pytest
+
+import fletplus
 
 from fletplus.icons import (
     DEFAULT_ICON_SET,
@@ -141,3 +145,64 @@ def test_critical_upstream_icon_name_resolution_for_component_catalog() -> None:
 def test_upstream_icon_namespace_supports_pascal_or_snake_case() -> None:
     icons = _icons_namespace()
     assert getattr(icons, "HOME", None) is not None
+
+
+def test_icon_compat_soporta_invocacion_posicional_y_legacy(monkeypatch):
+    class _LegacyIcon:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(ft, "Icon", _LegacyIcon)
+    monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
+    importlib.reload(fletplus)
+
+    positional = ft.Icon("home", color="blue")
+    assert positional.args == ("home",)
+    assert positional.kwargs == {"color": "blue"}
+
+    legacy = ft.Icon(icon="settings", color="red")
+    assert legacy.args == ("settings",)
+    assert legacy.kwargs == {"color": "red"}
+
+
+def test_icon_compat_prioridad_de_argumentos_en_conflicto(monkeypatch):
+    class _LegacyIcon:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(ft, "Icon", _LegacyIcon)
+    monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
+    importlib.reload(fletplus)
+
+    conflict = ft.Icon("posicional", name="name", icon="icon")
+    assert conflict.args == ("posicional",)
+
+    conflict_by_name = ft.Icon(name="name", icon="icon")
+    assert conflict_by_name.args == ("name",)
+
+
+def test_control_patch_es_idempotente(monkeypatch):
+    class _LegacyIcon:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    class _LegacyTextButton:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(ft, "Icon", _LegacyIcon)
+    monkeypatch.setattr(ft, "TextButton", _LegacyTextButton)
+    monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
+    importlib.reload(fletplus)
+
+    first_icon = ft.Icon
+    first_button = ft.TextButton
+
+    importlib.reload(fletplus)
+
+    assert ft.Icon is first_icon
+    assert ft.TextButton is first_button

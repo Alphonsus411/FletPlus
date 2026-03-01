@@ -1,5 +1,9 @@
+import importlib
+
 import flet as ft
 import pytest
+
+import fletplus
 
 from fletplus.components.buttons import (
     DangerButton,
@@ -355,3 +359,37 @@ def test_status_buttons_icon_end(cls, color_key, color):
     assert row.controls[1].size == 20
     style = container.content.style
     assert style.bgcolor[ft.ControlState.DEFAULT] == color
+
+
+def test_text_button_compat_reenvia_args_y_kwargs(monkeypatch):
+    class _LegacyTextButton:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(ft, "TextButton", _LegacyTextButton)
+    monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
+    importlib.reload(fletplus)
+
+    positional = ft.TextButton("Posicional", color="blue")
+    assert positional.args == ("Posicional",)
+    assert positional.kwargs == {"color": "blue"}
+
+    legacy = ft.TextButton(text="Legacy", color="red")
+    assert legacy.args == ()
+    assert legacy.kwargs == {"content": "Legacy", "color": "red"}
+
+
+def test_text_button_compat_prioridad_argumentos(monkeypatch):
+    class _LegacyTextButton:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(ft, "TextButton", _LegacyTextButton)
+    monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
+    importlib.reload(fletplus)
+
+    conflict = ft.TextButton("Primario", text="Ignorar")
+    assert conflict.args == ("Primario",)
+    assert "content" not in conflict.kwargs
