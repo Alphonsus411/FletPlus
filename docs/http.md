@@ -143,9 +143,17 @@ await cliente.get("https://api.example.com/items")
 Puede deshabilitarse el almacenamiento por petición con `cache=False`.
 
 Cuando la petición incluye credenciales (`Authorization`, `Cookie` o
-`X-API-Key`), el cliente no cachea por defecto aunque se pase `cache=True`.
-Este comportamiento de seguridad puede habilitarse de forma explícita con
-`allow_sensitive_cache=True` en `request()` y en atajos como `get()`.
+`X-API-Key`) o query params sensibles (`token`, `access_token`, `id_token`,
+`refresh_token`, `api_key`, `password`, `passwd`, `secret`,
+`client_secret`, `jwt`, etc.), el cliente no cachea por defecto aunque se
+pase `cache=True`.
+
+La detección de query params sensibles se normaliza para variantes comunes
+de mayúsculas/minúsculas y separadores (`client-secret`, `client_secret` y
+`CLIENT_SECRET` se tratan como el mismo parámetro).
+
+Este comportamiento de seguridad solo puede habilitarse de forma explícita
+con `allow_sensitive_cache=True` en `request()` y en atajos como `get()`.
 
 ### Política de `Cache-Control`
 

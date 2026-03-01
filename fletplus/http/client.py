@@ -38,8 +38,33 @@ _WS_UNSUPPORTED_HTTPX_KWARGS = {
 }
 
 _DEFAULT_SENSITIVE_QUERY_PARAMS = frozenset(
-    {"token", "access_token", "api_key", "apikey", "auth", "signature", "sig"}
+    {
+        "token",
+        "access_token",
+        "id_token",
+        "refresh_token",
+        "api_key",
+        "apikey",
+        "auth",
+        "authorization",
+        "password",
+        "passwd",
+        "pass_word",
+        "pwd",
+        "secret",
+        "client_secret",
+        "jwt",
+        "sessionid",
+        "session_id",
+        "signature",
+        "sig",
+    }
 )
+
+
+def _normalize_sensitive_query_param_name(value: str) -> str:
+    """Normaliza nombres de query params sensibles para comparación segura."""
+    return value.strip().lower().replace("-", "_")
 
 
 def _parse_cache_control_max_age(cache_control: str) -> int | None:
@@ -358,10 +383,14 @@ class HttpClient:
         self._hooks = _HookManager()
         self._interceptors: list[HttpInterceptor] = list(interceptors or [])
         if sensitive_query_params is None:
-            self._sensitive_query_params = _DEFAULT_SENSITIVE_QUERY_PARAMS
+            self._sensitive_query_params = frozenset(
+                _normalize_sensitive_query_param_name(key) for key in _DEFAULT_SENSITIVE_QUERY_PARAMS
+            )
         else:
             self._sensitive_query_params = frozenset(
-                key.strip().lower() for key in sensitive_query_params if key and key.strip()
+                _normalize_sensitive_query_param_name(key)
+                for key in sensitive_query_params
+                if key and key.strip()
             )
 
     # ------------------------------------------------------------------
@@ -405,12 +434,16 @@ class HttpClient:
           se conserva ese error principal y el fallo del hook solo se registra en logs.
         - Si `emit_after` falla y no existe error principal, el error del hook se propaga.
 
-        Nota sobre caché: si los headers incluyen credenciales (`authorization`,
-        `cookie` o `x-api-key`) o la URL contiene parámetros sensibles
-        (p. ej. `api_key`, `token`), la caché se desactiva automáticamente para evitar
-        persistir respuestas sensibles. Para permitirlo debes habilitarlo
-        explícitamente con `allow_sensitive_cache=True`. También se respetan
-        las cabeceras
+        Nota sobre caché sensible: si los headers incluyen credenciales
+        (`authorization`, `cookie` o `x-api-key`) o la URL contiene parámetros
+        sensibles (por ejemplo `api_key`, `access_token`, `password`,
+        `client_secret`, `refresh_token`, `jwt`, `secret`), la caché se desactiva
+        automáticamente para evitar persistir respuestas sensibles. La
+        comparación de claves sensibles en query params está normalizada para
+        variantes comunes de mayúsculas/minúsculas y separadores
+        (`client-secret` == `client_secret`). Para permitir caché en esos casos
+        debes habilitarlo explícitamente con `allow_sensitive_cache=True`.
+        También se respetan las cabeceras
         de la petición `Cache-Control`/`Pragma` con `no-store` o `no-cache`
         (a menos que se pase `cache=True`), y en la respuesta se consideran
         `Cache-Control`/`Pragma` con `no-store` o `private`, la presencia de
@@ -462,7 +495,8 @@ class HttpClient:
             credential_headers = {"authorization", "cookie", "x-api-key"}
             has_credentials = any(request.headers.get(name) is not None for name in credential_headers)
             has_sensitive_query_params = any(
-                key.lower() in self._sensitive_query_params for key in request.url.params.keys()
+                _normalize_sensitive_query_param_name(key) in self._sensitive_query_params
+                for key in request.url.params.keys()
             )
             if (has_credentials or has_sensitive_query_params) and not allow_sensitive_cache:
                 use_cache = False

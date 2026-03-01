@@ -163,6 +163,47 @@ async def test_http_client_does_not_cache_sensitive_query_params_by_default(tmp_
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize(
+    "query_param",
+    [
+        "password",
+        "PASSWORD",
+        "pass-word",
+        "passwd",
+        "secret",
+        "client_secret",
+        "client-secret",
+        "refresh_token",
+        "refresh-token",
+        "jwt",
+    ],
+)
+async def test_http_client_disables_cache_for_extended_sensitive_query_params(
+    tmp_path: Path, query_param: str
+):
+    call_count = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        return httpx.Response(200, json={"value": call_count})
+
+    transport = httpx.MockTransport(handler)
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=transport)
+
+    url = f"https://example.org/secure?{query_param}=very-sensitive"
+    respuesta1 = await client.get(url, cache=True, allow_sensitive_cache=False)
+    respuesta2 = await client.get(url, cache=True, allow_sensitive_cache=False)
+
+    await client.aclose()
+
+    assert respuesta1.json() == {"value": 1}
+    assert respuesta2.json() == {"value": 2}
+    assert call_count == 2
+
+
+@pytest.mark.anyio
 async def test_http_client_interceptors(tmp_path: Path):
     captured_header = {}
 
