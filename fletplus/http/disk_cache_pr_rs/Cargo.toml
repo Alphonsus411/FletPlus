@@ -13,3 +13,4 @@ sha2 = "0.10"
 
 [package.metadata.maturin]
 name = "fletplus.http.disk_cache_pr_rs._native"
+module-name = "_native"

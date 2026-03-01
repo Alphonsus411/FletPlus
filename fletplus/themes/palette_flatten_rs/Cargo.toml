@@ -12,3 +12,4 @@ pyo3 = { version = "0.21", features = ["extension-module"] }
 
 [package.metadata.maturin]
 name = "fletplus.themes.palette_flatten_rs._native"
+module-name = "_native"

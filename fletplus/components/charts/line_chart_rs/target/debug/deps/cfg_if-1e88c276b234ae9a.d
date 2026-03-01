@@ -1,0 +1,7 @@
+C:\Users\Adolfo\PycharmProjects\FletPlus\fletplus\components\charts\line_chart_rs\target\debug\deps\libcfg_if-1e88c276b234ae9a.rmeta: C:\Users\Adolfo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cfg-if-1.0.4\src\lib.rs
+
+C:\Users\Adolfo\PycharmProjects\FletPlus\fletplus\components\charts\line_chart_rs\target\debug\deps\libcfg_if-1e88c276b234ae9a.rlib: C:\Users\Adolfo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cfg-if-1.0.4\src\lib.rs
+
+C:\Users\Adolfo\PycharmProjects\FletPlus\fletplus\components\charts\line_chart_rs\target\debug\deps\cfg_if-1e88c276b234ae9a.d: C:\Users\Adolfo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cfg-if-1.0.4\src\lib.rs
+
+C:\Users\Adolfo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cfg-if-1.0.4\src\lib.rs:
