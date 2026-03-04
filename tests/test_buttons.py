@@ -369,7 +369,9 @@ def test_text_button_compat_reenvia_args_y_kwargs(monkeypatch):
 
     monkeypatch.setattr(ft, "TextButton", _LegacyTextButton)
     monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
-    importlib.reload(fletplus)
+    module = importlib.import_module("fletplus")
+    importlib.reload(module)
+    module.enable_compat_patches(force=True)
 
     positional = ft.TextButton("Posicional", color="blue")
     assert positional.args == ("Posicional",)
@@ -388,7 +390,9 @@ def test_text_button_compat_prioridad_argumentos(monkeypatch):
 
     monkeypatch.setattr(ft, "TextButton", _LegacyTextButton)
     monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
-    importlib.reload(fletplus)
+    module = importlib.import_module("fletplus")
+    importlib.reload(module)
+    module.enable_compat_patches(force=True)
 
     conflict = ft.TextButton("Primario", text="Ignorar")
     assert conflict.args == ("Primario",)
