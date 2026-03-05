@@ -34,7 +34,7 @@ run_static_security_scope() {
   python -m mypy fletplus
   python tools/check_bandit_command_sync.py
   python -m bandit -c pyproject.toml -r fletplus
-  python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json
+  python -m pip_audit -r requirements.txt -r requirements-dev.txt
   python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml
 }
 

@@ -53,3 +53,42 @@ Se considera completado cuando:
   - `docs/tooling.md` (contrato vigente y deuda legacy acotada).
   - `tests/test_flet_version_matrix.py` (símbolos sensibles reforzados para componentes/router/tema).
 - Decisión: mantener baseline `0.28.x` y target `0.80.x` hasta nueva revisión mensual o evento extraordinario de upstream.
+
+## Plan de implementación (auditoría funcional + seguridad + Flet latest)
+
+### Bloque A — Compatibilidad con Flet 0.80.x/0.81-ready
+- [ ] **A1. Contrato de `Page.window` y dimensiones**
+  - Verificar en tests que el contrato soporte `Page.window.width/height` cuando `Page.width/height` no estén definidos como atributos de clase.
+  - Añadir casos de regresión para evitar falsos negativos por cambios de API en Flet.
+- [ ] **A2. Eliminar usos de API deprecada de `padding`**
+  - Migrar `ft.padding.symmetric(...)` a `ft.Padding.symmetric(...)` en componentes interactivos.
+  - Ejecutar suite enfocada en contratos Flet para confirmar ausencia de warnings deprecados en rutas críticas.
+- [ ] **A3. Revisión de alias legacy opcionales**
+  - Validar que `enable_compat_patches()` no silencie errores relevantes y mantener compatibilidad hacia atrás sin romper apps nuevas.
+
+### Bloque B — Bugs funcionales y robustez
+- [ ] **B1. Cobertura de componentes responsive con contratos mínimos de `Page`**
+  - Revisar componentes que leen `page.width/page.height` para asegurar fallback robusto.
+  - Priorizar `responsive_*`, `adaptive_*` y layouts con `on_resize`.
+- [ ] **B2. Endurecimiento de errores silenciosos (`except Exception: pass`)**
+  - Clasificar por criticidad los puntos donde se ignoran excepciones.
+  - Reemplazar por excepciones específicas o logging controlado cuando aplique.
+
+### Bloque C — Seguridad operacional
+- [ ] **C1. Subprocess hardening**
+  - Revisar entradas que llegan a `safe_subprocess` y asegurar validación de comandos/argumentos en capas llamadoras.
+  - Documentar explícitamente el modelo de amenaza para comandos CLI.
+- [ ] **C2. Política Bandit y excepciones justificadas**
+  - Añadir anotaciones justificadas (`# nosec`) solo donde el riesgo esté mitigado y auditado.
+  - Mantener cero hallazgos Medium/High y reducir Low no accionables.
+
+### Bloque D — Validación continua
+- [ ] **D1. Pipeline mínimo de auditoría local**
+  - `check_flet_target_drift` + tests de contrato Flet + `bandit` + `pip-audit`.
+  - Publicar evidencia resumida por iteración en `informe_tests.md`.
+
+### Orden de ejecución recomendado
+1. A1 → A2
+2. B1 → B2
+3. C1 → C2
+4. D1
