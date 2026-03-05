@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 from pathlib import Path
 
 from fletplus.utils.flet_compat import (
     append_page_overlay,
     build_flet_control,
+    enable_legacy_page_window_patch,
     get_flet_color,
     get_flet_colors,
     get_flet_enum,
@@ -146,6 +148,7 @@ def test_set_page_width_writes_window_width_when_available() -> None:
 
     assert set_page_width(page, 1111) is True
     assert page.window.width == 1111
+    assert not hasattr(page, "width")
 
 
 def test_set_page_width_falls_back_to_legacy_window_width() -> None:
@@ -177,6 +180,59 @@ def test_set_page_height_falls_back_to_legacy_window_height() -> None:
 
     assert set_page_height(page, 910) is True
     assert page.window_height == 910
+
+
+def test_set_page_height_writes_window_height_when_available_without_mutating_page() -> None:
+    page = _PageWithWindow()
+    page.window.height = 500
+
+    assert set_page_height(page, 910) is True
+    assert page.window.height == 910
+    assert not hasattr(page, "height")
+
+
+def test_enable_legacy_page_window_patch_patches_when_missing(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    class _PageWithoutWindow:
+        pass
+
+    monkeypatch.setattr(flet_compat._ft, "Page", _PageWithoutWindow, raising=False)
+
+    assert enable_legacy_page_window_patch(force=True) is True
+    assert isinstance(_PageWithoutWindow.window, property)
+
+
+def test_enable_legacy_page_window_patch_no_overwrites_descriptor(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    class _WindowDescriptor:
+        def __get__(self, instance, owner):
+            return {"native": True}
+
+    native_descriptor = _WindowDescriptor()
+
+    class _PageWithDescriptor:
+        window = native_descriptor
+
+    monkeypatch.setattr(flet_compat._ft, "Page", _PageWithDescriptor, raising=False)
+
+    assert enable_legacy_page_window_patch(force=True) is True
+    assert inspect.getattr_static(_PageWithDescriptor, "window") is native_descriptor
+
+
+def test_enable_legacy_page_window_patch_no_overwrites_native_property(monkeypatch) -> None:
+    from fletplus.utils import flet_compat
+
+    class _PageWithNativeProperty:
+        @property
+        def window(self):
+            return "native-window"
+
+    monkeypatch.setattr(flet_compat._ft, "Page", _PageWithNativeProperty, raising=False)
+
+    assert enable_legacy_page_window_patch(force=True) is True
+    assert _PageWithNativeProperty().window == "native-window"
 
 
 def test_safe_open_drawer_and_close_drawer_work_when_available() -> None:
