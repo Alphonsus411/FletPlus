@@ -97,7 +97,6 @@ class _FileBackend(_BaseBackend):
 
     @contextmanager
     def _file_lock(self) -> Iterator[None]:
-        self._lock_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self._lock_path, "a+b") as lock_file:
             if os.name == "nt":
                 lock_file.seek(0)
@@ -200,11 +199,16 @@ class _FileBackend(_BaseBackend):
         return None
 
     def save(self, data: Mapping[str, Any]) -> None:
+        if not self._validate_save_target():
+            logger.warning(
+                "Guardado de preferencias abortado por política de seguridad (%s)",
+                self._path,
+            )
+            return
+
         try:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
             with self._file_lock():
-                self._path.parent.mkdir(parents=True, exist_ok=True)
-                if not self._validate_save_target():
-                    return
                 payload = self._read_all()
                 current_entry = payload.get(self._key)
                 if isinstance(current_entry, Mapping):
@@ -251,7 +255,7 @@ class _FileBackend(_BaseBackend):
                     if tmp_path is not None and tmp_path.exists():
                         tmp_path.unlink(missing_ok=True)
         except Exception:  # pragma: no cover - errores inesperados
-            logger.exception("No se pudieron guardar preferencias en %s", self._path)
+            logger.exception("Error de I/O al guardar preferencias en %s", self._path)
 
 
 class PreferenceStorage:

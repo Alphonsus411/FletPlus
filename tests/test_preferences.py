@@ -185,13 +185,19 @@ def test_file_backend_rejects_path_outside_trusted_root(tmp_path, monkeypatch, c
     allowed_root = tmp_path / "trusted"
     allowed_root.mkdir()
     outside_target = tmp_path / "outside" / "preferences.json"
+    outside_dir = outside_target.parent
+    outside_lock = outside_target.with_suffix(f"{outside_target.suffix}.lock")
     monkeypatch.setenv("FLETPLUS_PREFS_TRUSTED_ROOT", str(allowed_root))
     monkeypatch.setenv("FLETPLUS_PREFS_FILE", str(outside_target))
+    monkeypatch.delenv("FLETPLUS_PREFS_ALLOW_ARBITRARY_PATH", raising=False)
 
     prefs = PreferenceStorage(DummyPage(None))
     prefs.save({"theme": "dark"})
 
+    assert not outside_dir.exists()
     assert not outside_target.exists()
+    assert not outside_lock.exists()
+    assert "abortado por política de seguridad" in caplog.text
     assert "ruta fuera del directorio confiable" in caplog.text
 
 
