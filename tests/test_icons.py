@@ -155,7 +155,9 @@ def test_icon_compat_soporta_invocacion_posicional_y_legacy(monkeypatch):
 
     monkeypatch.setattr(ft, "Icon", _LegacyIcon)
     monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
-    importlib.reload(fletplus)
+    module = importlib.import_module("fletplus")
+    importlib.reload(module)
+    module.enable_compat_patches(force=True)
 
     positional = ft.Icon("home", color="blue")
     assert positional.args == ("home",)
@@ -174,7 +176,9 @@ def test_icon_compat_prioridad_de_argumentos_en_conflicto(monkeypatch):
 
     monkeypatch.setattr(ft, "Icon", _LegacyIcon)
     monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
-    importlib.reload(fletplus)
+    module = importlib.import_module("fletplus")
+    importlib.reload(module)
+    module.enable_compat_patches(force=True)
 
     conflict = ft.Icon("posicional", name="name", icon="icon")
     assert conflict.args == ("posicional",)
@@ -197,12 +201,16 @@ def test_control_patch_es_idempotente(monkeypatch):
     monkeypatch.setattr(ft, "Icon", _LegacyIcon)
     monkeypatch.setattr(ft, "TextButton", _LegacyTextButton)
     monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
-    importlib.reload(fletplus)
+    module = importlib.import_module("fletplus")
+    importlib.reload(module)
+    module.enable_compat_patches(force=True)
 
     first_icon = ft.Icon
     first_button = ft.TextButton
 
-    importlib.reload(fletplus)
+    module = importlib.import_module("fletplus")
+    importlib.reload(module)
+    module.enable_compat_patches(force=True)
 
     assert ft.Icon is first_icon
     assert ft.TextButton is first_button

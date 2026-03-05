@@ -6,7 +6,7 @@ from pathlib import Path
 
 import flet as ft
 
-from fletplus import FletPlusApp
+from fletplus import FletPlusApp, enable_compat_patches
 from fletplus.core_legacy import FletPlusApp as LegacyFletPlusApp
 from fletplus_demo import main as demo_main
 from fletplus_demo.app import create_app
@@ -50,6 +50,7 @@ def test_public_entrypoints_use_real_modules_without_stubs():
 
 def test_public_import_supports_demo_construction():
     page = DummyPage()
+    enable_compat_patches(force=True)
 
     app = create_app(page)
 

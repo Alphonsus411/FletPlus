@@ -241,3 +241,44 @@ Si cualquier ítem falla, el estado de migración permanece **abierto** y no se 
 - Estado final: ✅ **migración cerrada para el minor target vigente**.
 - Decisión operativa: el target `latest-migration-target` queda oficialmente validado y vigente.
 - Alcance de deuda legacy: se mantiene únicamente por compatibilidad histórica local y queda fuera del contrato activo de soporte.
+
+
+## 11) Migración de parches legacy implícitos
+
+Desde esta iteración, FletPlus **ya no aplica automáticamente** parches de compatibilidad sobre `flet` al hacer `import fletplus`.
+
+### ¿Qué cambió?
+
+- Antes: `import fletplus` mutaba `ft.TextButton`, `ft.Icon` y alias `ft.Page.width/height` cuando detectaba APIs legacy.
+- Ahora: esos parches viven en `fletplus.utils.flet_compat_patch` y se activan de forma explícita.
+
+### Cómo migrar si dependías del comportamiento implícito
+
+```python
+import fletplus
+
+# Opción explícita recomendada (sin depender de variables de entorno):
+fletplus.enable_compat_patches(force=True)
+```
+
+También puedes controlar la activación por entorno sin hardcodear en la app:
+
+```bash
+export FLETPLUS_ENABLE_LEGACY_PATCHES=1
+```
+
+Y luego en código:
+
+```python
+import fletplus
+fletplus.enable_compat_patches()  # lee FLETPLUS_ENABLE_LEGACY_PATCHES
+```
+
+Para deshabilitarlo explícitamente:
+
+```bash
+export FLETPLUS_ENABLE_LEGACY_PATCHES=0
+```
+
+Con esto se evita introducir side-effects globales inesperados en apps que ya usan APIs modernas de Flet.
+

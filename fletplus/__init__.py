@@ -11,82 +11,8 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Any
 
-import flet as ft
-
-_patched = getattr(ft, "_fletplus_patched_controls", False)
-if not _patched:
-    try:
-        Page = ft.Page
-        if (getattr(Page, "width", None) is None) and (getattr(Page, "window_width", None) is None):
-            def _get_width(self):  # type: ignore[no-redef]
-                win = getattr(self, "window", None)
-                if win is not None and hasattr(win, "width"):
-                    return getattr(win, "width")
-                return getattr(self, "__dict__", {}).get("width", None)
-            def _set_width(self, value):  # type: ignore[no-redef]
-                win = getattr(self, "window", None)
-                if win is not None and hasattr(win, "width"):
-                    try:
-                        setattr(win, "width", value)
-                        return
-                    except Exception:
-                        pass
-                try:
-                    self.__dict__["width"] = value
-                except Exception:
-                    pass
-            ft.Page.width = property(_get_width, _set_width)  # type: ignore[assignment]
-        if (getattr(Page, "height", None) is None) and (getattr(Page, "window_height", None) is None):
-            def _get_height(self):  # type: ignore[no-redef]
-                win = getattr(self, "window", None)
-                if win is not None and hasattr(win, "height"):
-                    return getattr(win, "height")
-                return getattr(self, "__dict__", {}).get("height", None)
-            def _set_height(self, value):  # type: ignore[no-redef]
-                win = getattr(self, "window", None)
-                if win is not None and hasattr(win, "height"):
-                    try:
-                        setattr(win, "height", value)
-                        return
-                    except Exception:
-                        pass
-                try:
-                    self.__dict__["height"] = value
-                except Exception:
-                    pass
-            ft.Page.height = property(_get_height, _set_height)  # type: ignore[assignment]
-    except Exception:
-        pass
-    try:
-        _OriginalTextButton = ft.TextButton
-        class _TextButtonCompat(_OriginalTextButton):
-            def __init__(self, *args, text: Any = None, content: Any = None, **kwargs):
-                if content is not None and "content" not in kwargs:
-                    kwargs["content"] = content
-                if not args and text is not None and "content" not in kwargs:
-                    kwargs["content"] = text
-                super().__init__(*args, **kwargs)
-        ft.TextButton = _TextButtonCompat  # type: ignore[assignment]
-    except Exception:
-        pass
-    try:
-        _OriginalIcon = ft.Icon
-        class _IconCompat(_OriginalIcon):
-            def __init__(self, *args, name: Any = None, icon: Any = None, **kwargs):
-                if name is not None and not args:
-                    args = (name,)
-                elif icon is not None and not args:
-                    args = (icon,)
-                super().__init__(*args, **kwargs)
-        ft.Icon = _IconCompat  # type: ignore[assignment]
-    except Exception:
-        pass
-    try:
-        setattr(ft, "_fletplus_patched_controls", True)
-    except Exception:
-        pass
-
 LAZY_IMPORTS = {
+    "enable_compat_patches": "fletplus.utils.flet_compat_patch",
     "AdaptiveDestination": "fletplus.components",
     "AdaptiveNavigationLayout": "fletplus.components",
     "AccessibilityPanel": "fletplus.components",
@@ -189,6 +115,7 @@ LAZY_IMPORTS = {
 }
 
 if TYPE_CHECKING:
+    from fletplus.utils.flet_compat_patch import enable_compat_patches
     from fletplus.animation import (
         AnimatedContainer,
         AnimationController,
@@ -297,6 +224,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "enable_compat_patches",
     "FletPlusApp",
     "Layout",
     "State",
