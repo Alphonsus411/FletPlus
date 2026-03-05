@@ -33,7 +33,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import importlib
+import os
 from pathlib import Path
 from threading import current_thread, main_thread
 from typing import Any
@@ -60,6 +62,12 @@ class _FtProxy:
         return self._m.__dict__
 
 ft = _FtProxy(_ft)
+
+LEGACY_PAGE_WINDOW_PATCH_ENV_VAR = "FLETPLUS_ENABLE_LEGACY_PAGE_WINDOW_PATCH"
+"""Variable de entorno para habilitar explícitamente el parche legacy de ``Page.window``."""
+
+_TRUTHY_VALUES = frozenset({"1", "true", "yes", "on", "enabled"})
+_FALSY_VALUES = frozenset({"0", "false", "no", "off", "disabled"})
 
 # Proveer alias ft.icons en entornos donde no exista (compatibilidad de tests y monkeypatch)
 if not hasattr(ft, "icons"):
@@ -127,14 +135,71 @@ try:
 except Exception:
     pass
 
-# Garantiza presencia del atributo de clase `Page.window` para contratos de tests
-try:
-    if not isinstance(getattr(_ft.Page, "window", None), property):
-        def _get_window(self):
-            return getattr(self, "_window", None)
-        setattr(_ft.Page, "window", property(_get_window))
-except Exception:
-    pass
+def is_legacy_page_window_patch_enabled_from_env(default: bool = False) -> bool:
+    """Indica si el parche legacy de ``Page.window`` se activa por entorno."""
+
+    raw_value = os.getenv(LEGACY_PAGE_WINDOW_PATCH_ENV_VAR)
+    if raw_value is None:
+        return default
+
+    value = raw_value.strip().lower()
+    if value in _TRUTHY_VALUES:
+        return True
+    if value in _FALSY_VALUES:
+        return False
+    return default
+
+
+def _has_functional_window_descriptor(page_cls: type[Any]) -> bool:
+    """Detecta si ``Page.window`` ya está implementado con descriptor usable."""
+
+    sentinel = object()
+    window_attr = inspect.getattr_static(page_cls, "window", sentinel)
+    if window_attr is sentinel:
+        return False
+
+    if isinstance(window_attr, property):
+        return window_attr.fget is not None
+
+    return hasattr(window_attr, "__get__")
+
+
+def _needs_legacy_page_window_patch(page_cls: type[Any]) -> bool:
+    """Determina si ``Page.window`` está ausente o es inequívocamente incompatible."""
+
+    sentinel = object()
+    window_attr = inspect.getattr_static(page_cls, "window", sentinel)
+    if window_attr is sentinel:
+        return True
+    if _has_functional_window_descriptor(page_cls):
+        return False
+    return True
+
+
+def _patch_page_window_property() -> bool:
+    """Aplica el alias legacy de ``Page.window`` únicamente cuando hace falta."""
+
+    page_cls = _ft.Page
+    if not _needs_legacy_page_window_patch(page_cls):
+        return False
+
+    def _get_window(self):
+        return getattr(self, "_window", None)
+
+    setattr(page_cls, "window", property(_get_window))
+    return True
+
+
+def enable_legacy_page_window_patch(force: bool | None = None) -> bool:
+    """Habilita el parche legacy de ``Page.window`` bajo bandera explícita."""
+
+    should_enable = force if force is not None else is_legacy_page_window_patch_enabled_from_env()
+    if not should_enable:
+        return False
+
+    with contextlib.suppress(Exception):
+        _patch_page_window_property()
+    return True
 
 def get_page_window(page: Any) -> Any | None:
     """Devuelve ``page.window`` si existe; en caso contrario ``None``."""
@@ -172,8 +237,6 @@ def set_page_width(page: Any, width: float) -> bool:
     if window is not None and hasattr(window, "width"):
         with contextlib.suppress(Exception):
             setattr(window, "width", width)
-        with contextlib.suppress(Exception):
-            setattr(page, "width", width)
         return True
 
     for attr in ("window_width", "width"):
@@ -213,8 +276,6 @@ def set_page_height(page: Any, height: float) -> bool:
     if window is not None and hasattr(window, "height"):
         with contextlib.suppress(Exception):
             setattr(window, "height", height)
-        with contextlib.suppress(Exception):
-            setattr(page, "height", height)
         return True
 
     for attr in ("window_height", "height"):
