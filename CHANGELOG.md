@@ -8,5 +8,7 @@
 - Se actualiza la documentación (README y docs) para reflejar un único camino oficial de importación pública.
 - Se fija como URL pública canónica del repositorio `https://github.com/FletPlus/FletPlus` y se migra la metadata desde URLs históricas de `Alphonsus411/fletplus`.
 - Se documenta la política de versión objetivo de Flet (cadencia de actualización, criterios de rollback y checklist de release) en `README.md` y `docs/tooling.md`, y se adopta como referencia obligatoria para trazabilidad de próximos upgrades.
-- Se actualiza la matriz de compatibilidad de Flet en CI al baseline `0.28.x` y target estable `0.80.x`, alineando `reusable-quality.yml`, `tools/flet_version_matrix_config.py` y la política de versión en `README.md`.
-- 2026-02-21: salto de target de Flet a `0.80.x` (manteniendo baseline `0.28.x`) por deprecaciones/acoples acumulados en versiones intermedias y para cubrir validación preventiva ante fixes potencialmente breaking en releases críticos.
+- Se actualiza la matriz de compatibilidad de Flet en CI al baseline `0.29.x` y target estable `0.82.x`, alineando `reusable-quality.yml`, `tools/flet_version_matrix_config.py` y la política de versión en `README.md`.
+- 2026-03-05: salto de target de Flet a `0.82.x` (manteniendo baseline `0.29.x`) por deprecaciones/acoples acumulados en versiones intermedias y para cubrir validación preventiva ante fixes potencialmente breaking en releases críticos.
+- Se amplía el rango soportado de paquete/desarrollo a `flet>=0.29,<0.83` para cubrir la validación del nuevo target `0.82.x` en CI y ejecución local.
+- Riesgos/breaking changes documentados para el salto a `0.82.x`: cambios de símbolos sensibles de navegación/iconografía (`ft.Icons`/`ft.icons`, destinos de navegación) y variaciones de APIs de página; se mantiene cobertura contractual en `tests/test_flet_version_matrix.py`.

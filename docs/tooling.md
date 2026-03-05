@@ -280,10 +280,10 @@ Esta política define cómo mantenemos la compatibilidad de FletPlus con Flet y 
 
 ### Versión objetivo, cadencia y rollback
 
-- **Versión objetivo vigente**: `flet==0.80.x` (target de migración en CI).
-- **Estado del target vigente**: ✅ validado oficialmente para la serie `0.80.x` (incluyendo el parche más reciente validado en esta iteración).
+- **Versión objetivo vigente**: `flet==0.82.x` (target de migración en CI).
+- **Estado del target vigente**: ✅ validado oficialmente para la serie `0.82.x` (incluyendo el parche más reciente validado en esta iteración).
 - **Baseline de validación en CI**: `flet>=0.29,<0.30` (`min-supported`).
-- **Mínimo de empaquetado**: `flet>=0.29,<0.81` (publicado en `pyproject.toml` y replicado en plantillas/dev).
+- **Mínimo de empaquetado**: `flet>=0.29,<0.83` (publicado en `pyproject.toml` y replicado en plantillas/dev).
 - **Cadencia de actualización**: revisión **mensual** de nuevas versiones de Flet, con posibilidad de adelanto por seguridad o correcciones críticas.
 - **Rollback**: se revierte al objetivo anterior cuando ocurra cualquiera de estos escenarios:
   1. Ruptura de API pública de FletPlus.
@@ -297,9 +297,9 @@ Todo upgrade/rollback debe registrarse en `CHANGELOG.md` indicando versión eval
 
 Este bloque es la referencia **única** para evitar desalineaciones entre documentación, CI y validación local:
 
-- **Mínimo de paquete (distribución)**: `pyproject.toml` declara `flet>=0.29,<0.81`.
-- **Baseline/target en CI**: `.github/workflows/reusable-quality.yml` valida `min-supported` (`flet>=0.29,<0.30`) y `latest-migration-target` (`flet>=0.80,<0.81`).
-- **Validación local de minors permitidos**: `tools/flet_version_matrix_config.py` define `FLET_MATRIX_MINORS = ("0.29", "0.80")` y `ALLOWED_FLET_MINORS`.
+- **Mínimo de paquete (distribución)**: `pyproject.toml` declara `flet>=0.29,<0.83`.
+- **Baseline/target en CI**: `.github/workflows/reusable-quality.yml` valida `min-supported` (`flet>=0.29,<0.30`) y `latest-migration-target` (`flet>=0.82,<0.83`).
+- **Validación local de minors permitidos**: `tools/flet_version_matrix_config.py` define `FLET_MATRIX_MINORS = ("0.29", "0.82")` y `ALLOWED_FLET_MINORS`.
 - **Sin minors legacy fuera del contrato**: `ALLOWED_FLET_MINORS` debe coincidir exactamente con `FLET_MATRIX_MINORS`; no se aceptan tolerancias residuales (como `0.27`) en validaciones locales o CI.
 
 Regla operativa: cualquier cambio de baseline o target se realiza primero en `tools/flet_version_matrix_config.py` y luego se replica de forma idéntica en el workflow de CI y documentación asociada.
