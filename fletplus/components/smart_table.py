@@ -185,7 +185,7 @@ class SmartTableColumn:
         icon = ft.Icon(ft.Icons.ARROW_UPWARD if ascending else ft.Icons.ARROW_DOWNWARD, size=14)
         order_badge = ft.Container(
             content=ft.Text(str(sort_order), size=12),
-            padding=ft.padding.symmetric(horizontal=4, vertical=2),
+            padding=ft.Padding.symmetric(horizontal=4, vertical=2),
             bgcolor=ft.Colors.with_opacity(0.08, ft.Colors.PRIMARY),
             border_radius=6,
         )

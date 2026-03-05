@@ -62,7 +62,7 @@ CRITICAL_COMMANDS = {
     "mypy": "python -m mypy fletplus",
     "bandit-sync": "python tools/check_bandit_command_sync.py",
     "bandit": "python -m bandit -c pyproject.toml -r fletplus",
-    "pip-audit": "python -m pip_audit -r requirements.txt -r requirements-dev.txt --policy pip-audit.policy.json",
+    "pip-audit": "python -m pip_audit -r requirements.txt -r requirements-dev.txt",
     "safety": "python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml",
 }
 

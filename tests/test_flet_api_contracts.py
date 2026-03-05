@@ -86,10 +86,13 @@ def test_page_window_dimension_contract() -> None:
     page_height_attr = getattr(ft.Page, "window_height", None)
     width_attr = getattr(ft.Page, "width", None)
     height_attr = getattr(ft.Page, "height", None)
+    window = ft.Window()
+    has_window_width = hasattr(window, "width")
+    has_window_height = hasattr(window, "height")
 
     assert isinstance(window_attr, property)
-    assert (page_width_attr is not None or width_attr is not None)
-    assert (page_height_attr is not None or height_attr is not None)
+    assert page_width_attr is not None or width_attr is not None or has_window_width
+    assert page_height_attr is not None or height_attr is not None or has_window_height
 
 
 def test_page_update_contract_methods_exist() -> None:
