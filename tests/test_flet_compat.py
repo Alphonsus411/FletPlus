@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import types
 from pathlib import Path
 
 from fletplus.utils.flet_compat import (
@@ -374,6 +375,63 @@ def test_get_flet_icons_falls_back_to_lowercase_namespace(monkeypatch) -> None:
     monkeypatch.setattr(flet_compat.ft, "icons", fake_icons, raising=False)
 
     assert get_flet_icons() is fake_icons
+
+
+def test_module_import_survives_without_flet_controls_internal_modules(monkeypatch) -> None:
+    import importlib
+    import sys
+
+    import flet
+
+    fake_icons = types.SimpleNamespace(MENU="menu")
+    fake_transform = types.SimpleNamespace(Offset=object, Scale=object, Rotate=object)
+
+    monkeypatch.setattr(flet, "Icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "transform", fake_transform, raising=False)
+
+    real_import_module = importlib.import_module
+
+    def _raising_import(name: str, package: str | None = None):
+        if name.startswith("flet.controls."):
+            raise ModuleNotFoundError(name)
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", _raising_import)
+    sys.modules.pop("fletplus.utils.flet_compat", None)
+
+    flet_compat = importlib.import_module("fletplus.utils.flet_compat")
+
+    assert flet_compat.get_flet_icons() is fake_icons
+    assert flet_compat.ft.transform is fake_transform
+
+
+def test_internal_import_resolver_logs_warning_once(monkeypatch, caplog) -> None:
+    import importlib
+
+    from fletplus.utils import flet_compat
+
+    monkeypatch.delattr(flet_compat._resolve_internal_symbol, "_warned", raising=False)
+
+    def _raising_import(name: str, package: str | None = None):
+        raise ModuleNotFoundError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _raising_import)
+    caplog.set_level("WARNING")
+
+    assert flet_compat._resolve_internal_symbol(
+        "flet.controls.material.icons",
+        default=None,
+        warning_key="icons_namespace",
+    ) is None
+    assert flet_compat._resolve_internal_symbol(
+        "flet.controls.material.icons",
+        default=None,
+        warning_key="icons_namespace",
+    ) is None
+
+    warnings = [r for r in caplog.records if "API interna" in r.message]
+    assert len(warnings) == 1
 
 
 def test_get_flet_colors_falls_back_to_lowercase_namespace(monkeypatch) -> None:

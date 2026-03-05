@@ -284,3 +284,26 @@ export FLETPLUS_ENABLE_LEGACY_PATCHES=0
 
 Con esto se evita introducir side-effects globales inesperados en apps que ya usan APIs modernas de Flet.
 
+
+
+## 12) Símbolos internos/no garantizados y mitigaciones
+
+En `fletplus.utils.flet_compat` se usa una política explícita: **primero APIs públicas** y solo después imports internos.
+
+### Símbolos considerados internos/no garantizados
+
+- `flet.controls.material.icons`
+- `flet.controls.transform`
+- `flet.controls.alignment`
+
+Estos módulos no forman parte del contrato público estable y pueden desaparecer o moverse entre versiones.
+
+### Mitigación implementada
+
+1. **Prioridad a APIs públicas**:
+   - Iconos: `ft.Icons` y `ft.icons`.
+   - Transformaciones: `ft.transform` y símbolos top-level (`ft.Offset`, `ft.Scale`, `ft.Rotate`).
+   - Alineación: `ft.alignment`.
+2. **Resolución encapsulada de imports internos**: helper `_resolve_internal_symbol(...)` con fallback explícito.
+3. **Trazas de advertencia controladas**: warning único por tipo de símbolo interno faltante (sin ruido repetido).
+4. **Pruebas de robustez**: se simula la ausencia de `flet.controls.*` y se valida que la carga del módulo sigue operativa mediante fallbacks públicos.
