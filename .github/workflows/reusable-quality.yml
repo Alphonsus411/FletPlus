@@ -85,8 +85,8 @@ jobs:
             flet-spec: flet>=0.29,<0.30
             expected-minor: "0.29"
           - label: latest-migration-target
-            flet-spec: flet>=0.80,<0.81
-            expected-minor: "0.80"
+            flet-spec: flet>=0.82,<0.83
+            expected-minor: "0.82"
 
     steps:
       - name: Checkout

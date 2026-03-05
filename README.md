@@ -67,7 +67,7 @@ pip install fletplus
 
 Para reducir regresiones y hacer predecible cada salto de compatibilidad, FletPlus mantiene una política explícita sobre `flet`:
 
-- **Versión objetivo**: la versión objetivo vigente es **Flet 0.80.x** y la baseline mínima de validación en CI es **Flet 0.28.x** (`>=0.28,<0.29`).
+- **Versión objetivo**: la versión objetivo vigente es **Flet 0.82.x** y la baseline mínima de validación en CI es **Flet 0.29.x** (`>=0.29,<0.30`).
 - **Cadencia de actualización**: se evalúan nuevas versiones de Flet en una ventana **mensual** o antes si hay correcciones críticas de seguridad/estabilidad.
 - **Criterios de rollback**: si un upgrade rompe APIs públicas de FletPlus, degrada demos oficiales, o introduce fallos en CI que no se pueden corregir en la ventana de release, se revierte temporalmente a la versión objetivo anterior y se documenta en `CHANGELOG.md`.
 
