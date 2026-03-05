@@ -35,6 +35,7 @@ import asyncio
 import contextlib
 import inspect
 import importlib
+import logging
 import os
 from pathlib import Path
 from threading import current_thread, main_thread
@@ -62,6 +63,36 @@ class _FtProxy:
         return self._m.__dict__
 
 ft = _FtProxy(_ft)
+_logger = logging.getLogger(__name__)
+
+
+def _resolve_internal_symbol(
+    module_path: str,
+    *,
+    attr: str | None = None,
+    default: Any = None,
+    warning_key: str | None = None,
+) -> Any:
+    """Resuelve símbolos internos de Flet con fallback y warning controlado."""
+
+    try:
+        module = importlib.import_module(module_path)
+    except Exception as exc:
+        if warning_key is not None:
+            warned = getattr(_resolve_internal_symbol, "_warned", set())
+            if warning_key not in warned:
+                _logger.warning(
+                    "fletplus compat: no se pudo importar API interna '%s' (%s); se usará fallback público.",
+                    module_path,
+                    exc,
+                )
+                warned.add(warning_key)
+                setattr(_resolve_internal_symbol, "_warned", warned)
+        return default
+
+    if attr is None:
+        return module
+    return getattr(module, attr, default)
 
 LEGACY_PAGE_WINDOW_PATCH_ENV_VAR = "FLETPLUS_ENABLE_LEGACY_PAGE_WINDOW_PATCH"
 """Variable de entorno para habilitar explícitamente el parche legacy de ``Page.window``."""
@@ -71,17 +102,25 @@ _FALSY_VALUES = frozenset({"0", "false", "no", "off", "disabled"})
 
 # Proveer alias ft.icons en entornos donde no exista (compatibilidad de tests y monkeypatch)
 if not hasattr(ft, "icons"):
-    try:
-        _icons_mod = importlib.import_module("flet.controls.material.icons")
-    except Exception:
-        _icons_mod = type("icons", (), {})()
+    _icons_mod = (
+        getattr(_ft, "icons", None)
+        or _resolve_internal_symbol(
+            "flet.controls.material.icons",
+            default=type("icons", (), {})(),
+            warning_key="icons_namespace",
+        )
+    )
     try:
         setattr(ft, "icons", _icons_mod)
     except Exception:
         pass
 if "Icons" not in getattr(ft, "__dict__", {}):
     try:
-        _icons_cls = getattr(importlib.import_module("flet.controls.material.icons"), "Icons", None)
+        _icons_cls = getattr(_ft, "Icons", None) or _resolve_internal_symbol(
+            "flet.controls.material.icons",
+            attr="Icons",
+            warning_key="icons_class",
+        )
         if _icons_cls is None:
             _icons_cls = type("Icons", (), {})()
         setattr(ft, "Icons", _icons_cls)
@@ -93,10 +132,11 @@ if "Icons" not in getattr(ft, "__dict__", {}):
 
 # Alias de `ft.transform` cuando no exista (compatibilidad con código legacy)
 if not hasattr(ft, "transform"):
-    try:
-        _transform_mod = importlib.import_module("flet.controls.transform")
-        setattr(ft, "transform", _transform_mod)
-    except Exception:
+    _transform_mod = getattr(_ft, "transform", None) or _resolve_internal_symbol(
+        "flet.controls.transform",
+        warning_key="transform_namespace",
+    )
+    if _transform_mod is None:
         # Fallback mínimo: objeto con Offset/Scale/Rotate si existen a nivel top
         _transform_mod = type(
             "transform",
@@ -107,14 +147,19 @@ if not hasattr(ft, "transform"):
                 "Rotate": getattr(_ft, "Rotate", object),
             },
         )()
-        try:
-            setattr(ft, "transform", _transform_mod)
-        except Exception:
-            pass
+    try:
+        setattr(ft, "transform", _transform_mod)
+    except Exception:
+        pass
 
 # Completar constantes de alineación comunes si faltan
 try:
-    _alignment_mod = importlib.import_module("flet.controls.alignment")
+    _alignment_mod = getattr(_ft, "alignment", None) or _resolve_internal_symbol(
+        "flet.controls.alignment",
+        warning_key="alignment_namespace",
+    )
+    if _alignment_mod is None:
+        raise RuntimeError("alignment namespace unavailable")
     _align_defaults = {
         "top_left": (-1, -1),
         "top_center": (0, -1),
