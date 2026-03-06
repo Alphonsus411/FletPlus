@@ -67,9 +67,14 @@ class _FtProxy:
     def __delattr__(self, name: str):
         try:
             delattr(self._m, name)
-        except Exception:
+        except (AttributeError, TypeError) as exc:
             # Tolerar eliminación repetida o símbolos dinámicos ausentes
-            pass
+            _logger.debug(
+                "No se pudo eliminar símbolo en proxy ft: symbol=%s flet_version=%s error=%r",
+                name,
+                getattr(_ft, "__version__", "unknown"),
+                exc,
+            )
     @property
     def __dict__(self):
         return self._m.__dict__
@@ -110,7 +115,7 @@ def _resolve_internal_symbol(
 
     try:
         module = importlib.import_module(module_path)
-    except Exception as exc:
+    except (ModuleNotFoundError, ImportError) as exc:
         if warning_key is not None:
             _warn_once(
                 "fletplus.compat.internal_import_unavailable",
@@ -172,8 +177,12 @@ if not hasattr(ft, "icons"):
     )
     try:
         setattr(ft, "icons", _icons_mod)
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "No se pudo exponer alias ft.icons: symbol=icons flet_version=%s fallback=namespace error=%r",
+            getattr(_ft, "__version__", "unknown"),
+            exc,
+        )
 if "Icons" not in getattr(ft, "__dict__", {}):
     try:
         _icons_cls = _resolve_public_first_symbol(
@@ -185,11 +194,20 @@ if "Icons" not in getattr(ft, "__dict__", {}):
         if _icons_cls is None:
             _icons_cls = type("Icons", (), {})()
         setattr(ft, "Icons", _icons_cls)
-    except Exception:
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "Fallo al resolver alias ft.Icons primario: symbol=Icons flet_version=%s fallback=namespace_vacio error=%r",
+            getattr(_ft, "__version__", "unknown"),
+            exc,
+        )
         try:
             setattr(ft, "Icons", type("Icons", (), {})())
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as fallback_exc:
+            _logger.warning(
+                "Fallo al aplicar fallback ft.Icons vacío: symbol=Icons flet_version=%s fallback=omitido error=%r",
+                getattr(_ft, "__version__", "unknown"),
+                fallback_exc,
+            )
 
 # Alias de `ft.transform` cuando no exista (compatibilidad con código legacy)
 if not hasattr(ft, "transform"):
@@ -211,8 +229,12 @@ if not hasattr(ft, "transform"):
         )()
     try:
         setattr(ft, "transform", _transform_mod)
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "No se pudo exponer alias ft.transform: symbol=transform flet_version=%s fallback=namespace_transform error=%r",
+            getattr(_ft, "__version__", "unknown"),
+            exc,
+        )
 
 # Completar constantes de alineación comunes si faltan
 try:
@@ -238,10 +260,19 @@ try:
         if not hasattr(_alignment_mod, _name):
             try:
                 setattr(_alignment_mod, _name, _ft.Alignment(_x, _y))
-            except Exception:
-                pass
-except Exception:
-    pass
+            except (AttributeError, TypeError) as exc:
+                _logger.debug(
+                    "No se pudo completar constante de alineación: symbol=%s flet_version=%s fallback=constante_omitida error=%r",
+                    _name,
+                    getattr(_ft, "__version__", "unknown"),
+                    exc,
+                )
+except (AttributeError, TypeError, RuntimeError) as exc:
+    _logger.warning(
+        "No se pudo completar namespace de alineación: symbol=alignment flet_version=%s fallback=omitido error=%r",
+        getattr(_ft, "__version__", "unknown"),
+        exc,
+    )
 
 def is_legacy_page_window_patch_enabled_from_env(default: bool = False) -> bool:
     """Indica si el parche legacy de ``Page.window`` se activa por entorno."""

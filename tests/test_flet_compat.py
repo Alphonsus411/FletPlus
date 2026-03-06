@@ -438,6 +438,17 @@ def test_internal_import_resolver_logs_warning_once(monkeypatch, caplog) -> None
     assert len(warnings) == 1
 
 
+def test_ft_proxy_delattr_missing_symbol_logs_debug(caplog) -> None:
+    from fletplus.utils import flet_compat
+
+    proxy = flet_compat._FtProxy(types.SimpleNamespace())
+    caplog.set_level("DEBUG")
+
+    delattr(proxy, "missing_symbol")
+
+    assert any("No se pudo eliminar símbolo en proxy ft" in r.message for r in caplog.records)
+
+
 def test_module_import_prefers_public_api_without_touching_internals(monkeypatch) -> None:
     import importlib
     import sys

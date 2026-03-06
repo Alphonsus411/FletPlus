@@ -9,9 +9,12 @@ necesite el comportamiento legacy.
 from __future__ import annotations
 
 import os
+import logging
 from typing import Any
 
 import flet as ft
+
+_logger = logging.getLogger(__name__)
 
 LEGACY_PATCHES_ENV_VAR = "FLETPLUS_ENABLE_LEGACY_PATCHES"
 """Variable de entorno que gobierna la activación de parches legacy."""
@@ -57,12 +60,20 @@ def _patch_page_size_aliases() -> None:
                 try:
                     setattr(win, "width", value)
                     return
-                except Exception:
-                    pass
+                except (AttributeError, TypeError) as exc:
+                    _logger.warning(
+                        "No se pudo asignar page.window.width: flet_version=%s fallback=page.__dict__.width error=%r",
+                        getattr(ft, "__version__", "unknown"),
+                        exc,
+                    )
             try:
                 self.__dict__["width"] = value
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as exc:
+                _logger.debug(
+                    "No se pudo asignar page.__dict__.width: flet_version=%s fallback=omitido error=%r",
+                    getattr(ft, "__version__", "unknown"),
+                    exc,
+                )
 
         ft.Page.width = property(_get_width, _set_width)  # type: ignore[assignment]
 
@@ -80,12 +91,20 @@ def _patch_page_size_aliases() -> None:
                 try:
                     setattr(win, "height", value)
                     return
-                except Exception:
-                    pass
+                except (AttributeError, TypeError) as exc:
+                    _logger.warning(
+                        "No se pudo asignar page.window.height: flet_version=%s fallback=page.__dict__.height error=%r",
+                        getattr(ft, "__version__", "unknown"),
+                        exc,
+                    )
             try:
                 self.__dict__["height"] = value
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as exc:
+                _logger.debug(
+                    "No se pudo asignar page.__dict__.height: flet_version=%s fallback=omitido error=%r",
+                    getattr(ft, "__version__", "unknown"),
+                    exc,
+                )
 
         ft.Page.height = property(_get_height, _set_height)  # type: ignore[assignment]
 
@@ -140,22 +159,38 @@ def enable_compat_patches(force: bool | None = None) -> bool:
 
     try:
         _patch_page_size_aliases()
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "Fallo en parche legacy _patch_page_size_aliases: flet_version=%s fallback=continuar_sin_aliases error=%r",
+            getattr(ft, "__version__", "unknown"),
+            exc,
+        )
 
     try:
         _patch_text_button_compat()
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "Fallo en parche legacy _patch_text_button_compat: flet_version=%s fallback=continuar_sin_textbutton_patch error=%r",
+            getattr(ft, "__version__", "unknown"),
+            exc,
+        )
 
     try:
         _patch_icon_compat()
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "Fallo en parche legacy _patch_icon_compat: flet_version=%s fallback=continuar_sin_icon_patch error=%r",
+            getattr(ft, "__version__", "unknown"),
+            exc,
+        )
 
     try:
         setattr(ft, "_fletplus_patched_controls", True)
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as exc:
+        _logger.warning(
+            "No se pudo marcar _fletplus_patched_controls: flet_version=%s fallback=sin_marca error=%r",
+            getattr(ft, "__version__", "unknown"),
+            exc,
+        )
 
     return True
