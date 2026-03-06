@@ -20,7 +20,7 @@ from typing import Callable, Dict, Iterable
 
 import click
 
-from .build import PackagingError, run_build
+from .build import DEFAULT_BUILD_TIMEOUT_SECONDS, PackagingError, run_build
 
 
 def _watchdog_available() -> bool:
@@ -531,11 +531,19 @@ def profile(flow_names: tuple[str, ...], output_path: Path, sort: str, limit: in
     show_default=True,
     help="Ruta al archivo principal de la aplicación.",
 )
-def build(target: str, app_path: Path) -> None:
+@click.option(
+    "--timeout",
+    "build_timeout",
+    type=click.FloatRange(min=0.0, min_open=True),
+    default=DEFAULT_BUILD_TIMEOUT_SECONDS,
+    show_default=True,
+    help="Tiempo máximo en segundos para cada subproceso de compilación.",
+)
+def build(target: str, app_path: Path, build_timeout: float) -> None:
     """Compila la aplicación para los objetivos seleccionados."""
 
     try:
-        reports = run_build(Path.cwd(), app_path, target.lower())
+        reports = run_build(Path.cwd(), app_path, target.lower(), build_timeout=build_timeout)
     except PackagingError as exc:
         raise click.ClickException(str(exc)) from exc
 
