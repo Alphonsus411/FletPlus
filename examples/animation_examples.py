@@ -48,8 +48,8 @@ def animated_dashboard() -> ft.Control:
         ),
         duration=360,
         curve=ft.AnimationCurve.EASE_IN_OUT,
-        begin={"padding": ft.padding.all(12), "bgcolor": ft.Colors.with_opacity(0.05, ft.Colors.BLUE)},
-        end={"padding": ft.padding.all(24), "bgcolor": ft.Colors.with_opacity(0.15, ft.Colors.BLUE)},
+        begin={"padding": ft.Padding.all(12), "bgcolor": ft.Colors.with_opacity(0.05, ft.Colors.BLUE)},
+        end={"padding": ft.Padding.all(24), "bgcolor": ft.Colors.with_opacity(0.15, ft.Colors.BLUE)},
         trigger="card_expand",
         reverse_trigger="card_collapse",
     )

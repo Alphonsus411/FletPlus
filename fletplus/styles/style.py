@@ -256,7 +256,7 @@ class Style:
             v is not None
             for v in [self.padding_top, self.padding_right, self.padding_bottom, self.padding_left]
         ):
-            container_kwargs["padding"] = ft.padding.only(
+            container_kwargs["padding"] = ft.Padding.only(
                 left=self.padding_left or 0,
                 top=self.padding_top or 0,
                 right=self.padding_right or 0,

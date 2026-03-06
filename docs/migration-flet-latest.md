@@ -307,3 +307,30 @@ Estos módulos no forman parte del contrato público estable y pueden desaparece
 2. **Resolución encapsulada de imports internos**: helper `_resolve_internal_symbol(...)` con fallback explícito.
 3. **Trazas de advertencia controladas**: warning único por tipo de símbolo interno faltante (sin ruido repetido).
 4. **Pruebas de robustez**: se simula la ausencia de `flet.controls.*` y se valida que la carga del módulo sigue operativa mediante fallbacks públicos.
+
+## 13) Convención vigente para padding (eliminar `ft.padding.*`)
+
+Para evitar warnings deprecados y drift entre código productivo y ejemplos, desde esta iteración la convención oficial es:
+
+- ✅ Usar `ft.Padding.*` (`all`, `only`, `symmetric`) en `fletplus/`.
+- ✅ Usar la misma convención en `examples/`.
+- ❌ No introducir nuevas referencias a `ft.padding.*`.
+
+### Ejemplo de migración
+
+```python
+# Antes (legacy)
+padding = ft.padding.symmetric(horizontal=16, vertical=12)
+
+# Ahora (vigente)
+padding = ft.Padding.symmetric(horizontal=16, vertical=12)
+```
+
+### Validación contractual
+
+Se añade el contrato `tests/test_padding_migration_contract.py` para:
+
+1. Verificar que la API `ft.Padding` existe y expone constructores esperados.
+2. Bloquear regresiones de `ft.padding.` dentro de `fletplus/` y `examples/`.
+
+Si este contrato falla, la migración se considera abierta hasta eliminar el uso legacy.
