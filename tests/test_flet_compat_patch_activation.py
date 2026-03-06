@@ -89,3 +89,19 @@ def test_compat_patch_no_rompe_api_moderna(monkeypatch):
 
     button = ft.TextButton(content="Contenido moderno", style="outlined")
     assert button.kwargs == {"content": "Contenido moderno", "style": "outlined"}
+
+
+def test_enable_compat_patches_registra_warning_si_falla_un_parche(monkeypatch, caplog):
+    monkeypatch.setattr(ft, "_fletplus_patched_controls", False, raising=False)
+
+    module = importlib.import_module("fletplus.utils.flet_compat_patch")
+    importlib.reload(module)
+
+    def _boom() -> None:
+        raise TypeError("patch failed")
+
+    monkeypatch.setattr(module, "_patch_page_size_aliases", _boom)
+    caplog.set_level("WARNING")
+
+    assert module.enable_compat_patches(force=True) is True
+    assert any("Fallo en parche legacy _patch_page_size_aliases" in r.message for r in caplog.records)
