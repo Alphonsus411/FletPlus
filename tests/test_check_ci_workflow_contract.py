@@ -1299,13 +1299,13 @@ def test_validate_dependency_policy_contract_passes_when_synced(
         """
 [project]
 dependencies = [
-  "flet>=0.29.0,<0.81",
+  "flet>=0.29,<0.81",
   "websockets>=13,<14",
   "httpx>=0.28,<1",
 ]
 [project.optional-dependencies]
 dev = [
-  "flet>=0.28,<0.81",
+  "flet>=0.29,<0.81",
   "pytest>=7.4,<9",
   "websockets>=13,<14",
   "httpx>=0.28,<1",
@@ -1318,7 +1318,7 @@ dev = [
     requirements_dev = tmp_path / "requirements-dev.txt"
     requirements_dev.write_text(
         """
-flet>=0.28,<0.81
+flet>=0.29,<0.81
 websockets>=13,<14
 httpx>=0.28,<1
 watchdog>=3,<7
@@ -1328,7 +1328,7 @@ pytest>=7.4,<9
     )
 
     template_req = tmp_path / "template-requirements.txt"
-    template_req.write_text("flet>=0.29.0,<0.81\nfletplus\n", encoding="utf-8")
+    template_req.write_text("flet>=0.29,<0.81\nfletplus\n", encoding="utf-8")
 
     workflow = tmp_path / "reusable-quality.yml"
     workflow.write_text(
@@ -1348,6 +1348,22 @@ jobs:
         encoding="utf-8",
     )
 
+    config_file = tmp_path / "flet_version_matrix_config.py"
+    config_file.write_text(
+        'FLET_MATRIX_MINORS: tuple[str, ...] = ("0.29", "0.80")\n',
+        encoding="utf-8",
+    )
+
+    migration_doc = tmp_path / "migration-flet-latest.md"
+    migration_doc.write_text(
+        """
+**Baseline de validación (estado actual en CI)**: `flet>=0.29,<0.30`
+**Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81`
+**Rango contractual de paquete (distribución/dev/plantillas)**: `flet>=0.29,<0.81`
+""",
+        encoding="utf-8",
+    )
+
     monkeypatch.setattr(check_ci_workflow_contract, "PYPROJECT_FILE", pyproject)
     monkeypatch.setattr(
         check_ci_workflow_contract, "REQUIREMENTS_DEV", requirements_dev
@@ -1356,6 +1372,8 @@ jobs:
         check_ci_workflow_contract, "CLI_TEMPLATE_REQUIREMENTS", template_req
     )
     monkeypatch.setattr(check_ci_workflow_contract, "REUSABLE_WORKFLOW", workflow)
+    monkeypatch.setattr(check_ci_workflow_contract, "FLET_MATRIX_CONFIG", config_file)
+    monkeypatch.setattr(check_ci_workflow_contract, "MIGRATION_DOC", migration_doc)
 
     errors = check_ci_workflow_contract.validate_dependency_policy_contract()
 
@@ -1370,7 +1388,7 @@ def test_validate_dependency_policy_contract_detects_contradictions(
         """
 [project]
 dependencies = [
-  "flet>=0.29.0,<0.81",
+  "flet>=0.29,<0.81",
   "websockets>=13,<14",
   "httpx>=0.28,<1",
 ]
@@ -1419,6 +1437,21 @@ jobs:
         encoding="utf-8",
     )
 
+    config_file = tmp_path / "flet_version_matrix_config.py"
+    config_file.write_text(
+        'FLET_MATRIX_MINORS: tuple[str, ...] = ("0.28", "0.80")\n',
+        encoding="utf-8",
+    )
+
+    migration_doc = tmp_path / "migration-flet-latest.md"
+    migration_doc.write_text(
+        """
+**Baseline de validación (estado actual en CI)**: `flet>=0.28,<0.29`
+**Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.80,<0.81`
+""",
+        encoding="utf-8",
+    )
+
     monkeypatch.setattr(check_ci_workflow_contract, "PYPROJECT_FILE", pyproject)
     monkeypatch.setattr(
         check_ci_workflow_contract, "REQUIREMENTS_DEV", requirements_dev
@@ -1427,10 +1460,13 @@ jobs:
         check_ci_workflow_contract, "CLI_TEMPLATE_REQUIREMENTS", template_req
     )
     monkeypatch.setattr(check_ci_workflow_contract, "REUSABLE_WORKFLOW", workflow)
+    monkeypatch.setattr(check_ci_workflow_contract, "FLET_MATRIX_CONFIG", config_file)
+    monkeypatch.setattr(check_ci_workflow_contract, "MIGRATION_DOC", migration_doc)
 
     errors = check_ci_workflow_contract.validate_dependency_policy_contract()
 
     assert any("Rango contradictorio para websockets" in e for e in errors)
     assert any("plantilla CLI" in e for e in errors)
     assert any("requirements-dev.txt" in e for e in errors)
+    assert any("docs/migration-flet-latest.md" in e for e in errors)
     assert any("matrix.flet-spec" in e for e in errors)
