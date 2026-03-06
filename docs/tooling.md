@@ -156,6 +156,34 @@ Cuando el servidor se expone fuera de loopback (`0.0.0.0`, `::` o IP no local), 
 
 El comando `fletplus run` monitoriza el árbol del proyecto (ignorando carpetas temporales como `.git`, `__pycache__` o `build`) mediante `watchdog`. Cuando detecta cambios en archivos Python, JSON o YAML, detiene el proceso actual de `flet run` y lo reinicia, conservando las opciones de puerto y activando los DevTools salvo que se haya pasado `--no-devtools`. También admite seleccionar el archivo principal con `--app` y la carpeta a vigilar con `--watch`.
 
+## Modelo de amenaza y política de subprocesos para `fletplus build`
+
+La cadena de build (`flet build`, `PyInstaller` y `briefcase`) ejecuta herramientas externas que heredan entorno del sistema. Para reducir superficie de ataque, FletPlus aplica una política de **mínimo privilegio por whitelist explícita** en cada subproceso.
+
+### Riesgos considerados
+
+- **Exfiltración de secretos del entorno**: tokens, credenciales cloud o variables de CI podrían filtrarse si se pasa el entorno completo.
+- **Comportamiento no determinista por contaminación de entorno**: variables ajenas al build pueden alterar resolución de binarios o librerías.
+- **Denegación de servicio por builds colgados**: subprocesos sin límite temporal pueden bloquear pipelines y estaciones de desarrollo.
+
+### Controles aplicados
+
+1. **Whitelist por perfil de comando**:
+   - `flet_build`: solo variables base de sistema + variables mínimas de runtime Python.
+   - `pyinstaller`: mismo enfoque mínimo para empaquetado de escritorio.
+   - `briefcase`: whitelist mínima + variables estrictamente necesarias de empaquetado móvil (`FLETPLUS_METADATA`, `FLETPLUS_ICON`).
+2. **Timeout configurable por comando**:
+   - `fletplus build --timeout <segundos>` aplica un tiempo máximo por subproceso.
+   - Al exceder el umbral se devuelve error explícito con comando, cwd y timeout observado.
+3. **Errores normalizados**:
+   - Herramienta ausente (`FileNotFoundError`) y fallo de salida no cero (`CalledProcessError`) se elevan como `PackagingError` con contexto útil.
+
+### Política operativa
+
+- Evitar añadir variables a la whitelist sin justificar necesidad funcional concreta.
+- Si una herramienta nueva requiere variables adicionales, crear un perfil dedicado en lugar de ampliar de forma global.
+- Mantener el timeout por defecto conservador y ajustarlo desde CLI solo cuando el entorno lo requiera (por ejemplo, CI lento o máquinas con pocos recursos).
+
 ## Perfilado previo a releases
 
 Para decidir qué módulos compilar con Cython antes de publicar una nueva versión:

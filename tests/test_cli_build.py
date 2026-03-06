@@ -11,6 +11,8 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
+from fletplus.cli import build as build_module
+
 
 def _configure_watchdog(monkeypatch, *, available: bool) -> None:
     if available:
@@ -185,3 +187,56 @@ def test_build_uses_directory_name_when_pyproject_missing(monkeypatch, watchdog_
         expected_name = re.sub(r"[\\/\s]+", "-", base.name)
         expected_name = re.sub(r"[^A-Za-z0-9_-]", "", expected_name).strip("-_") or "app"
         assert desktop_command[name_index + 1] == expected_name
+
+
+@pytest.mark.parametrize(
+    ("target", "profile"),
+    [
+        ("web", "flet_build"),
+        ("desktop", "pyinstaller"),
+        ("mobile", "briefcase"),
+    ],
+)
+def test_build_uses_whitelist_profile(monkeypatch, target: str, profile: str) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        _setup_minimal_project(base)
+
+        captured_kwargs: list[dict] = []
+
+        def fake_run(command, **kwargs):
+            captured_kwargs.append(kwargs)
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", target])
+
+        assert result.exit_code == 0, result.output
+        assert captured_kwargs
+        kwargs = captured_kwargs[0]
+        assert tuple(kwargs.get("env_whitelist", ())) == build_module.BUILD_ENV_PROFILES[profile]
+
+
+def test_build_timeout_error_is_reported(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        _setup_minimal_project(base)
+
+        def fake_run(command, **kwargs):
+            raise subprocess.TimeoutExpired(cmd=command, timeout=kwargs.get("timeout", 1.0))
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", "desktop", "--timeout", "1.5"])
+
+        assert result.exit_code != 0
+        assert "tiempo límite" in result.output
+        assert "1.5s" in result.output
+        assert "comando='" in result.output

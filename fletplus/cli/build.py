@@ -25,6 +25,63 @@ class PackagingError(RuntimeError):
     """Error de alto nivel al empaquetar la aplicación."""
 
 
+DEFAULT_BUILD_TIMEOUT_SECONDS = 900.0
+
+# Variables base permitidas para cualquier comando de build.
+BUILD_ENV_BASE_WHITELIST = (
+    "PATH",
+    "SystemRoot",
+    "WINDIR",
+    "COMSPEC",
+    "PATHEXT",
+    "TEMP",
+    "TMP",
+    "HOME",
+    "USERPROFILE",
+)
+
+# Perfiles mínimos por tipo de comando para evitar sobreexposición del entorno.
+BUILD_ENV_PROFILES: dict[str, tuple[str, ...]] = {
+    "flet_build": (
+        *BUILD_ENV_BASE_WHITELIST,
+        "VIRTUAL_ENV",
+        "PYTHONPATH",
+        "PYTHONHOME",
+        "PYTHONUTF8",
+        "PYTHONDONTWRITEBYTECODE",
+        "PYTHONUNBUFFERED",
+        "LD_LIBRARY_PATH",
+        "DYLD_LIBRARY_PATH",
+    ),
+    "pyinstaller": (
+        *BUILD_ENV_BASE_WHITELIST,
+        "VIRTUAL_ENV",
+        "PYTHONPATH",
+        "PYTHONHOME",
+        "PYTHONUTF8",
+        "PYTHONDONTWRITEBYTECODE",
+        "PYTHONUNBUFFERED",
+        "LD_LIBRARY_PATH",
+        "DYLD_LIBRARY_PATH",
+    ),
+    "briefcase": (
+        *BUILD_ENV_BASE_WHITELIST,
+        "APPDATA",
+        "LOCALAPPDATA",
+        "VIRTUAL_ENV",
+        "PYTHONPATH",
+        "PYTHONHOME",
+        "PYTHONUTF8",
+        "PYTHONDONTWRITEBYTECODE",
+        "PYTHONUNBUFFERED",
+        "LD_LIBRARY_PATH",
+        "DYLD_LIBRARY_PATH",
+        "FLETPLUS_METADATA",
+        "FLETPLUS_ICON",
+    ),
+}
+
+
 class BuildTarget(str, Enum):
     """Objetivos soportados por el comando de compilación."""
 
@@ -76,9 +133,12 @@ class BuildContext:
     metadata: BuildMetadata
     assets_dir: Path | None
     icon_path: Path | None
+    build_timeout: float
 
     @classmethod
-    def from_project(cls, project_dir: Path, app_path: Path) -> "BuildContext":
+    def from_project(
+        cls, project_dir: Path, app_path: Path, build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS
+    ) -> "BuildContext":
         project_dir = project_dir.resolve()
         if not project_dir.exists():
             raise PackagingError(f"No se encontró el proyecto en {project_dir}.")
@@ -109,6 +169,7 @@ class BuildContext:
             metadata=metadata,
             assets_dir=assets_dir,
             icon_path=icon_path,
+            build_timeout=build_timeout,
         )
 
 
@@ -208,16 +269,47 @@ def _write_metadata(metadata: BuildMetadata, destination: Path) -> Path:
     return metadata_path
 
 
-def _run_command(command: List[str], cwd: Path | None = None) -> None:
+def _run_command(
+    command: List[str],
+    *,
+    cwd: Path | None = None,
+    timeout: float | None = None,
+    env_overrides: dict[str, str] | None = None,
+    env_profile: str,
+) -> None:
     click.echo(f"Ejecutando: {' '.join(command)}")
+    whitelist = BUILD_ENV_PROFILES.get(env_profile)
+    if whitelist is None:
+        raise PackagingError(f"Perfil de entorno no soportado: {env_profile}.")
+
+    env = os.environ.copy()
+    if env_overrides:
+        env.update(env_overrides)
+
     try:
         from fletplus.utils.safe_subprocess import safe_run
-        safe_run(command, cwd=str(cwd) if cwd else None, check=True)
+
+        safe_run(
+            command,
+            cwd=str(cwd) if cwd else None,
+            check=True,
+            timeout=timeout,
+            env=env,
+            env_whitelist=whitelist,
+        )
     except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
         missing_tool = command[0]
         raise PackagingError(
             f"No se encontró la herramienta requerida: {missing_tool}. "
             "Asegúrate de que esté instalada y disponible en el PATH."
+        ) from exc
+    except subprocess.TimeoutExpired as exc:
+        executed_command = " ".join(str(part) for part in command)
+        cwd_label = str(cwd) if cwd else os.getcwd()
+        timeout_label = exc.timeout if exc.timeout is not None else timeout
+        raise PackagingError(
+            "El subproceso de compilación excedió el tiempo límite "
+            f"({timeout_label}s, cwd={cwd_label}, comando='{executed_command}')."
         ) from exc
     except subprocess.CalledProcessError as exc:  # pragma: no cover - manejado en adaptador
         executed_command = " ".join(str(part) for part in (exc.cmd or command))
@@ -267,7 +359,12 @@ class WebAdapter(_BaseAdapter):
             "--output",
             str(self.output_dir),
         ]
-        _run_command(command, cwd=self.context.project_dir)
+        _run_command(
+            command,
+            cwd=self.context.project_dir,
+            timeout=self.context.build_timeout,
+            env_profile="flet_build",
+        )
 
 
 class DesktopAdapter(_BaseAdapter):
@@ -308,7 +405,12 @@ class DesktopAdapter(_BaseAdapter):
             *add_data_args,
             str(self.context.app_path),
         ]
-        _run_command(command, cwd=self.context.project_dir)
+        _run_command(
+            command,
+            cwd=self.context.project_dir,
+            timeout=self.context.build_timeout,
+            env_profile="pyinstaller",
+        )
 
 
 class MobileAdapter(_BaseAdapter):
@@ -318,7 +420,7 @@ class MobileAdapter(_BaseAdapter):
         icon_path = prepared.get("icon")
         metadata_path = prepared.get("metadata")
 
-        env = os.environ.copy()
+        env = {}
         if metadata_path:
             env["FLETPLUS_METADATA"] = str(metadata_path)
         if icon_path:
@@ -333,40 +435,13 @@ class MobileAdapter(_BaseAdapter):
             str(self.output_dir),
         ]
         click.echo("Preparando paquete móvil (android)")
-        try:
-            from fletplus.utils.safe_subprocess import safe_run
-            whitelist = [
-                "PATH",
-                "SystemRoot",
-                "WINDIR",
-                "COMSPEC",
-                "TEMP",
-                "TMP",
-                "HOME",
-                "USERPROFILE",
-                "PATHEXT",
-                "FLETPLUS_METADATA",
-                "FLETPLUS_ICON",
-            ]
-            safe_run(
-                command,
-                cwd=str(self.context.project_dir),
-                check=True,
-                env=env,
-                env_whitelist=whitelist,
-            )
-        except FileNotFoundError as exc:  # pragma: no cover - depende del entorno
-            missing_tool = command[0]
-            raise PackagingError(
-                f"No se encontró la herramienta requerida: {missing_tool}. "
-                "Asegúrate de que esté instalada y disponible en el PATH."
-            ) from exc
-        except subprocess.CalledProcessError as exc:
-            executed_command = " ".join(str(part) for part in (exc.cmd or command))
-            raise PackagingError(
-                "El subproceso de compilación móvil falló "
-                f"(código={exc.returncode}, cwd={self.context.project_dir}, comando='{executed_command}')."
-            ) from exc
+        _run_command(
+            command,
+            cwd=self.context.project_dir,
+            timeout=self.context.build_timeout,
+            env_overrides=env,
+            env_profile="briefcase",
+        )
 
 
 def create_adapter(target: BuildTarget, context: BuildContext) -> _BaseAdapter:
@@ -412,8 +487,13 @@ class BuildManager:
         return reports
 
 
-def run_build(project_dir: Path, app_path: Path, target: str) -> List[BuildReport]:
-    context = BuildContext.from_project(project_dir, app_path)
+def run_build(
+    project_dir: Path,
+    app_path: Path,
+    target: str,
+    build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS,
+) -> List[BuildReport]:
+    context = BuildContext.from_project(project_dir, app_path, build_timeout=build_timeout)
     targets = BuildTarget.parse_option(target)
     manager = BuildManager(context)
     return manager.build(targets)
