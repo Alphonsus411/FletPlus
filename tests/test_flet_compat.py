@@ -411,7 +411,7 @@ def test_internal_import_resolver_logs_warning_once(monkeypatch, caplog) -> None
 
     from fletplus.utils import flet_compat
 
-    monkeypatch.delattr(flet_compat._resolve_internal_symbol, "_warned", raising=False)
+    flet_compat._WARNED_COMPAT_KEYS.clear()
 
     def _raising_import(name: str, package: str | None = None):
         raise ModuleNotFoundError(name)
@@ -430,8 +430,72 @@ def test_internal_import_resolver_logs_warning_once(monkeypatch, caplog) -> None
         warning_key="icons_namespace",
     ) is None
 
-    warnings = [r for r in caplog.records if "API interna" in r.message]
+    warnings = [
+        r
+        for r in caplog.records
+        if "event=fletplus.compat.internal_import_unavailable" in r.message
+    ]
     assert len(warnings) == 1
+
+
+def test_module_import_prefers_public_api_without_touching_internals(monkeypatch) -> None:
+    import importlib
+    import sys
+
+    import flet
+
+    fake_icons = types.SimpleNamespace(MENU="menu")
+    fake_transform = types.SimpleNamespace(Offset=object, Scale=object, Rotate=object)
+    fake_alignment = types.SimpleNamespace(center=(0, 0))
+
+    monkeypatch.setattr(flet, "Icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "transform", fake_transform, raising=False)
+    monkeypatch.setattr(flet, "alignment", fake_alignment, raising=False)
+
+    real_import_module = importlib.import_module
+
+    def _assert_no_internal_import(name: str, package: str | None = None):
+        if name.startswith("flet.controls."):
+            raise AssertionError("No se debe usar internals cuando hay API pública")
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", _assert_no_internal_import)
+    sys.modules.pop("fletplus.utils.flet_compat", None)
+
+    flet_compat = importlib.import_module("fletplus.utils.flet_compat")
+
+    assert flet_compat.get_flet_icons() is fake_icons
+    assert flet_compat.ft.transform is fake_transform
+
+
+def test_module_import_without_internal_module_uses_public_api(monkeypatch) -> None:
+    import importlib
+    import sys
+
+    import flet
+
+    fake_icons = types.SimpleNamespace(MENU="menu")
+    fake_transform = types.SimpleNamespace(Offset=object, Scale=object, Rotate=object)
+
+    monkeypatch.setattr(flet, "Icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "transform", fake_transform, raising=False)
+
+    real_import_module = importlib.import_module
+
+    def _raising_internal_import(name: str, package: str | None = None):
+        if name.startswith("flet.controls."):
+            raise ModuleNotFoundError(name)
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", _raising_internal_import)
+    sys.modules.pop("fletplus.utils.flet_compat", None)
+
+    flet_compat = importlib.import_module("fletplus.utils.flet_compat")
+
+    assert flet_compat.get_flet_icons() is fake_icons
+    assert flet_compat.ft.transform is fake_transform
 
 
 def test_get_flet_colors_falls_back_to_lowercase_namespace(monkeypatch) -> None:

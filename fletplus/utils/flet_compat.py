@@ -17,6 +17,18 @@ Atributos de compatibilidad actualmente cubiertos
   ``Page._invoke_method_async('screenshot', ...)``.
 - ``Window.destroy`` vs ``Window.close``.
 
+Política de uso de APIs internas (temporal y de retirada)
+---------------------------------------------------------
+- Regla principal: priorizar siempre API pública de Flet (``ft.Icons``,
+  ``ft.icons``, ``ft.Alignment``, ``ft.alignment``, ``ft.transform``, etc.).
+- APIs internas (``flet.controls.*``) sólo se usan como último recurso
+  temporal cuando la API pública no está disponible.
+- Cada uso de fallback interno emite telemetría de warning estructurada una
+  sola vez por símbolo, para detectar cambios de compatibilidad pronto.
+- Criterio de retirada: eliminar cada fallback interno antes de
+  ``2026-06-30`` o en la primera versión mínima soportada de Flet donde la
+  API pública correspondiente esté estabilizada en CI, lo que ocurra antes.
+
 Cómo extender esta capa
 -----------------------
 1. Añade una función pequeña y explícita (p. ej. ``safe_foo(...)``) con
@@ -64,6 +76,27 @@ class _FtProxy:
 
 ft = _FtProxy(_ft)
 _logger = logging.getLogger(__name__)
+_WARNED_COMPAT_KEYS: set[str] = set()
+
+
+def _warn_once(event: str, symbol: str, **context: Any) -> None:
+    """Emite warning estructurado una sola vez por símbolo/evento."""
+
+    warning_id = f"{event}:{symbol}"
+    if warning_id in _WARNED_COMPAT_KEYS:
+        return
+    _WARNED_COMPAT_KEYS.add(warning_id)
+    _logger.warning(
+        "event=%s symbol=%s context=%s",
+        event,
+        symbol,
+        context,
+        extra={
+            "event": event,
+            "symbol": symbol,
+            "context": context,
+        },
+    )
 
 
 def _resolve_internal_symbol(
@@ -79,20 +112,49 @@ def _resolve_internal_symbol(
         module = importlib.import_module(module_path)
     except Exception as exc:
         if warning_key is not None:
-            warned = getattr(_resolve_internal_symbol, "_warned", set())
-            if warning_key not in warned:
-                _logger.warning(
-                    "fletplus compat: no se pudo importar API interna '%s' (%s); se usará fallback público.",
-                    module_path,
-                    exc,
-                )
-                warned.add(warning_key)
-                setattr(_resolve_internal_symbol, "_warned", warned)
+            _warn_once(
+                "fletplus.compat.internal_import_unavailable",
+                warning_key,
+                module_path=module_path,
+                attr=attr,
+                error=repr(exc),
+            )
         return default
+
+    if warning_key is not None:
+        _warn_once(
+            "fletplus.compat.internal_fallback_used",
+            warning_key,
+            module_path=module_path,
+            attr=attr,
+        )
 
     if attr is None:
         return module
     return getattr(module, attr, default)
+
+
+def _resolve_public_first_symbol(
+    *,
+    public_candidates: tuple[str, ...],
+    internal_module_path: str,
+    internal_attr: str | None = None,
+    default: Any = None,
+    warning_key: str,
+) -> Any:
+    """Resuelve símbolo priorizando API pública y sólo luego internals."""
+
+    for candidate in public_candidates:
+        public_symbol = getattr(_ft, candidate, None)
+        if public_symbol is not None:
+            return public_symbol
+
+    return _resolve_internal_symbol(
+        internal_module_path,
+        attr=internal_attr,
+        default=default,
+        warning_key=warning_key,
+    )
 
 LEGACY_PAGE_WINDOW_PATCH_ENV_VAR = "FLETPLUS_ENABLE_LEGACY_PAGE_WINDOW_PATCH"
 """Variable de entorno para habilitar explícitamente el parche legacy de ``Page.window``."""
@@ -102,13 +164,11 @@ _FALSY_VALUES = frozenset({"0", "false", "no", "off", "disabled"})
 
 # Proveer alias ft.icons en entornos donde no exista (compatibilidad de tests y monkeypatch)
 if not hasattr(ft, "icons"):
-    _icons_mod = (
-        getattr(_ft, "icons", None)
-        or _resolve_internal_symbol(
-            "flet.controls.material.icons",
-            default=type("icons", (), {})(),
-            warning_key="icons_namespace",
-        )
+    _icons_mod = _resolve_public_first_symbol(
+        public_candidates=("icons", "Icons"),
+        internal_module_path="flet.controls.material.icons",
+        default=type("icons", (), {})(),
+        warning_key="icons_namespace",
     )
     try:
         setattr(ft, "icons", _icons_mod)
@@ -116,9 +176,10 @@ if not hasattr(ft, "icons"):
         pass
 if "Icons" not in getattr(ft, "__dict__", {}):
     try:
-        _icons_cls = getattr(_ft, "Icons", None) or _resolve_internal_symbol(
-            "flet.controls.material.icons",
-            attr="Icons",
+        _icons_cls = _resolve_public_first_symbol(
+            public_candidates=("Icons", "icons"),
+            internal_module_path="flet.controls.material.icons",
+            internal_attr="Icons",
             warning_key="icons_class",
         )
         if _icons_cls is None:
@@ -132,8 +193,9 @@ if "Icons" not in getattr(ft, "__dict__", {}):
 
 # Alias de `ft.transform` cuando no exista (compatibilidad con código legacy)
 if not hasattr(ft, "transform"):
-    _transform_mod = getattr(_ft, "transform", None) or _resolve_internal_symbol(
-        "flet.controls.transform",
+    _transform_mod = _resolve_public_first_symbol(
+        public_candidates=("transform",),
+        internal_module_path="flet.controls.transform",
         warning_key="transform_namespace",
     )
     if _transform_mod is None:
@@ -154,8 +216,9 @@ if not hasattr(ft, "transform"):
 
 # Completar constantes de alineación comunes si faltan
 try:
-    _alignment_mod = getattr(_ft, "alignment", None) or _resolve_internal_symbol(
-        "flet.controls.alignment",
+    _alignment_mod = _resolve_public_first_symbol(
+        public_candidates=("alignment", "Alignment"),
+        internal_module_path="flet.controls.alignment",
         warning_key="alignment_namespace",
     )
     if _alignment_mod is None:
