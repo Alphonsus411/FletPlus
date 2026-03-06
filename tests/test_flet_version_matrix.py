@@ -36,11 +36,19 @@ def test_flet_version_in_supported_matrix() -> None:
         )
 
 
+def test_matrix_minors_contract_shape() -> None:
+    assert len(FLET_MATRIX_MINORS) == 2, (
+        "El contrato activo debe declarar exactamente baseline y target en FLET_MATRIX_MINORS. "
+        f"actual={FLET_MATRIX_MINORS!r}."
+    )
+
+
 def test_allowed_minors_match_active_contract() -> None:
     assert ALLOWED_FLET_MINORS == frozenset(FLET_MATRIX_MINORS), (
         "ALLOWED_FLET_MINORS no debe incluir minors legacy fuera del contrato activo. "
         f"contrato={FLET_MATRIX_MINORS!r}, permitidos={sorted(ALLOWED_FLET_MINORS)!r}."
     )
+
 
 def _require_symbol(container: object, symbol_name: str, qualified_name: str) -> object:
     assert hasattr(container, symbol_name), (
@@ -69,7 +77,9 @@ def test_flet_matrix_sensitive_contracts_still_exist() -> None:
 
     update_async = getattr(ft.Page, "update_async", None)
     if update_async is not None:
-        assert callable(update_async), "Símbolo sensible inválido: ft.Page.update_async no es callable."
+        assert callable(
+            update_async
+        ), "Símbolo sensible inválido: ft.Page.update_async no es callable."
 
 
 def test_flet_compat_helpers_tolerate_missing_sensitive_symbols(monkeypatch) -> None:
@@ -81,18 +91,24 @@ def test_flet_compat_helpers_tolerate_missing_sensitive_symbols(monkeypatch) -> 
 
     nav_bar = flet_compat.make_navigation_bar_destination(icon="home", label="Inicio")
     nav_rail = flet_compat.make_navigation_rail_destination(icon="home", label="Inicio")
-    nav_drawer = flet_compat.make_navigation_drawer_destination(icon="home", label="Inicio")
+    nav_drawer = flet_compat.make_navigation_drawer_destination(
+        icon="home", label="Inicio"
+    )
 
     assert isinstance(nav_bar, flet_compat.ft.Container)
     assert isinstance(nav_rail, flet_compat.ft.Container)
     assert isinstance(nav_drawer, flet_compat.ft.Container)
 
 
-def test_flet_compat_icon_resolution_falls_back_when_icons_namespace_changes(monkeypatch) -> None:
+def test_flet_compat_icon_resolution_falls_back_when_icons_namespace_changes(
+    monkeypatch,
+) -> None:
     from fletplus.utils import flet_compat
 
     monkeypatch.setattr(flet_compat.ft, "Icons", None, raising=False)
-    monkeypatch.setattr(flet_compat.ft, "icons", type("icons", (), {"MENU": "menu"})(), raising=False)
+    monkeypatch.setattr(
+        flet_compat.ft, "icons", type("icons", (), {"MENU": "menu"})(), raising=False
+    )
 
     assert flet_compat.get_flet_icon("MENU", "fallback") == "menu"
     assert flet_compat.get_flet_icon("MISSING", "fallback") == "fallback"

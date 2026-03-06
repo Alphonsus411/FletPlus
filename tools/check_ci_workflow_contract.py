@@ -694,6 +694,11 @@ def extract_flet_matrix_from_migration_doc(path: Path) -> tuple[str, str] | None
     return baseline, target
 
 
+def _minor_to_upper_bound(minor: str) -> str:
+    major, minor_part = minor.split(".")
+    return f"{major}.{int(minor_part) + 1}"
+
+
 def _normalize_req_name(name: str) -> str:
     return name.strip().lower().replace("_", "-")
 
@@ -731,7 +736,9 @@ def _load_pyproject_specs(path: Path) -> tuple[dict[str, str], dict[str, str]]:
     project = content.get("project", {}) if isinstance(content, dict) else {}
 
     dependencies = project.get("dependencies", []) if isinstance(project, dict) else []
-    optional = project.get("optional-dependencies", {}) if isinstance(project, dict) else {}
+    optional = (
+        project.get("optional-dependencies", {}) if isinstance(project, dict) else {}
+    )
     dev_dependencies = optional.get("dev", []) if isinstance(optional, dict) else []
 
     dep_specs: dict[str, str] = {}
@@ -764,6 +771,19 @@ def validate_dependency_policy_contract() -> list[str]:
     requirements_dev = _load_requirements_specs(REQUIREMENTS_DEV)
     cli_template = _load_requirements_specs(CLI_TEMPLATE_REQUIREMENTS)
 
+    config_versions = extract_flet_matrix_from_config(FLET_MATRIX_CONFIG)
+    if config_versions is None:
+        errors.append(
+            "tools/flet_version_matrix_config.py debe definir FLET_MATRIX_MINORS con baseline/target."
+        )
+        return errors
+
+    baseline_minor, target_minor = config_versions
+    expected_contract_flet_spec = (
+        f"flet>={baseline_minor},<{_minor_to_upper_bound(target_minor)}"
+    )
+    expected_contract_flet_bounds = expected_contract_flet_spec.replace("flet", "", 1)
+
     for package in CONTRACT_PACKAGES:
         pyproject_spec = pyproject_dev.get(package) or pyproject_deps.get(package)
         req_dev_spec = requirements_dev.get(package)
@@ -787,11 +807,15 @@ def validate_dependency_policy_contract() -> list[str]:
 
     template_flet = cli_template.get("flet")
     if template_flet is None:
-        errors.append("fletplus/cli/templates/app/requirements.txt debe declarar flet con rango.")
+        errors.append(
+            "fletplus/cli/templates/app/requirements.txt debe declarar flet con rango."
+        )
     else:
         pyproject_flet = pyproject_deps.get("flet")
         if pyproject_flet is None:
-            errors.append("pyproject.toml debe declarar flet en [project].dependencies.")
+            errors.append(
+                "pyproject.toml debe declarar flet en [project].dependencies."
+            )
         else:
             pyproject_lower = pyproject_flet.split(",", 1)[0]
             template_lower = template_flet.split(",", 1)[0]
@@ -800,8 +824,39 @@ def validate_dependency_policy_contract() -> list[str]:
                     "La plantilla CLI debe usar el mismo mínimo de flet que [project].dependencies en pyproject.toml."
                 )
 
+    pyproject_flet = pyproject_deps.get("flet")
+    requirements_dev_flet = requirements_dev.get("flet")
+
+    if pyproject_flet and pyproject_flet != expected_contract_flet_bounds:
+        errors.append(
+            "pyproject.toml debe alinear el rango de flet con tools/flet_version_matrix_config.py "
+            f"(esperado={expected_contract_flet_spec!r}, actual={pyproject_flet!r})."
+        )
+
+    if requirements_dev_flet and requirements_dev_flet != expected_contract_flet_bounds:
+        errors.append(
+            "requirements-dev.txt debe alinear el rango de flet con tools/flet_version_matrix_config.py "
+            f"(esperado={expected_contract_flet_spec!r}, actual={requirements_dev_flet!r})."
+        )
+
+    if template_flet and template_flet != expected_contract_flet_bounds:
+        errors.append(
+            "fletplus/cli/templates/app/requirements.txt debe alinear el rango de flet con tools/flet_version_matrix_config.py "
+            f"(esperado={expected_contract_flet_spec!r}, actual={template_flet!r})."
+        )
+
+    migration_text = MIGRATION_DOC.read_text(encoding="utf-8")
+    if expected_contract_flet_spec not in migration_text:
+        errors.append(
+            "docs/migration-flet-latest.md debe incluir el rango contractual de flet derivado de tools/flet_version_matrix_config.py "
+            f"({expected_contract_flet_spec})."
+        )
+
     workflow_commands = load_workflow_run_commands(REUSABLE_WORKFLOW)
-    if normalize_command("pip install -r requirements-dev.txt") not in workflow_commands:
+    if (
+        normalize_command("pip install -r requirements-dev.txt")
+        not in workflow_commands
+    ):
         errors.append(
             "reusable-quality.yml debe instalar requirements-dev.txt como set contractual de dependencias."
         )
