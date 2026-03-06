@@ -247,7 +247,7 @@ class AccessibilityPanel:
         )
         self._root = ft.Container(
             bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.BLUE_GREY),
-            padding=ft.padding.symmetric(horizontal=16, vertical=14),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=14),
             border_radius=12,
             content=body,
             tooltip="Panel para configurar accesibilidad",
@@ -258,7 +258,7 @@ class AccessibilityPanel:
         return ft.Container(
             border_radius=10,
             bgcolor=ft.Colors.with_opacity(0.04, _ACCESSIBLE_SURFACE),
-            padding=ft.padding.all(12),
+            padding=ft.Padding.all(12),
             content=ft.Column(
                 spacing=8,
                 controls=[
