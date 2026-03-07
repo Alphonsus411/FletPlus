@@ -2,7 +2,21 @@ PROFILE=build/profile.txt
 CONFIG=build_config.yaml
 PROFILE_LIMIT=30
 CONFIG_LIMIT=4
-RUST_MANIFESTS=fletplus/router/router_pr_rs/Cargo.toml fletplus/router/router_rs/Cargo.toml fletplus/animation/listeners_rs/Cargo.toml fletplus/animation/listeners_pr_rs/Cargo.toml fletplus/components/smart_table_rs/Cargo.toml
+RUST_MANIFESTS=fletplus/router/router_pr_rs/Cargo.toml \
+	fletplus/router/router_rs/Cargo.toml \
+	fletplus/animation/listeners_pr_rs/Cargo.toml \
+	fletplus/animation/listeners_rs/Cargo.toml \
+	fletplus/components/smart_table_rs/Cargo.toml \
+	fletplus/components/responsive_grid_rs/Cargo.toml \
+	fletplus/components/command_palette_rs/Cargo.toml \
+	fletplus/components/charts/line_chart_rs/Cargo.toml \
+	fletplus/themes/token_merge_rs/Cargo.toml \
+	fletplus/themes/palette_flatten_rs/Cargo.toml \
+	fletplus/themes/theme_merge_rs/Cargo.toml \
+	fletplus/http/disk_cache_pr_rs/Cargo.toml \
+	fletplus/utils/breakpoint_rs/Cargo.toml \
+	fletplus/utils/responsive_manager_rs/Cargo.toml \
+	fletplus/state/signal_pr_rs/Cargo.toml
 
 .PHONY: profile update-build-config build build-rust rustify-auto qa check-canonical-repo-links test-preflight test-preflight-full test-preflight-perf pytest ruff black mypy bandit pip-audit safety qa-all
 

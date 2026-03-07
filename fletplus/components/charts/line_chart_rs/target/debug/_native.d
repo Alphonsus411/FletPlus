@@ -1,1 +1,0 @@
-C:\Users\Adolfo\PycharmProjects\FletPlus\fletplus\components\charts\line_chart_rs\target\debug\_native.dll: C:\Users\Adolfo\PycharmProjects\FletPlus\fletplus\components\charts\line_chart_rs\src\lib.rs

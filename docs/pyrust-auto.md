@@ -8,13 +8,13 @@
    pip install .[rust]
    ```
 
-2. Intento de ejecución del wrapper de Make:
+2. Ejecución del wrapper de Make:
 
    ```bash
    make rustify-auto
    ```
 
-   Falló con el error `Makefile:17: *** missing separator`.
+   El target `rustify-auto` ejecuta el wrapper `tools/pyrust_native_auto.sh`.
 
 3. Ejecución directa del pipeline con un *entrypoint* ligero:
 

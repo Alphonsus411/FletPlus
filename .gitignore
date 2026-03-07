@@ -26,4 +26,13 @@ htmlcov/
 *.spec
 
 # Rust
-fletplus/router/router_rs/target/
+**/target/
+
+# Native build artifacts
+*.dll
+*.dylib
+*.so
+*.pyd
+*.pdb
+*.lib
+*.exp
