@@ -3,8 +3,6 @@ import importlib
 import flet as ft
 import pytest
 
-import fletplus
-
 from fletplus.icons import (
     DEFAULT_ICON_SET,
     Icon,

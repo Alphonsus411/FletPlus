@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import random
+
 import flet as ft
 
 from examples import ensure_project_root

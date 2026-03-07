@@ -1,4 +1,5 @@
 import time
+
 from fletplus.components.command_palette import filter_commands
 
 

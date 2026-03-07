@@ -1,4 +1,5 @@
 import flet as ft
+
 from fletplus.core_legacy import FletPlusApp
 
 

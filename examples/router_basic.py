@@ -2,7 +2,7 @@
 
 import flet as ft
 
-from fletplus import FletPlusApp, Route, Router, LayoutInstance
+from fletplus import FletPlusApp, LayoutInstance, Route, Router
 
 
 def dashboard_layout(_match):

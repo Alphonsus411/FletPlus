@@ -10,6 +10,7 @@ import flet as ft
 
 from fletplus import FletPlusApp
 
+
 @dataclass(frozen=True, slots=True)
 class DemoRoute:
     """Describe una sección navegable de la demostración."""

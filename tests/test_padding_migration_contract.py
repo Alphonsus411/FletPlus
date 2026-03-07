@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import warnings
+from pathlib import Path
 
 import flet as ft
 
 from fletplus.components.accessibility_panel import AccessibilityPanel
 from fletplus.styles import Style
-
 
 ROOT = Path(__file__).resolve().parent.parent
 SCOPES = ("fletplus", "examples")

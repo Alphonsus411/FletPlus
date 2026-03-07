@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import importlib
-from argparse import ArgumentParser
 import sys
+from argparse import ArgumentParser
 
 SUITE_DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "default": (),

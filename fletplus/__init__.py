@@ -115,7 +115,6 @@ LAZY_IMPORTS = {
 }
 
 if TYPE_CHECKING:
-    from fletplus.utils.flet_compat_patch import enable_compat_patches
     from fletplus.animation import (
         AnimatedContainer,
         AnimationController,
@@ -220,6 +219,7 @@ if TYPE_CHECKING:
         responsive_spacing,
         responsive_text,
     )
+    from fletplus.utils.flet_compat_patch import enable_compat_patches
     from fletplus.web import generate_manifest, generate_service_worker, register_pwa
 
 

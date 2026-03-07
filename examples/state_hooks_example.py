@@ -6,12 +6,10 @@ import flet as ft
 
 from examples import ensure_project_root
 
-
 ensure_project_root()
 
 from fletplus import FletPlusApp  # noqa: E402
 from fletplus.state import Signal, reactive, use_signal, use_state, watch  # noqa: E402
-
 
 global_counter = Signal(0)
 

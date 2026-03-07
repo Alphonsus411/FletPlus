@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 
+
 def _try_load_native():
     try:  # pragma: no cover - extensión opcional
         from .router_pr_rs import _native as mod

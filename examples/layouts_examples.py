@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[1]
 project_root_str = str(project_root)
@@ -15,20 +15,21 @@ from examples._bootstrap import ensure_project_root
 ensure_project_root()
 
 import flet as ft
+
 from fletplus.components.layouts import (
-    ResponsiveContainer,
-    FlexRow,
     FlexColumn,
+    FlexRow,
     Grid,
     GridItem,
+    ResponsiveContainer,
     Wrap,
 )
 from fletplus.styles import Style
 from fletplus.themes.theme_manager import ThemeManager
 from fletplus.utils.responsive_typography import (
     ResponsiveTypography,
-    responsive_text,
     responsive_spacing,
+    responsive_text,
 )
 
 
