@@ -63,7 +63,7 @@ class SidebarAdmin:
             container = ft.Container(
                 data=i,
                 content=row,
-                border_radius=ft.border_radius.all(18),
+                border_radius=ft.BorderRadius.all(18),
                 padding=ft.Padding(14, 10, 14, 10),
                 on_click=lambda e, idx=i: self._select_item(idx, e),
                 ink=True,
@@ -77,7 +77,7 @@ class SidebarAdmin:
         content = ft.Container(
             width=self.width,
             bgcolor=ft.Colors.with_opacity(0.02, self.active_color),
-            border_radius=ft.border_radius.all(24),
+            border_radius=ft.BorderRadius.all(24),
             padding=ft.Padding(6, 16, 6, 16),
             content=ft.Column(
                 controls=[

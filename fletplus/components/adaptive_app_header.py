@@ -322,7 +322,7 @@ class AdaptiveAppHeader:
         if isinstance(self.corner_radius, ft.BorderRadius):
             self._background.border_radius = self.corner_radius
         elif self.corner_radius is not None:
-            self._background.border_radius = ft.border_radius.all(self.corner_radius)
+            self._background.border_radius = ft.BorderRadius.all(self.corner_radius)
 
         if self.shadow is None:
             self._background.shadow = ft.BoxShadow(

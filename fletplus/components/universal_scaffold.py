@@ -536,7 +536,7 @@ class UniversalAdaptiveScaffold:
             self._body_container.content = central_column
             self._footer_container.content = ft.Container(
                 bgcolor=with_opacity(0.98, get_flet_color("SURFACE", "#FFFFFF")),
-                border=ft.border.only(top=ft.BorderSide(1, with_opacity(0.12, get_flet_color("BLACK", "#000000")))),
+                border=ft.Border.only(top=ft.BorderSide(1, with_opacity(0.12, get_flet_color("BLACK", "#000000")))),
                 content=self._nav_bar,
             )
             self._show_desktop_accessibility_panel = False
@@ -586,7 +586,7 @@ class UniversalAdaptiveScaffold:
                     ft.Container(
                         bgcolor=with_opacity(0.04, get_flet_color("BLUE_GREY", "#607D8B")),
                         padding=ft.Padding(18, 16, 18, 16) if is_large_desktop else ft.Padding(16, 12, 16, 12),
-                        border=ft.border.only(left=ft.BorderSide(1, with_opacity(0.1, get_flet_color("BLACK", "#000000")))),
+                        border=ft.Border.only(left=ft.BorderSide(1, with_opacity(0.1, get_flet_color("BLACK", "#000000")))),
                         content=ft.Column(
                             tight=True,
                             spacing=12,

@@ -278,9 +278,9 @@ class Style:
             or self.border_left is not None
             or self.border_style is not None
         ):
-            side_fields = getattr(ft.border.BorderSide, "__dataclass_fields__", {})
+            side_fields = getattr(ft.BorderSide, "__dataclass_fields__", {})
 
-            def make_side(color: Any) -> Optional[ft.border.BorderSide]:
+            def make_side(color: Any) -> Optional[ft.BorderSide]:
                 if color is None and self.border_color is None:
                     return None
                 kwargs = {"width": self.border_width}
@@ -298,16 +298,18 @@ class Style:
                         "dotted": getattr(ft.BorderSideStyle, "DOTTED", "dotted"),
                     }
                     kwargs["style"] = style_map.get(self.border_style, self.border_style)
-                return ft.border.BorderSide(**kwargs)
+                return ft.BorderSide(**kwargs)
 
-            container_kwargs["border"] = ft.border.only(
+            container_kwargs["border"] = ft.Border.only(
                 top=make_side(self.border_top),
                 right=make_side(self.border_right),
                 bottom=make_side(self.border_bottom),
                 left=make_side(self.border_left),
             )
         elif self.border_color is not None:
-            container_kwargs["border"] = ft.border.all(self.border_width, self.border_color)
+            container_kwargs["border"] = ft.Border.all(
+                self.border_width, self.border_color
+            )
 
         if self.background_image is not None:
             container_kwargs["image_src"] = self.background_image

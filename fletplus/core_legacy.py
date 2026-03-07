@@ -255,7 +255,7 @@ class FletPlusApp:
             expand=True,
             bgcolor=surface_color,
             padding=ft.Padding(32, 28, 32, 32),
-            border_radius=ft.border_radius.only(
+            border_radius=ft.BorderRadius.only(
                 top_left=28,
                 top_right=0,
                 bottom_left=0,
@@ -323,7 +323,7 @@ class FletPlusApp:
         surface_variant = self.theme.get_color("surface_variant", ft.Colors.with_opacity(0.05, ft.Colors.BLACK))
         return Style(
             padding=ft.Padding(12, 18, 12, 18),
-            border_radius=ft.border_radius.all(26),
+            border_radius=ft.BorderRadius.all(26),
             bgcolor=surface_variant,
             shadow=shadow,
         )
@@ -761,7 +761,7 @@ class FletPlusApp:
         self._floating_menu_control = ft.Container(
             width=options.width,
             bgcolor=surface,
-            border_radius=ft.border_radius.all(options.border_radius),
+            border_radius=ft.BorderRadius.all(options.border_radius),
             padding=options.padding,
             content=menu_column,
             opacity=0,

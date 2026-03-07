@@ -289,7 +289,7 @@ class AdaptiveNavigationLayout:
             if container.padding is None:
                 container.padding = ft.Padding(20, 16, 20, 18)
             if container.border_radius is None:
-                container.border_radius = ft.border_radius.all(28)
+                container.border_radius = ft.BorderRadius.all(28)
             if container.alignment is None:
                 container.alignment = ft.alignment.center_left
             if container.shadow is None:

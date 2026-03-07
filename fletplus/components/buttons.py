@@ -42,7 +42,7 @@ def _get_button_tokens(theme: ThemeManager | None, color_key: str):
 
     return text_style, icon_size_style, bgcolor
 
-class PrimaryButton(ft.ElevatedButton):
+class PrimaryButton(ft.Button):
     """Botón principal con colores basados en ``ThemeManager``."""
 
     def __init__(
@@ -90,7 +90,7 @@ class PrimaryButton(ft.ElevatedButton):
         return self._style.apply(self) if self._style else self
 
 
-class SecondaryButton(ft.ElevatedButton):
+class SecondaryButton(ft.Button):
     """Botón secundario que usa tokens de ``ThemeManager``."""
 
     def __init__(
@@ -144,7 +144,7 @@ class SecondaryButton(ft.ElevatedButton):
         return self._style.apply(self) if self._style else self
 
 
-class _StatusButton(ft.ElevatedButton):
+class _StatusButton(ft.Button):
     """Botón genérico con color configurable mediante tokens."""
 
     def __init__(
@@ -423,7 +423,7 @@ class TextButton(ft.TextButton):
         return self._style.apply(self) if self._style else self
 
 
-class FloatingActionButton(ft.ElevatedButton):
+class FloatingActionButton(ft.Button):
     """Botón de acción flotante con soporte de estilos y estados."""
 
     def __init__(
