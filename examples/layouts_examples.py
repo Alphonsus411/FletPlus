@@ -85,7 +85,7 @@ def mobile_demo(page: ft.Page) -> None:
         },
     )
     actions = Wrap(
-        [ft.ElevatedButton("Aceptar"), ft.OutlinedButton("Cancelar")],
+        [ft.Button("Aceptar"), ft.OutlinedButton("Cancelar")],
         breakpoints={"xs": {"spacing": 4}, "md": {"spacing": 12, "run_spacing": 6}},
     )
     page.add(container.init_responsive(page), actions.init_responsive(page))

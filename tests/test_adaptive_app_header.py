@@ -27,7 +27,7 @@ def test_adaptive_app_header_orientation_switch(orientation: str) -> None:
         title="Dashboard semanal",
         subtitle="Resumen de KPIs",
         supporting_text="Datos frescos cada hora",
-        actions=[ft.TextButton(text="Actualizar")],
+        actions=[ft.TextButton(content="Actualizar")],
         hero=ft.Container(width=220, height=140, bgcolor=ft.Colors.BLUE_200),
         theme=theme,
         layout_by_orientation={"portrait": "stacked", "landscape": "split"},

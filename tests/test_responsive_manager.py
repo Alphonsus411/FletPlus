@@ -180,7 +180,7 @@ def test_responsive_style_by_orientation_and_device():
 
 def test_responsive_style_updates_container_properties():
     page = DummyPage(500, 800)
-    box = ft.Container(bgcolor="base", padding=ft.padding.all(5), width=120)
+    box = ft.Container(bgcolor="base", padding=ft.Padding.all(5), width=120)
     styles = ResponsiveStyle(
         width={
             0: Style(bgcolor="red", padding=10, width=200),

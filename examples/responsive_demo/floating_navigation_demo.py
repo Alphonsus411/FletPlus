@@ -9,7 +9,7 @@ def _section(title: str, description: str, icon: str) -> ft.Control:
     return ft.Container(
         bgcolor=ft.Colors.with_opacity(0.04, ft.Colors.PRIMARY),
         padding=ft.Padding(24, 32, 24, 32),
-        border_radius=ft.border_radius.all(26),
+        border_radius=ft.BorderRadius.all(26),
         content=ft.Column(
             spacing=16,
             controls=[

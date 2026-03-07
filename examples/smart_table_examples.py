@@ -92,7 +92,7 @@ def main(page: ft.Page) -> None:
             await pending
             page.update()
 
-    load_more_button = ft.ElevatedButton("Cargar más", on_click=load_more_async)
+    load_more_button = ft.Button("Cargar más", on_click=load_more_async)
 
     page.add(
         ft.Text(

@@ -333,8 +333,8 @@ class HeaderHighlight:
             content=content_row,
             padding=padding,
             bgcolor=ft.Colors.with_opacity(0.12, accent),
-            border_radius=ft.border_radius.all(radius),
-            border=ft.border.all(1, ft.Colors.with_opacity(0.28, accent)),
+            border_radius=ft.BorderRadius.all(radius),
+            border=ft.Border.all(1, ft.Colors.with_opacity(0.28, accent)),
             expand=device in {"desktop", "large_desktop"},
         )
         return container
@@ -674,8 +674,8 @@ class ResponsiveGrid:
                     content=badge_content,
                     padding=ft.Padding(12, 6, 12, 6),
                     bgcolor=ft.Colors.with_opacity(0.14, accent or ft.Colors.BLUE_200),
-                    border_radius=ft.border_radius.all(40),
-                    border=ft.border.all(1, ft.Colors.with_opacity(0.2, accent or ft.Colors.BLUE)),
+                    border_radius=ft.BorderRadius.all(40),
+                    border=ft.Border.all(1, ft.Colors.with_opacity(0.2, accent or ft.Colors.BLUE)),
                 )
 
         self._wrap_requested = False
@@ -1359,8 +1359,8 @@ class ResponsiveGrid:
             content=tag_row,
             padding=ft.Padding(14, 8, 14, 8),
             bgcolor=ft.Colors.with_opacity(0.1, accent),
-            border_radius=ft.border_radius.all(40),
-            border=ft.border.all(1, ft.Colors.with_opacity(0.22, accent)),
+            border_radius=ft.BorderRadius.all(40),
+            border=ft.Border.all(1, ft.Colors.with_opacity(0.22, accent)),
         )
 
         if style:
@@ -1513,13 +1513,13 @@ class ResponsiveGrid:
                 radius_value = float(self.section_border_radius)
             except (TypeError, ValueError):
                 radius_value = 20
-            self._section_container.border_radius = ft.border_radius.all(radius_value)
+            self._section_container.border_radius = ft.BorderRadius.all(radius_value)
 
         if self.section_border is not None:
             self._section_container.border = self.section_border
         elif self.section_glass_background:
             accent = self._resolve_accent_color()
-            self._section_container.border = ft.border.all(
+            self._section_container.border = ft.Border.all(
                 1, ft.Colors.with_opacity(0.26, accent)
             )
         else:
@@ -1600,7 +1600,7 @@ class ResponsiveGrid:
         if self.header_border is not None:
             self._section_header_container.border = self.header_border
         elif header_background is not None or header_gradient is not None:
-            self._section_header_container.border = ft.border.all(
+            self._section_header_container.border = ft.Border.all(
                 1, ft.Colors.with_opacity(0.16, accent)
             )
         else:
@@ -1613,11 +1613,11 @@ class ResponsiveGrid:
                 radius_value = float(self.header_border_radius)
             except (TypeError, ValueError):
                 radius_value = 20
-            self._section_header_container.border_radius = ft.border_radius.all(
+            self._section_header_container.border_radius = ft.BorderRadius.all(
                 radius_value
             )
         elif header_background is not None or header_gradient is not None:
-            self._section_header_container.border_radius = ft.border_radius.all(20)
+            self._section_header_container.border_radius = ft.BorderRadius.all(20)
         else:
             self._section_header_container.border_radius = None
 
@@ -1693,7 +1693,7 @@ class ResponsiveGrid:
             icon_wrapper = ft.Container(
                 content=self._section_icon_control,
                 padding=ft.Padding(10, 10, 10, 10),
-                border_radius=ft.border_radius.all(16),
+                border_radius=ft.BorderRadius.all(16),
                 bgcolor=self._resolve_icon_background(),
             )
 

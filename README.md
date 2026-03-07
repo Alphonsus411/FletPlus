@@ -12,9 +12,9 @@ pip install fletplus
 ```
 - Tras la instalación tendrás disponible el comando `fletplus` para crear, ejecutar y perfilar proyectos desde la terminal.
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
-- **Requiere Python 3.9+, flet>=0.29.0 (mínimo de paquete) y httpx>=0.28**
+- **Requiere Python 3.9+, flet>=0.80 (mínimo de paquete) y httpx>=0.28**
 
-> ℹ️ FletPlus adopta oficialmente Python 3.9 como versión mínima, publica `flet>=0.29.0` en `pyproject.toml` como requisito de paquete y usa `httpx` (>=0.28) como cliente HTTP base.
+> ℹ️ FletPlus adopta oficialmente Python 3.9 como versión mínima, publica `flet>=0.80` en `pyproject.toml` como requisito de paquete y usa `httpx` (>=0.28) como cliente HTTP base.
 
 ## 📚 Documentación
 
@@ -67,7 +67,7 @@ pip install fletplus
 
 Para reducir regresiones y hacer predecible cada salto de compatibilidad, FletPlus mantiene una política explícita sobre `flet`:
 
-- **Versión objetivo**: la versión objetivo vigente es **Flet 0.82.x** y la baseline mínima de validación en CI es **Flet 0.29.x** (`>=0.29,<0.30`).
+- **Versión objetivo**: la versión objetivo vigente es **Flet 0.82.x** y la baseline mínima de validación en CI es **Flet 0.80.x** (`>=0.80,<0.81`).
 - **Cadencia de actualización**: se evalúan nuevas versiones de Flet en una ventana **mensual** o antes si hay correcciones críticas de seguridad/estabilidad.
 - **Criterios de rollback**: si un upgrade rompe APIs públicas de FletPlus, degrada demos oficiales, o introduce fallos en CI que no se pueden corregir en la ventana de release, se revierte temporalmente a la versión objetivo anterior y se documenta en `CHANGELOG.md`.
 

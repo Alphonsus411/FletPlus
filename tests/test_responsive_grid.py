@@ -134,7 +134,7 @@ def test_responsive_grid_header_tags_and_highlights(page_factory):
             {"label": "Satisfacción", "value": "97%", "description": "Últimos 7 días"},
         ],
         section_glass_background=True,
-        section_border=ft.border.all(2, "#334155"),
+        section_border=ft.Border.all(2, "#334155"),
         theme=theme,
         header_background="#0F172A",
         header_padding={"desktop": ft.Padding(28, 24, 28, 32)},
@@ -206,7 +206,7 @@ def test_responsive_grid_header_surface_customization(page_factory):
     grid = ResponsiveGrid(
         header_title="Resumen",
         header_gradient=header_gradient,
-        header_border=ft.border.all(1, "#3B82F6"),
+        header_border=ft.Border.all(1, "#3B82F6"),
         header_shadow=ft.BoxShadow(
             blur_radius=16,
             spread_radius=0,

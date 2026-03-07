@@ -54,7 +54,7 @@ def main(page: ft.Page) -> None:
     page.add(
         ft.Row(
             [
-                ft.ElevatedButton("Reconstruir", on_click=render_container),
+                ft.Button("Reconstruir", on_click=render_container),
                 ft.OutlinedButton("Desmontar", on_click=dispose_container),
             ]
         ),

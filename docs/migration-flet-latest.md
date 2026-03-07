@@ -10,7 +10,7 @@ Este documento define una migración **controlada por fases** para compatibiliza
 - `fletplus/core_legacy.py`
 - `fletplus_demo/`
 
-**Baseline de validación (estado actual en CI)**: `flet>=0.29,<0.30` (job `min-supported`).  
+**Baseline de validación (estado actual en CI)**: `flet>=0.80,<0.81` (job `min-supported`).  
 **Versión objetivo de migración (estado objetivo en CI)**: `flet>=0.82,<0.83` (job `latest-migration-target`).  
 **Estado oficial del target**: ✅ **validado para toda la serie del minor objetivo vigente**, incluyendo el parche más reciente disponible durante esta iteración de validación.  
 **Rango contractual de paquete (distribución/dev/plantillas)**: `flet>=0.29,<0.83` (según `pyproject.toml`, `requirements-dev.txt` y template CLI).
@@ -190,7 +190,7 @@ Cualquier cambio en Flet que rompa uno de estos cuatro bloques mantiene la migra
 | Ámbito | Estado actual (observado en repo) | Estado objetivo de migración | Fuente de verdad |
 |---|---|---|---|
 | Manifiesto de paquete | `pyproject.toml`: `flet>=0.29,<0.83` | Mantener rango contractual de distribución/desarrollo hasta nuevo contrato | `pyproject.toml` |
-| CI baseline (`flet-version-matrix`) | `flet>=0.29,<0.30` (`min-supported`) | Mantener baseline contractual de regresión | `.github/workflows/reusable-quality.yml` |
+| CI baseline (`flet-version-matrix`) | `flet>=0.80,<0.81` (`min-supported`) | Mantener baseline contractual de regresión | `.github/workflows/reusable-quality.yml` |
 | CI target (`flet-version-matrix`) | `flet>=0.82,<0.83` (`latest-migration-target`) | Consolidar compatibilidad funcional sobre `0.82.x` | `.github/workflows/reusable-quality.yml` |
 | Validación local de minors | `FLET_MATRIX_MINORS = ("0.29", "0.82")` y `ALLOWED_FLET_MINORS = frozenset(FLET_MATRIX_MINORS)` | Mantener sincronía exacta con matriz CI sin tolerancias legacy | `tools/flet_version_matrix_config.py` |
 | Dependencias legacy fuera de contrato | Cualquier pin histórico fuera de baseline/target activo | No permitido en contrato vigente; eliminar tolerancias locales y en pruebas | Revisión en PR + checks contractuales |

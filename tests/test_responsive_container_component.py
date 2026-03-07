@@ -22,7 +22,7 @@ def _trigger_resize(page: DummyPage) -> None:
 
 def test_responsive_container_restores_base_attributes():
     page = DummyPage(width=320, height=640)
-    inner = ft.Container(padding=ft.padding.all(42))
+    inner = ft.Container(padding=ft.Padding.all(42))
 
     styles = ResponsiveStyle(
         width={

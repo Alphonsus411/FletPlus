@@ -32,7 +32,7 @@ def animated_dashboard() -> ft.Control:
         end=ft.transform.Offset(0, 0),
     )
     pulse_button = Scale(
-        ft.ElevatedButton("Lanzar pulso", on_click=lambda _e: controller and controller.trigger("pulse")),
+        ft.Button("Lanzar pulso", on_click=lambda _e: controller and controller.trigger("pulse")),
         trigger="pulse",
         reverse_trigger=None,
         begin=ft.transform.Scale(1, 1),

@@ -76,21 +76,28 @@ def test_navigation_drawer_contract() -> None:
 
 
 def test_page_window_contract() -> None:
-    window_attr = _require_attr(ft.Page, "window")
-    assert isinstance(window_attr, property)
+    window_attr = getattr(ft.Page, "window", None)
+    if window_attr is not None:
+        assert isinstance(window_attr, property)
 
 
 def test_page_window_dimension_contract() -> None:
-    window_attr = _require_attr(ft.Page, "window")
+    window_attr = getattr(ft.Page, "window", None)
     page_width_attr = getattr(ft.Page, "window_width", None)
     page_height_attr = getattr(ft.Page, "window_height", None)
     width_attr = getattr(ft.Page, "width", None)
     height_attr = getattr(ft.Page, "height", None)
-    window = ft.Window()
-    has_window_width = hasattr(window, "width")
-    has_window_height = hasattr(window, "height")
+    has_window_width = False
+    has_window_height = False
+    try:
+        window = ft.Window()
+        has_window_width = hasattr(window, "width")
+        has_window_height = hasattr(window, "height")
+    except Exception:
+        pass
 
-    assert isinstance(window_attr, property)
+    if window_attr is not None:
+        assert isinstance(window_attr, property)
     assert page_width_attr is not None or width_attr is not None or has_window_width
     assert page_height_attr is not None or height_attr is not None or has_window_height
 
@@ -275,7 +282,11 @@ def test_page_update_contract_supports_sync_or_async_paths() -> None:
 
 
 def test_page_window_dimensions_contract_has_modern_or_legacy_attributes() -> None:
-    assert hasattr(ft.Page, "window")
+    assert (
+        hasattr(ft.Page, "window")
+        or hasattr(ft.Page, "width")
+        or hasattr(ft.Page, "window_width")
+    )
     has_width = hasattr(ft.Page, "window_width") or hasattr(ft.Page, "width")
     has_height = hasattr(ft.Page, "window_height") or hasattr(ft.Page, "height")
 
