@@ -209,6 +209,12 @@ class _FileBackend(_BaseBackend):
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
             with self._file_lock():
+                if not self._validate_save_target():
+                    logger.warning(
+                        "Guardado de preferencias abortado por política de seguridad (%s)",
+                        self._path,
+                    )
+                    return
                 payload = self._read_all()
                 current_entry = payload.get(self._key)
                 if isinstance(current_entry, Mapping):
