@@ -6,7 +6,12 @@ from pathlib import Path
 import httpx
 import pytest
 
-from fletplus.http import DiskCache
+from fletplus.http import DiskCache, HttpClient
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
 
 
 def _make_request(url: str, *, body: bytes | str = b"", headers: dict[str, str] | None = None) -> httpx.Request:
@@ -46,6 +51,52 @@ def test_disk_cache_preserves_headers_and_reason(tmp_path: Path):
     assert loaded.reason_phrase == "CREATED"
     assert loaded.read() == b"payload"
 
+
+def test_disk_cache_set_accepts_already_read_response(tmp_path: Path):
+    cache = DiskCache(tmp_path)
+    request = _make_request("https://example.org/read")
+    response = httpx.Response(200, content=b"already-read", request=request)
+
+    key = cache.build_key(request)
+    cache.set(key, response)
+
+    loaded = cache.get(key, request=request)
+    assert loaded is not None
+    assert loaded.content == b"already-read"
+
+
+def test_disk_cache_set_rejects_unread_streaming_response(tmp_path: Path):
+    cache = DiskCache(tmp_path)
+    request = _make_request("https://example.org/unread")
+    response = httpx.Response(200, stream=httpx.ByteStream(b"stream-body"), request=request)
+
+    key = cache.build_key(request)
+    with pytest.raises(ValueError, match="requiere una respuesta HTTP leída"):
+        cache.set(key, response)
+
+    assert cache.get(key, request=request) is None
+
+
+@pytest.mark.anyio
+async def test_http_client_reads_response_before_disk_cache_set(tmp_path: Path):
+    calls = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, stream=httpx.ByteStream(f"body-{calls}".encode()), request=request)
+
+    cache = DiskCache(tmp_path)
+    client = HttpClient(cache=cache, transport=httpx.MockTransport(handler))
+
+    response_one = await client.get("https://example.org/client-cache")
+    response_two = await client.get("https://example.org/client-cache")
+
+    await client.aclose()
+
+    assert response_one.content == b"body-1"
+    assert response_two.content == b"body-1"
+    assert calls == 1
 
 
 def test_disk_cache_roundtrip_http_version_bytes(tmp_path: Path):
