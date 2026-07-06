@@ -186,9 +186,10 @@ def test_file_storage_provider_persists_data(tmp_path: Path) -> None:
     snapshot = provider.snapshot_signal().get()
     assert snapshot["volume"] == 7
 
-    # Se guarda como JSON estructurado
+    # Se guarda como un documento JSON estructurado: cada clave del
+    # almacenamiento apunta al valor JSON serializado individualmente.
     raw = json.loads(path.read_text("utf-8"))
-    assert set(raw.keys()) == {"settings", "volume"}
+    assert raw == {"settings": {"theme": "dark", "lang": "es"}, "volume": 7}
 
     provider2 = FileStorageProvider(path)
     assert provider2.get("settings") == {"theme": "dark", "lang": "es"}
@@ -208,16 +209,20 @@ def test_file_storage_provider_uses_custom_serializer_deserializer(
     def serializer(value: Any) -> Any:
         serializer_calls.append(value)
         if isinstance(value, dict):
-            return json.dumps(value, separators=(",", ":"))
-        return f"encoded:{value}"
+            return {"kind": "dict", "value": value}
+        if isinstance(value, list):
+            return {"kind": "list", "value": value}
+        if isinstance(value, str):
+            return {"kind": "str", "value": value}
+        if isinstance(value, int):
+            return {"kind": "int", "value": value}
+        raise TypeError(f"Valor no soportado: {type(value)!r}")
 
     def deserializer(value: Any) -> Any:
         deserializer_calls.append(value)
-        if isinstance(value, str) and value.startswith("{"):
-            return json.loads(value)
-        if isinstance(value, str) and value.startswith("encoded:"):
-            return value.removeprefix("encoded:")
-        return value
+        if not isinstance(value, dict) or "kind" not in value:
+            raise TypeError("El deserializador sólo acepta valores individuales")
+        return value["value"]
 
     provider = FileStorageProvider(
         path,
@@ -226,8 +231,13 @@ def test_file_storage_provider_uses_custom_serializer_deserializer(
     )
 
     provider.set("token", "abc")
+    provider.set("count", 3)
 
-    assert serializer_calls[-2:] == ["abc", {"token": "encoded:abc"}]
+    assert serializer_calls == ["abc", 3]
+    assert json.loads(path.read_text("utf-8")) == {
+        "count": {"kind": "int", "value": 3},
+        "token": {"kind": "str", "value": "abc"},
+    }
 
     provider2 = FileStorageProvider(
         path,
@@ -235,22 +245,32 @@ def test_file_storage_provider_uses_custom_serializer_deserializer(
         deserializer=deserializer,
     )
     assert provider2.get("token") == "abc"
-    assert any(
-        isinstance(call, str) and call.startswith("{") for call in deserializer_calls
-    )
+    assert provider2.get("count") == 3
+    assert deserializer_calls
+    assert all(isinstance(call, dict) and "kind" in call for call in deserializer_calls)
+    assert {call["value"] for call in deserializer_calls} == {"abc", 3}
 
 
 def test_file_storage_provider_defaults_keep_json_read_write(tmp_path: Path) -> None:
     path = tmp_path / "defaults-storage.json"
     provider = FileStorageProvider(path)
 
-    provider.set("answer", 42)
+    values = {
+        "settings": {"theme": "dark", "lang": "es"},
+        "items": ["alpha", 2],
+        "name": "FletPlus",
+        "answer": 42,
+    }
 
-    raw = path.read_text("utf-8")
-    assert json.loads(raw) == {"answer": json.dumps(42)}
+    for key, value in values.items():
+        provider.set(key, value)
+
+    raw = json.loads(path.read_text("utf-8"))
+    assert raw == values
 
     reloaded = FileStorageProvider(path)
-    assert reloaded.get("answer") == 42
+    for key, value in values.items():
+        assert reloaded.get(key) == value
 
 
 def test_file_storage_provider_refreshes_reads_between_instances(tmp_path: Path) -> None:
@@ -349,7 +369,7 @@ def test_file_storage_provider_persists_even_if_chmod_fails(
     provider.set("token", "abc")
 
     persisted = json.loads(path.read_text("utf-8"))
-    assert persisted["token"] == json.dumps("abc")
+    assert persisted["token"] == "abc"
     assert provider.get("token") == "abc"
     assert provider._dirty_keys == set()
     assert provider._deleted_keys == set()
