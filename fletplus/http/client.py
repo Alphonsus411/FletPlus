@@ -206,6 +206,19 @@ def _load_disk_cache() -> type[_PyDiskCache]:
 DiskCache = _load_disk_cache()
 
 
+async def _close_websocket(websocket: Any) -> None:
+    """Cierra un websocket priorizando `aclose` sobre `close`."""
+
+    # Orden explícito: preferimos `aclose` porque este cliente expone una API
+    # asíncrona; `close` queda como compatibilidad con implementaciones legacy.
+    close = getattr(websocket, "aclose", None) or getattr(websocket, "close", None)
+    if close is None:
+        return
+    result = close()
+    if inspect.isawaitable(result):
+        await result
+
+
 class _WebSocketConnection:
     def __init__(self, websocket: Any, response: httpx.Response) -> None:
         self._websocket = websocket
@@ -215,14 +228,7 @@ class _WebSocketConnection:
         return getattr(self._websocket, name)
 
     async def aclose(self) -> None:
-        close = getattr(self._websocket, "close", None)
-        if close is None:
-            close = getattr(self._websocket, "aclose", None)
-        if close is None:
-            return
-        result = close()
-        if inspect.isawaitable(result):
-            await result
+        await _close_websocket(self._websocket)
 
     async def __aenter__(self) -> "_WebSocketConnection":
         enter = getattr(self._websocket, "__aenter__", None)
@@ -774,14 +780,7 @@ class HttpClient:
     # ------------------------------------------------------------------
     async def _close_websocket_with_guard(self, websocket: Any, *, suppress_errors: bool = False) -> None:
         try:
-            close = getattr(websocket, "close", None)
-            if close is None:
-                close = getattr(websocket, "aclose", None)
-            if close is None:
-                return
-            result = close()
-            if inspect.isawaitable(result):
-                await result
+            await _close_websocket(websocket)
         except Exception:
             if suppress_errors:
                 logger.exception("Fallo al cerrar websocket durante la limpieza defensiva.")

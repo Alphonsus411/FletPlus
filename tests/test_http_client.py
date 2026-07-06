@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from fletplus.http import DiskCache, HttpClient, HttpInterceptor
-from fletplus.http.client import _build_websocket_response
+from fletplus.http.client import _build_websocket_response, _WebSocketConnection
 
 
 @pytest.fixture
@@ -273,6 +273,84 @@ async def test_http_client_websocket_interceptors(monkeypatch: pytest.MonkeyPatc
     assert captured_headers["request"]["x-initial"] == "1"
     assert websocket.response.headers["X-Intercepted"] == "1"
     assert websocket.response.headers["X-Original"] == "1"
+
+
+@pytest.mark.anyio
+async def test_websocket_connection_aclose_uses_close_when_only_close_exists():
+    class CloseOnlyWebSocket:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def close(self) -> None:
+            self.calls.append("close")
+
+    raw_websocket = CloseOnlyWebSocket()
+    response = httpx.Response(101, request=httpx.Request("GET", "https://example.org/ws"))
+    websocket = _WebSocketConnection(raw_websocket, response)
+
+    await websocket.aclose()
+
+    assert raw_websocket.calls == ["close"]
+
+
+@pytest.mark.anyio
+async def test_websocket_connection_aclose_uses_aclose_when_only_aclose_exists():
+    class AcloseOnlyWebSocket:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        async def aclose(self) -> None:
+            self.calls.append("aclose")
+
+    raw_websocket = AcloseOnlyWebSocket()
+    response = httpx.Response(101, request=httpx.Request("GET", "https://example.org/ws"))
+    websocket = _WebSocketConnection(raw_websocket, response)
+
+    await websocket.aclose()
+
+    assert raw_websocket.calls == ["aclose"]
+
+
+@pytest.mark.anyio
+async def test_websocket_connection_aclose_prefers_aclose_over_close_when_both_exist():
+    class BothCloseMethodsWebSocket:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        async def aclose(self) -> None:
+            self.calls.append("aclose")
+
+        def close(self) -> None:
+            self.calls.append("close")
+
+    raw_websocket = BothCloseMethodsWebSocket()
+    response = httpx.Response(101, request=httpx.Request("GET", "https://example.org/ws"))
+    websocket = _WebSocketConnection(raw_websocket, response)
+
+    await websocket.aclose()
+
+    assert raw_websocket.calls == ["aclose"]
+
+
+@pytest.mark.anyio
+async def test_websocket_connection_aclose_awaits_close_awaitable_result():
+    class AwaitableCloseWebSocket:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def close(self):
+            async def mark_closed() -> None:
+                self.calls.append("close-awaited")
+
+            return mark_closed()
+
+    raw_websocket = AwaitableCloseWebSocket()
+    response = httpx.Response(101, request=httpx.Request("GET", "https://example.org/ws"))
+    websocket = _WebSocketConnection(raw_websocket, response)
+
+    await websocket.aclose()
+
+    assert raw_websocket.calls == ["close-awaited"]
 
 
 def test_build_websocket_response_with_legacy_metadata():
