@@ -23,6 +23,21 @@ __all__ = ["FileStorageProvider"]
 logger = logging.getLogger(__name__)
 
 
+def _serialize_document(data: Mapping[str, Any]) -> str:
+    """Serializa el documento completo que se persiste en disco."""
+
+    return json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+def _deserialize_document(text: str) -> dict[str, Any]:
+    """Deserializa el documento completo leído desde disco."""
+
+    data = json.loads(text)
+    if not isinstance(data, dict):
+        return {}
+    return data
+
+
 class FileStorageProvider(StorageProvider[Any]):
     """Persiste datos en un archivo JSON y emite señales al cambiar.
 
@@ -48,8 +63,8 @@ class FileStorageProvider(StorageProvider[Any]):
         deserializer: Deserializer | None = None,
         encoding: str = "utf-8",
     ) -> None:
-        self._serializer_fn: Serializer = serializer or json.dumps
-        self._deserializer_fn: Deserializer = deserializer or json.loads
+        self._serializer_fn: Serializer = serializer or (lambda value: value)
+        self._deserializer_fn: Deserializer = deserializer or (lambda value: value)
         self._path = Path(path)
         self._lock_path = self._path.with_suffix(f"{self._path.suffix}.lock")
         self._encoding = encoding
@@ -114,12 +129,9 @@ class FileStorageProvider(StorageProvider[Any]):
             return {}
         try:
             text = self._path.read_text(encoding=self._encoding)
-            data = self._deserializer_fn(text)
+            return _deserialize_document(text)
         except (OSError, UnicodeDecodeError, TypeError, ValueError):
             return {}
-        if not isinstance(data, dict):
-            return {}
-        return data
 
     # ------------------------------------------------------------------
     def _persist(self) -> None:
@@ -148,17 +160,7 @@ class FileStorageProvider(StorageProvider[Any]):
                     encoding=self._encoding,
                 ) as fp:
                     tmp_path = Path(fp.name)
-                    serialized = self._serializer_fn(merged_data)
-                    if isinstance(serialized, str):
-                        payload = serialized
-                    else:
-                        payload = json.dumps(
-                            serialized,
-                            ensure_ascii=False,
-                            indent=2,
-                            sort_keys=True,
-                        )
-                    fp.write(payload)
+                    fp.write(_serialize_document(merged_data))
                     fp.flush()
                     os.fsync(fp.fileno())
                 if tmp_path is None:
