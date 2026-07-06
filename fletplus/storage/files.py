@@ -100,8 +100,30 @@ class FileStorageProvider(StorageProvider[Any]):
         current_mtime_ns = self._get_mtime_ns()
         if current_mtime_ns == self._last_mtime_ns:
             return False
-        self._cache = self._read_disk_data()
+
+        previous_cache = dict(self._cache)
+        next_cache = self._read_disk_data()
+        self._cache = next_cache
         self._last_mtime_ns = current_mtime_ns
+
+        previous_keys = set(previous_cache)
+        next_keys = set(next_cache)
+        added_or_modified = {
+            key
+            for key in next_keys
+            if key not in previous_cache or previous_cache[key] != next_cache[key]
+        }
+        deleted = previous_keys - next_keys
+
+        for key in (added_or_modified | deleted) & set(self._signals):
+            if key in next_cache:
+                value = self._deserializer_fn(next_cache[key])
+            else:
+                value = self._defaults.get(key)
+            signal = self._signals[key]
+            if signal.get() != value:
+                signal.set(value)
+
         return True
 
     # ------------------------------------------------------------------

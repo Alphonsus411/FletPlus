@@ -285,6 +285,64 @@ def test_file_storage_provider_refreshes_reads_between_instances(tmp_path: Path)
     assert "shared" in provider_reader.keys()
 
 
+def test_file_storage_provider_signal_refreshes_on_external_set_via_get(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "shared-signal-get.json"
+    provider_reader = FileStorageProvider(path)
+    provider_writer = FileStorageProvider(path)
+
+    signal = provider_reader.signal("shared")
+    observed: list[Any] = []
+    signal.subscribe(observed.append)
+
+    provider_writer.set("shared", {"version": 1})
+
+    assert provider_reader.get("shared") == {"version": 1}
+    assert signal.get() == {"version": 1}
+    assert observed == [{"version": 1}]
+
+
+def test_file_storage_provider_signal_refreshes_on_external_update_via_keys(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "shared-signal-keys.json"
+    provider_reader = FileStorageProvider(path)
+    provider_writer = FileStorageProvider(path)
+
+    provider_writer.set("shared", {"version": 1})
+    signal = provider_reader.signal("shared")
+    provider_reader._last_mtime_ns = -1
+    observed: list[Any] = []
+    signal.subscribe(observed.append)
+
+    provider_writer.set("shared", {"version": 2})
+
+    assert "shared" in provider_reader.keys()
+    assert signal.get() == {"version": 2}
+    assert observed == [{"version": 2}]
+
+
+def test_file_storage_provider_signal_refreshes_on_external_remove_via_snapshot(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "shared-signal-remove.json"
+    provider_writer = FileStorageProvider(path)
+    provider_writer.set("shared", {"version": 1})
+
+    provider_reader = FileStorageProvider(path)
+    signal = provider_reader.signal("shared", default={"version": 0})
+    observed: list[Any] = []
+    signal.subscribe(observed.append)
+
+    provider_writer.remove("shared")
+    provider_reader._last_mtime_ns = -1
+
+    assert provider_reader.snapshot() == {}
+    assert signal.get() == {"version": 0}
+    assert observed == [{"version": 0}]
+
+
 def test_file_storage_provider_remove_uses_fresh_cache_between_instances(
     tmp_path: Path,
 ) -> None:
