@@ -203,10 +203,18 @@ class DiskCache:
         else:
             reason_phrase = str(raw_reason_phrase)
 
+        try:
+            content = response.content
+        except httpx.ResponseNotRead as exc:
+            raise ValueError(
+                "DiskCache.set() requiere una respuesta HTTP leída antes de cachear. "
+                "Llama a response.read() o await response.aread() antes de invocarlo."
+            ) from exc
+
         entry: dict[str, Any] = {
             "status_code": response.status_code,
             "headers": headers,
-            "content": base64.b64encode(response.content).decode("ascii"),
+            "content": base64.b64encode(content).decode("ascii"),
             "http_version": http_version,
             "reason_phrase": reason_phrase,
             "timestamp": time.time(),
