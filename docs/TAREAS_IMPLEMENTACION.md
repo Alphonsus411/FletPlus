@@ -92,3 +92,26 @@ Se considera completado cuando:
 2. B1 → B2
 3. C1 → C2
 4. D1
+
+## Plan estructurado — actualización Flet 0.85.x (2026-07-07)
+
+### Bloque F85-A — Contrato de versión y distribución
+- [x] **F85-A1. Detectar última versión publicada**: PyPI informa `flet 0.85.3` como última versión estable disponible.
+- [x] **F85-A2. Actualizar rango contractual**: ampliar manifiestos y plantillas a `flet>=0.80,<0.86` para cubrir toda la serie 0.85.x sin perder baseline 0.80.x.
+- [x] **F85-A3. Sincronizar matriz CI**: mantener `min-supported` en 0.80.x y elevar `latest-migration-target` a 0.85.x.
+
+### Bloque F85-B — Adaptación funcional de FletPlus
+- [x] **F85-B1. Validar APIs sensibles**: confirmar símbolos de navegación, tema, iconos, colores y métodos de `Page` con la matriz de compatibilidad.
+- [x] **F85-B2. Revisar capa `flet_compat`**: conservar detección por capacidades para `Page.window`, dimensiones, drawer, screenshots, iconos/colores y controles de navegación.
+- [x] **F85-B3. Corregir deuda temporal vencida**: mover la fecha de retirada de fallbacks internos a una ventana futura auditada para evitar documentación obsoleta tras julio de 2026.
+
+### Bloque F85-C — Bugs/fisuras detectadas
+- [x] **F85-C1. Drift de versión**: el repositorio seguía apuntando a 0.82.x aunque PyPI ya publica 0.85.3; queda corregido en manifests, CI y docs.
+- [x] **F85-C2. Documentación de plantilla desalineada**: el README de la plantilla CLI conservaba `flet>=0.80,<0.83`; queda alineado al rango nuevo.
+- [ ] **F85-C3. Dependencias locales de validación**: asegurar que entornos de desarrollo instalan `requirements-dev.txt` antes de ejecutar checks que importan `yaml`.
+
+### Bloque F85-D — Validación
+- [x] **F85-D1. Ejecutar contrato Flet 0.85.x**: `FLET_MATRIX_EXPECTED_MINOR=0.85 python -m pytest tests/test_flet_version_matrix.py tests/test_flet_compat.py tests/test_flet_api_contracts.py -q`.
+- [x] **F85-D2. Ejecutar drift check**: `python tools/check_flet_target_drift.py`.
+- [ ] **F85-D3. Ejecutar contrato CI completo**: `python tools/check_ci_workflow_contract.py` requiere dependencias dev instaladas (`PyYAML`).
+

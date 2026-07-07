@@ -11,6 +11,26 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING, Any
 
+SUBMODULE_IMPORTS = {
+    "animation",
+    "cli",
+    "components",
+    "context",
+    "core",
+    "desktop",
+    "devtools",
+    "http",
+    "icons",
+    "router",
+    "state",
+    "storage",
+    "styles",
+    "themes",
+    "utils",
+    "web",
+}
+
+
 LAZY_IMPORTS = {
     "enable_compat_patches": "fletplus.utils.flet_compat_patch",
     "AdaptiveDestination": "fletplus.components",
@@ -331,8 +351,12 @@ def __getattr__(name: str) -> Any:
         value = getattr(module, name)
         globals()[name] = value
         return value
+    if name in SUBMODULE_IMPORTS:
+        module = importlib.import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def __dir__() -> list[str]:
-    return sorted(set(__all__))
+    return sorted(set(__all__) | SUBMODULE_IMPORTS)

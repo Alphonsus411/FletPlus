@@ -2,7 +2,7 @@ anyio==4.9.0
 certifi==2025.4.26
 colorama==0.4.6
 coverage==7.8.0
-flet>=0.80,<0.83
+flet>=0.80,<0.86
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
