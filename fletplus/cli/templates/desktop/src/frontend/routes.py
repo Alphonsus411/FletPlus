@@ -23,7 +23,7 @@ def about_view(match) -> ft.Control:
     return ft.Column(
         controls=[
             ft.Text("Acerca de"),
-            ft.Text("Edita src/routes.py para añadir pantallas."),
+            ft.Text("Edita src/frontend/routes.py para añadir pantallas."),
         ],
         spacing=12,
     )

@@ -15,11 +15,16 @@ def _load_module_from_path(module_name: str, file_path: Path):
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
+    sys.path.insert(0, str(file_path.parent))
     try:
         spec.loader.exec_module(module)
         return module
     finally:
         sys.modules.pop(module_name, None)
+        try:
+            sys.path.remove(str(file_path.parent))
+        except ValueError:
+            pass
 
 
 def test_cli_template_main_smoke_signature() -> None:

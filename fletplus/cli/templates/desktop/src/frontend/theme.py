@@ -6,21 +6,18 @@ from pathlib import Path
 
 from fletplus import FrontEndConfig
 
-PALETTE_NAME = "material"
-PALETTE_MODE = "light"
-FONT_FAMILY = "Roboto"
-FONT_ASSETS = {
-    # "Inter": "assets/fonts/Inter-Regular.ttf",
-}
-CUSTOM_TOKENS = {
-    "colors": {
-        "brand": "#2563EB",
-        "brand_container": "#DBEAFE",
-        "surface_soft": "#F8FAFC",
-    },
-    "spacing": {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32},
-    "radius": {"card": 18, "pill": 999},
-}
+from .config import (
+    CUSTOM_TOKENS,
+    FONT_ASSETS,
+    FONT_FAMILY,
+    LAYOUT_DENSITY,
+    MAX_CONTENT_WIDTH,
+    MIN_CONTENT_WIDTH,
+    PAGE_PADDING,
+    PALETTE_MODE,
+    PALETTE_NAME,
+    SPACING,
+)
 
 
 def create_frontend_config() -> FrontEndConfig:
@@ -39,11 +36,11 @@ def create_frontend_config() -> FrontEndConfig:
             mode=PALETTE_MODE,
             font_family=FONT_FAMILY,
             font_assets=FONT_ASSETS,
-            page_padding=12,
-            max_content_width=480,
-            min_content_width=280,
-            spacing=12,
-            layout_density='compact',
+            page_padding=PAGE_PADDING,
+            max_content_width=MAX_CONTENT_WIDTH,
+            min_content_width=MIN_CONTENT_WIDTH,
+            spacing=SPACING,
+            layout_density=LAYOUT_DENSITY,
         )
     config.font_assets = {**FONT_ASSETS, **dict(config.font_assets)}
     config.theme_tokens = {**CUSTOM_TOKENS, **dict(config.theme_tokens)}

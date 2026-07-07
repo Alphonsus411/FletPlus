@@ -164,14 +164,17 @@ def test_create_supports_frontend_templates(
         for marker in unexpected_markers:
             assert marker not in main_py
         assert "fletplus run" in readme
-        assert "src/theme.py" in readme
+        assert "src/frontend/theme.py" in readme
         assert "breakpoints" in readme
         generated_paths = [
             "pyproject.toml",
-            "src/theme.py",
-            "src/layout.py",
-            "src/routes.py",
-            "src/assets.py",
+            "src/main.py",
+            "src/frontend/__init__.py",
+            "src/frontend/config.py",
+            "src/frontend/theme.py",
+            "src/frontend/layout.py",
+            "src/frontend/routes.py",
+            "src/frontend/assets.py",
             "assets/README.md",
         ]
         if template_name == "web":
@@ -426,10 +429,46 @@ def test_create_web_template_generates_configured_pwa_files(
         service_worker = (project / "web" / "service_worker.js").read_text(
             encoding="utf-8"
         )
-        theme_py = (project / "src" / "theme.py").read_text(encoding="utf-8")
+        theme_py = (project / "src" / "frontend" / "theme.py").read_text(encoding="utf-8")
 
     assert '"name": "Mi Web"' in manifest
     assert '"display": "standalone"' in manifest
     assert 'mi_web-fletplus-v1' in service_worker
     assert "FrontEndConfig.from_pyproject" in theme_py
     assert "_find_pyproject" in theme_py
+
+
+def test_frontend_template_static_structure_is_consistent() -> None:
+    template_root = Path("fletplus/cli/templates")
+    expected_frontend_files = {
+        "__init__.py",
+        "config.py",
+        "theme.py",
+        "layout.py",
+        "assets.py",
+        "routes.py",
+    }
+
+    for template_name in ("app", "web", "desktop", "mobile"):
+        src = template_root / template_name / "src"
+        frontend_dir = src / "frontend"
+        assert frontend_dir.is_dir(), template_name
+        assert {path.name for path in frontend_dir.glob("*.py")} == expected_frontend_files
+        for legacy_module in ("theme.py", "layout.py", "assets.py", "routes.py"):
+            assert not (src / legacy_module).exists(), f"{template_name}: {legacy_module}"
+
+        main_py = (src / "main.py").read_text(encoding="utf-8")
+        assert "from frontend.theme import create_frontend_config" in main_py
+        assert "from frontend.layout import responsive_shell, spacing" in main_py
+        assert "from frontend.routes import render_initial_route" in main_py
+
+        readme = (template_root / template_name / "README.md").read_text(encoding="utf-8")
+        for expected_doc in (
+            "src/frontend/config.py",
+            "colores",
+            "Fuentes",
+            "Densidad visual",
+            "Assets",
+            "Rutas",
+        ):
+            assert expected_doc in readme
