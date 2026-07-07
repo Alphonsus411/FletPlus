@@ -32,6 +32,7 @@ class FrontEndConfig:
     page_padding: int = 24
     max_content_width: int = 1200
     min_content_width: int = 320
+    allow_min_width_overflow: bool = False
     spacing: int = 16
     responsive_profiles: Sequence[DeviceProfile] = DEFAULT_DEVICE_PROFILES
     layout_density: str = "comfortable"
@@ -58,10 +59,11 @@ class FrontEndConfig:
         """Calcula el ancho máximo seguro del contenido principal."""
 
         width = int(page.width or self.max_content_width)
-        return max(
-            self.min_content_width,
-            min(width - (self.page_padding * 2), self.max_content_width),
-        )
+        available_width = max(0, width - (self.page_padding * 2))
+        content_width = min(available_width, self.max_content_width)
+        if self.allow_min_width_overflow:
+            return max(self.min_content_width, content_width)
+        return content_width
 
     def apply_to_page(self, page: ft.Page) -> ThemeManager:
         """Aplica fuente, tema y espaciado base sobre una página Flet."""
