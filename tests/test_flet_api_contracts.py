@@ -244,7 +244,9 @@ def test_responsive_components_tolerate_minimal_page_contract() -> None:
 
 def test_smart_table_refresh_and_build_without_gui_runtime() -> None:
     table = SmartTable(
-        columns=[SmartTableColumn(key="name", label="Nombre", sortable=True, filterable=True)],
+        columns=[
+            SmartTableColumn(key="name", label="Nombre", sortable=True, filterable=True)
+        ],
         rows=[{"name": "Ada"}, {"name": "Linus"}],
     )
 
@@ -260,7 +262,9 @@ def test_icons_namespace_contract_supports_pascal_or_snake_case() -> None:
     icons_namespace = getattr(ft, "Icons", None) or getattr(ft, "icons", None)
 
     assert icons_namespace is not None
-    home_icon = getattr(icons_namespace, "HOME", None) or getattr(icons_namespace, "home", None)
+    home_icon = getattr(icons_namespace, "HOME", None) or getattr(
+        icons_namespace, "home", None
+    )
     assert home_icon is not None
 
 
@@ -292,3 +296,49 @@ def test_page_window_dimensions_contract_has_modern_or_legacy_attributes() -> No
 
     assert has_width is True
     assert has_height is True
+
+
+def test_flet_0853_dialog_contract_uses_show_dialog_before_modern_open() -> None:
+    version = getattr(ft, "__version__", "")
+    if version != "0.85.3":
+        return
+
+    assert hasattr(ft.Page, "show_dialog")
+    assert callable(ft.Page.show_dialog)
+    assert not hasattr(ft.Page, "open")
+
+
+def test_flet_compat_dialog_helpers_support_modern_and_0853_page_apis() -> None:
+    from fletplus.utils.flet_compat import safe_close_dialog, safe_show_dialog
+
+    class PageWithFlet0853DialogApi:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, object | None]] = []
+
+        def show_dialog(self, control: object) -> None:
+            self.calls.append(("show_dialog", control))
+
+        def close_dialog(self) -> None:
+            self.calls.append(("close_dialog", None))
+
+    class PageWithModernOverlayApi:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, object | None]] = []
+
+        def open(self, control: object) -> None:
+            self.calls.append(("open", control))
+
+        def close(self, control: object) -> None:
+            self.calls.append(("close", control))
+
+    dialog = ft.AlertDialog(title=ft.Text("Contrato"))
+    legacy_page = PageWithFlet0853DialogApi()
+    modern_page = PageWithModernOverlayApi()
+
+    assert safe_show_dialog(legacy_page, dialog) is True
+    assert safe_close_dialog(legacy_page) is True
+    assert legacy_page.calls == [("show_dialog", dialog), ("close_dialog", None)]
+
+    assert safe_show_dialog(modern_page, dialog) is True
+    assert safe_close_dialog(modern_page, dialog) is True
+    assert modern_page.calls == [("open", dialog), ("close", dialog)]

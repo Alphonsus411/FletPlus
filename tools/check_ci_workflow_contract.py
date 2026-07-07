@@ -17,6 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover - Python <3.11
     import tomli as tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
 REUSABLE_WORKFLOW = REPO_ROOT / ".github/workflows/reusable-quality.yml"
 QA_SCRIPT = REPO_ROOT / "tools/qa.sh"
 NOXFILE = REPO_ROOT / "noxfile.py"
@@ -71,6 +72,8 @@ FLET_BASELINE_LABEL = "min-supported"
 FLET_TARGET_LABEL = "latest-migration-target"
 
 CONTRACT_PACKAGES = ("flet", "websockets", "httpx", "watchdog", "pytest")
+
+from tools.flet_version_matrix_config import FLET_MATRIX_PINNED_PATCHES
 
 REQUIREMENTS_DEV = REPO_ROOT / "requirements-dev.txt"
 PYPROJECT_FILE = REPO_ROOT / "pyproject.toml"
@@ -683,8 +686,8 @@ def extract_flet_matrix_from_migration_doc(path: Path) -> tuple[str, str] | None
     target = _extract_first_minor(
         text,
         (
-            r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=(?P<target>\d+\.\d+),<\d+\.\d+`",
-            r"\*\*Versión objetivo de migración \(estado objetivo en CI\)\*\*: `flet>=(?P<target>\d+\.\d+),<\d+\.\d+`",
+            r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet(?:==|>=)(?P<target>\d+\.\d+)(?:\.\d+)?,?[^`]*`",
+            r"\*\*Versión objetivo de migración \(estado objetivo en CI\)\*\*: `flet(?:==|>=)(?P<target>\d+\.\d+)(?:\.\d+)?,?[^`]*`",
         ),
         "target",
     )
@@ -920,7 +923,11 @@ def validate_flet_baseline_target_contract() -> list[str]:
         )
 
     expected_baseline_spec = f"flet>={config_baseline},<{config_baseline.split('.')[0]}.{int(config_baseline.split('.')[1]) + 1}"
-    expected_target_spec = f"flet>={config_target},<{config_target.split('.')[0]}.{int(config_target.split('.')[1]) + 1}"
+    expected_target_spec = (
+        f"flet=={FLET_MATRIX_PINNED_PATCHES[config_target]}"
+        if config_target in FLET_MATRIX_PINNED_PATCHES
+        else f"flet>={config_target},<{config_target.split('.')[0]}.{int(config_target.split('.')[1]) + 1}"
+    )
 
     if (
         workflow_baseline_spec != expected_baseline_spec

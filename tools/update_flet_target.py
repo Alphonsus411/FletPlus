@@ -5,12 +5,16 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
 WORKFLOW_PATH = REPO_ROOT / ".github/workflows/reusable-quality.yml"
 CONFIG_PATH = REPO_ROOT / "tools/flet_version_matrix_config.py"
 DOC_PATH = REPO_ROOT / "docs/migration-flet-latest.md"
+
+from tools.flet_version_matrix_config import FLET_MATRIX_PINNED_PATCHES
 
 
 def _minor_to_upper_bound(minor: str) -> str:
@@ -25,18 +29,25 @@ def _replace_once(pattern: str, repl: str, text: str) -> str:
     return updated
 
 
+def _minor_to_spec(minor: str) -> str:
+    pinned_patch = FLET_MATRIX_PINNED_PATCHES.get(minor)
+    if pinned_patch is not None:
+        return f"flet=={pinned_patch}"
+    return f"flet>={minor},<{_minor_to_upper_bound(minor)}"
+
+
 def update_workflow(text: str, baseline_minor: str, target_minor: str) -> str:
-    baseline_upper = _minor_to_upper_bound(baseline_minor)
-    target_upper = _minor_to_upper_bound(target_minor)
+    baseline_spec = _minor_to_spec(baseline_minor)
+    target_spec = _minor_to_spec(target_minor)
 
     text = _replace_once(
-        r'(- label: min-supported\n\s*flet-spec:\s*)flet>=[^\n]+(\n\s*expected-minor:\s*)"[^"]+"',
-        rf'\g<1>flet>={baseline_minor},<{baseline_upper}\g<2>"{baseline_minor}"',
+        r'(- label: min-supported\n\s*flet-spec:\s*)flet(?:==|>=)[^\n]+(\n\s*expected-minor:\s*)"[^"]+"',
+        rf'\g<1>{baseline_spec}\g<2>"{baseline_minor}"',
         text,
     )
     text = _replace_once(
-        r'(- label: latest-migration-target\n\s*flet-spec:\s*)flet>=[^\n]+(\n\s*expected-minor:\s*)"[^"]+"',
-        rf'\g<1>flet>={target_minor},<{target_upper}\g<2>"{target_minor}"',
+        r'(- label: latest-migration-target\n\s*flet-spec:\s*)flet(?:==|>=)[^\n]+(\n\s*expected-minor:\s*)"[^"]+"',
+        rf'\g<1>{target_spec}\g<2>"{target_minor}"',
         text,
     )
     return text
@@ -61,21 +72,23 @@ def _replace_first_matching(patterns: tuple[str, ...], repl: str, text: str) -> 
 def update_docs(text: str, baseline_minor: str, target_minor: str) -> str:
     baseline_upper = _minor_to_upper_bound(baseline_minor)
     target_upper = _minor_to_upper_bound(target_minor)
+    baseline_spec = _minor_to_spec(baseline_minor)
+    target_spec = _minor_to_spec(target_minor)
 
     text = _replace_first_matching(
         (
-            r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet>=[^`]+`",
-            r"\*\*Baseline de validación \(estado actual en CI\)\*\*: `flet>=[^`]+`",
+            r"\*\*Versión mínima soportada \(estado actual\)\*\*: `flet(?:==|>=)[^`]+`",
+            r"\*\*Baseline de validación \(estado actual en CI\)\*\*: `flet(?:==|>=)[^`]+`",
         ),
         f"**Baseline de validación (estado actual en CI)**: `flet>={baseline_minor},<{baseline_upper}`",
         text,
     )
     text = _replace_first_matching(
         (
-            r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet>=[^`]+`",
-            r"\*\*Versión objetivo de migración \(estado objetivo en CI\)\*\*: `flet>=[^`]+`",
+            r"\*\*Versión objetivo de migración \(estado objetivo\)\*\*: `flet(?:==|>=)[^`]+`",
+            r"\*\*Versión objetivo de migración \(estado objetivo en CI\)\*\*: `flet(?:==|>=)[^`]+`",
         ),
-        f"**Versión objetivo de migración (estado objetivo en CI)**: `flet>={target_minor},<{target_upper}`",
+        f"**Versión objetivo de migración (estado objetivo en CI)**: `{target_spec}`",
         text,
     )
 
@@ -85,8 +98,8 @@ def update_docs(text: str, baseline_minor: str, target_minor: str) -> str:
         text,
     )
     text = _replace_once(
-        r"(\| CI target \(`flet-version-matrix`\) \| `flet>=)[^`]+(` \(`latest-migration-target`\) \|)",
-        rf"\g<1>{target_minor},<{target_upper}\g<2>",
+        r"(\| CI target \(`flet-version-matrix`\) \| `)flet(?:==|>=)[^`]+(` \(\`latest-migration-target\`\) \|)",
+        rf"\g<1>{target_spec}\g<2>",
         text,
     )
     return text

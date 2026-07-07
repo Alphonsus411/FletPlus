@@ -13,6 +13,8 @@ Atributos de compatibilidad actualmente cubiertos
   presentes en todas las combinaciones de versión/OS.
 - ``Page.update_async`` vs ``Page.update``.
 - ``Page.open_drawer`` / ``Page.close_drawer`` pueden no existir según target.
+- ``Page.show_dialog`` / ``Page.open`` y ``Page.close_dialog`` / ``Page.close`` varían entre releases;
+  la capa expone helpers seguros para diálogos y overlays.
 - ``Page.screenshot_async`` vs ``Page.screenshot`` vs invocación interna
   ``Page._invoke_method_async('screenshot', ...)``.
 - ``Window.destroy`` vs ``Window.close``.
@@ -465,6 +467,38 @@ def safe_close_window(page: Any) -> bool:
         if callable(method):
             with contextlib.suppress(Exception):
                 method()
+                return True
+    return False
+
+
+def safe_show_dialog(page: Any, control: Any) -> bool:
+    """Muestra un diálogo/overlay con la API disponible de Flet.
+
+    Flet 0.85.3 mantiene ``Page.show_dialog`` y no expone aún ``Page.open`` en
+    la clase pública; releases posteriores pueden preferir ``open``. Este helper
+    permite que FletPlus use un único contrato defensivo.
+    """
+
+    for attr in ("open", "show_dialog"):
+        method = getattr(page, attr, None)
+        if callable(method):
+            with contextlib.suppress(Exception):
+                method(control)
+                return True
+    return False
+
+
+def safe_close_dialog(page: Any, control: Any | None = None) -> bool:
+    """Cierra un diálogo/overlay usando ``close`` o ``close_dialog`` si existen."""
+
+    for attr in ("close", "close_dialog"):
+        method = getattr(page, attr, None)
+        if callable(method):
+            with contextlib.suppress(Exception):
+                if control is None:
+                    method()
+                else:
+                    method(control)
                 return True
     return False
 
