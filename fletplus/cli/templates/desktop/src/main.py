@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import flet as ft
-from fletplus import FrontEndConfig
-from fletplus.utils.flet_compat import safe_set_window_attr
-
 from layout import responsive_shell, spacing
 from routes import render_initial_route
 from theme import create_frontend_config
+
+from fletplus import FrontEndConfig
+from fletplus.utils.flet_compat import safe_set_window_attr
 
 frontend: FrontEndConfig = create_frontend_config()
 

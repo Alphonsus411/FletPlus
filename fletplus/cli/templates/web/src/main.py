@@ -5,12 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import flet as ft
-from fletplus import FrontEndConfig
-from fletplus.web.pwa import generate_manifest, generate_service_worker, register_pwa
-
 from layout import responsive_shell, spacing
 from routes import render_initial_route
 from theme import create_frontend_config
+
+from fletplus import FrontEndConfig
+from fletplus.web.pwa import generate_manifest, generate_service_worker, register_pwa
 
 frontend: FrontEndConfig = create_frontend_config()
 PWA_DIR = Path("web")

@@ -96,7 +96,9 @@ def test_frontend_config_builds_content_shell_with_very_reduced_width() -> None:
 
 def test_frontend_config_preserves_existing_theme_properties() -> None:
     page = DummyPage()
-    existing_theme = ft.Theme(scaffold_bgcolor=ft.Colors.AMBER, visual_density="compact")
+    existing_theme = ft.Theme(
+        scaffold_bgcolor=ft.Colors.AMBER, visual_density="compact"
+    )
     page.theme = existing_theme
     config = FrontEndConfig(font_family="Inter", palette="material", mode="light")
 
@@ -155,8 +157,44 @@ unknown = 'ignored'
     assert config.layout_density == "compact"
 
 
-def test_frontend_config_from_pyproject_uses_defaults_when_missing(tmp_path: Path) -> None:
+def test_frontend_config_from_pyproject_uses_defaults_when_missing(
+    tmp_path: Path,
+) -> None:
     config = FrontEndConfig.from_pyproject(tmp_path / "missing.toml")
 
     assert config.palette == "material"
     assert config.page_padding == 24
+
+
+def test_frontend_config_applies_density_mode_and_responsive_metadata() -> None:
+    page = DummyPage()
+    page.width = 375
+    page.height = 812
+    config = FrontEndConfig(
+        palette="material",
+        mode="dark",
+        layout_density="compact",
+        follow_platform_theme=False,
+    )
+
+    manager = config.apply_to_page(page)  # type: ignore[arg-type]
+
+    assert manager.dark_mode is True
+    assert page.theme_mode == ft.ThemeMode.DARK
+    assert page.theme.visual_density == "compact"
+    assert manager._active_device == "mobile"
+    assert manager._active_orientation == "portrait"
+
+
+def test_frontend_config_can_read_follow_platform_theme(tmp_path: Path) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.fletplus.frontend]
+follow_platform_theme = true
+""",
+        encoding="utf-8",
+    )
+
+    config = FrontEndConfig.from_pyproject(pyproject)
+
+    assert config.follow_platform_theme is True
