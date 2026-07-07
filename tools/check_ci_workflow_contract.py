@@ -6,6 +6,7 @@ from __future__ import annotations
 import ast
 import configparser
 import re
+import runpy
 import sys
 from pathlib import Path
 
@@ -24,6 +25,7 @@ NOXFILE = REPO_ROOT / "noxfile.py"
 TOOLING_DOC = REPO_ROOT / "docs/tooling.md"
 README_DOC = REPO_ROOT / "README.md"
 MIGRATION_DOC = REPO_ROOT / "docs/migration-flet-latest.md"
+FLET_FEATURE_ADOPTION_DOC = REPO_ROOT / "docs/flet-feature-adoption.md"
 FLET_MATRIX_CONFIG = REPO_ROOT / "tools/flet_version_matrix_config.py"
 WRAPPER_WORKFLOWS = (
     REPO_ROOT / ".github/workflows/qa.yml",
@@ -73,7 +75,17 @@ FLET_TARGET_LABEL = "latest-migration-target"
 
 CONTRACT_PACKAGES = ("flet", "websockets", "httpx", "watchdog", "pytest")
 
-from tools.flet_version_matrix_config import FLET_MATRIX_PINNED_PATCHES
+
+def _load_flet_matrix_pinned_patches() -> dict[str, str]:
+    value = runpy.run_path(str(FLET_MATRIX_CONFIG)).get(
+        "FLET_MATRIX_PINNED_PATCHES", {}
+    )
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): str(item) for key, item in value.items()}
+
+
+FLET_MATRIX_PINNED_PATCHES = _load_flet_matrix_pinned_patches()
 
 REQUIREMENTS_DEV = REPO_ROOT / "requirements-dev.txt"
 PYPROJECT_FILE = REPO_ROOT / "pyproject.toml"
@@ -875,6 +887,70 @@ def validate_dependency_policy_contract() -> list[str]:
     return errors
 
 
+def validate_flet_feature_adoption_doc_contract() -> list[str]:
+    errors: list[str] = []
+
+    config_versions = extract_flet_matrix_from_config(FLET_MATRIX_CONFIG)
+    if config_versions is None:
+        errors.append(
+            "tools/flet_version_matrix_config.py debe definir FLET_MATRIX_MINORS con baseline/target."
+        )
+        return errors
+
+    if not FLET_FEATURE_ADOPTION_DOC.exists():
+        errors.append(
+            "docs/flet-feature-adoption.md debe documentar la matriz de adopción de funcionalidades de Flet."
+        )
+        return errors
+
+    baseline_minor, target_minor = config_versions
+    doc_text = FLET_FEATURE_ADOPTION_DOC.read_text(encoding="utf-8")
+    expected_matrix = f'FLET_MATRIX_MINORS = ("{baseline_minor}", "{target_minor}")'
+    if expected_matrix not in doc_text:
+        errors.append(
+            "docs/flet-feature-adoption.md debe reflejar explícitamente el valor actual de FLET_MATRIX_MINORS "
+            f"({expected_matrix})."
+        )
+
+    target_major, target_minor_number = (int(part) for part in target_minor.split("."))
+    for minor_number in range(83, target_minor_number + 1):
+        minor = f"{target_major}.{minor_number:02d}"
+        if f"## Flet {minor}.x" not in doc_text:
+            errors.append(
+                "docs/flet-feature-adoption.md debe incluir una sección por cada minor adoptado desde 0.83 "
+                f"hasta el target contractual; falta Flet {minor}.x."
+            )
+
+    required_sections = (
+        "### APIs nuevas",
+        "### APIs deprecadas",
+        "### Cambios de comportamiento",
+        "### Acciones requeridas en FletPlus",
+        "## No aplica: funcionalidades de Flet sin wrapper requerido",
+    )
+    for section in required_sections:
+        if section not in doc_text:
+            errors.append(
+                f"docs/flet-feature-adoption.md debe contener la sección de mantenimiento {section!r}."
+            )
+
+    required_targets = (
+        "fletplus/utils/flet_compat.py",
+        "fletplus/frontend/config.py",
+        "fletplus/components/*",
+        "fletplus/cli/templates/*",
+        "Tests de contrato",
+    )
+    for target in required_targets:
+        if target not in doc_text:
+            errors.append(
+                "docs/flet-feature-adoption.md debe vincular acciones a módulos concretos; "
+                f"falta {target!r}."
+            )
+
+    return errors
+
+
 def validate_flet_baseline_target_contract() -> list[str]:
     errors: list[str] = []
 
@@ -977,6 +1053,7 @@ def main() -> int:
     errors.extend(validate_docs_workflow_contract(DOCS_WORKFLOW))
     errors.extend(validate_perf_workflow_contract(PERF_WORKFLOW))
     errors.extend(validate_flet_baseline_target_contract())
+    errors.extend(validate_flet_feature_adoption_doc_contract())
     errors.extend(validate_dependency_policy_contract())
 
     for wrapper in WRAPPER_WORKFLOWS:
