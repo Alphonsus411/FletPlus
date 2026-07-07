@@ -144,3 +144,48 @@ def test_flet_0853_sensitive_page_contracts() -> None:
         "FletPlus no debe depender todavía de ft.Page.open en el target bloqueado 0.85.3; "
         "usar flet_compat.safe_show_dialog para mantener compatibilidad."
     )
+
+
+def test_flet_0853_public_equivalents_for_compat_internal_fallbacks() -> None:
+    version = _read_flet_version()
+    if version != FLET_MATRIX_PINNED_PATCHES.get("0.85"):
+        return
+
+    assert getattr(ft, "Icons", None) is not None
+    assert getattr(ft, "icons", None) is not None
+    assert getattr(ft, "alignment", None) is not None
+    assert getattr(ft, "Alignment", None) is not None
+    assert getattr(ft, "Offset", None) is not None
+    assert getattr(ft, "Scale", None) is not None
+    assert getattr(ft, "Rotate", None) is not None
+
+
+def test_flet_compat_import_tolerates_absent_internal_namespaces_in_matrix(monkeypatch) -> None:
+    import importlib
+    import sys
+
+    fake_icons = getattr(ft, "Icons", None) or type("Icons", (), {"HOME": "home"})()
+    fake_alignment = getattr(ft, "alignment", None) or type("alignment", (), {})()
+
+    monkeypatch.setattr(ft, "Icons", fake_icons, raising=False)
+    monkeypatch.setattr(ft, "icons", fake_icons, raising=False)
+    monkeypatch.delattr(ft, "transform", raising=False)
+    monkeypatch.setattr(ft, "alignment", fake_alignment, raising=False)
+
+    real_import_module = importlib.import_module
+    internal_imports: list[str] = []
+
+    def _block_internal_import(name: str, package: str | None = None):
+        if name.startswith("flet.controls."):
+            internal_imports.append(name)
+            raise ModuleNotFoundError(name)
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", _block_internal_import)
+    sys.modules.pop("fletplus.utils.flet_compat", None)
+
+    flet_compat = importlib.import_module("fletplus.utils.flet_compat")
+
+    assert internal_imports == []
+    assert flet_compat.get_flet_icons() is fake_icons
+    assert hasattr(flet_compat.ft, "transform")

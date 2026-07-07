@@ -176,14 +176,12 @@ LEGACY_PAGE_WINDOW_PATCH_ENV_VAR = "FLETPLUS_ENABLE_LEGACY_PAGE_WINDOW_PATCH"
 _TRUTHY_VALUES = frozenset({"1", "true", "yes", "on", "enabled"})
 _FALSY_VALUES = frozenset({"0", "false", "no", "off", "disabled"})
 
-# Proveer alias ft.icons en entornos donde no exista (compatibilidad de tests y monkeypatch)
+# Proveer alias ft.icons en entornos donde no exista (compatibilidad de tests y monkeypatch).
+# Confirmado en Flet 0.85.3: ``ft.icons`` y ``ft.Icons`` son API pública.
+# Retirada del alias sintético: antes de 2026-12-31 o cuando el baseline mínimo
+# estabilice ambos nombres públicos en CI.
 if not hasattr(ft, "icons"):
-    _icons_mod = _resolve_public_first_symbol(
-        public_candidates=("icons", "Icons"),
-        internal_module_path="flet.controls.material.icons",
-        default=type("icons", (), {})(),
-        warning_key="icons_namespace",
-    )
+    _icons_mod = getattr(_ft, "icons", None) or getattr(_ft, "Icons", None) or type("icons", (), {})()
     try:
         setattr(ft, "icons", _icons_mod)
     except (AttributeError, TypeError) as exc:
@@ -194,14 +192,10 @@ if not hasattr(ft, "icons"):
         )
 if "Icons" not in getattr(ft, "__dict__", {}):
     try:
-        _icons_cls = _resolve_public_first_symbol(
-            public_candidates=("Icons", "icons"),
-            internal_module_path="flet.controls.material.icons",
-            internal_attr="Icons",
-            warning_key="icons_class",
-        )
-        if _icons_cls is None:
-            _icons_cls = type("Icons", (), {})()
+        # Confirmado en Flet 0.85.3: ``ft.Icons`` es API pública; si falta,
+        # usamos ``ft.icons`` o un namespace vacío, nunca ``flet.controls.*``.
+        # Retirada del alias sintético: antes de 2026-12-31 o al subir baseline.
+        _icons_cls = getattr(_ft, "Icons", None) or getattr(_ft, "icons", None) or type("Icons", (), {})()
         setattr(ft, "Icons", _icons_cls)
     except (AttributeError, TypeError) as exc:
         _logger.warning(
@@ -218,40 +212,46 @@ if "Icons" not in getattr(ft, "__dict__", {}):
                 fallback_exc,
             )
 
-# Alias de `ft.transform` cuando no exista (compatibilidad con código legacy)
+def _build_public_transform_namespace() -> Any:
+    """Construye ``ft.transform`` legacy sólo con clases públicas de Flet.
+
+    Confirmado en Flet 0.85.3: no hay namespace público ``ft.transform``, pero
+    sí existen las clases públicas equivalentes ``ft.Offset``, ``ft.Scale`` y
+    ``ft.Rotate``. No se usa ``flet.controls.transform``.
+    """
+
+    return type(
+        "transform",
+        (),
+        {
+            "Offset": getattr(_ft, "Offset", object),
+            "Scale": getattr(_ft, "Scale", object),
+            "Rotate": getattr(_ft, "Rotate", object),
+        },
+    )()
+
+
+# Alias de `ft.transform` cuando no exista (compatibilidad con código legacy).
+# Retirada: eliminar este alias cuando el baseline mínimo sea posterior a Flet
+# 0.85.3 y el código de FletPlus ya no consuma ``ft.transform`` legacy; fecha
+# máxima de retirada 2026-12-31.
 if not hasattr(ft, "transform"):
-    _transform_mod = _resolve_public_first_symbol(
-        public_candidates=("transform",),
-        internal_module_path="flet.controls.transform",
-        warning_key="transform_namespace",
-    )
-    if _transform_mod is None:
-        # Fallback mínimo: objeto con Offset/Scale/Rotate si existen a nivel top
-        _transform_mod = type(
-            "transform",
-            (),
-            {
-                "Offset": getattr(_ft, "Offset", object),
-                "Scale": getattr(_ft, "Scale", object),
-                "Rotate": getattr(_ft, "Rotate", object),
-            },
-        )()
+    _transform_mod = getattr(_ft, "transform", None) or _build_public_transform_namespace()
     try:
         setattr(ft, "transform", _transform_mod)
     except (AttributeError, TypeError) as exc:
         _logger.warning(
-            "No se pudo exponer alias ft.transform: symbol=transform flet_version=%s fallback=namespace_transform error=%r",
+            "No se pudo exponer alias ft.transform: symbol=transform flet_version=%s fallback=namespace_transform_publico error=%r",
             getattr(_ft, "__version__", "unknown"),
             exc,
         )
 
 # Completar constantes de alineación comunes si faltan
 try:
-    _alignment_mod = _resolve_public_first_symbol(
-        public_candidates=("alignment", "Alignment"),
-        internal_module_path="flet.controls.alignment",
-        warning_key="alignment_namespace",
-    )
+    # Confirmado en Flet 0.85.3: ``ft.alignment`` y ``ft.Alignment`` son API
+    # pública. No se importa ``flet.controls.alignment``. Retirar el relleno de
+    # constantes antes de 2026-12-31 o al subir baseline con contrato estable.
+    _alignment_mod = getattr(_ft, "alignment", None) or getattr(_ft, "Alignment", None)
     if _alignment_mod is None:
         raise RuntimeError("alignment namespace unavailable")
     _align_defaults = {
@@ -797,11 +797,34 @@ async def safe_take_screenshot(page: Any, path: Path) -> None:
             await result
         return
 
+    await _take_screenshot_via_internal_invoke(page, path)
+
+
+async def _take_screenshot_via_internal_invoke(page: Any, path: Path) -> bool:
+    """Último fallback para screenshots mediante método interno de ``Page``.
+
+    Confirmado en Flet 0.85.3: la alternativa pública equivalente es
+    ``Page.screenshot``/``Page.screenshot_async`` cuando existe en la instancia.
+    Este fallback interno sólo cubre runners donde esas APIs públicas no estén
+    expuestas. Retirada obligatoria: antes de 2026-12-31 o cuando el baseline
+    mínimo exponga screenshot público en todos los targets de CI.
+    """
+
     invoke_method = getattr(page, "_invoke_method_async", None)
-    if callable(invoke_method):
-        await invoke_method(
-            "screenshot",
-            {"path": str(path)},
-            wait_for_result=True,
-            wait_timeout=30,
-        )
+    if not callable(invoke_method):
+        return False
+
+    _warn_once(
+        "fletplus.compat.internal_method_fallback_used",
+        "Page._invoke_method_async:screenshot",
+        public_alternatives=("Page.screenshot_async", "Page.screenshot"),
+        removal_deadline="2026-12-31",
+        flet_version=getattr(_ft, "__version__", "unknown"),
+    )
+    await invoke_method(
+        "screenshot",
+        {"path": str(path)},
+        wait_for_result=True,
+        wait_timeout=30,
+    )
+    return True

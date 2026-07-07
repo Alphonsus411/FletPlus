@@ -640,3 +640,67 @@ def test_navigation_destination_factories_use_symbols_when_present(monkeypatch) 
     assert isinstance(nav_bar, _Bar)
     assert isinstance(nav_rail, _Rail)
     assert isinstance(nav_drawer, _Drawer)
+
+
+def test_public_compat_aliases_do_not_import_internal_namespaces(monkeypatch) -> None:
+    import importlib
+    import sys
+
+    import flet
+
+    fake_icons = types.SimpleNamespace(MENU="menu")
+    fake_alignment = types.SimpleNamespace(center=(0, 0))
+
+    monkeypatch.setattr(flet, "Icons", fake_icons, raising=False)
+    monkeypatch.setattr(flet, "icons", fake_icons, raising=False)
+    monkeypatch.delattr(flet, "transform", raising=False)
+    monkeypatch.setattr(flet, "Offset", object, raising=False)
+    monkeypatch.setattr(flet, "Scale", object, raising=False)
+    monkeypatch.setattr(flet, "Rotate", object, raising=False)
+    monkeypatch.setattr(flet, "alignment", fake_alignment, raising=False)
+
+    real_import_module = importlib.import_module
+    touched_internal_namespaces: list[str] = []
+
+    def _record_internal_import(name: str, package: str | None = None):
+        if name.startswith("flet.controls."):
+            touched_internal_namespaces.append(name)
+            raise ModuleNotFoundError(name)
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", _record_internal_import)
+    sys.modules.pop("fletplus.utils.flet_compat", None)
+
+    flet_compat = importlib.import_module("fletplus.utils.flet_compat")
+
+    assert touched_internal_namespaces == []
+    assert flet_compat.get_flet_icons() is fake_icons
+    assert flet_compat.ft.transform.Offset is object
+
+
+def test_internal_screenshot_fallback_is_isolated_and_warns_once(caplog) -> None:
+    from fletplus.utils import flet_compat
+
+    class _Page:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def _invoke_method_async(self, method: str, payload: dict, **kwargs) -> None:
+            assert method == "screenshot"
+            assert payload["path"].endswith("isolated.png")
+            self.calls += 1
+
+    flet_compat._WARNED_COMPAT_KEYS.clear()
+    caplog.set_level("WARNING")
+    page = _Page()
+
+    asyncio.run(flet_compat._take_screenshot_via_internal_invoke(page, Path("isolated.png")))
+    asyncio.run(flet_compat._take_screenshot_via_internal_invoke(page, Path("isolated.png")))
+
+    assert page.calls == 2
+    warnings = [
+        r
+        for r in caplog.records
+        if "event=fletplus.compat.internal_method_fallback_used" in r.message
+    ]
+    assert len(warnings) == 1
