@@ -1,9 +1,6 @@
 # {{ project_name }}
 
-Esta aplicación ha sido generada con la CLI de FletPlus.
-
-El punto de entrada de la aplicación está en `src/main.py`, donde se define la función
-`main` y se invoca `ft.app` para iniciar la interfaz.
+Aplicación web generada con la CLI de FletPlus. La plantilla incluye configuración de página para navegador, registro PWA y generación inicial de `manifest.json` y `service_worker.js` en el directorio `web/`.
 
 ## Requisitos
 
@@ -11,14 +8,25 @@ El punto de entrada de la aplicación está en `src/main.py`, donde se define la
 - Flet `>=0.80,<0.86` (misma política de versión que `fletplus`)
 - Dependencias listadas en `requirements.txt`
 
-## Ejecución en modo desarrollo
+## Ejecución web en desarrollo
 
 ```bash
-fletplus run
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+fletplus run --web
 ```
 
-## Construcción para distribución
+También puedes ejecutar directamente el entrypoint para abrir el navegador y regenerar los recursos PWA iniciales:
 
 ```bash
-fletplus build
+python src/main.py
 ```
+
+## Build para navegador/PWA
+
+```bash
+fletplus build --target web
+```
+
+Antes de publicar, reemplaza los iconos vacíos del manifest por tus assets reales y sirve `manifest.json` y `service_worker.js` desde el mismo origen que la aplicación.

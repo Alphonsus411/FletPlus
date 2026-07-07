@@ -1,55 +1,75 @@
-"""Punto de entrada principal para {{ project_name }}."""
+"""Punto de entrada mobile para {{ project_name }}."""
 
 from __future__ import annotations
 
 import flet as ft
 
 from fletplus import FrontEndConfig
+from fletplus.utils.flet_compat import get_flet_icon, make_navigation_bar_destination
 
 frontend = FrontEndConfig(
     palette="material",
     mode="light",
     font_family="Roboto",
-    page_padding=24,
-    max_content_width=1100,
+    page_padding=12,
+    max_content_width=480,
+    min_content_width=280,
+    spacing=12,
+    layout_density="compact",
 )
 
 
-def build_home(page: ft.Page) -> ft.Control:
-    """Construye la vista inicial con tema y layout responsivo."""
+def build_mobile_body(page: ft.Page) -> ft.Control:
+    """Construye contenido compacto con padding seguro para pantallas pequeñas."""
 
-    profile = frontend.resolve_device_profile(int(page.width or 1024))
-    hero = ft.Column(
+    profile = frontend.resolve_device_profile(int(page.width or 390))
+    content = ft.Column(
         controls=[
-            ft.Text(
-                "¡Hola desde FletPlus!",
-                style=ft.TextThemeStyle.HEADLINE_MEDIUM,
-                text_align=ft.TextAlign.CENTER,
+            ft.Text("{{ project_name }}", style=ft.TextThemeStyle.HEADLINE_SMALL),
+            ft.Text(f"Perfil móvil: {profile.name} · {profile.columns} columna(s)"),
+            ft.Container(
+                content=ft.Text("Tarjeta optimizada para uso táctil y lectura rápida."),
+                padding=16,
             ),
-            ft.Text(
-                f"Plantilla mobile responsive activa: {profile.name} ({profile.columns} columnas)",
-                text_align=ft.TextAlign.CENTER,
+            ft.Container(content=ft.Text("Acción principal"), padding=16),
+        ],
+        spacing=frontend.spacing,
+        tight=True,
+    )
+    safe_area = getattr(ft, "SafeArea", None)
+    if safe_area is not None:
+        return safe_area(content=frontend.build_content_shell(content, page))
+    return ft.Container(content=frontend.build_content_shell(content, page), padding=12)
+
+
+def build_navigation() -> ft.NavigationBar:
+    """Crea navegación inferior compacta compatible entre versiones de Flet."""
+
+    return ft.NavigationBar(
+        destinations=[
+            make_navigation_bar_destination(
+                icon=get_flet_icon("HOME", "home"), label="Inicio"
             ),
-            ft.Text(
-                "Personaliza paletas, fuentes y layout desde `frontend`.",
-                text_align=ft.TextAlign.CENTER,
+            make_navigation_bar_destination(
+                icon=get_flet_icon("SEARCH", "search"), label="Buscar"
+            ),
+            make_navigation_bar_destination(
+                icon=get_flet_icon("PERSON", "person"), label="Perfil"
             ),
         ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        spacing=frontend.spacing,
+        height=64,
     )
-    return frontend.build_content_shell(hero, page)
 
 
 def main(page: ft.Page) -> None:
-    """Crea el contenido inicial de la aplicación."""
+    """Configura navegación compacta y safe-area para mobile."""
 
     page.title = "{{ project_name }}"
+    page.scroll = ft.ScrollMode.AUTO
     frontend.apply_to_page(page)
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.add(build_home(page))
+    page.padding = 0
+    page.navigation_bar = build_navigation()
+    page.add(build_mobile_body(page))
 
 
 if __name__ == "__main__":
