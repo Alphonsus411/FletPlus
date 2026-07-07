@@ -4,7 +4,7 @@ Aplicación mobile generada con la CLI de FletPlus. La plantilla prioriza pantal
 
 ## Requisitos
 
-- Python 3.9 o superior
+- Python 3.10 o superior
 - Flet `>=0.80,<0.86` (misma política de versión que `fletplus`)
 - Dependencias listadas en `requirements.txt`
 

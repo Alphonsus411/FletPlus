@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import flet as ft
 
 from fletplus.frontend import FrontEndConfig
@@ -124,3 +126,37 @@ def test_frontend_config_theme_tokens_and_font_share_final_theme() -> None:
     assert page.theme.scaffold_bgcolor == ft.Colors.AMBER
     assert page.theme.spacing["default"] == 12
     assert page.theme.radii["default"] == 6
+
+
+def test_frontend_config_can_load_from_pyproject(tmp_path: Path) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.fletplus.frontend]
+palette = 'ocean'
+mode = 'dark'
+font_family = 'Inter'
+page_padding = 18
+max_content_width = 960
+spacing = 14
+layout_density = 'compact'
+unknown = 'ignored'
+""",
+        encoding="utf-8",
+    )
+
+    config = FrontEndConfig.from_pyproject(pyproject)
+
+    assert config.palette == "ocean"
+    assert config.mode == "dark"
+    assert config.font_family == "Inter"
+    assert config.page_padding == 18
+    assert config.max_content_width == 960
+    assert config.spacing == 14
+    assert config.layout_density == "compact"
+
+
+def test_frontend_config_from_pyproject_uses_defaults_when_missing(tmp_path: Path) -> None:
+    config = FrontEndConfig.from_pyproject(tmp_path / "missing.toml")
+
+    assert config.palette == "material"
+    assert config.page_padding == 24

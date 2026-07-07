@@ -167,6 +167,7 @@ def test_create_supports_frontend_templates(
         assert "src/theme.py" in readme
         assert "breakpoints" in readme
         for generated_path in (
+            "pyproject.toml",
             "src/theme.py",
             "src/layout.py",
             "src/routes.py",
@@ -175,6 +176,10 @@ def test_create_supports_frontend_templates(
         ):
             assert (base / "demo" / generated_path).exists()
         assert (base / "demo" / "requirements.txt").exists()
+        pyproject = (base / "demo" / "pyproject.toml").read_text(encoding="utf-8")
+        assert 'requires-python = ">=3.10"' in pyproject
+        assert "[tool.fletplus]" in pyproject
+        assert "[tool.fletplus.frontend]" in pyproject
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])

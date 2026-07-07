@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Mapping, Sequence
+from pathlib import Path
+from typing import Any, Mapping, Sequence
 
 import flet as ft
 
@@ -37,6 +38,62 @@ class FrontEndConfig:
     responsive_profiles: Sequence[DeviceProfile] = DEFAULT_DEVICE_PROFILES
     layout_density: str = "comfortable"
     theme_tokens: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
+        """Crea configuración visual desde un mapping declarativo seguro.
+
+        Acepta las claves usadas por ``[tool.fletplus.frontend]`` y descarta
+        valores desconocidos para que las plantillas puedan crecer sin romper
+        versiones anteriores de FletPlus.
+        """
+
+        allowed = {
+            "palette",
+            "mode",
+            "font_family",
+            "font_assets",
+            "page_padding",
+            "max_content_width",
+            "min_content_width",
+            "allow_min_width_overflow",
+            "spacing",
+            "layout_density",
+            "theme_tokens",
+        }
+        normalized = {key: value for key, value in data.items() if key in allowed}
+        return cls(**normalized)
+
+    @classmethod
+    def from_pyproject(cls, path: str | Path = "pyproject.toml") -> "FrontEndConfig":
+        """Carga ``[tool.fletplus.frontend]`` desde un ``pyproject.toml``.
+
+        Si el archivo no existe o no declara la sección, devuelve la
+        configuración por defecto.
+        """
+
+        pyproject_path = Path(path)
+        if not pyproject_path.exists():
+            return cls()
+
+        try:
+            import tomllib
+        except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
+            import tomli as tomllib  # type: ignore
+
+        data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        tool_data = data.get("tool", {}) if isinstance(data, dict) else {}
+        fletplus_data = (
+            tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
+        )
+        frontend_data = (
+            fletplus_data.get("frontend", {})
+            if isinstance(fletplus_data, dict)
+            else {}
+        )
+        if not isinstance(frontend_data, Mapping):
+            return cls()
+        return cls.from_mapping(frontend_data)
 
     def palette_tokens(self) -> dict[str, object]:
         """Devuelve tokens de paleta si la paleta existe; si no, un dict vacío."""

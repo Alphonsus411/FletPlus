@@ -6,7 +6,7 @@ El punto de entrada está en `src/main.py`, donde se define `main`, se aplica `F
 
 ## Requisitos
 
-- Python 3.9 o superior
+- Python 3.10 o superior
 - Flet `>=0.80,<0.86` (misma política de versión que `fletplus`)
 - Dependencias listadas en `requirements.txt`
 

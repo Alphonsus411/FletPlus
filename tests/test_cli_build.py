@@ -249,3 +249,78 @@ def test_build_timeout_error_is_reported(monkeypatch) -> None:
         assert "tiempo límite" in result.output
         assert "1.5s" in result.output
         assert "comando='" in result.output
+
+
+def test_build_uses_tool_fletplus_defaults_and_paths(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        (base / "app").mkdir()
+        (base / "app" / "main.py").write_text("print('configured')\n", encoding="utf-8")
+        (base / "static").mkdir()
+        (base / "static" / "custom.png").write_bytes(b"fake")
+        (base / "pyproject.toml").write_text(
+            """[project]
+name = 'configured-app'
+version = '2.0.0'
+
+[tool.fletplus]
+app = 'app/main.py'
+default_target = 'web'
+assets_dir = 'static'
+icon = 'static/custom.png'
+build_timeout = 12.5
+
+[tool.fletplus.web]
+base_url = '/demo'
+""",
+            encoding="utf-8",
+        )
+
+        calls: list[tuple[list[str], dict]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(([str(part) for part in command], kwargs))
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build"])
+
+        assert result.exit_code == 0, result.output
+        assert len(calls) == 1
+        command, kwargs = calls[0]
+        assert command[:5] == [sys.executable, "-m", "flet", "build", "web"]
+        assert str((base / "app" / "main.py").resolve()) in command
+        assert "--base-url" in command
+        assert command[command.index("--base-url") + 1] == "/demo"
+        assert kwargs["timeout"] == 12.5
+        assert (base / "build" / "web" / "static" / "custom.png").exists()
+
+
+def test_build_uses_tool_fletplus_mobile_package(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        _setup_minimal_project(base)
+        with (base / "pyproject.toml").open("a", encoding="utf-8") as fh:
+            fh.write("\n[tool.fletplus.mobile]\npackage = 'com.example.demo'\n")
+
+        calls: list[tuple[list[str], dict]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(([str(part) for part in command], kwargs))
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", "mobile"])
+
+        assert result.exit_code == 0, result.output
+        command, kwargs = calls[0]
+        assert "--project" not in command
+        assert kwargs["env"]["FLETPLUS_PACKAGE"] == "com.example.demo"
