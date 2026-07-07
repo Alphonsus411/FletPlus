@@ -38,6 +38,7 @@ class FrontEndConfig:
     responsive_profiles: Sequence[DeviceProfile] = DEFAULT_DEVICE_PROFILES
     layout_density: str = "comfortable"
     theme_tokens: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
+    follow_platform_theme: bool = False
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
@@ -60,6 +61,7 @@ class FrontEndConfig:
             "spacing",
             "layout_density",
             "theme_tokens",
+            "follow_platform_theme",
         }
         normalized = {key: value for key, value in data.items() if key in allowed}
         return cls(**normalized)
@@ -87,9 +89,7 @@ class FrontEndConfig:
             tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
         )
         frontend_data = (
-            fletplus_data.get("frontend", {})
-            if isinstance(fletplus_data, dict)
-            else {}
+            fletplus_data.get("frontend", {}) if isinstance(fletplus_data, dict) else {}
         )
         if not isinstance(frontend_data, Mapping):
             return cls()
@@ -123,7 +123,7 @@ class FrontEndConfig:
         return content_width
 
     def apply_to_page(self, page: ft.Page) -> ThemeManager:
-        """Aplica fuente, tema y espaciado base sobre una página Flet."""
+        """Aplica fuente, tema, modo visual y espaciado base sobre una página Flet."""
 
         if self.font_assets:
             page.fonts = {**getattr(page, "fonts", {}), **dict(self.font_assets)}
@@ -135,13 +135,39 @@ class FrontEndConfig:
                 theme = ft.Theme(font_family=self.font_family)
             page.theme = theme
 
+        theme = page.theme or ft.Theme()
+        try:
+            if getattr(theme, "visual_density", None) is None:
+                theme.visual_density = self.layout_density
+        except AttributeError:
+            pass
+        page.theme = theme
         page.padding = self.page_padding
-        theme_manager = ThemeManager(page, palette=self.palette, palette_mode=self.mode)
+
+        theme_manager = ThemeManager(
+            page,
+            palette=self.palette,
+            palette_mode=self.mode,
+            follow_platform_theme=self.follow_platform_theme,
+        )
         for group, values in self.theme_tokens.items():
             for key, value in values.items():
                 theme_manager.set_token(f"{group}.{key}", value)
-        theme_manager.apply_theme()
+        theme_manager.apply_theme(
+            device=self.resolve_device_profile(
+                int(getattr(page, "width", 0) or self.max_content_width)
+            ).name,
+            orientation=self.orientation_for_page(page),
+            width=getattr(page, "width", None),
+        )
         return theme_manager
+
+    def orientation_for_page(self, page: ft.Page) -> str:
+        """Devuelve ``portrait`` o ``landscape`` según dimensiones actuales."""
+
+        width = int(getattr(page, "width", 0) or 0)
+        height = int(getattr(page, "height", 0) or 0)
+        return "portrait" if height >= width else "landscape"
 
     def build_content_shell(self, control: ft.Control, page: ft.Page) -> ft.Container:
         """Envuelve un control en un contenedor responsivo centrado."""

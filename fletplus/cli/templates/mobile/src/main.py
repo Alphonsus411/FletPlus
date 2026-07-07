@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import flet as ft
-from fletplus import FrontEndConfig
-from fletplus.utils.flet_compat import get_flet_icon, make_navigation_bar_destination
-
 from layout import responsive_shell, spacing
 from routes import render_initial_route
 from theme import create_frontend_config
+
+from fletplus import FrontEndConfig
+from fletplus.utils.flet_compat import get_flet_icon, make_navigation_bar_destination
 
 frontend: FrontEndConfig = create_frontend_config()  # layout_density="compact"
 

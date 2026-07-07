@@ -14,7 +14,7 @@ Aplicación web generada con la CLI de FletPlus. La plantilla incluye configurac
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-fletplus run --web
+fletplus run --app src/main.py
 ```
 
 También puedes ejecutar directamente el entrypoint para abrir el navegador y regenerar los recursos PWA iniciales:
@@ -29,7 +29,7 @@ python src/main.py
 fletplus build --target web
 ```
 
-Antes de publicar, reemplaza los iconos vacíos del manifest por tus assets reales y sirve `manifest.json` y `service_worker.js` desde el mismo origen que la aplicación.
+La plantilla ya incluye `web/manifest.json` y `web/service_worker.js`; antes de publicar, añade iconos reales al manifest y sirve ambos archivos desde el mismo origen que la aplicación.
 
 ## Estructura inicial
 

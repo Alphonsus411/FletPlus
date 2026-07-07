@@ -1,0 +1,12 @@
+{
+  "name": "{{ project_name }}",
+  "short_name": "{{ project_name }}",
+  "description": "Aplicación web progresiva generada con FletPlus.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F8FAFC",
+  "theme_color": "#2563EB",
+  "icons": []
+}

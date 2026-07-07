@@ -166,14 +166,17 @@ def test_create_supports_frontend_templates(
         assert "fletplus run" in readme
         assert "src/theme.py" in readme
         assert "breakpoints" in readme
-        for generated_path in (
+        generated_paths = [
             "pyproject.toml",
             "src/theme.py",
             "src/layout.py",
             "src/routes.py",
             "src/assets.py",
             "assets/README.md",
-        ):
+        ]
+        if template_name == "web":
+            generated_paths.extend(["web/manifest.json", "web/service_worker.js"])
+        for generated_path in generated_paths:
             assert (base / "demo" / generated_path).exists()
         assert (base / "demo" / "requirements.txt").exists()
         pyproject = (base / "demo" / "pyproject.toml").read_text(encoding="utf-8")
@@ -403,3 +406,30 @@ def test_run_fails_with_non_zero_exit_code_with_watchdog(monkeypatch) -> None:
 
     assert result.exit_code != 0
     assert "código 3" in result.output
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_web_template_generates_configured_pwa_files(
+    monkeypatch, watchdog_available: bool
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(app, ["create", "Mi Web", "--template", "web"])
+
+        assert result.exit_code == 0, result.output
+        project = base / "Mi Web"
+        manifest = (project / "web" / "manifest.json").read_text(encoding="utf-8")
+        service_worker = (project / "web" / "service_worker.js").read_text(
+            encoding="utf-8"
+        )
+        theme_py = (project / "src" / "theme.py").read_text(encoding="utf-8")
+
+    assert '"name": "Mi Web"' in manifest
+    assert '"display": "standalone"' in manifest
+    assert 'mi_web-fletplus-v1' in service_worker
+    assert "FrontEndConfig.from_pyproject" in theme_py
+    assert "_find_pyproject" in theme_py
