@@ -427,16 +427,18 @@ class ThemeManager:
         borders = self._effective_tokens.get("borders", {})
         shadows = self._effective_tokens.get("shadows", {})
 
-        self.page.theme = ft.Theme(
-            color_scheme_seed=colors.get("primary"),
-            font_family=typography.get("font_family"),
-        )
+        theme = self.page.theme or ft.Theme()
+        theme.color_scheme_seed = colors.get("primary")
+        token_font_family = typography.get("font_family")
+        if token_font_family is not None:
+            theme.font_family = token_font_family
         # Store additional tokens that are not directly supported by
         # ``ft.Theme`` as custom attributes.
-        self.page.theme.radii = radii
-        self.page.theme.spacing = spacing
-        self.page.theme.borders = borders
-        self.page.theme.shadows = shadows
+        theme.radii = radii
+        theme.spacing = spacing
+        theme.borders = borders
+        theme.shadows = shadows
+        self.page.theme = theme
         self.page.theme_mode = (
             ft.ThemeMode.DARK if self.dark_mode else ft.ThemeMode.LIGHT
         )

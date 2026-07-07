@@ -90,3 +90,37 @@ def test_frontend_config_builds_content_shell_with_very_reduced_width() -> None:
     assert isinstance(shell, ft.Container)
     assert shell.width == 0
     assert shell.padding == 24
+
+
+def test_frontend_config_preserves_existing_theme_properties() -> None:
+    page = DummyPage()
+    existing_theme = ft.Theme(scaffold_bgcolor=ft.Colors.AMBER, visual_density="compact")
+    page.theme = existing_theme
+    config = FrontEndConfig(font_family="Inter", palette="material", mode="light")
+
+    config.apply_to_page(page)  # type: ignore[arg-type]
+
+    assert page.theme is existing_theme
+    assert page.theme.font_family == "Inter"
+    assert page.theme.scaffold_bgcolor == ft.Colors.AMBER
+    assert page.theme.visual_density == "compact"
+
+
+def test_frontend_config_theme_tokens_and_font_share_final_theme() -> None:
+    page = DummyPage()
+    existing_theme = ft.Theme(scaffold_bgcolor=ft.Colors.AMBER)
+    page.theme = existing_theme
+    config = FrontEndConfig(
+        font_family="Inter",
+        palette="material",
+        mode="light",
+        theme_tokens={"spacing": {"default": 12}, "radii": {"default": 6}},
+    )
+
+    config.apply_to_page(page)  # type: ignore[arg-type]
+
+    assert page.theme is existing_theme
+    assert page.theme.font_family == "Inter"
+    assert page.theme.scaffold_bgcolor == ft.Colors.AMBER
+    assert page.theme.spacing["default"] == 12
+    assert page.theme.radii["default"] == 6

@@ -71,13 +71,18 @@ class FrontEndConfig:
         if self.font_assets:
             page.fonts = {**getattr(page, "fonts", {}), **dict(self.font_assets)}
         if self.font_family:
-            page.theme = ft.Theme(font_family=self.font_family)
+            theme = page.theme or ft.Theme()
+            try:
+                theme.font_family = self.font_family
+            except AttributeError:
+                theme = ft.Theme(font_family=self.font_family)
+            page.theme = theme
 
         page.padding = self.page_padding
         theme_manager = ThemeManager(page, palette=self.palette, palette_mode=self.mode)
         for group, values in self.theme_tokens.items():
             for key, value in values.items():
-                theme_manager.set_token(group, key, value)
+                theme_manager.set_token(f"{group}.{key}", value)
         theme_manager.apply_theme()
         return theme_manager
 
