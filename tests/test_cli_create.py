@@ -164,6 +164,16 @@ def test_create_supports_frontend_templates(
         for marker in unexpected_markers:
             assert marker not in main_py
         assert "fletplus run" in readme
+        assert "src/theme.py" in readme
+        assert "breakpoints" in readme
+        for generated_path in (
+            "src/theme.py",
+            "src/layout.py",
+            "src/routes.py",
+            "src/assets.py",
+            "assets/README.md",
+        ):
+            assert (base / "demo" / generated_path).exists()
         assert (base / "demo" / "requirements.txt").exists()
 
 
