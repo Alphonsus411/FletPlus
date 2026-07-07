@@ -16,15 +16,90 @@ from fletplus.utils.device_profiles import (
     get_device_profile,
 )
 
+TypographyStyle = Mapping[str, int | float | str | None]
+TypographyScale = Mapping[str, TypographyStyle | Mapping[str, TypographyStyle]]
+
+DEFAULT_TYPOGRAPHY_TOKENS: dict[str, dict[str, dict[str, int | float | str]]] = {
+    "display": {
+        "mobile": {"size": 40, "weight": "w700", "line_height": 1.1},
+        "tablet": {"size": 48, "weight": "w700", "line_height": 1.08},
+        "desktop": {"size": 56, "weight": "w700", "line_height": 1.05},
+        "large_desktop": {"size": 64, "weight": "w700", "line_height": 1.03},
+    },
+    "headline": {
+        "mobile": {"size": 28, "weight": "w600", "line_height": 1.18},
+        "tablet": {"size": 32, "weight": "w600", "line_height": 1.16},
+        "desktop": {"size": 36, "weight": "w600", "line_height": 1.14},
+        "large_desktop": {"size": 40, "weight": "w600", "line_height": 1.12},
+    },
+    "title": {
+        "mobile": {"size": 20, "weight": "w600", "line_height": 1.28},
+        "tablet": {"size": 22, "weight": "w600", "line_height": 1.25},
+        "desktop": {"size": 24, "weight": "w600", "line_height": 1.22},
+        "large_desktop": {"size": 28, "weight": "w600", "line_height": 1.18},
+    },
+    "body": {
+        "mobile": {"size": 14, "weight": "w400", "line_height": 1.55},
+        "tablet": {"size": 16, "weight": "w400", "line_height": 1.55},
+        "desktop": {"size": 18, "weight": "w400", "line_height": 1.5},
+        "large_desktop": {"size": 20, "weight": "w400", "line_height": 1.45},
+    },
+    "label": {
+        "mobile": {"size": 12, "weight": "w600", "line_height": 1.35},
+        "tablet": {"size": 13, "weight": "w600", "line_height": 1.35},
+        "desktop": {"size": 14, "weight": "w600", "line_height": 1.3},
+        "large_desktop": {"size": 15, "weight": "w600", "line_height": 1.28},
+    },
+    "caption": {
+        "mobile": {"size": 11, "weight": "w400", "line_height": 1.35},
+        "tablet": {"size": 12, "weight": "w400", "line_height": 1.35},
+        "desktop": {"size": 13, "weight": "w400", "line_height": 1.32},
+        "large_desktop": {"size": 14, "weight": "w400", "line_height": 1.3},
+    },
+}
+
+_DEVICE_ALIASES = {
+    "movil": "mobile",
+    "móvil": "mobile",
+    "mobile": "mobile",
+    "tablet": "tablet",
+    "escritorio": "desktop",
+    "desktop": "desktop",
+    "pantalla_amplia": "large_desktop",
+    "wide": "large_desktop",
+    "wide_screen": "large_desktop",
+    "large_desktop": "large_desktop",
+}
+
+
+def _normalize_device_name(name: str) -> str:
+    return _DEVICE_ALIASES.get(name, name)
+
+
+def _merge_typography_tokens(
+    base: Mapping[str, Mapping[str, Mapping[str, int | float | str]]],
+    overrides: TypographyScale,
+) -> dict[str, dict[str, dict[str, int | float | str | None]]]:
+    merged = {
+        role: {device: dict(values) for device, values in variants.items()}
+        for role, variants in base.items()
+    }
+    for role, role_values in overrides.items():
+        if not isinstance(role_values, Mapping):
+            continue
+        target = merged.setdefault(role, {})
+        if any(key in role_values for key in ("size", "weight", "line_height")):
+            target.setdefault("mobile", {}).update(role_values)  # type: ignore[arg-type]
+            continue
+        for device, values in role_values.items():
+            if isinstance(values, Mapping):
+                target.setdefault(_normalize_device_name(str(device)), {}).update(values)
+    return merged
+
 
 @dataclass(slots=True)
 class FrontEndConfig:
-    """Agrupa decisiones visuales habituales para una aplicación FletPlus.
-
-    La configuración concentra paleta, fuentes, breakpoints, dimensiones y
-    densidad de layout para que las plantillas web, desktop y mobile partan de
-    una misma metodología visual.
-    """
+    """Agrupa decisiones visuales habituales para una aplicación FletPlus."""
 
     palette: str = "material"
     mode: str = "light"
@@ -38,29 +113,15 @@ class FrontEndConfig:
     responsive_profiles: Sequence[DeviceProfile] = DEFAULT_DEVICE_PROFILES
     layout_density: str = "comfortable"
     theme_tokens: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
+    typography_tokens: TypographyScale = field(default_factory=dict)
     follow_platform_theme: bool = False
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
-        """Crea configuración visual desde un mapping declarativo seguro.
-
-        Acepta las claves usadas por ``[tool.fletplus.frontend]`` y descarta
-        valores desconocidos para que las plantillas puedan crecer sin romper
-        versiones anteriores de FletPlus.
-        """
-
         allowed = {
-            "palette",
-            "mode",
-            "font_family",
-            "font_assets",
-            "page_padding",
-            "max_content_width",
-            "min_content_width",
-            "allow_min_width_overflow",
-            "spacing",
-            "layout_density",
-            "theme_tokens",
+            "palette", "mode", "font_family", "font_assets", "page_padding",
+            "max_content_width", "min_content_width", "allow_min_width_overflow",
+            "spacing", "layout_density", "theme_tokens", "typography_tokens",
             "follow_platform_theme",
         }
         normalized = {key: value for key, value in data.items() if key in allowed}
@@ -68,53 +129,66 @@ class FrontEndConfig:
 
     @classmethod
     def from_pyproject(cls, path: str | Path = "pyproject.toml") -> "FrontEndConfig":
-        """Carga ``[tool.fletplus.frontend]`` desde un ``pyproject.toml``.
-
-        Si el archivo no existe o no declara la sección, devuelve la
-        configuración por defecto.
-        """
-
         pyproject_path = Path(path)
         if not pyproject_path.exists():
             return cls()
-
         try:
             import tomllib
         except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
             import tomli as tomllib  # type: ignore
-
         data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
         tool_data = data.get("tool", {}) if isinstance(data, dict) else {}
-        fletplus_data = (
-            tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
-        )
-        frontend_data = (
-            fletplus_data.get("frontend", {}) if isinstance(fletplus_data, dict) else {}
-        )
+        fletplus_data = tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
+        frontend_data = fletplus_data.get("frontend", {}) if isinstance(fletplus_data, dict) else {}
         if not isinstance(frontend_data, Mapping):
             return cls()
         return cls.from_mapping(frontend_data)
 
     def palette_tokens(self) -> dict[str, object]:
-        """Devuelve tokens de paleta si la paleta existe; si no, un dict vacío."""
-
         if has_palette(self.palette):
             return dict(get_palette_tokens(self.palette, self.mode))
         return {}
 
-    def resolve_device_profile(self, width: int) -> DeviceProfile:
-        """Selecciona el perfil de dispositivo activo para un ancho dado."""
+    def resolved_typography_tokens(self) -> dict[str, dict[str, dict[str, int | float | str | None]]]:
+        """Devuelve la escala tipográfica base fusionada con overrides."""
+        return _merge_typography_tokens(DEFAULT_TYPOGRAPHY_TOKENS, self.typography_tokens)
 
+    def resolve_device_profile(self, width: int) -> DeviceProfile:
         return get_device_profile(width, self.responsive_profiles)
 
     def columns_for_width(self, width: int) -> int:
-        """Devuelve columnas sugeridas para un ancho de pantalla."""
-
         return columns_for_width(width, self.responsive_profiles)
 
-    def content_width_for_page(self, page: ft.Page) -> int:
-        """Calcula el ancho máximo seguro del contenido principal."""
+    def resolve_typography(self, role: str, width: int) -> dict[str, int | float | str | None]:
+        """Resuelve tamaño, peso y altura de línea de un rol para un ancho."""
+        tokens = self.resolved_typography_tokens()
+        role_tokens = tokens.get(role) or tokens["body"]
+        device = _normalize_device_name(self.resolve_device_profile(width).name)
+        if width >= 1440 and "large_desktop" in role_tokens:
+            device = "large_desktop"
+        selected = role_tokens.get(device) or role_tokens.get("desktop") or role_tokens.get("mobile") or {}
+        return dict(selected)
 
+    def typography_size(self, role: str, width: int) -> int | float | None:
+        return self.resolve_typography(role, width).get("size")  # type: ignore[return-value]
+
+    def typography_weight(self, role: str, width: int) -> str | None:
+        value = self.resolve_typography(role, width).get("weight")
+        return str(value) if value is not None else None
+
+    def typography_line_height(self, role: str, width: int) -> int | float | None:
+        return self.resolve_typography(role, width).get("line_height")  # type: ignore[return-value]
+
+    def text_style(self, role: str, width: int) -> ft.TextStyle:
+        """Construye un ``ft.TextStyle`` para el rol y ancho indicados."""
+        values = self.resolve_typography(role, width)
+        return ft.TextStyle(
+            size=values.get("size"),
+            weight=values.get("weight"),
+            height=values.get("line_height"),
+        )
+
+    def content_width_for_page(self, page: ft.Page) -> int:
         width = int(page.width or self.max_content_width)
         available_width = max(0, width - (self.page_padding * 2))
         content_width = min(available_width, self.max_content_width)
@@ -123,8 +197,6 @@ class FrontEndConfig:
         return content_width
 
     def apply_to_page(self, page: ft.Page) -> ThemeManager:
-        """Aplica fuente, tema, modo visual y espaciado base sobre una página Flet."""
-
         if self.font_assets:
             page.fonts = {**getattr(page, "fonts", {}), **dict(self.font_assets)}
         if self.font_family:
@@ -134,7 +206,6 @@ class FrontEndConfig:
             except AttributeError:
                 theme = ft.Theme(font_family=self.font_family)
             page.theme = theme
-
         theme = page.theme or ft.Theme()
         try:
             if getattr(theme, "visual_density", None) is None:
@@ -143,7 +214,6 @@ class FrontEndConfig:
             pass
         page.theme = theme
         page.padding = self.page_padding
-
         theme_manager = ThemeManager(
             page,
             palette=self.palette,
@@ -153,25 +223,20 @@ class FrontEndConfig:
         for group, values in self.theme_tokens.items():
             for key, value in values.items():
                 theme_manager.set_token(f"{group}.{key}", value)
+        theme_manager.tokens.setdefault("typography", {}).update(self.resolved_typography_tokens())
         theme_manager.apply_theme(
-            device=self.resolve_device_profile(
-                int(getattr(page, "width", 0) or self.max_content_width)
-            ).name,
+            device=self.resolve_device_profile(int(getattr(page, "width", 0) or self.max_content_width)).name,
             orientation=self.orientation_for_page(page),
             width=getattr(page, "width", None),
         )
         return theme_manager
 
     def orientation_for_page(self, page: ft.Page) -> str:
-        """Devuelve ``portrait`` o ``landscape`` según dimensiones actuales."""
-
         width = int(getattr(page, "width", 0) or 0)
         height = int(getattr(page, "height", 0) or 0)
         return "portrait" if height >= width else "landscape"
 
     def build_content_shell(self, control: ft.Control, page: ft.Page) -> ft.Container:
-        """Envuelve un control en un contenedor responsivo centrado."""
-
         return ft.Container(
             content=control,
             width=self.content_width_for_page(page),

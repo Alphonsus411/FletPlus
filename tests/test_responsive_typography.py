@@ -48,3 +48,34 @@ def test_responsive_typography_updates_text_and_spacing():
     assert txt.style.size == 24
     assert responsive_spacing(page) == 16
     assert theme.tokens["spacing"]["default"] == 16
+
+from fletplus.frontend.config import FrontEndConfig
+
+
+def test_frontend_config_resolves_typography_by_width():
+    config = FrontEndConfig(
+        typography_tokens={
+            "headline": {
+                "mobile": {"size": 30, "weight": "w500", "line_height": 1.2},
+                "desktop": {"size": 42, "weight": "w700", "line_height": 1.1},
+                "pantalla_amplia": {"size": 54, "weight": "w700", "line_height": 1.05},
+            }
+        }
+    )
+
+    assert config.typography_size("headline", 390) == 30
+    assert config.typography_weight("headline", 1280) == "w700"
+    assert config.typography_line_height("headline", 1600) == 1.05
+
+
+def test_responsive_typography_applies_role_styles():
+    page = DummyPage(1280, 800)
+    config = FrontEndConfig()
+    typography = ResponsiveTypography(page, config=config)
+    title = ft.Text("Título")
+
+    typography.register_text(title, role="title")
+
+    assert title.style.size == config.typography_size("title", 1280)
+    assert title.style.weight == config.typography_weight("title", 1280)
+    assert title.style.height == config.typography_line_height("title", 1280)

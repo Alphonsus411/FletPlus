@@ -17,6 +17,7 @@ from .config import (
     PALETTE_MODE,
     PALETTE_NAME,
     SPACING,
+    TYPOGRAPHY_TOKENS,
 )
 
 
@@ -41,9 +42,11 @@ def create_frontend_config() -> FrontEndConfig:
             min_content_width=MIN_CONTENT_WIDTH,
             spacing=SPACING,
             layout_density=LAYOUT_DENSITY,
+            typography_tokens=TYPOGRAPHY_TOKENS,
         )
     config.font_assets = {**FONT_ASSETS, **dict(config.font_assets)}
     config.theme_tokens = {**CUSTOM_TOKENS, **dict(config.theme_tokens)}
+    config.typography_tokens = {**TYPOGRAPHY_TOKENS, **dict(config.typography_tokens)}
     return config
 
 

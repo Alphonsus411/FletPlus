@@ -293,3 +293,36 @@ ft.app(target=main)
 Al ampliar la ventana se incrementa automáticamente `message.style.size`, se
 actualiza el `padding` de `surface` y el `ThemeManager` reaplica el tema con el
 nuevo valor del token de espaciado, manteniendo la coherencia de toda la UI.
+
+## Tokens tipográficos responsivos
+
+`FrontEndConfig` incluye una escala tipográfica adaptable organizada por roles:
+`display`, `headline`, `title`, `body`, `label` y `caption`. Cada rol puede
+sobrescribirse por perfil de dispositivo (`mobile`, `tablet`, `desktop` y
+`large_desktop`; también se aceptan aliases como `móvil`, `escritorio` y
+`pantalla_amplia`).
+
+```python
+from fletplus import FrontEndConfig
+
+config = FrontEndConfig(
+    typography_tokens={
+        "headline": {
+            "mobile": {"size": 28, "weight": "w600", "line_height": 1.18},
+            "desktop": {"size": 36, "weight": "w700", "line_height": 1.12},
+            "pantalla_amplia": {"size": 44, "weight": "w700", "line_height": 1.08},
+        }
+    }
+)
+
+style = config.text_style("headline", width=1280)
+```
+
+Para consultar valores individuales usa `typography_size(role, width)`,
+`typography_weight(role, width)` y `typography_line_height(role, width)`. Si
+necesitas aplicar la escala a controles existentes, registra cada `ft.Text` con
+`ResponsiveTypography.register_text(text, role="title")`; en cada resize se
+resolverán tamaño, peso y altura de línea con el ancho actual.
+
+Consulta `examples/responsive_typography_example.py` para ver todos los roles
+adaptándose al redimensionar la ventana.
