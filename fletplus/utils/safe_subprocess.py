@@ -43,8 +43,19 @@ def _inject_powershell_flags(args: list[str]) -> list[str]:
 def _filter_env(base: Mapping[str, str] | None, whitelist: Sequence[str] | None) -> Mapping[str, str] | None:
     if whitelist is None:
         return dict(base) if base is not None else None
+
     base_env = os.environ if base is None else base
-    allowed = {k: v for k, v in base_env.items() if k in set(whitelist)}
+    if os.name == "nt":
+        env_key_by_upper = {key.upper(): key for key in base_env}
+        allowed = {}
+        for whitelisted_key in whitelist:
+            original_key = env_key_by_upper.get(whitelisted_key.upper())
+            if original_key is not None:
+                allowed[original_key] = base_env[original_key]
+        return allowed
+
+    allowed_keys = set(whitelist)
+    allowed = {k: v for k, v in base_env.items() if k in allowed_keys}
     return allowed
 
 
