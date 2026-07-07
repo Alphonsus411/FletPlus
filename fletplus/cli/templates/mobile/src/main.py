@@ -3,28 +3,22 @@
 from __future__ import annotations
 
 import flet as ft
-
 from fletplus import FrontEndConfig
 from fletplus.utils.flet_compat import get_flet_icon, make_navigation_bar_destination
 
-frontend = FrontEndConfig(
-    palette="material",
-    mode="light",
-    font_family="Roboto",
-    page_padding=12,
-    max_content_width=480,
-    min_content_width=280,
-    spacing=12,
-    layout_density="compact",
-)
+from layout import responsive_shell, spacing
+from routes import render_initial_route
+from theme import create_frontend_config
+
+frontend: FrontEndConfig = create_frontend_config()  # layout_density="compact"
 
 
 def build_mobile_body(page: ft.Page) -> ft.Control:
-    """Construye contenido compacto con padding seguro para pantallas pequeñas."""
-
     profile = frontend.resolve_device_profile(int(page.width or 390))
+    routed_view = render_initial_route("/")
     content = ft.Column(
         controls=[
+            routed_view,
             ft.Text("{{ project_name }}", style=ft.TextThemeStyle.HEADLINE_SMALL),
             ft.Text(f"Perfil móvil: {profile.name} · {profile.columns} columna(s)"),
             ft.Container(
@@ -33,18 +27,16 @@ def build_mobile_body(page: ft.Page) -> ft.Control:
             ),
             ft.Container(content=ft.Text("Acción principal"), padding=16),
         ],
-        spacing=frontend.spacing,
+        spacing=spacing(frontend),
         tight=True,
     )
     safe_area = getattr(ft, "SafeArea", None)
     if safe_area is not None:
-        return safe_area(content=frontend.build_content_shell(content, page))
-    return ft.Container(content=frontend.build_content_shell(content, page), padding=12)
+        return safe_area(content=responsive_shell(content, page, frontend))
+    return ft.Container(content=responsive_shell(content, page, frontend), padding=12)
 
 
 def build_navigation() -> ft.NavigationBar:
-    """Crea navegación inferior compacta compatible entre versiones de Flet."""
-
     return ft.NavigationBar(
         destinations=[
             make_navigation_bar_destination(
@@ -62,8 +54,6 @@ def build_navigation() -> ft.NavigationBar:
 
 
 def main(page: ft.Page) -> None:
-    """Configura navegación compacta y safe-area para mobile."""
-
     page.title = "{{ project_name }}"
     page.scroll = ft.ScrollMode.AUTO
     frontend.apply_to_page(page)
