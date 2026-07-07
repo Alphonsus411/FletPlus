@@ -18,6 +18,7 @@ SUBMODULE_IMPORTS = {
     "context",
     "core",
     "desktop",
+    "frontend",
     "devtools",
     "http",
     "icons",
@@ -54,6 +55,7 @@ LAZY_IMPORTS = {
     # Contrato público oficial por compatibilidad: API legacy.
     # La nueva core desacoplada sigue disponible vía `fletplus.core`.
     "FletPlusApp": "fletplus.core_legacy",
+    "FrontEndConfig": "fletplus.frontend",
     "Grid": "fletplus.components",
     "GridItem": "fletplus.components",
     "HttpClient": "fletplus.http",
@@ -182,6 +184,7 @@ if TYPE_CHECKING:
     from fletplus.core import Layout, State
     from fletplus.core_legacy import FletPlusApp
     from fletplus.desktop import SystemTray, WindowManager, show_notification
+    from fletplus.frontend import FrontEndConfig
     from fletplus.http import (
         DiskCache,
         HttpClient,
@@ -246,6 +249,7 @@ if TYPE_CHECKING:
 __all__ = [
     "enable_compat_patches",
     "FletPlusApp",
+    "FrontEndConfig",
     "Layout",
     "State",
     "AnimationController",

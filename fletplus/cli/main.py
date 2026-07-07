@@ -42,7 +42,15 @@ else:  # pragma: no cover - depende de watchdog opcional
 
     Observer = None  # type: ignore[assignment]
 
-EXCLUDED_DIRS = {".git", "__pycache__", "build", "dist", "node_modules", ".venv", "venv"}
+EXCLUDED_DIRS = {
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+    ".venv",
+    "venv",
+}
 TEMPLATE_PACKAGE = "fletplus.cli"
 PACKAGE_NAME_REGEX = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -87,7 +95,9 @@ def _render_template(content: str, context: Dict[str, str]) -> str:
     return rendered
 
 
-def _copy_template_tree(template_root: Traversable, destination: Path, context: Dict[str, str]) -> None:
+def _copy_template_tree(
+    template_root: Traversable, destination: Path, context: Dict[str, str]
+) -> None:
     for entry in template_root.iterdir():
         target_path = destination / entry.name
         if entry.is_dir():
@@ -101,7 +111,9 @@ def _copy_template_tree(template_root: Traversable, destination: Path, context: 
                 with entry.open("rb") as source, target_path.open("wb") as target:
                     shutil.copyfileobj(source, target)
             else:
-                target_path.write_text(_render_template(content, context), encoding="utf-8")
+                target_path.write_text(
+                    _render_template(content, context), encoding="utf-8"
+                )
 
 
 def _profile_router_navigation() -> None:
@@ -215,7 +227,15 @@ def _validate_project_name(nombre: str) -> None:
     default=None,
     help="Ruta donde se creará la nueva aplicación.",
 )
-def create(nombre: str, directorio_base: Path | None) -> None:
+@click.option(
+    "--template",
+    "template_name",
+    type=click.Choice(["app", "web", "desktop", "mobile"], case_sensitive=False),
+    default="app",
+    show_default=True,
+    help="Plantilla inicial del proyecto.",
+)
+def create(nombre: str, directorio_base: Path | None, template_name: str) -> None:
     """Genera la estructura base de una aplicación FletPlus."""
 
     if directorio_base is None:
@@ -232,15 +252,19 @@ def create(nombre: str, directorio_base: Path | None) -> None:
         )
 
     if proyecto.is_dir() and any(proyecto.iterdir()):
-        raise click.ClickException(f"El directorio '{proyecto}' ya existe y no está vacío.")
+        raise click.ClickException(
+            f"El directorio '{proyecto}' ya existe y no está vacío."
+        )
 
     proyecto.mkdir(parents=True, exist_ok=True)
     contexto = {"project_name": nombre, "package_name": paquete}
 
-    plantilla_base = resources.files(TEMPLATE_PACKAGE).joinpath("templates", "app")
+    plantilla_base = resources.files(TEMPLATE_PACKAGE).joinpath(
+        "templates", template_name.lower()
+    )
     _copy_template_tree(plantilla_base, proyecto, contexto)
 
-    click.echo(f"Proyecto creado en {proyecto}")
+    click.echo(f"Proyecto creado en {proyecto} con plantilla {template_name.lower()}")
 
 
 def _should_ignore(path: Path, watch_path: Path | None = None) -> bool:
@@ -267,7 +291,9 @@ class _ReloadHandler(FileSystemEventHandler):
         self._debounce_window_seconds = debounce_window_seconds
         self._last_event_by_path: dict[str, float] = {}
 
-    def on_any_event(self, event: FileSystemEvent) -> None:  # pragma: no cover - interactivo
+    def on_any_event(
+        self, event: FileSystemEvent
+    ) -> None:  # pragma: no cover - interactivo
         if event.is_directory:
             return
 
@@ -297,7 +323,9 @@ class _ReloadHandler(FileSystemEventHandler):
         self._trigger()
 
 
-def _launch_flet_process(app_path: Path, port: int | None, devtools: bool) -> subprocess.Popen:
+def _launch_flet_process(
+    app_path: Path, port: int | None, devtools: bool
+) -> subprocess.Popen:
     command = [sys.executable, "-m", "flet", "run", str(app_path)]
     if port is not None:
         command.extend(["--port", str(port)])
@@ -314,9 +342,12 @@ def _launch_flet_process(app_path: Path, port: int | None, devtools: bool) -> su
 
     mensaje_arranque = f"Iniciando servidor: {' '.join(command)}"
     if devtools_env_removed:
-        mensaje_arranque += " (FLET_DEVTOOLS eliminado del entorno porque --no-devtools está activo)"
+        mensaje_arranque += (
+            " (FLET_DEVTOOLS eliminado del entorno porque --no-devtools está activo)"
+        )
     click.echo(mensaje_arranque)
     from fletplus.utils.safe_subprocess import safe_popen
+
     return safe_popen(
         command,
         env=env,
@@ -369,8 +400,16 @@ def _resolve_app_path(app_path: Path, watch_path: Path) -> Path:
         "contra --watch y, si no existe, contra el directorio actual."
     ),
 )
-@click.option("--port", default=8550, show_default=True, help="Puerto del servidor web.")
-@click.option("--no-devtools", "devtools", flag_value=False, default=True, help="Desactiva DevTools.")
+@click.option(
+    "--port", default=8550, show_default=True, help="Puerto del servidor web."
+)
+@click.option(
+    "--no-devtools",
+    "devtools",
+    flag_value=False,
+    default=True,
+    help="Desactiva DevTools.",
+)
 @click.option(
     "--watch",
     "watch_path",
@@ -390,7 +429,9 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
 
     app_path = _resolve_app_path(app_path, watch_path)
     if not app_path.exists():
-        raise click.ClickException(f"No se encontró el archivo de la aplicación: {app_path}")
+        raise click.ClickException(
+            f"No se encontró el archivo de la aplicación: {app_path}"
+        )
     if not app_path.is_file():
         raise click.ClickException(
             f"La ruta de la aplicación debe ser un archivo: {app_path}"
@@ -498,7 +539,9 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
     show_default=True,
     help="Número de filas a mostrar en el reporte impreso.",
 )
-def profile(flow_names: tuple[str, ...], output_path: Path, sort: str, limit: int) -> None:
+def profile(
+    flow_names: tuple[str, ...], output_path: Path, sort: str, limit: int
+) -> None:
     """Ejecuta flujos clave con cProfile y genera un reporte."""
 
     if limit <= 0:
@@ -518,10 +561,13 @@ def profile(flow_names: tuple[str, ...], output_path: Path, sort: str, limit: in
 @app.command()
 @click.option(
     "--target",
-    type=click.Choice(["web", "desktop", "mobile", "all"], case_sensitive=False),
+    type=click.Choice(
+        ["web", "desktop", "mobile", "android-apk", "android-aab", "ios", "all"],
+        case_sensitive=False,
+    ),
     default="all",
     show_default=True,
-    help="Objetivo de compilación (web, desktop, mobile o all).",
+    help="Objetivo de compilación (web, desktop, android-apk, android-aab, ios, mobile alias de android-apk o all).",
 )
 @click.option(
     "--app",
@@ -543,7 +589,9 @@ def build(target: str, app_path: Path, build_timeout: float) -> None:
     """Compila la aplicación para los objetivos seleccionados."""
 
     try:
-        reports = run_build(Path.cwd(), app_path, target.lower(), build_timeout=build_timeout)
+        reports = run_build(
+            Path.cwd(), app_path, target.lower(), build_timeout=build_timeout
+        )
     except PackagingError as exc:
         raise click.ClickException(str(exc)) from exc
 

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import importlib
 
+
 def _try_load_native():
     try:  # pragma: no cover - extensión opcional
         from .router_pr_rs import _native as mod
+
         return mod
     except Exception:
         pass
@@ -12,12 +14,20 @@ def _try_load_native():
     try:
         mod = importlib.import_module("_native")
         # Comprobar interfaz esperada
-        required = ["_normalize_path", "_normalize_path_string", "_parse_segment", "_join_paths", "_dfs_match", "_match"]
+        required = [
+            "_normalize_path",
+            "_normalize_path_string",
+            "_parse_segment",
+            "_join_paths",
+            "_dfs_match",
+            "_match",
+        ]
         if all(hasattr(mod, name) for name in required):
             return mod
     except Exception:
         return None
     return None
+
 
 _native = _try_load_native()
 

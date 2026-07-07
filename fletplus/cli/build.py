@@ -53,18 +53,7 @@ BUILD_ENV_PROFILES: dict[str, tuple[str, ...]] = {
         "LD_LIBRARY_PATH",
         "DYLD_LIBRARY_PATH",
     ),
-    "pyinstaller": (
-        *BUILD_ENV_BASE_WHITELIST,
-        "VIRTUAL_ENV",
-        "PYTHONPATH",
-        "PYTHONHOME",
-        "PYTHONUTF8",
-        "PYTHONDONTWRITEBYTECODE",
-        "PYTHONUNBUFFERED",
-        "LD_LIBRARY_PATH",
-        "DYLD_LIBRARY_PATH",
-    ),
-    "briefcase": (
+    "flet_mobile": (
         *BUILD_ENV_BASE_WHITELIST,
         "APPDATA",
         "LOCALAPPDATA",
@@ -79,6 +68,17 @@ BUILD_ENV_PROFILES: dict[str, tuple[str, ...]] = {
         "FLETPLUS_METADATA",
         "FLETPLUS_ICON",
     ),
+    "pyinstaller": (
+        *BUILD_ENV_BASE_WHITELIST,
+        "VIRTUAL_ENV",
+        "PYTHONPATH",
+        "PYTHONHOME",
+        "PYTHONUTF8",
+        "PYTHONDONTWRITEBYTECODE",
+        "PYTHONUNBUFFERED",
+        "LD_LIBRARY_PATH",
+        "DYLD_LIBRARY_PATH",
+    ),
 }
 
 
@@ -87,14 +87,24 @@ class BuildTarget(str, Enum):
 
     WEB = "web"
     DESKTOP = "desktop"
-    MOBILE = "mobile"
+    ANDROID_APK = "android-apk"
+    ANDROID_AAB = "android-aab"
+    IOS = "ios"
 
     @classmethod
     def parse_option(cls, value: str) -> List["BuildTarget"]:
-        if value == "all":
-            return list(cls)
+        normalized = value.lower()
+        aliases = {
+            "mobile": cls.ANDROID_APK,
+            "apk": cls.ANDROID_APK,
+            "aab": cls.ANDROID_AAB,
+        }
+        if normalized == "all":
+            return [cls.WEB, cls.DESKTOP, cls.ANDROID_APK]
+        if normalized in aliases:
+            return [aliases[normalized]]
         try:
-            return [cls(value)]
+            return [cls(normalized)]
         except ValueError as exc:  # pragma: no cover - validado por Click
             raise PackagingError(str(exc)) from exc
 
@@ -137,7 +147,10 @@ class BuildContext:
 
     @classmethod
     def from_project(
-        cls, project_dir: Path, app_path: Path, build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS
+        cls,
+        project_dir: Path,
+        app_path: Path,
+        build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS,
     ) -> "BuildContext":
         project_dir = project_dir.resolve()
         if not project_dir.exists():
@@ -194,7 +207,9 @@ def _load_metadata(project_dir: Path) -> BuildMetadata:
             author = first
     description = project_data.get("description")
 
-    return BuildMetadata(name=name, version=version, author=author, description=description)
+    return BuildMetadata(
+        name=name, version=version, author=author, description=description
+    )
 
 
 def _normalize_build_name(value: str) -> str:
@@ -311,7 +326,9 @@ def _run_command(
             "El subproceso de compilación excedió el tiempo límite "
             f"({timeout_label}s, cwd={cwd_label}, comando='{executed_command}')."
         ) from exc
-    except subprocess.CalledProcessError as exc:  # pragma: no cover - manejado en adaptador
+    except (
+        subprocess.CalledProcessError
+    ) as exc:  # pragma: no cover - manejado en adaptador
         executed_command = " ".join(str(part) for part in (exc.cmd or command))
         cwd_label = str(cwd) if cwd else os.getcwd()
         raise PackagingError(
@@ -348,7 +365,9 @@ class _BaseAdapter:
 class WebAdapter(_BaseAdapter):
     target = BuildTarget.WEB
 
-    def build(self, prepared: dict[str, Path | None]) -> None:  # pragma: no cover - invocado por run()
+    def build(
+        self, prepared: dict[str, Path | None]
+    ) -> None:  # pragma: no cover - invocado por run()
         command = [
             sys.executable,
             "-m",
@@ -367,54 +386,38 @@ class WebAdapter(_BaseAdapter):
         )
 
 
+def _desktop_platform_target() -> str:
+    if sys.platform.startswith("win"):
+        return "windows"
+    if sys.platform == "darwin":
+        return "macos"
+    return "linux"
+
+
 class DesktopAdapter(_BaseAdapter):
     target = BuildTarget.DESKTOP
 
     def build(self, prepared: dict[str, Path | None]) -> None:
-        add_data_args: list[str] = []
-        assets_dir = self.context.assets_dir
-        if assets_dir and assets_dir.exists():
-            staging_assets = self.staging_dir / assets_dir.name
-            if staging_assets.exists():
-                add_data_args.extend(
-                    [
-                        "--add-data",
-                        f"{staging_assets}{os.pathsep}{assets_dir.name}",
-                    ]
-                )
-
-        icon_arg: list[str] = []
-        icon_path = prepared.get("icon")
-        if icon_path:
-            icon_arg = ["--icon", str(icon_path)]
-
         command = [
             sys.executable,
             "-m",
-            "PyInstaller",
-            "--noconfirm",
-            "--name",
-            self.context.metadata.name,
-            "--distpath",
-            str(self.output_dir),
-            "--workpath",
-            str(self.context.build_dir / "pyinstaller"),
-            "--specpath",
-            str(self.context.build_dir / "pyinstaller"),
-            *icon_arg,
-            *add_data_args,
+            "flet",
+            "build",
+            _desktop_platform_target(),
             str(self.context.app_path),
+            "--output",
+            str(self.output_dir),
         ]
         _run_command(
             command,
             cwd=self.context.project_dir,
             timeout=self.context.build_timeout,
-            env_profile="pyinstaller",
+            env_profile="flet_build",
         )
 
 
-class MobileAdapter(_BaseAdapter):
-    target = BuildTarget.MOBILE
+class FletMobileAdapter(_BaseAdapter):
+    flet_target: str = "apk"
 
     def build(self, prepared: dict[str, Path | None]) -> None:
         icon_path = prepared.get("icon")
@@ -427,21 +430,38 @@ class MobileAdapter(_BaseAdapter):
             env["FLETPLUS_ICON"] = str(icon_path)
 
         command = [
-            "briefcase",
-            "package",
-            "android",
-            "--no-input",
+            sys.executable,
+            "-m",
+            "flet",
+            "build",
+            self.flet_target,
+            str(self.context.app_path),
             "--output",
             str(self.output_dir),
         ]
-        click.echo("Preparando paquete móvil (android)")
+        click.echo(f"Preparando paquete móvil con Flet ({self.flet_target})")
         _run_command(
             command,
             cwd=self.context.project_dir,
             timeout=self.context.build_timeout,
             env_overrides=env,
-            env_profile="briefcase",
+            env_profile="flet_mobile",
         )
+
+
+class AndroidApkAdapter(FletMobileAdapter):
+    target = BuildTarget.ANDROID_APK
+    flet_target = "apk"
+
+
+class AndroidAabAdapter(FletMobileAdapter):
+    target = BuildTarget.ANDROID_AAB
+    flet_target = "aab"
+
+
+class IosAdapter(FletMobileAdapter):
+    target = BuildTarget.IOS
+    flet_target = "ipa"
 
 
 def create_adapter(target: BuildTarget, context: BuildContext) -> _BaseAdapter:
@@ -449,8 +469,12 @@ def create_adapter(target: BuildTarget, context: BuildContext) -> _BaseAdapter:
         return WebAdapter(context)
     if target is BuildTarget.DESKTOP:
         return DesktopAdapter(context)
-    if target is BuildTarget.MOBILE:
-        return MobileAdapter(context)
+    if target is BuildTarget.ANDROID_APK:
+        return AndroidApkAdapter(context)
+    if target is BuildTarget.ANDROID_AAB:
+        return AndroidAabAdapter(context)
+    if target is BuildTarget.IOS:
+        return IosAdapter(context)
     raise PackagingError(f"Objetivo no soportado: {target}")
 
 
@@ -483,7 +507,9 @@ class BuildManager:
                     )
                 )
             except PackagingError as exc:
-                reports.append(BuildReport(target=target, success=False, message=str(exc)))
+                reports.append(
+                    BuildReport(target=target, success=False, message=str(exc))
+                )
         return reports
 
 
@@ -493,7 +519,9 @@ def run_build(
     target: str,
     build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS,
 ) -> List[BuildReport]:
-    context = BuildContext.from_project(project_dir, app_path, build_timeout=build_timeout)
+    context = BuildContext.from_project(
+        project_dir, app_path, build_timeout=build_timeout
+    )
     targets = BuildTarget.parse_option(target)
     manager = BuildManager(context)
     return manager.build(targets)

@@ -1,10 +1,10 @@
 # Compilación de aplicaciones FletPlus
 
 El comando `fletplus build` empaqueta una aplicación según distintos objetivos,
-aprovechando herramientas conocidas del ecosistema Python.
+aprovechando el empaquetado nativo de Flet.
 
 ```bash
-fletplus build --target <web|desktop|mobile|all>
+fletplus build --target <web|desktop|mobile|android-apk|android-aab|ios|all>
 ```
 
 ## Flujo general
@@ -12,11 +12,13 @@ fletplus build --target <web|desktop|mobile|all>
 1. Se analizan los metadatos del proyecto desde `pyproject.toml` (nombre,
    versión, autores y descripción).
 2. Se recopilan iconos y recursos estáticos ubicados en `assets/` o `static/`.
-3. Se delega la compilación a la herramienta adecuada:
+3. Se delega la compilación a `flet build` según el objetivo:
    - `flet build web` genera la versión web en `dist/web/`.
-   - `PyInstaller` construye binarios de escritorio en `dist/desktop/`.
-   - `briefcase package android` produce artefactos móviles en `dist/mobile/`.
-4. Cada backend reporta su resultado individual.
+   - `flet build windows/macos/linux` construye artefactos de escritorio en `dist/desktop/`.
+   - `flet build apk` produce APKs en `dist/android-apk/`.
+   - `flet build aab` produce Android App Bundles en `dist/android-aab/`.
+   - `flet build ipa` produce artefactos iOS en `dist/ios/`.
+4. Cada target reporta su resultado individual.
 
 Si alguno de los empaquetadores falla, el comando finaliza con un error
 indicando qué objetivo no se pudo generar.
@@ -47,7 +49,7 @@ Antes de ejecutar ese flujo en local, instala el extra opcional de build con `pi
 fletplus build
 ```
 
-Genera artefactos para los tres destinos (`web`, `desktop`, `mobile`).
+Genera artefactos para `web`, `desktop` y `android-apk`.
 
 ### Objetivo web
 
@@ -69,7 +71,7 @@ Permite especificar un archivo distinto al predeterminado `src/main.py`.
 ## Variables de entorno auxiliares
 
 Durante la fase móvil se exponen dos variables de entorno útiles para recetas
-personalizadas de Briefcase:
+personalizadas de Flet/build hooks:
 
 - `FLETPLUS_METADATA`: ruta al archivo `metadata.json` generado en la carpeta de
   compilación temporal.
@@ -77,3 +79,13 @@ personalizadas de Briefcase:
 
 Estas variables pueden consumirse desde scripts o configuraciones externas para
 ajustar el empaquetado sin modificar el código fuente.
+
+### Objetivos móviles explícitos
+
+```bash
+fletplus build --target android-apk
+fletplus build --target android-aab
+fletplus build --target ios
+```
+
+`mobile` se conserva como alias retrocompatible de `android-apk`.

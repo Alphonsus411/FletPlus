@@ -25,7 +25,7 @@ Para evitar drift entre CI, desarrollo local y plantillas CLI, esta tabla fija l
 
 | Dependencia | Versión mínima | Versión máxima (exclusiva) | Referencia contractual |
 |---|---:|---:|---|
-| `flet` | `0.80` (baseline contractual y paquete distribuible) | `0.83` | `pyproject.toml`, `requirements-dev.txt`, `fletplus/cli/templates/app/requirements.txt` |
+| `flet` | `0.80` (baseline contractual y paquete distribuible) | `0.86` | `pyproject.toml`, `requirements-dev.txt`, `fletplus/cli/templates/app/requirements.txt` |
 | `websockets` | `13` | `14` | `pyproject.toml`, `requirements-dev.txt` |
 | `httpx` | `0.28` | `1` | `pyproject.toml`, `requirements-dev.txt` |
 | `watchdog` | `3` | `7` | `pyproject.toml` (`optional-dependencies.dev`), `requirements-dev.txt` |
@@ -334,3 +334,17 @@ Se añade el contrato `tests/test_padding_migration_contract.py` para:
 2. Bloquear regresiones de `ft.padding.` dentro de `fletplus/` y `examples/`.
 
 Si este contrato falla, la migración se considera abierta hasta eliminar el uso legacy.
+
+## Matriz de adopción de Flet 0.85.x
+
+| Área | Funcionalidad | Estado en FletPlus | Implementación |
+|---|---|---|---|
+| Build web | `flet build web` | Adoptado | `fletplus/cli/build.py` usa el backend nativo de Flet. |
+| Build desktop | `flet build windows/macos/linux` | Adoptado | `DesktopAdapter` selecciona el target por plataforma. |
+| Build Android APK | `flet build apk` | Adoptado | `BuildTarget.ANDROID_APK` y alias `mobile`. |
+| Build Android AAB | `flet build aab` | Adoptado | `BuildTarget.ANDROID_AAB`. |
+| Build iOS | `flet build ipa` | Adoptado | `BuildTarget.IOS`. |
+| Plantillas FrontEnd | estructuras web/desktop/mobile | Adoptado | `fletplus/cli/templates/{app,web,desktop,mobile}`. |
+| Configuración visual | paletas, fuentes, pantalla y layout | Adoptado | `fletplus.frontend.FrontEndConfig`. |
+
+> La política vigente de distribución, desarrollo y plantillas es `flet>=0.80,<0.86`, por lo que cubre la serie objetivo Flet 0.85.x.
