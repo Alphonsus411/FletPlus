@@ -50,3 +50,43 @@ def test_frontend_config_builds_content_shell_width() -> None:
 
     assert isinstance(shell, ft.Container)
     assert shell.width == 700
+
+
+def test_frontend_config_content_width_uses_available_width_for_small_pages() -> None:
+    page = DummyPage()
+    page.width = 320
+    config = FrontEndConfig(page_padding=24, min_content_width=320)
+
+    assert config.content_width_for_page(page) == 272  # type: ignore[arg-type]
+
+
+def test_frontend_config_content_width_can_allow_min_width_overflow() -> None:
+    page = DummyPage()
+    page.width = 320
+    config = FrontEndConfig(
+        page_padding=24,
+        min_content_width=320,
+        allow_min_width_overflow=True,
+    )
+
+    assert config.content_width_for_page(page) == 320  # type: ignore[arg-type]
+
+
+def test_frontend_config_content_width_never_goes_below_zero() -> None:
+    page = DummyPage()
+    page.width = 32
+    config = FrontEndConfig(page_padding=24, min_content_width=320)
+
+    assert config.content_width_for_page(page) == 0  # type: ignore[arg-type]
+
+
+def test_frontend_config_builds_content_shell_with_very_reduced_width() -> None:
+    page = DummyPage()
+    page.width = 32
+    config = FrontEndConfig(page_padding=24, min_content_width=320)
+
+    shell = config.build_content_shell(ft.Text("hola"), page)  # type: ignore[arg-type]
+
+    assert isinstance(shell, ft.Container)
+    assert shell.width == 0
+    assert shell.padding == 24
