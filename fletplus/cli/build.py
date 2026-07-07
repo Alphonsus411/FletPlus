@@ -8,10 +8,10 @@ import re
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Iterable, List
+from typing import Any, Iterable, List
 
 import click
 
@@ -67,6 +67,7 @@ BUILD_ENV_PROFILES: dict[str, tuple[str, ...]] = {
         "DYLD_LIBRARY_PATH",
         "FLETPLUS_METADATA",
         "FLETPLUS_ICON",
+        "FLETPLUS_PACKAGE",
     ),
     "pyinstaller": (
         *BUILD_ENV_BASE_WHITELIST,
@@ -110,6 +111,21 @@ class BuildTarget(str, Enum):
 
 
 @dataclass(slots=True)
+class FletPlusProjectConfig:
+    """Configuración leída de ``[tool.fletplus]`` en proyectos generados."""
+
+    app_path: Path | None = None
+    default_target: str | None = None
+    assets_dir: Path | None = None
+    icon_path: Path | None = None
+    build_timeout: float | None = None
+    frontend: dict[str, Any] = field(default_factory=dict)
+    web: dict[str, Any] = field(default_factory=dict)
+    desktop: dict[str, Any] = field(default_factory=dict)
+    mobile: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class BuildMetadata:
     """Metadatos del proyecto normalizados para compilación.
 
@@ -144,6 +160,7 @@ class BuildContext:
     assets_dir: Path | None
     icon_path: Path | None
     build_timeout: float
+    project_config: FletPlusProjectConfig
 
     @classmethod
     def from_project(
@@ -156,6 +173,9 @@ class BuildContext:
         if not project_dir.exists():
             raise PackagingError(f"No se encontró el proyecto en {project_dir}.")
 
+        project_config = _load_fletplus_config(project_dir)
+        if str(app_path) == "src/main.py" and project_config.app_path is not None:
+            app_path = project_config.app_path
         app_path = app_path if app_path.is_absolute() else project_dir / app_path
         if not app_path.exists():
             raise PackagingError(f"No se encontró la aplicación principal: {app_path}.")
@@ -171,8 +191,9 @@ class BuildContext:
         build_dir.mkdir(parents=True, exist_ok=True)
 
         metadata = _load_metadata(project_dir)
-        assets_dir = _detect_assets(project_dir)
-        icon_path = _detect_icon(project_dir, assets_dir)
+        assets_dir = _detect_assets(project_dir, project_config)
+        icon_path = _detect_icon(project_dir, assets_dir, project_config)
+        effective_timeout = project_config.build_timeout or build_timeout
 
         return cls(
             project_dir=project_dir,
@@ -182,17 +203,59 @@ class BuildContext:
             metadata=metadata,
             assets_dir=assets_dir,
             icon_path=icon_path,
-            build_timeout=build_timeout,
+            build_timeout=effective_timeout,
+            project_config=project_config,
         )
 
 
-def _load_metadata(project_dir: Path) -> BuildMetadata:
+def _load_pyproject(project_dir: Path) -> dict[str, Any]:
     pyproject = project_dir / "pyproject.toml"
-    if pyproject.exists():
-        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-        project_data = data.get("project", {}) if isinstance(data, dict) else {}
-    else:
-        project_data = {}
+    if not pyproject.exists():
+        return {}
+    return tomllib.loads(pyproject.read_text(encoding="utf-8"))
+
+
+def _load_fletplus_config(project_dir: Path) -> FletPlusProjectConfig:
+    data = _load_pyproject(project_dir)
+    tool_data = data.get("tool", {}) if isinstance(data, dict) else {}
+    raw_config = tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
+    if not isinstance(raw_config, dict):
+        return FletPlusProjectConfig()
+
+    def optional_path(name: str) -> Path | None:
+        value = raw_config.get(name)
+        if isinstance(value, str) and value.strip():
+            return Path(value)
+        return None
+
+    timeout_value = raw_config.get("build_timeout")
+    try:
+        build_timeout = float(timeout_value) if timeout_value is not None else None
+    except (TypeError, ValueError):
+        raise PackagingError("[tool.fletplus].build_timeout debe ser numérico.")
+
+    default_target = raw_config.get("default_target")
+
+    def optional_dict(name: str) -> dict[str, Any]:
+        value = raw_config.get(name, {})
+        return dict(value) if isinstance(value, dict) else {}
+
+    return FletPlusProjectConfig(
+        app_path=optional_path("app"),
+        default_target=default_target if isinstance(default_target, str) else None,
+        assets_dir=optional_path("assets_dir"),
+        icon_path=optional_path("icon"),
+        build_timeout=build_timeout,
+        frontend=optional_dict("frontend"),
+        web=optional_dict("web"),
+        desktop=optional_dict("desktop"),
+        mobile=optional_dict("mobile"),
+    )
+
+
+def _load_metadata(project_dir: Path) -> BuildMetadata:
+    data = _load_pyproject(project_dir)
+    project_data = data.get("project", {}) if isinstance(data, dict) else {}
 
     raw_name = project_data.get("name") or project_dir.name
     name = _normalize_build_name(raw_name)
@@ -219,16 +282,35 @@ def _normalize_build_name(value: str) -> str:
     return normalized or "app"
 
 
-def _detect_assets(project_dir: Path) -> Path | None:
-    candidates = [project_dir / "assets", project_dir / "static"]
+def _resolve_project_path(project_dir: Path, path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    return path if path.is_absolute() else project_dir / path
+
+
+def _detect_assets(
+    project_dir: Path, config: FletPlusProjectConfig | None = None
+) -> Path | None:
+    configured_assets = _resolve_project_path(
+        project_dir, config.assets_dir if config else None
+    )
+    candidates = [configured_assets] if configured_assets else []
+    candidates.extend([project_dir / "assets", project_dir / "static"])
     for candidate in candidates:
         if candidate.is_dir():
             return candidate
     return None
 
 
-def _detect_icon(project_dir: Path, assets_dir: Path | None) -> Path | None:
-    candidates = []
+def _detect_icon(
+    project_dir: Path,
+    assets_dir: Path | None,
+    config: FletPlusProjectConfig | None = None,
+) -> Path | None:
+    configured_icon = _resolve_project_path(
+        project_dir, config.icon_path if config else None
+    )
+    candidates = [configured_icon] if configured_icon else []
     if assets_dir:
         candidates.append(assets_dir / "icon.png")
         candidates.append(assets_dir / "icons" / "app.png")
@@ -378,6 +460,9 @@ class WebAdapter(_BaseAdapter):
             "--output",
             str(self.output_dir),
         ]
+        base_url = self.context.project_config.web.get("base_url")
+        if isinstance(base_url, str) and base_url:
+            command.extend(["--base-url", base_url])
         _run_command(
             command,
             cwd=self.context.project_dir,
@@ -408,6 +493,9 @@ class DesktopAdapter(_BaseAdapter):
             "--output",
             str(self.output_dir),
         ]
+        product_name = self.context.project_config.desktop.get("product_name")
+        if isinstance(product_name, str) and product_name:
+            command.extend(["--product", product_name])
         _run_command(
             command,
             cwd=self.context.project_dir,
@@ -428,6 +516,10 @@ class FletMobileAdapter(_BaseAdapter):
             env["FLETPLUS_METADATA"] = str(metadata_path)
         if icon_path:
             env["FLETPLUS_ICON"] = str(icon_path)
+        mobile_config = self.context.project_config.mobile
+        package_name = mobile_config.get("package")
+        if isinstance(package_name, str) and package_name:
+            env["FLETPLUS_PACKAGE"] = package_name
 
         command = [
             sys.executable,
@@ -519,9 +611,13 @@ def run_build(
     target: str,
     build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS,
 ) -> List[BuildReport]:
+    project_config = _load_fletplus_config(project_dir.resolve())
+    effective_target = target
+    if target == "all" and project_config.default_target:
+        effective_target = project_config.default_target
     context = BuildContext.from_project(
         project_dir, app_path, build_timeout=build_timeout
     )
-    targets = BuildTarget.parse_option(target)
+    targets = BuildTarget.parse_option(effective_target)
     manager = BuildManager(context)
     return manager.build(targets)

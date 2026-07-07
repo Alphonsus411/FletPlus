@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{ package_name }}"
+version = "0.1.0"
+description = "Aplicación FletPlus generada desde la plantilla web."
+requires-python = ">=3.10"
+dependencies = [
+  "flet>=0.80,<0.86",
+  "fletplus",
+]
+
+[tool.fletplus]
+app = "src/main.py"
+default_target = "web"
+assets_dir = "assets"
+icon = "assets/icon.png"
+build_timeout = 900
+
+[tool.fletplus.frontend]
+palette = "material"
+mode = "light"
+font_family = "Roboto"
+page_padding = 32
+max_content_width = 1180
+min_content_width = 320
+spacing = 20
+layout_density = "comfortable"
+
+[tool.fletplus.web]
+view = "ft.AppView.WEB_BROWSER"
+pwa = true
+manifest = "web/manifest.json"
+service_worker = "web/service_worker.js"
+
+[tool.fletplus.desktop]
+width = 1280
+height = 820
+min_width = 960
+min_height = 640
+
+[tool.fletplus.mobile]
+package = "com.example.{{ package_name }}"
+orientation = "portrait"
