@@ -9,6 +9,11 @@ from __future__ import annotations
 # - docs/migration-flet-latest.md
 FLET_MATRIX_MINORS: tuple[str, ...] = ("0.80", "0.85")
 
+# Parches bloqueados por política cuando un minor debe validarse contra una
+# versión exacta. 0.85 apunta a 0.85.3 porque PyPI lo reporta como último
+# patch disponible durante la revisión del 2026-07-07.
+FLET_MATRIX_PINNED_PATCHES: dict[str, str] = {"0.85": "0.85.3"}
+
 # Menores de Flet soportados para ejecución local cuando
 # FLET_MATRIX_EXPECTED_MINOR no está definido por CI.
 ALLOWED_FLET_MINORS: frozenset[str] = frozenset(FLET_MATRIX_MINORS)

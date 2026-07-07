@@ -7,7 +7,11 @@ from importlib import metadata
 
 import flet as ft
 
-from tools.flet_version_matrix_config import ALLOWED_FLET_MINORS, FLET_MATRIX_MINORS
+from tools.flet_version_matrix_config import (
+    ALLOWED_FLET_MINORS,
+    FLET_MATRIX_MINORS,
+    FLET_MATRIX_PINNED_PATCHES,
+)
 
 
 def _read_flet_version() -> str:
@@ -28,6 +32,12 @@ def test_flet_version_in_supported_matrix() -> None:
             "FLET_MATRIX_EXPECTED_MINOR tiene prioridad y no coincide con la versión detectada: "
             f"detectada={version!r} (minor={current_minor!r}), esperada={expected_minor!r}."
         )
+        pinned_patch = FLET_MATRIX_PINNED_PATCHES.get(expected_minor)
+        if pinned_patch is not None:
+            assert version == pinned_patch, (
+                "El minor esperado está bloqueado a un patch documentado y no coincide: "
+                f"detectada={version!r}, esperada={pinned_patch!r}."
+            )
     else:
         allowed_sorted = sorted(ALLOWED_FLET_MINORS)
         assert current_minor in ALLOWED_FLET_MINORS, (
@@ -112,3 +122,25 @@ def test_flet_compat_icon_resolution_falls_back_when_icons_namespace_changes(
 
     assert flet_compat.get_flet_icon("MENU", "fallback") == "menu"
     assert flet_compat.get_flet_icon("MISSING", "fallback") == "fallback"
+
+
+def test_pinned_patch_versions_are_part_of_active_contract() -> None:
+    assert set(FLET_MATRIX_PINNED_PATCHES).issubset(FLET_MATRIX_MINORS)
+    for minor, version in FLET_MATRIX_PINNED_PATCHES.items():
+        assert version.startswith(f"{minor}."), (
+            "Cada patch bloqueado debe pertenecer al minor activo que documenta. "
+            f"minor={minor!r}, version={version!r}."
+        )
+
+
+def test_flet_0853_sensitive_page_contracts() -> None:
+    version = _read_flet_version()
+    if version != FLET_MATRIX_PINNED_PATCHES.get("0.85"):
+        return
+
+    assert callable(_require_symbol(ft.Page, "show_dialog", "ft.Page.show_dialog"))
+    assert callable(_require_symbol(ft.Page, "close_drawer", "ft.Page.close_drawer"))
+    assert not hasattr(ft.Page, "open"), (
+        "FletPlus no debe depender todavía de ft.Page.open en el target bloqueado 0.85.3; "
+        "usar flet_compat.safe_show_dialog para mantener compatibilidad."
+    )

@@ -72,9 +72,9 @@ jobs:
         # (breaking changes, deprecaciones relevantes o ajustes de política de soporte).
         # Política vigente:
         # - baseline: menor mínimo soportado activamente por el proyecto.
-        # - target: última minor estable publicada en PyPI para validar migraciones.
+        # - target: último patch estable documentado para el minor objetivo vigente.
         # Procedimiento de actualización:
-        # 1) Revisar en PyPI la última minor estable de `flet`.
+        # 1) Revisar en PyPI el último patch estable de `flet` para el minor objetivo.
         # 2) Mantener `min-supported` alineado con la baseline definida por el proyecto.
         # 3) FUENTE DE VERDAD ÚNICA: `tools/flet_version_matrix_config.py`
         #    (FLET_MATRIX_MINORS / ALLOWED_FLET_MINORS).
@@ -85,7 +85,7 @@ jobs:
             flet-spec: flet>=0.80,<0.81
             expected-minor: "0.80"
           - label: latest-migration-target
-            flet-spec: flet>=0.85,<0.86
+            flet-spec: flet==0.85.3
             expected-minor: "0.85"
 
     steps:
