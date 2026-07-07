@@ -26,7 +26,7 @@ Política de uso de APIs internas (temporal y de retirada)
 - Cada uso de fallback interno emite telemetría de warning estructurada una
   sola vez por símbolo, para detectar cambios de compatibilidad pronto.
 - Criterio de retirada: eliminar cada fallback interno antes de
-  ``2026-06-30`` o en la primera versión mínima soportada de Flet donde la
+  ``2026-12-31`` o en la primera versión mínima soportada de Flet donde la
   API pública correspondiente esté estabilizada en CI, lo que ocurra antes.
 
 Cómo extender esta capa
@@ -58,12 +58,16 @@ import flet as _ft
 
 class _FtProxy:
     __slots__ = ("_m",)
+
     def __init__(self, module):
         object.__setattr__(self, "_m", module)
+
     def __getattr__(self, name: str):
         return getattr(self._m, name)
+
     def __setattr__(self, name: str, value):
         setattr(self._m, name, value)
+
     def __delattr__(self, name: str):
         try:
             delattr(self._m, name)
@@ -75,9 +79,11 @@ class _FtProxy:
                 getattr(_ft, "__version__", "unknown"),
                 exc,
             )
+
     @property
     def __dict__(self):
         return self._m.__dict__
+
 
 ft = _FtProxy(_ft)
 _logger = logging.getLogger(__name__)
@@ -160,6 +166,7 @@ def _resolve_public_first_symbol(
         default=default,
         warning_key=warning_key,
     )
+
 
 LEGACY_PAGE_WINDOW_PATCH_ENV_VAR = "FLETPLUS_ENABLE_LEGACY_PAGE_WINDOW_PATCH"
 """Variable de entorno para habilitar explícitamente el parche legacy de ``Page.window``."""
@@ -274,6 +281,7 @@ except (AttributeError, TypeError, RuntimeError) as exc:
         exc,
     )
 
+
 def is_legacy_page_window_patch_enabled_from_env(default: bool = False) -> bool:
     """Indica si el parche legacy de ``Page.window`` se activa por entorno."""
 
@@ -332,13 +340,16 @@ def _patch_page_window_property() -> bool:
 def enable_legacy_page_window_patch(force: bool | None = None) -> bool:
     """Habilita el parche legacy de ``Page.window`` bajo bandera explícita."""
 
-    should_enable = force if force is not None else is_legacy_page_window_patch_enabled_from_env()
+    should_enable = (
+        force if force is not None else is_legacy_page_window_patch_enabled_from_env()
+    )
     if not should_enable:
         return False
 
     with contextlib.suppress(Exception):
         _patch_page_window_property()
     return True
+
 
 def get_page_window(page: Any) -> Any | None:
     """Devuelve ``page.window`` si existe; en caso contrario ``None``."""
@@ -545,8 +556,6 @@ def append_page_overlay(page: Any, control: Any) -> bool:
     return False
 
 
-
-
 def has_page_overlay_control(page: Any, control: Any) -> bool:
     """Comprueba si un control ya está en ``page.overlay`` de forma segura."""
 
@@ -556,6 +565,7 @@ def has_page_overlay_control(page: Any, control: Any) -> bool:
     with contextlib.suppress(Exception):
         return control in overlay
     return False
+
 
 def safe_page_set_focus(page: Any, control: Any) -> bool:
     """Ejecuta ``page.set_focus(control)`` si existe, con fallback seguro."""
@@ -687,7 +697,9 @@ def make_navigation_rail_destination(
 def make_navigation_drawer_destination(*, icon: Any, label: str) -> Any:
     """Crea un destino de ``NavigationDrawer`` con fallback seguro."""
 
-    destination = build_flet_control("NavigationDrawerDestination", icon=icon, label=label)
+    destination = build_flet_control(
+        "NavigationDrawerDestination", icon=icon, label=label
+    )
     if destination is not None:
         return destination
     return ft.Container(content=ft.Text(label))
