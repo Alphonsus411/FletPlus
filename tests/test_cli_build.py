@@ -93,13 +93,14 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         assert web_command.count(expected_web_output) == 1
         assert expected_app_path in web_command
         assert web_command.count(expected_app_path) == 1
-        assert any("PyInstaller" in part for part in desktop_command)
-        assert mobile_command[0] == "briefcase"
+        assert desktop_command[:4] == [sys.executable, "-m", "flet", "build"]
+        assert desktop_command[4] in {"linux", "macos", "windows"}
+        assert mobile_command[:5] == [sys.executable, "-m", "flet", "build", "apk"]
         assert "FLETPLUS_METADATA" in mobile_kwargs.get("env", {})
         assert "FLETPLUS_ICON" in mobile_kwargs.get("env", {})
         assert "✅ web" in result.output
         assert "✅ desktop" in result.output
-        assert "✅ mobile" in result.output
+        assert "✅ android-apk" in result.output
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
@@ -116,27 +117,29 @@ def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> N
         def fake_run(command, **kwargs):
             normalized = [str(part) for part in command]
             calls.append(normalized)
-            if "PyInstaller" in command:
+            if "aab" in command:
                 raise subprocess.CalledProcessError(returncode=1, cmd=command)
             return subprocess.CompletedProcess(command, 0)
 
         with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
-            result = runner.invoke(app, ["build", "--target", "desktop"])
+            result = runner.invoke(app, ["build", "--target", "android-aab"])
 
         assert result.exit_code != 0
-        assert "❌ desktop" in result.output
+        assert "❌ android-aab" in result.output
         assert "La compilación terminó con errores" in result.output
         assert "código=1" in result.output
         assert "comando='" in result.output
         assert "cwd=" in result.output
-        desktop_command = next(command for command in calls if "PyInstaller" in command)
-        assert desktop_command[:3] == [sys.executable, "-m", "PyInstaller"]
-        assert desktop_command.count(sys.executable) == 1
-        assert desktop_command[1:].count(sys.executable) == 0
+        mobile_command = next(command for command in calls if "aab" in command)
+        assert mobile_command[:5] == [sys.executable, "-m", "flet", "build", "aab"]
+        assert mobile_command.count(sys.executable) == 1
+        assert mobile_command[1:].count(sys.executable) == 0
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_build_normalizes_name_for_pyinstaller(monkeypatch, watchdog_available: bool) -> None:
+def test_build_normalizes_name_for_pyinstaller(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -154,16 +157,13 @@ def test_build_normalizes_name_for_pyinstaller(monkeypatch, watchdog_available: 
             result = runner.invoke(app, ["build", "--target", "desktop"])
 
         assert result.exit_code == 0, result.output
-        desktop_command = next(command for command, _ in calls if "PyInstaller" in command)
-        assert desktop_command[:3] == [sys.executable, "-m", "PyInstaller"]
-        assert desktop_command.count(sys.executable) == 1
-        assert desktop_command[1:].count(sys.executable) == 0
-        name_index = desktop_command.index("--name")
-        assert desktop_command[name_index + 1] == "demo-app-name2024"
+        assert build_module._load_metadata(base).name == "demo-app-name2024"
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-def test_build_uses_directory_name_when_pyproject_missing(monkeypatch, watchdog_available: bool) -> None:
+def test_build_uses_directory_name_when_pyproject_missing(
+    monkeypatch, watchdog_available: bool
+) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
     runner = CliRunner()
@@ -182,19 +182,21 @@ def test_build_uses_directory_name_when_pyproject_missing(monkeypatch, watchdog_
             result = runner.invoke(app, ["build", "--target", "desktop"])
 
         assert result.exit_code == 0, result.output
-        desktop_command = next(command for command, _ in calls if "PyInstaller" in command)
-        name_index = desktop_command.index("--name")
         expected_name = re.sub(r"[\\/\s]+", "-", base.name)
-        expected_name = re.sub(r"[^A-Za-z0-9_-]", "", expected_name).strip("-_") or "app"
-        assert desktop_command[name_index + 1] == expected_name
+        expected_name = (
+            re.sub(r"[^A-Za-z0-9_-]", "", expected_name).strip("-_") or "app"
+        )
+        assert build_module._load_metadata(base).name == expected_name
 
 
 @pytest.mark.parametrize(
     ("target", "profile"),
     [
         ("web", "flet_build"),
-        ("desktop", "pyinstaller"),
-        ("mobile", "briefcase"),
+        ("desktop", "flet_build"),
+        ("mobile", "flet_mobile"),
+        ("android-aab", "flet_mobile"),
+        ("ios", "flet_mobile"),
     ],
 )
 def test_build_uses_whitelist_profile(monkeypatch, target: str, profile: str) -> None:
@@ -218,7 +220,10 @@ def test_build_uses_whitelist_profile(monkeypatch, target: str, profile: str) ->
         assert result.exit_code == 0, result.output
         assert captured_kwargs
         kwargs = captured_kwargs[0]
-        assert tuple(kwargs.get("env_whitelist", ())) == build_module.BUILD_ENV_PROFILES[profile]
+        assert (
+            tuple(kwargs.get("env_whitelist", ()))
+            == build_module.BUILD_ENV_PROFILES[profile]
+        )
 
 
 def test_build_timeout_error_is_reported(monkeypatch) -> None:
@@ -231,10 +236,14 @@ def test_build_timeout_error_is_reported(monkeypatch) -> None:
         _setup_minimal_project(base)
 
         def fake_run(command, **kwargs):
-            raise subprocess.TimeoutExpired(cmd=command, timeout=kwargs.get("timeout", 1.0))
+            raise subprocess.TimeoutExpired(
+                cmd=command, timeout=kwargs.get("timeout", 1.0)
+            )
 
         with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
-            result = runner.invoke(app, ["build", "--target", "desktop", "--timeout", "1.5"])
+            result = runner.invoke(
+                app, ["build", "--target", "desktop", "--timeout", "1.5"]
+            )
 
         assert result.exit_code != 0
         assert "tiempo límite" in result.output

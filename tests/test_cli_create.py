@@ -89,9 +89,33 @@ def test_create_template_uses_main_flet_version_policy(
         requirements = (project / "requirements.txt").read_text(encoding="utf-8")
         readme = (project / "README.md").read_text(encoding="utf-8")
 
-    requirement_lines = {line.strip() for line in requirements.splitlines() if line.strip() and not line.startswith("#")}
+    requirement_lines = {
+        line.strip()
+        for line in requirements.splitlines()
+        if line.strip() and not line.startswith("#")
+    }
     assert expected_flet_dependency in requirement_lines
     assert f"Flet `{expected_flet_policy}`" in readme
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+@pytest.mark.parametrize("template_name", ["app", "web", "desktop", "mobile"])
+def test_create_supports_frontend_templates(
+    monkeypatch, watchdog_available: bool, template_name: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(app, ["create", "demo", "--template", template_name])
+
+        assert result.exit_code == 0, result.output
+        main_py = (base / "demo" / "src" / "main.py").read_text(encoding="utf-8")
+        assert "FrontEndConfig" in main_py
+        assert "Plantilla" in main_py
+        assert (base / "demo" / "requirements.txt").exists()
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])

@@ -16,7 +16,7 @@ pip install fletplus
 
 Genera una estructura base para comenzar un nuevo proyecto. Por defecto el
 directorio se crea dentro de la carpeta actual, aunque puedes indicar una ruta
-distinta con `--directorio`.
+distinta con `--directorio` y una plantilla con `--template`.
 
 Archivos generados:
 
@@ -24,6 +24,14 @@ Archivos generados:
 - `requirements.txt` con dependencias mínimas.
 - `.gitignore` preconfigurado.
 - Paquete `src/` con un `main.py` listo para ejecutar.
+- Configuración FrontEnd inicial basada en `FrontEndConfig` para paletas, fuentes, pantalla y layout responsive.
+
+Plantillas disponibles:
+
+- `app`: punto de partida general.
+- `web`: estructura inicial orientada a despliegue web.
+- `desktop`: estructura inicial orientada a escritorio.
+- `mobile`: estructura inicial orientada a móvil.
 
 ### `fletplus run`
 
@@ -74,22 +82,22 @@ responsivas, mostrando las 10 filas más relevantes.
 ### `fletplus build`
 
 Compila la aplicación para los distintos objetivos soportados (`web`,
-`desktop`, `mobile`) reutilizando el flujo descrito en `docs/building.md`. El
-comando coordina los empaquetadores oficiales y muestra un reporte individual
-por destino.
+`desktop`, `android-apk`, `android-aab`, `ios` y el alias `mobile`) reutilizando
+el flujo descrito en `docs/building.md`. El comando delega en `flet build` y
+muestra un reporte individual por destino.
 
 Opciones principales:
 
-- `--target {web|desktop|mobile|all}`: define qué objetivo(s) compilar. La
-  opción `all` ejecuta la cadena completa y deja los artefactos en `dist/web/`,
-  `dist/desktop/` y `dist/mobile/` respectivamente.
+- `--target {web|desktop|mobile|android-apk|android-aab|ios|all}`: define qué
+  objetivo(s) compilar. La opción `mobile` es alias de `android-apk`; `all`
+  ejecuta `web`, `desktop` y `android-apk`.
 - `--app PATH`: permite indicar un punto de entrada diferente al valor
   predeterminado `src/main.py`, útil si tu proyecto organiza la aplicación en
   otro módulo.
 
 Durante la ejecución se imprime un estado por objetivo en el formato `✅ web:
-artefactos generados en dist/web/` o `❌ desktop: falta PyInstaller`, lo que
-facilita identificar rápidamente el resultado de cada empaquetador.
+artefactos generados en dist/web/` o `❌ android-aab: ...`, lo que facilita
+identificar rápidamente el resultado de cada empaquetador.
 
 Ejemplos prácticos:
 
@@ -104,17 +112,17 @@ paso "Objetivo web" descrito en la guía de compilación.
 fletplus build --target desktop --app src/app.py
 ```
 
-Empaqueta la aplicación de escritorio con PyInstaller tomando `src/app.py` como
-entrada y dejando los binarios en `dist/desktop/`.
+Empaqueta la aplicación de escritorio con `flet build` tomando `src/app.py` como
+entrada y dejando los artefactos en `dist/desktop/`.
 
 ```bash
 fletplus build --target mobile
 ```
 
-Produce el paquete móvil mediante Briefcase y coloca los artefactos generados
-en `dist/mobile/`.
+Produce un APK mediante `flet build apk` y coloca los artefactos generados en
+`dist/android-apk/`. Usa `--target android-aab` o `--target ios` para generar
+artefactos AAB o IPA.
 
 > **Nota de compatibilidad:** asegúrate de tener instaladas las herramientas
-> externas necesarias (`PyInstaller` para `desktop` y `Briefcase` para
-> `mobile`). Para más detalles y requisitos adicionales, consulta la [guía de
-> compilación](./building.md).
+> requeridas por Flet para cada plataforma objetivo. Para más detalles y
+> requisitos adicionales, consulta la [guía de compilación](./building.md).

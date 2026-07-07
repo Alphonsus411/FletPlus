@@ -27,7 +27,7 @@ def build_home(page: ft.Page) -> ft.Control:
                 text_align=ft.TextAlign.CENTER,
             ),
             ft.Text(
-                f"Plantilla responsive activa: {profile.name} ({profile.columns} columnas)",
+                f"Plantilla web responsive activa: {profile.name} ({profile.columns} columnas)",
                 text_align=ft.TextAlign.CENTER,
             ),
             ft.Text(

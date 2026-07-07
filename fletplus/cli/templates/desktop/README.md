@@ -1,0 +1,24 @@
+# {{ project_name }}
+
+Esta aplicación ha sido generada con la CLI de FletPlus.
+
+El punto de entrada de la aplicación está en `src/main.py`, donde se define la función
+`main` y se invoca `ft.app` para iniciar la interfaz.
+
+## Requisitos
+
+- Python 3.9 o superior
+- Flet `>=0.80,<0.86` (misma política de versión que `fletplus`)
+- Dependencias listadas en `requirements.txt`
+
+## Ejecución en modo desarrollo
+
+```bash
+fletplus run
+```
+
+## Construcción para distribución
+
+```bash
+fletplus build
+```
