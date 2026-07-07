@@ -39,6 +39,23 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+SUPPORTED_PALETTE_PLATFORMS = {"web", "desktop", "mobile"}
+CRITICAL_COLOR_TOKENS = (
+    "primary",
+    "background",
+    "surface",
+    "on_surface",
+    "success",
+    "warning",
+    "error",
+    "info",
+    "surface_soft",
+    "surface_elevated",
+    "focus_ring",
+    "disabled",
+    "on_disabled",
+)
+
 
 def _load_palette_flatten_backend():
     spec = importlib.util.find_spec("fletplus.themes.palette_flatten_rs")
@@ -143,6 +160,12 @@ def _parse_theme_json(file_path: str) -> dict[str, object]:
             if isinstance(overrides, Mapping):
                 variant_mapping = definition.setdefault(variant, {})
                 _merge_token_groups(variant_mapping, overrides)
+
+    for platform in SUPPORTED_PALETTE_PLATFORMS:
+        platform_overrides = data.get(platform)
+        if isinstance(platform_overrides, Mapping):
+            platform_mapping = definition.setdefault(platform, {})
+            _merge_token_groups(platform_mapping, platform_overrides)
 
     mode = data.get("mode")
     mode_value: str | None = None
@@ -315,6 +338,18 @@ class ThemeManager:
 
         color_defaults = {
             "primary": primary_color,
+            "background": "#FFFFFF",
+            "surface": "#FFFFFF",
+            "on_surface": "#111827",
+            "success": ft.Colors.GREEN,
+            "warning": ft.Colors.AMBER,
+            "error": ft.Colors.RED,
+            "info": ft.Colors.BLUE,
+            "surface_soft": "#F7F7F7",
+            "surface_elevated": "#FFFFFF",
+            "focus_ring": primary_color,
+            "disabled": "#E0E0E0",
+            "on_disabled": "#757575",
             **{
                 f"{token}_{n}": getattr(ft.Colors, f"{base}_{n}")
                 for token, base in base_colors.items()
@@ -335,6 +370,7 @@ class ThemeManager:
         self._palette_name: str | None = None
         self._preset_name: str | None = None
         self._palette_tokens: dict[str, dict[str, object]] = {}
+        self._palette_platform_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._device_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._orientation_tokens: dict[str, dict[str, dict[str, object]]] = {}
         self._breakpoint_tokens: dict[int, dict[str, dict[str, object]]] = {}
@@ -427,7 +463,7 @@ class ThemeManager:
         borders = self._effective_tokens.get("borders", {})
         shadows = self._effective_tokens.get("shadows", {})
 
-        theme = self.page.theme or ft.Theme()
+        theme = getattr(self.page, "theme", None) or ft.Theme()
         theme.color_scheme_seed = colors.get("primary")
         token_font_family = typography.get("font_family")
         if token_font_family is not None:
@@ -767,9 +803,13 @@ class ThemeManager:
     def _apply_current_palette_variant(self) -> None:
         if not self._palette_definition:
             self._palette_tokens = {}
+            self._palette_platform_tokens = {}
             return
 
         mode = "dark" if self.dark_mode else "light"
+        common = self._palette_definition.get("tokens") or self._palette_definition.get(
+            "common"
+        )
         variant = self._palette_definition.get(mode)
         if not isinstance(variant, Mapping):
             # Intentar modo alternativo si no existe la variante
@@ -777,9 +817,16 @@ class ThemeManager:
             variant = self._palette_definition.get(fallback)
             if not isinstance(variant, Mapping):
                 self._palette_tokens = {}
+                self._palette_platform_tokens = {}
                 return
 
-        self._palette_tokens = self._build_palette_tokens(variant)
+        layers: list[dict[str, dict[str, object]]] = []
+        if isinstance(common, Mapping):
+            layers.append(self._build_palette_tokens(common))
+        layers.append(self._build_palette_tokens(variant))
+        self._palette_tokens = merge_token_layers({}, layers)
+        self._palette_platform_tokens = self._build_palette_platform_tokens()
+        self._warn_missing_critical_tokens(self._palette_tokens, context=f"palette:{mode}")
         self._refresh_effective_tokens(
             self._active_device, self._active_orientation, self._active_width
         )
@@ -805,12 +852,51 @@ class ThemeManager:
         return palette_layer
 
     # ------------------------------------------------------------------
+    def _build_palette_platform_tokens(self) -> dict[str, dict[str, dict[str, object]]]:
+        platform_tokens: dict[str, dict[str, dict[str, object]]] = {}
+        if not self._palette_definition:
+            return platform_tokens
+
+        for platform in SUPPORTED_PALETTE_PLATFORMS:
+            overrides = self._palette_definition.get(platform)
+            if isinstance(overrides, Mapping):
+                platform_tokens[platform] = self._build_palette_tokens(overrides)
+        return platform_tokens
+
+    # ------------------------------------------------------------------
+    def _resolve_palette_platform_overrides(
+        self, device: str | None
+    ) -> dict[str, dict[str, object]]:
+        if not device:
+            return {}
+        platform_tokens = getattr(self, "_palette_platform_tokens", {})
+        return deepcopy(platform_tokens.get(device.lower(), {}))
+
+    # ------------------------------------------------------------------
+    def _warn_missing_critical_tokens(
+        self, tokens: Mapping[str, Mapping[str, object]], *, context: str
+    ) -> None:
+        colors = tokens.get("colors")
+        if not isinstance(colors, Mapping):
+            logger.warning("Theme %s is missing critical token group 'colors'", context)
+            return
+
+        missing = [token for token in CRITICAL_COLOR_TOKENS if token not in colors]
+        if missing:
+            logger.warning(
+                "Theme %s is missing critical color tokens: %s",
+                context,
+                ", ".join(missing),
+            )
+
+    # ------------------------------------------------------------------
     def _refresh_effective_tokens(
         self,
         device: str | None,
         orientation: str | None,
         width: int | None,
     ) -> None:
+        palette_platform_overrides = self._resolve_palette_platform_overrides(device)
         device_overrides = self._resolve_device_overrides(device)
         orientation_overrides = self._resolve_orientation_overrides(orientation)
         breakpoint_overrides = self._resolve_breakpoint_overrides(width)
@@ -821,12 +907,14 @@ class ThemeManager:
             self.tokens,
             [
                 palette_tokens,
+                palette_platform_overrides,
                 device_overrides,
                 orientation_overrides,
                 breakpoint_overrides,
                 self._persistent_overrides,
             ],
         )
+        self._warn_missing_critical_tokens(self._effective_tokens, context="effective")
 
     # ------------------------------------------------------------------
     def _apply_preset_definition(

@@ -40,8 +40,9 @@ Al crear la instancia puedes proporcionar:
 - `tokens`: grupos de tokens base (`colors`, `typography`, `spacing`,
   `radii`, `borders`, `shadows`, `gradients`).
 - `palette`: nombre de una paleta registrada o un mapeo personalizado con
-  variantes `light`/`dark`. Si `follow_platform_theme=True` (valor por
-  defecto), la variante activa seguirá al sistema.
+  tokens comunes (`tokens` o `common`), variantes `light`/`dark` y overrides
+  opcionales `web`/`desktop`/`mobile`. Si `follow_platform_theme=True` (valor
+  por defecto), la variante activa seguirá al sistema.
 - Overrides adaptativos (`device_tokens`, `orientation_tokens`,
   `breakpoint_tokens`). Cada estructura replica el esquema de grupos de
   tokens y se fusiona automáticamente cuando se invoca `apply_theme`.
@@ -104,11 +105,96 @@ palette = load_palette_from_file("paletas/digital_ocean.json", mode="dark")
   claves `light` y/o `dark`, aplana los grupos de colores (por ejemplo
   `info -> 100` se convierte en `info_100`) y devuelve un diccionario de
   tokens listo para combinarse con `ThemeManager.tokens`.
+- Las paletas registradas incluyen roles semánticos estándar en
+  `colors`: `success`, `warning`, `error`, `info`, `surface_soft`,
+  `surface_elevated`, `focus_ring`, `disabled` y `on_disabled`.
+- Cuando pases una paleta completa a `ThemeManager`, el gestor fusiona primero
+  tokens comunes, luego la variante `light`/`dark` activa y finalmente la
+  variante de plataforma (`web`, `desktop` o `mobile`) que coincida con
+  `apply_theme(device=...)`.
 - `ThemeManager.list_available_palettes()` reutiliza internamente
   `list_palettes()` para integrar el listado desde la propia instancia.
 
 Puedes pasar el resultado a `ThemeManager.apply_palette()` o fusionarlo en
 los tokens manualmente.
+
+## Estructura recomendada de paletas personalizadas
+
+Para nuevas paletas, usa un objeto JSON con cuatro capas declarativas:
+
+1. `tokens` (o `common`): tokens compartidos por todos los modos y plataformas.
+2. `light` / `dark`: tokens específicos del modo visual.
+3. `web` / `desktop` / `mobile`: overrides opcionales por plataforma.
+4. Overrides de ejecución (`device_tokens`, orientación, breakpoint y
+   `set_token`) que siguen teniendo prioridad desde Python.
+
+El orden efectivo de fusión en `ThemeManager` es:
+
+```text
+tokens base → paleta común → light/dark → web/desktop/mobile →
+device_tokens → orientation_tokens → breakpoint_tokens → set_token/load_token_overrides
+```
+
+Los tokens críticos recomendados dentro de `colors` son:
+
+```text
+primary, background, surface, on_surface, success, warning, error, info,
+surface_soft, surface_elevated, focus_ring, disabled, on_disabled
+```
+
+Si falta alguno de estos tokens, el gestor no bloquea la aplicación, pero
+emite una advertencia en el logger para ayudarte a detectar paletas
+incompletas durante desarrollo.
+
+Ejemplo mínimo con variantes por plataforma:
+
+```json
+{
+  "tokens": {
+    "spacing": {"page": 20, "section": 16},
+    "radii": {"card": 18}
+  },
+  "light": {
+    "colors": {
+      "primary": "#2563EB",
+      "background": "#F8FAFC",
+      "surface": "#FFFFFF",
+      "on_surface": "#111827",
+      "success": "#15803D",
+      "warning": "#B45309",
+      "error": "#B91C1C",
+      "info": "#0369A1",
+      "surface_soft": "#F1F5F9",
+      "surface_elevated": "#FFFFFF",
+      "focus_ring": "#2563EB",
+      "disabled": "#CBD5E1",
+      "on_disabled": "#64748B"
+    }
+  },
+  "dark": {
+    "colors": {
+      "primary": "#93C5FD",
+      "background": "#020617",
+      "surface": "#0F172A",
+      "on_surface": "#E2E8F0",
+      "success": "#86EFAC",
+      "warning": "#FCD34D",
+      "error": "#FCA5A5",
+      "info": "#7DD3FC",
+      "surface_soft": "#111827",
+      "surface_elevated": "#1E293B",
+      "focus_ring": "#93C5FD",
+      "disabled": "#334155",
+      "on_disabled": "#94A3B8"
+    }
+  },
+  "web": {"spacing": {"page": 24}},
+  "desktop": {"spacing": {"page": 28}},
+  "mobile": {"spacing": {"page": 16}, "radii": {"card": 24}}
+}
+```
+
+Hay un ejemplo más completo en `examples/custom_palette_platforms.json`.
 
 ## Overrides por dispositivo, orientación y breakpoint
 
@@ -172,6 +258,8 @@ El archivo puede verse así:
   overrides.
 - `tokens` define ajustes comunes a las variantes `light` y `dark`.
 - Cada variante puede agregar o reemplazar grupos específicos.
+- `web`, `desktop` y `mobile` son opcionales y se fusionan cuando el
+  dispositivo activo coincide con `apply_theme(device="...")`.
 - `mode` admite `"light"` o `"dark"`. Si lo dejas en `null` (o lo omites)
   y `follow_platform_theme=True`, el gestor seguirá la preferencia del
   sistema (modo automático). Cuando se detecte un cambio en la plataforma,

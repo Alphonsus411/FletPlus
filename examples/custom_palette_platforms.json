@@ -1,0 +1,89 @@
+{
+  "mode": null,
+  "tokens": {
+    "spacing": {
+      "page": 20,
+      "section": 16
+    },
+    "radii": {
+      "card": 18,
+      "button": 12
+    }
+  },
+  "light": {
+    "colors": {
+      "primary": "#2563EB",
+      "on_primary": "#FFFFFF",
+      "background": "#F8FAFC",
+      "on_background": "#0F172A",
+      "surface": "#FFFFFF",
+      "on_surface": "#111827",
+      "surface_variant": "#E2E8F0",
+      "on_surface_variant": "#334155",
+      "outline": "#94A3B8",
+      "accent": "#14B8A6",
+      "muted": "#64748B",
+      "success": "#15803D",
+      "warning": "#B45309",
+      "error": "#B91C1C",
+      "info": "#0369A1",
+      "surface_soft": "#F1F5F9",
+      "surface_elevated": "#FFFFFF",
+      "focus_ring": "#2563EB",
+      "disabled": "#CBD5E1",
+      "on_disabled": "#64748B"
+    }
+  },
+  "dark": {
+    "colors": {
+      "primary": "#93C5FD",
+      "on_primary": "#0F172A",
+      "background": "#020617",
+      "on_background": "#E2E8F0",
+      "surface": "#0F172A",
+      "on_surface": "#E2E8F0",
+      "surface_variant": "#1E293B",
+      "on_surface_variant": "#CBD5E1",
+      "outline": "#475569",
+      "accent": "#2DD4BF",
+      "muted": "#94A3B8",
+      "success": "#86EFAC",
+      "warning": "#FCD34D",
+      "error": "#FCA5A5",
+      "info": "#7DD3FC",
+      "surface_soft": "#111827",
+      "surface_elevated": "#1E293B",
+      "focus_ring": "#93C5FD",
+      "disabled": "#334155",
+      "on_disabled": "#94A3B8"
+    }
+  },
+  "web": {
+    "spacing": {
+      "page": 24,
+      "section": 20
+    },
+    "radii": {
+      "card": 20
+    }
+  },
+  "desktop": {
+    "spacing": {
+      "page": 28,
+      "section": 22
+    },
+    "radii": {
+      "card": 16
+    }
+  },
+  "mobile": {
+    "spacing": {
+      "page": 16,
+      "section": 12
+    },
+    "radii": {
+      "card": 24,
+      "button": 16
+    }
+  }
+}
