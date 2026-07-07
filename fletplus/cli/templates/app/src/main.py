@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import flet as ft
-from layout import responsive_shell, spacing
-from routes import render_initial_route
-from theme import create_frontend_config
+from frontend.layout import responsive_shell, spacing
+from frontend.routes import render_initial_route
+from frontend.theme import create_frontend_config
 
 from fletplus import FrontEndConfig
 
@@ -24,7 +24,7 @@ def build_home(page: ft.Page) -> ft.Control:
                 text_align=ft.TextAlign.CENTER,
             ),
             ft.Text(
-                "Personaliza paletas, fuentes, tokens y layout desde src/theme.py y src/layout.py.",
+                "Personaliza paletas, fuentes, tokens y layout desde src/frontend/theme.py y src/frontend/layout.py.",
                 text_align=ft.TextAlign.CENTER,
             ),
         ],

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from .config import ASSETS_DIR, PLACEHOLDER_README
 
-ASSETS_DIR = Path("assets")
-PLACEHOLDER_README = ASSETS_DIR / "README.md"
+__all__ = ["ASSETS_DIR", "PLACEHOLDER_README"]
