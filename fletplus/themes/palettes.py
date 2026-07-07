@@ -985,6 +985,76 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
 }
 
 
+_SEMANTIC_COLOR_DEFAULTS: Dict[str, Dict[str, str]] = {
+    "light": {
+        "success": "#2E7D32",
+        "warning": "#B26A00",
+        "error": "#B3261E",
+        "info": "#0B57D0",
+        "surface_soft": "#F7F2FA",
+        "surface_elevated": "#FFFFFF",
+        "focus_ring": "#6750A4",
+        "disabled": "#1D1B201F",
+        "on_disabled": "#1D1B2061",
+    },
+    "dark": {
+        "success": "#81C784",
+        "warning": "#FFCF70",
+        "error": "#F2B8B5",
+        "info": "#A8C7FA",
+        "surface_soft": "#211F26",
+        "surface_elevated": "#2B2930",
+        "focus_ring": "#D0BCFF",
+        "disabled": "#E6E0E91F",
+        "on_disabled": "#E6E0E961",
+    },
+}
+
+_PLATFORM_VARIANTS: Dict[str, Dict[str, Dict[str, object]]] = {
+    "web": {
+        "spacing": {"page": 24, "section": 20},
+        "radii": {"focus_ring": 6},
+    },
+    "desktop": {
+        "spacing": {"page": 28, "section": 22},
+        "radii": {"focus_ring": 4},
+    },
+    "mobile": {
+        "spacing": {"page": 16, "section": 14},
+        "radii": {"focus_ring": 8},
+    },
+}
+
+
+def _extend_palette_definitions() -> None:
+    """Añade tokens semánticos y variantes por plataforma a las paletas incluidas."""
+
+    for definition in _PRESET_PALETTES.values():
+        for mode, defaults in _SEMANTIC_COLOR_DEFAULTS.items():
+            mode_tokens = definition.setdefault(mode, {})
+            if not isinstance(mode_tokens, dict):
+                continue
+            colors = mode_tokens.setdefault("colors", {})
+            if isinstance(colors, dict):
+                for token, value in defaults.items():
+                    colors.setdefault(token, value)
+                colors.setdefault("focus_ring", colors.get("primary", defaults["focus_ring"]))
+                colors.setdefault("surface_soft", colors.get("surface_variant", defaults["surface_soft"]))
+                colors.setdefault("surface_elevated", colors.get("surface", defaults["surface_elevated"]))
+        for platform, tokens in _PLATFORM_VARIANTS.items():
+            platform_tokens = definition.setdefault(platform, {})
+            if not isinstance(platform_tokens, dict):
+                continue
+            for group, values in tokens.items():
+                group_tokens = platform_tokens.setdefault(group, {})
+                if isinstance(group_tokens, dict) and isinstance(values, dict):
+                    for token, value in values.items():
+                        group_tokens.setdefault(token, value)
+
+
+_extend_palette_definitions()
+
+
 def list_palettes() -> Iterable[Tuple[str, str]]:
     """Devuelve un iterable con pares ``(nombre, descripción)``."""
 
