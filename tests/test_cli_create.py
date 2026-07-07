@@ -99,9 +99,53 @@ def test_create_template_uses_main_flet_version_policy(
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-@pytest.mark.parametrize("template_name", ["app", "web", "desktop", "mobile"])
+@pytest.mark.parametrize(
+    ("template_name", "expected_markers", "unexpected_markers"),
+    [
+        (
+            "app",
+            ["FrontEndConfig", "Plantilla responsive activa"],
+            ["register_pwa", "safe_set_window_attr", "NavigationBar"],
+        ),
+        (
+            "web",
+            [
+                "from fletplus.web.pwa import",
+                "register_pwa(page",
+                "prepare_pwa_assets",
+                "view=ft.AppView.WEB_BROWSER",
+                "assets_dir=str(PWA_DIR)",
+            ],
+            ["safe_set_window_attr", "NavigationBar"],
+        ),
+        (
+            "desktop",
+            [
+                "from fletplus.utils.flet_compat import safe_set_window_attr",
+                "configure_window(page)",
+                "safe_set_window_attr(page, \"min_width\"",
+                "Panel principal",
+            ],
+            ["register_pwa", "NavigationBar"],
+        ),
+        (
+            "mobile",
+            [
+                "make_navigation_bar_destination",
+                "ft.NavigationBar",
+                "SafeArea",
+                "layout_density=\"compact\"",
+            ],
+            ["register_pwa", "safe_set_window_attr"],
+        ),
+    ],
+)
 def test_create_supports_frontend_templates(
-    monkeypatch, watchdog_available: bool, template_name: str
+    monkeypatch,
+    watchdog_available: bool,
+    template_name: str,
+    expected_markers: list[str],
+    unexpected_markers: list[str],
 ) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
     app = _load_cli_app()
@@ -113,8 +157,13 @@ def test_create_supports_frontend_templates(
 
         assert result.exit_code == 0, result.output
         main_py = (base / "demo" / "src" / "main.py").read_text(encoding="utf-8")
+        readme = (base / "demo" / "README.md").read_text(encoding="utf-8")
         assert "FrontEndConfig" in main_py
-        assert "Plantilla" in main_py
+        for marker in expected_markers:
+            assert marker in main_py
+        for marker in unexpected_markers:
+            assert marker not in main_py
+        assert "fletplus run" in readme
         assert (base / "demo" / "requirements.txt").exists()
 
 
