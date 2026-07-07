@@ -6,8 +6,17 @@ from pathlib import Path
 
 import flet as ft
 
-from fletplus import FletPlusApp, enable_compat_patches
+from fletplus import (
+    FletPlusApp,
+    FloatingMenuOptions,
+    ResponsiveNavigationConfig,
+    enable_compat_patches,
+)
 from fletplus.core_legacy import FletPlusApp as LegacyFletPlusApp
+from fletplus.core_legacy import FloatingMenuOptions as LegacyFloatingMenuOptions
+from fletplus.core_legacy import (
+    ResponsiveNavigationConfig as LegacyResponsiveNavigationConfig,
+)
 from fletplus_demo import main as demo_main
 from fletplus_demo.app import create_app
 
@@ -37,6 +46,13 @@ class DummyPage:
 
 def test_public_fletplus_app_alias_targets_legacy_contract():
     assert FletPlusApp is LegacyFletPlusApp
+
+
+def test_public_responsive_navigation_options_alias_legacy_contract():
+    from fletplus import FloatingMenuOptions, ResponsiveNavigationConfig
+
+    assert FloatingMenuOptions is LegacyFloatingMenuOptions
+    assert ResponsiveNavigationConfig is LegacyResponsiveNavigationConfig
 
 
 def test_public_entrypoints_use_real_modules_without_stubs():

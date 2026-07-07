@@ -52,6 +52,7 @@ LAZY_IMPORTS = {
     "FlexColumn": "fletplus.components",
     "FlexRow": "fletplus.components",
     "FloatingActionButton": "fletplus.components",
+    "FloatingMenuOptions": "fletplus.core_legacy",
     # Contrato público oficial por compatibilidad: API legacy.
     # La nueva core desacoplada sigue disponible vía `fletplus.core`.
     "FletPlusApp": "fletplus.core_legacy",
@@ -72,6 +73,7 @@ LAZY_IMPORTS = {
     "ResponsiveContainer": "fletplus.components",
     "ResponsiveGrid": "fletplus.components",
     "ResponsiveManager": "fletplus.utils",
+    "ResponsiveNavigationConfig": "fletplus.core_legacy",
     "Layout": "fletplus.core",
     "State": "fletplus.core",
     "ResponsiveStyle": "fletplus.utils",
@@ -182,7 +184,11 @@ if TYPE_CHECKING:
         user_context,
     )
     from fletplus.core import Layout, State
-    from fletplus.core_legacy import FletPlusApp
+    from fletplus.core_legacy import (
+        FletPlusApp,
+        FloatingMenuOptions,
+        ResponsiveNavigationConfig,
+    )
     from fletplus.desktop import SystemTray, WindowManager, show_notification
     from fletplus.frontend import FrontEndConfig
     from fletplus.http import (
@@ -249,6 +255,8 @@ if TYPE_CHECKING:
 __all__ = [
     "enable_compat_patches",
     "FletPlusApp",
+    "FloatingMenuOptions",
+    "ResponsiveNavigationConfig",
     "FrontEndConfig",
     "Layout",
     "State",
