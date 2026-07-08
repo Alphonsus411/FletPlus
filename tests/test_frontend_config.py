@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import flet as ft
+import pytest
 
 from fletplus.frontend import FrontEndConfig
 
@@ -155,6 +156,54 @@ unknown = 'ignored'
     assert config.max_content_width == 960
     assert config.spacing == 14
     assert config.layout_density == "compact"
+
+
+def test_frontend_config_loads_official_frontend_sections(tmp_path: Path) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.fletplus.frontend]
+palette = 'material'
+mode = 'dark'
+font_family = 'Inter'
+page_padding = 20
+max_content_width = 1000
+min_content_width = 360
+spacing = 18
+layout_density = 'comfortable'
+target = 'web'
+
+[tool.fletplus.frontend.fonts]
+Inter = 'assets/fonts/Inter.ttf'
+
+[tool.fletplus.frontend.tokens.colors]
+primary = '#2563EB'
+
+[tool.fletplus.frontend.tokens.spacing]
+page = 20
+section = 32
+""",
+        encoding="utf-8",
+    )
+
+    config = FrontEndConfig.from_pyproject(pyproject)
+
+    assert config.target == "web"
+    assert config.font_assets == {"Inter": "assets/fonts/Inter.ttf"}
+    assert config.theme_tokens["colors"]["primary"] == "#2563EB"
+    assert config.theme_tokens["spacing"]["section"] == 32
+
+
+def test_frontend_config_rejects_invalid_official_values(tmp_path: Path) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.fletplus.frontend]
+mode = 'sepia'
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="mode"):
+        FrontEndConfig.from_pyproject(pyproject)
 
 
 def test_frontend_config_from_pyproject_uses_defaults_when_missing(

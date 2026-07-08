@@ -19,6 +19,60 @@ from fletplus.utils.device_profiles import (
 TypographyStyle = Mapping[str, int | float | str | None]
 TypographyScale = Mapping[str, TypographyStyle | Mapping[str, TypographyStyle]]
 
+_ALLOWED_MODES = {"light", "dark"}
+_ALLOWED_DENSITIES = {"compact", "normal", "comfortable", "spacious"}
+_ALLOWED_TARGETS = {
+    "web",
+    "desktop",
+    "mobile",
+    "app",
+    "all",
+    "android-apk",
+    "android-aab",
+    "ios",
+}
+_NUMERIC_FIELDS = {
+    "page_padding",
+    "max_content_width",
+    "min_content_width",
+    "spacing",
+}
+
+
+def _ensure_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise ValueError(f"[tool.fletplus.frontend.{field_name}] debe ser una tabla TOML")
+    return value
+
+
+def _validate_positive_int(value: Any, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"tool.fletplus.frontend.{field_name} debe ser un entero positivo")
+    if value < 0:
+        raise ValueError(f"tool.fletplus.frontend.{field_name} no puede ser negativo")
+    return value
+
+
+def _validate_string(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"tool.fletplus.frontend.{field_name} debe ser una cadena no vacía")
+    return value.strip()
+
+
+def _validate_string_mapping(value: Mapping[str, Any], field_name: str) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError(
+                "Las claves de tool.fletplus.frontend."
+                f"{field_name} deben ser cadenas no vacías"
+            )
+        result[key.strip()] = _validate_string(item, f"{field_name}.{key}")
+    return result
+
+
 DEFAULT_TYPOGRAPHY_TOKENS: dict[str, dict[str, dict[str, int | float | str]]] = {
     "display": {
         "mobile": {"size": 40, "weight": "w700", "line_height": 1.1},
@@ -115,16 +169,71 @@ class FrontEndConfig:
     theme_tokens: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
     typography_tokens: TypographyScale = field(default_factory=dict)
     follow_platform_theme: bool = False
+    target: str | None = None
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
         allowed = {
-            "palette", "mode", "font_family", "font_assets", "page_padding",
+            "palette", "mode", "font_family", "font_assets", "fonts", "page_padding",
             "max_content_width", "min_content_width", "allow_min_width_overflow",
-            "spacing", "layout_density", "theme_tokens", "typography_tokens",
-            "follow_platform_theme",
+            "spacing", "layout_density", "theme_tokens", "typography_tokens", "tokens",
+            "follow_platform_theme", "target",
         }
-        normalized = {key: value for key, value in data.items() if key in allowed}
+        normalized: dict[str, Any] = {}
+        for key, value in data.items():
+            if key not in allowed:
+                continue
+            if key in _NUMERIC_FIELDS:
+                normalized[key] = _validate_positive_int(value, key)
+            elif key in {"palette", "mode", "font_family", "layout_density", "target"}:
+                normalized[key] = _validate_string(value, key)
+            elif key == "allow_min_width_overflow" or key == "follow_platform_theme":
+                if not isinstance(value, bool):
+                    raise ValueError(f"tool.fletplus.frontend.{key} debe ser booleano")
+                normalized[key] = value
+            elif key == "font_assets":
+                normalized[key] = _validate_string_mapping(
+                    _ensure_mapping(value, key), key
+                )
+            elif key == "fonts":
+                fonts = _validate_string_mapping(_ensure_mapping(value, key), key)
+                normalized["font_assets"] = {
+                    **fonts,
+                    **dict(normalized.get("font_assets", {})),
+                }
+            elif key == "tokens":
+                tokens = _ensure_mapping(value, key)
+                normalized["theme_tokens"] = {
+                    **dict(normalized.get("theme_tokens", {})),
+                    **dict(tokens),
+                }
+            elif key in {"theme_tokens", "typography_tokens"}:
+                normalized[key] = _ensure_mapping(value, key)
+
+        mode = normalized.get("mode")
+        if mode is not None and mode not in _ALLOWED_MODES:
+            raise ValueError("tool.fletplus.frontend.mode debe ser 'light' o 'dark'")
+        density = normalized.get("layout_density")
+        if density is not None and density not in _ALLOWED_DENSITIES:
+            raise ValueError(
+                "tool.fletplus.frontend.layout_density debe ser uno de "
+                f"{sorted(_ALLOWED_DENSITIES)}"
+            )
+        target = normalized.get("target")
+        if target is not None and target not in _ALLOWED_TARGETS:
+            raise ValueError(
+                "tool.fletplus.frontend.target debe ser uno de "
+                f"{sorted(_ALLOWED_TARGETS)}"
+            )
+        if (
+            "min_content_width" in normalized
+            and "max_content_width" in normalized
+            and normalized["min_content_width"] > normalized["max_content_width"]
+        ):
+            raise ValueError(
+                "tool.fletplus.frontend.min_content_width no puede superar "
+                "max_content_width"
+            )
         return cls(**normalized)
 
     @classmethod

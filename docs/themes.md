@@ -308,6 +308,54 @@ Con estos bloques puedes construir selectores de tema avanzados, sincronizar
 la UI con la configuración del sistema y ofrecer personalización persistente
 sin duplicar lógica.
 
+
+## Configuración oficial `[tool.fletplus.frontend]`
+
+Las plantillas generadas por `fletplus create` incluyen una sección oficial de
+frontend en `pyproject.toml`. `FrontEndConfig.from_pyproject()` lee esa tabla y
+valida tipos, modo visual, densidad y destino antes de crear la configuración:
+
+```toml
+[tool.fletplus.frontend]
+palette = "material"
+mode = "light"
+font_family = "Roboto"
+page_padding = 24
+max_content_width = 1100
+min_content_width = 320
+spacing = 16
+layout_density = "comfortable"
+target = "web"
+
+[tool.fletplus.frontend.fonts]
+Inter = "assets/fonts/Inter.ttf"
+
+[tool.fletplus.frontend.tokens.colors]
+primary = "#2563EB"
+surface = "#FFFFFF"
+
+[tool.fletplus.frontend.tokens.spacing]
+page = 24
+section = 32
+```
+
+Campos principales:
+
+- `palette`: paleta registrada que se aplicará mediante `ThemeManager`.
+- `mode`: variante visual, `"light"` o `"dark"`.
+- `font_family`: familia principal asignada al tema de Flet.
+- `page_padding`: padding global aplicado a la página y al shell de contenido.
+- `max_content_width` / `min_content_width`: límites para layouts centrados.
+- `spacing`: separación base para componentes y helpers de layout.
+- `layout_density`: `"compact"`, `"normal"`, `"comfortable"` o `"spacious"`.
+- `target`: destino esperado de la plantilla o build (`web`, `desktop`,
+  `mobile`, `app`, `all`, `android-apk`, `android-aab` o `ios`).
+
+Las subsecciones son opcionales. `[tool.fletplus.frontend.fonts]` se traduce a
+`font_assets`, y cualquier grupo bajo `[tool.fletplus.frontend.tokens.*]` se
+fusiona en `theme_tokens` para que `FrontEndConfig.apply_to_page()` lo publique
+en el `ThemeManager` activo.
+
 ## Tipografía como tokens del tema
 
 La configuración de frontend publica la escala tipográfica dentro del grupo de
