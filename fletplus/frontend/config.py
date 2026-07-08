@@ -253,6 +253,7 @@ class FrontEndConfig:
     spacing: int = 16
     responsive_profiles: Sequence[DeviceProfile] = DEFAULT_DEVICE_PROFILES
     layout_density: str = "comfortable"
+    preset: str | None = None
     theme_tokens: Mapping[str, Mapping[str, object]] = field(default_factory=dict)
     typography_tokens: TypographyScale = field(default_factory=dict)
     follow_platform_theme: bool = False
@@ -273,6 +274,7 @@ class FrontEndConfig:
             "allow_min_width_overflow",
             "spacing",
             "layout_density",
+            "preset",
             "theme_tokens",
             "typography_tokens",
             "tokens",
@@ -285,7 +287,14 @@ class FrontEndConfig:
                 continue
             if key in _NUMERIC_FIELDS:
                 normalized[key] = _validate_positive_int(value, key)
-            elif key in {"palette", "mode", "font_family", "layout_density", "target"}:
+            elif key in {
+                "palette",
+                "mode",
+                "font_family",
+                "layout_density",
+                "preset",
+                "target",
+            }:
                 normalized[key] = _validate_string(value, key)
             elif key == "allow_min_width_overflow" or key == "follow_platform_theme":
                 if not isinstance(value, bool):

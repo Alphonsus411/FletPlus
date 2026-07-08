@@ -20,6 +20,8 @@ from typing import Callable, Dict, Iterable
 
 import click
 
+from fletplus.themes import get_preset_definition, get_preset_metadata, list_presets
+
 from .build import DEFAULT_BUILD_TIMEOUT_SECONDS, PackagingError, run_build
 
 
@@ -85,6 +87,49 @@ FLET_RUN_ENV_WHITELIST = (
 @click.group()
 def app() -> None:
     """Herramientas de línea de comandos para proyectos FletPlus."""
+
+
+def _available_preset_names() -> tuple[str, ...]:
+    return tuple(name for name, _description in list_presets())
+
+
+def _frontend_preset_context(preset_name: str) -> Dict[str, str]:
+    definition = get_preset_definition(preset_name)
+    metadata = get_preset_metadata(preset_name)
+    light_tokens = definition.get("light", {})
+    palette = str(
+        metadata.get("palette")
+        or light_tokens.get("meta", {}).get("palette")
+        or "material"
+    )
+    density = str(
+        metadata.get("density")
+        or light_tokens.get("meta", {}).get("density")
+        or "comfortable"
+    )
+    spacing_tokens = dict(light_tokens.get("spacing", {}))
+    radii_tokens = dict(light_tokens.get("radii", {}))
+    shadow_tokens = dict(light_tokens.get("shadows", {}))
+    typography_tokens = dict(light_tokens.get("typography", {}))
+    font_family = str(typography_tokens.get("font_family") or "Roboto")
+    spacing = int(spacing_tokens.get("md") or spacing_tokens.get("section") or 16)
+    page_padding = int(spacing_tokens.get("page") or 24)
+    custom_tokens = {
+        "colors": {"brand": "#2563EB", "surface_soft": "#F8FAFC"},
+        "spacing": spacing_tokens,
+        "radii": radii_tokens,
+        "shadows": shadow_tokens,
+        "typography": typography_tokens,
+    }
+    return {
+        "preset_name": preset_name,
+        "palette_name": palette,
+        "font_family": font_family,
+        "layout_density": density,
+        "spacing": str(spacing),
+        "page_padding": str(page_padding),
+        "custom_tokens_repr": repr(custom_tokens),
+    }
 
 
 def _render_template(content: str, context: Dict[str, str]) -> str:
@@ -235,7 +280,17 @@ def _validate_project_name(nombre: str) -> None:
     show_default=True,
     help="Plantilla inicial del proyecto.",
 )
-def create(nombre: str, directorio_base: Path | None, template_name: str) -> None:
+@click.option(
+    "--preset",
+    "preset_name",
+    type=click.Choice(_available_preset_names(), case_sensitive=False),
+    default="saas",
+    show_default=True,
+    help="Preset visual inicial del proyecto.",
+)
+def create(
+    nombre: str, directorio_base: Path | None, template_name: str, preset_name: str
+) -> None:
     """Genera la estructura base de una aplicación FletPlus."""
 
     if directorio_base is None:
@@ -257,14 +312,19 @@ def create(nombre: str, directorio_base: Path | None, template_name: str) -> Non
         )
 
     proyecto.mkdir(parents=True, exist_ok=True)
+    normalized_preset = preset_name.lower()
     contexto = {"project_name": nombre, "package_name": paquete}
+    contexto.update(_frontend_preset_context(normalized_preset))
 
     plantilla_base = resources.files(TEMPLATE_PACKAGE).joinpath(
         "templates", template_name.lower()
     )
     _copy_template_tree(plantilla_base, proyecto, contexto)
 
-    click.echo(f"Proyecto creado en {proyecto} con plantilla {template_name.lower()}")
+    click.echo(
+        f"Proyecto creado en {proyecto} con plantilla {template_name.lower()} "
+        f"y preset {normalized_preset}"
+    )
 
 
 def _should_ignore(path: Path, watch_path: Path | None = None) -> bool:

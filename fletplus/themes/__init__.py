@@ -17,6 +17,7 @@ LAZY_IMPORTS = {
     "list_presets": "fletplus.themes.presets",
     "has_preset": "fletplus.themes.presets",
     "get_preset_definition": "fletplus.themes.presets",
+    "get_preset_metadata": "fletplus.themes.presets",
 }
 
 if TYPE_CHECKING:
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
     )
     from fletplus.themes.presets import (
         get_preset_definition,
+        get_preset_metadata,
         has_preset,
         list_presets,
     )
@@ -50,6 +52,7 @@ __all__ = [
     "list_presets",
     "has_preset",
     "get_preset_definition",
+    "get_preset_metadata",
 ]
 
 

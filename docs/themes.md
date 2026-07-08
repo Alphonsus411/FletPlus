@@ -84,6 +84,48 @@ y los atajos `apply_material3()`, `apply_fluent()` y `apply_cupertino()`. Si
 llamas a estos métodos con `mode="dark"`, el gestor desactiva la sincronización
 automática y aplica la variante solicitada antes de refrescar la página.
 
+### Presets de producto de alto nivel
+
+Además de los presets de sistema (`material3`, `fluent`, `cupertino`), FletPlus
+incluye presets orientados a tipos de producto. Estos presets declaran una
+paleta base, escala de spacing, radios, sombras, tipografía recomendada y
+densidad visual. La CLI los usa al crear proyectos y también pueden
+inspeccionarse con `list_presets()` / `get_preset_definition()`.
+
+| Preset | Paleta base | Densidad | Uso recomendado |
+| --- | --- | --- | --- |
+| `dashboard` | `fjord` | `compact` | KPIs, tablas, paneles de analítica y vistas con mucha información. |
+| `landing` | `solstice` | `spacious` | Páginas de marketing, hero sections, storytelling y conversión. |
+| `admin` | `metropolis` | `compact` | Backoffices, CRUDs, navegación lateral y herramientas internas. |
+| `mobile_app` | `aurora` | `comfortable` | Apps táctiles, navegación inferior, tarjetas amplias y lectura rápida. |
+| `saas` | `zenith` | `comfortable` | Productos SaaS, onboarding, ajustes de cuenta y paneles equilibrados. |
+| `ecommerce` | `citrus` | `comfortable` | Catálogos, fichas de producto, carritos y checkout. |
+
+Ejemplos rápidos:
+
+```python
+from fletplus.themes import get_preset_definition, get_preset_metadata
+
+dashboard = get_preset_definition("dashboard")
+dashboard_meta = get_preset_metadata("dashboard")
+print(dashboard_meta["palette"])  # fjord
+print(dashboard["light"]["spacing"]["page"])
+```
+
+```bash
+fletplus create Analitica --preset dashboard
+fletplus create Marketing --template web --preset landing
+fletplus create Backoffice --template desktop --preset admin
+fletplus create MiApp --template mobile --preset mobile_app
+fletplus create ProductoSaas --preset saas
+fletplus create Tienda --template web --preset ecommerce
+```
+
+En los proyectos generados, la paleta base queda escrita en
+`[tool.fletplus.frontend].palette`, la densidad en `layout_density`, el spacing
+base en `spacing`, y el resto de tokens en `src/frontend/config.py` bajo
+`CUSTOM_TOKENS`.
+
 ## Paletas y archivos externos
 
 Las paletas agrupan colores, gradientes y otros tokens. Puedes explorarlas y

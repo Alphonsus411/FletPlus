@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
-PALETTE_NAME = "material"
+PALETTE_NAME = "{{ palette_name }}"
 PALETTE_MODE = "light"
-FONT_FAMILY = "Roboto"
+FONT_FAMILY = "{{ font_family }}"
 FONT_FALLBACK_FAMILIES = ("Arial", "sans-serif")
 FONT_ASSETS = {
     # Registra fuentes locales incluidas en assets/fonts/.
@@ -31,19 +32,21 @@ TYPOGRAPHY_TOKENS = {
     "caption": {"mobile": {"size": 11, "weight": "w400", "line_height": 1.35}},
 }
 
-CUSTOM_TOKENS = {
-    "colors": {
-        "brand": "#2563EB",
-        "brand_container": "#DBEAFE",
-        "surface_soft": "#F8FAFC",
-    },
+DEFAULT_CUSTOM_TOKENS = {
+    "colors": {"brand": "#2563EB", "surface_soft": "#F8FAFC"},
     "spacing": {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32},
-    "radius": {"card": 18, "pill": 999},
+    "radii": {"card": 18, "pill": 999},
 }
-PAGE_PADDING = 32
+_CUSTOM_TOKENS_SOURCE = """{{ custom_tokens_repr }}"""
+CUSTOM_TOKENS = (
+    DEFAULT_CUSTOM_TOKENS
+    if _CUSTOM_TOKENS_SOURCE.strip().startswith("{{")
+    else ast.literal_eval(_CUSTOM_TOKENS_SOURCE)
+)
+PAGE_PADDING = int("0{{ page_padding }}".replace("0{{ page_padding }}", "24"))
 MAX_CONTENT_WIDTH = 1180
 MIN_CONTENT_WIDTH = 320
-SPACING = 20
-LAYOUT_DENSITY = "comfortable"
+SPACING = int("0{{ spacing }}".replace("0{{ spacing }}", "16"))
+LAYOUT_DENSITY = "{{ layout_density }}"
 ASSETS_DIR = Path("assets")
 PLACEHOLDER_README = ASSETS_DIR / "README.md"
