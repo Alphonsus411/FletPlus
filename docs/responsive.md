@@ -385,3 +385,38 @@ orientación y perfil activo, evitando duplicar lógica defensiva en cada callba
 Las plantillas `web`, `desktop` y `mobile` también los importan en
 `src/frontend/layout.py` para mostrar metadata de perfil, orientación, densidad
 y tamaño actual.
+
+## Layouts frontend por perfil de dispositivo
+
+Además de `ResponsiveGrid`, el módulo `fletplus.components.frontend_layouts`
+ofrece componentes semánticos que consumen los mismos perfiles de dispositivo y
+los tokens visuales de `FrontEndConfig`/`ThemeManager`.
+
+El helper `resolve_layout_tokens(page, ...)` calcula en un único lugar:
+
+- `profile`: `DeviceProfile` activo según el ancho de la página.
+- `spacing`: valor explícito, override por dispositivo, `theme.tokens["spacing"]["default"]`
+  o `FrontEndConfig.spacing`.
+- `padding`: valor explícito, `padding_by_device` o `FrontEndConfig.page_padding`.
+- `max_width`: valor explícito, `max_width_by_device` o `FrontEndConfig.max_content_width`.
+- `columns`: valor explícito, `columns_by_device` o `DeviceProfile.columns`.
+
+```python
+from fletplus.components import resolve_layout_tokens
+
+layout = resolve_layout_tokens(
+    page,
+    config=frontend,
+    theme=theme,
+    spacing_by_device={"mobile": 12, "tablet": 16, "desktop": 24},
+    padding_by_device={"mobile": 12, "desktop": 32},
+    columns_by_device={"mobile": 1, "tablet": 2, "desktop": 4},
+)
+
+print(layout.profile.name, layout.spacing, layout.columns)
+```
+
+Los componentes `PageShell`, `Section`, `CardGrid`, `HeroSection`,
+`ToolbarSection` y `FooterSection` llaman internamente a este helper. Esto
+permite que una app cambie de layout entre móvil, tablet y escritorio sin
+centralizar la lógica responsive en cada pantalla.
