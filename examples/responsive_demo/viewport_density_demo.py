@@ -5,14 +5,7 @@ from __future__ import annotations
 import flet as ft
 
 from fletplus.utils.responsive_manager import ResponsiveManager
-from fletplus.utils.viewport import (
-    active_device_profile,
-    safe_mobile_padding,
-    safe_page_height,
-    safe_page_width,
-    viewport_orientation,
-    visual_density_for_page,
-)
+from fletplus.utils.viewport import viewport_info
 
 
 def _metric(label: str, value: str) -> ft.Control:
@@ -37,19 +30,15 @@ def main(page: ft.Page) -> None:
     panel = ft.Container(border_radius=18, content=metrics)
 
     def sync(_: object | None = None) -> None:
-        width = safe_page_width(page, fallback=390)
-        height = safe_page_height(page, fallback=844)
-        profile = active_device_profile(page)
-        orientation = viewport_orientation(page)
-        density = visual_density_for_page(page)
-        panel.padding = safe_mobile_padding(page)
+        info = viewport_info(page, fallback_width=390, fallback_height=844)
+        panel.padding = info.padding
         status.value = "Redimensiona la ventana o rota el dispositivo para actualizar los valores."
         metrics.controls = [
-            _metric("Viewport", f"{width} × {height}"),
-            _metric("Orientación", orientation),
-            _metric("Perfil", f"{profile.name} · {profile.columns} columnas"),
-            _metric("Densidad", density),
-            _metric("Padding", str(panel.padding)),
+            _metric("Viewport", f"{info.width} × {info.height}"),
+            _metric("Orientación", info.orientation),
+            _metric("Perfil", f"{info.profile.name} · {info.profile.columns} columnas"),
+            _metric("Densidad", info.density),
+            _metric("Padding", str(info.padding)),
         ]
         page.update()
 

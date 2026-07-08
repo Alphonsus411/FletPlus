@@ -17,10 +17,7 @@ from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager_rs import apply_styles as _apply_styles_rs
 from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.utils.viewport import (
-    active_device_profile,
-    safe_page_height,
-    safe_page_width,
-    viewport_orientation,
+    viewport_info,
 )
 
 _STYLE_ATTRS = (
@@ -108,6 +105,9 @@ else:
             self._current_height_bp = None
             self._current_orientation = None
             self._current_device = None
+            self.current_viewport = viewport_info(
+                self.page, profiles=self.device_profiles
+            )
 
             self._styles: dict[ft.Control, ResponsiveStyle] = {}
             self._style_state: dict[ft.Control, dict[str, dict[str, object]]] = {}
@@ -241,8 +241,10 @@ else:
         # ------------------------------------------------------------------
         def _handle_resize(self, _event: ft.ControlEvent | None = None) -> None:
             page = self.page
-            width = safe_page_width(page)
-            height = safe_page_height(page)
+            info = viewport_info(page, profiles=self.device_profiles)
+            self.current_viewport = info
+            width = info.width
+            height = info.height
 
             bp_w = None
             bp_h = None
@@ -272,7 +274,7 @@ else:
                     bh_callback(height)
 
             # Orientación
-            orientation = viewport_orientation(page)
+            orientation = info.orientation
             if orientation != self._current_orientation:
                 self._current_orientation = orientation
                 orientation_callback = self.orientation_callbacks.get(orientation)
@@ -281,7 +283,7 @@ else:
 
             # Tipo de dispositivo (según ancho)
             if self.device_callbacks and self.device_profiles:
-                profile = active_device_profile(page, self.device_profiles)
+                profile = info.profile
                 if profile.name != self._current_device:
                     self._current_device = profile.name
                     device_callback = self.device_callbacks.get(profile.name)

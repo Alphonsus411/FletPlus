@@ -8,6 +8,7 @@ from fletplus.utils.viewport import (
     safe_page_size,
     safe_page_width,
     viewport_orientation,
+    viewport_info,
     visual_density_for_page,
 )
 
@@ -51,3 +52,18 @@ def test_safe_mobile_padding_uses_custom_profiles():
     assert isinstance(padding, ft.Padding)
     assert padding.left == padding.right
     assert padding.top == padding.bottom
+
+
+def test_viewport_info_reuses_consistent_snapshot():
+    page = DummyPage(width=420, height=900)
+
+    info = viewport_info(page, padding_base=20)
+
+    assert info.width == 420
+    assert info.height == 900
+    assert info.orientation == "portrait"
+    assert info.profile.name == "mobile"
+    assert info.density == "compact"
+    assert info.padding.left == 15
+    assert info.padding.top == 16
+    assert info.padding.bottom == 20

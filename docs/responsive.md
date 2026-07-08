@@ -380,6 +380,26 @@ from fletplus.utils.viewport import safe_mobile_padding
 content = ft.Container(content=body, padding=safe_mobile_padding(page, base=20))
 ```
 
+
+### Snapshot completo del viewport
+
+Cuando necesitas varios datos en el mismo render o callback de resize, usa
+`viewport_info(page)`. El helper devuelve un `ViewportInfo` inmutable con ancho,
+alto, orientación, perfil activo, densidad visual y padding seguro calculados de
+forma consistente para ese instante.
+
+```python
+from fletplus.utils.viewport import viewport_info
+
+info = viewport_info(page, fallback_width=390, fallback_height=844, padding_base=20)
+print(info.width, info.height, info.orientation, info.profile.name, info.density)
+content.padding = info.padding
+```
+
+`ResponsiveManager` mantiene el último snapshot en `manager.current_viewport`
+después de cada resize, por lo que los callbacks pueden leer el estado activo
+sin volver a inspeccionar `page.width`, `page.height` o `page.window`.
+
 `ResponsiveManager` usa estos helpers internamente para calcular ancho, alto,
 orientación y perfil activo, evitando duplicar lógica defensiva en cada callback.
 Las plantillas `web`, `desktop` y `mobile` también los importan en

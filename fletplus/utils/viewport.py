@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Literal, Sequence
 
 import flet as ft
@@ -15,6 +16,23 @@ from fletplus.utils.flet_compat import get_page_height, get_page_width
 
 Orientation = Literal["portrait", "landscape"]
 VisualDensity = Literal["compact", "normal", "comfortable"]
+
+
+@dataclass(frozen=True)
+class ViewportInfo:
+    """Snapshot normalizado del viewport activo.
+
+    El snapshot evita recalcular ancho, alto, orientación, perfil y densidad en
+    varios widgets dentro del mismo ciclo de resize. Es especialmente útil en
+    callbacks de ``ResponsiveManager`` y plantillas generadas por la CLI.
+    """
+
+    width: int
+    height: int
+    orientation: Orientation
+    profile: DeviceProfile
+    density: VisualDensity
+    padding: ft.Padding
 
 
 def safe_page_width(page: ft.Page, fallback: int | float = 0) -> int:
@@ -50,11 +68,17 @@ def safe_page_size(
     )
 
 
+def orientation_from_size(width: int | float, height: int | float) -> Orientation:
+    """Detecta orientación a partir de dimensiones ya normalizadas."""
+
+    return "portrait" if height >= width else "landscape"
+
+
 def viewport_orientation(page: ft.Page) -> Orientation:
     """Detecta si el viewport actual está en ``portrait`` o ``landscape``."""
 
     width, height = safe_page_size(page)
-    return "portrait" if height >= width else "landscape"
+    return orientation_from_size(width, height)
 
 
 def active_device_profile(
@@ -70,17 +94,14 @@ def active_device_profile(
     )
 
 
-def visual_density_for_page(
-    page: ft.Page,
-    *,
-    profiles: Sequence[DeviceProfile] | None = None,
+def density_for_viewport(
+    width: int | float,
+    height: int | float,
+    profile: DeviceProfile,
 ) -> VisualDensity:
-    """Calcula densidad visual sugerida para el viewport actual."""
+    """Calcula densidad visual a partir de tamaño y perfil ya resueltos."""
 
-    profile = active_device_profile(page, profiles=profiles)
-    orientation = viewport_orientation(page)
-    height = safe_page_height(page)
-
+    orientation = orientation_from_size(width, height)
     if profile.name == "mobile" or height < 520:
         return "compact"
     if profile.name == "tablet" or orientation == "portrait":
@@ -88,17 +109,25 @@ def visual_density_for_page(
     return "comfortable"
 
 
-def safe_mobile_padding(
+def visual_density_for_page(
     page: ft.Page,
-    base: int = 16,
     *,
     profiles: Sequence[DeviceProfile] | None = None,
-) -> ft.Padding:
-    """Calcula padding seguro para mobile considerando orientación y densidad."""
+) -> VisualDensity:
+    """Calcula densidad visual sugerida para el viewport actual."""
 
-    profile = active_device_profile(page, profiles=profiles)
-    orientation = viewport_orientation(page)
-    density = visual_density_for_page(page, profiles=profiles)
+    width, height = safe_page_size(page)
+    profile = get_device_profile(width, profiles or DEFAULT_DEVICE_PROFILES)
+    return density_for_viewport(width, height, profile)
+
+
+def padding_for_viewport(
+    profile: DeviceProfile,
+    orientation: Orientation,
+    density: VisualDensity,
+    base: int = 16,
+) -> ft.Padding:
+    """Calcula padding seguro desde perfil, orientación y densidad resueltos."""
 
     if density == "compact":
         horizontal = max(8, round(base * 0.75))
@@ -118,14 +147,51 @@ def safe_mobile_padding(
     return ft.Padding(horizontal, vertical, horizontal, vertical)
 
 
+def safe_mobile_padding(
+    page: ft.Page,
+    base: int = 16,
+    *,
+    profiles: Sequence[DeviceProfile] | None = None,
+) -> ft.Padding:
+    """Calcula padding seguro para mobile considerando orientación y densidad."""
+
+    profile = active_device_profile(page, profiles=profiles)
+    orientation = viewport_orientation(page)
+    density = visual_density_for_page(page, profiles=profiles)
+    return padding_for_viewport(profile, orientation, density, base=base)
+
+
+def viewport_info(
+    page: ft.Page,
+    *,
+    profiles: Sequence[DeviceProfile] | None = None,
+    fallback_width: int | float = 0,
+    fallback_height: int | float = 0,
+    padding_base: int = 16,
+) -> ViewportInfo:
+    """Devuelve un snapshot completo y consistente del viewport actual."""
+
+    width, height = safe_page_size(page, fallback_width, fallback_height)
+    profile = get_device_profile(width, profiles or DEFAULT_DEVICE_PROFILES)
+    orientation = orientation_from_size(width, height)
+    density = density_for_viewport(width, height, profile)
+    padding = padding_for_viewport(profile, orientation, density, base=padding_base)
+    return ViewportInfo(width, height, orientation, profile, density, padding)
+
+
 __all__ = [
     "Orientation",
     "VisualDensity",
+    "ViewportInfo",
     "active_device_profile",
+    "density_for_viewport",
+    "orientation_from_size",
+    "padding_for_viewport",
     "safe_mobile_padding",
     "safe_page_height",
     "safe_page_size",
     "safe_page_width",
+    "viewport_info",
     "viewport_orientation",
     "visual_density_for_page",
 ]
