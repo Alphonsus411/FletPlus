@@ -43,6 +43,14 @@ LAZY_IMPORTS = {
     "ResponsiveContainer": "fletplus.components.responsive_container",
     "ResponsiveGrid": "fletplus.components.responsive_grid",
     "ResponsiveGridItem": "fletplus.components.responsive_grid",
+    "PageShell": "fletplus.components.frontend_layouts",
+    "Section": "fletplus.components.frontend_layouts",
+    "CardGrid": "fletplus.components.frontend_layouts",
+    "HeroSection": "fletplus.components.frontend_layouts",
+    "ToolbarSection": "fletplus.components.frontend_layouts",
+    "FooterSection": "fletplus.components.frontend_layouts",
+    "LayoutTokens": "fletplus.components.frontend_layouts",
+    "resolve_layout_tokens": "fletplus.components.frontend_layouts",
     "SidebarAdmin": "fletplus.components.sidebar_admin",
     "SmartTable": "fletplus.components.smart_table",
     "LineChart": "fletplus.components.charts",
@@ -84,6 +92,16 @@ if TYPE_CHECKING:
     )
     from fletplus.components.responsive_container import ResponsiveContainer
     from fletplus.components.responsive_grid import ResponsiveGrid, ResponsiveGridItem
+    from fletplus.components.frontend_layouts import (
+        CardGrid,
+        FooterSection,
+        HeroSection,
+        LayoutTokens,
+        PageShell,
+        Section,
+        ToolbarSection,
+        resolve_layout_tokens,
+    )
     from fletplus.components.sidebar_admin import SidebarAdmin
     from fletplus.components.smart_table import SmartTable
     from fletplus.components.universal_scaffold import (
@@ -125,6 +143,14 @@ __all__ = [
     "SidebarAdmin",
     "SmartTable",
     "LineChart",
+    "LayoutTokens",
+    "resolve_layout_tokens",
+    "PageShell",
+    "Section",
+    "CardGrid",
+    "HeroSection",
+    "ToolbarSection",
+    "FooterSection",
 ]
 
 

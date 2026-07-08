@@ -203,3 +203,69 @@ En este ejemplo, `ResponsiveManager` escucha los cambios de tamaño de la
 página y reaplica los estilos definidos para cada breakpoint de ancho.
 Los valores no especificados conservan el estilo base del control,
 permitiendo personalizar únicamente los atributos que necesitas.
+
+## Layout frontend semántico
+
+FletPlus expone un kit de layouts de alto nivel desde `fletplus.components` para
+crear pantallas de producto sin repetir reglas de ancho, padding, spacing o
+columnas por dispositivo.
+
+- **PageShell**: contenedor raíz que centra el contenido, aplica `max_width`,
+  `padding` y `spacing`, y puede leer colores desde tokens de `ThemeManager`.
+- **Section**: bloque vertical con título, subtítulo, acciones y fondo opcional.
+- **CardGrid**: grilla de tarjetas que resuelve columnas desde el perfil activo
+  o desde `columns_by_device`.
+- **HeroSection**: sección de portada con eyebrow, headline, descripción,
+  acciones y media opcional.
+- **ToolbarSection**: fila de herramientas con contenido principal y acciones.
+- **FooterSection**: pie de página con enlaces o metadatos.
+- **resolve_layout_tokens** y **LayoutTokens**: helper y dataclass para resolver
+  los valores efectivos (`profile`, `spacing`, `padding`, `max_width`,
+  `columns`) antes de construir un control.
+
+Todos aceptan `config=FrontEndConfig(...)` y `theme=ThemeManager(...)`. Si no se
+pasa un valor explícito, los componentes usan `FrontEndConfig.spacing`,
+`FrontEndConfig.page_padding`, `FrontEndConfig.max_content_width` y los perfiles
+responsive configurados. Cuando reciben `theme`, `spacing.default` se usa como
+spacing base y los tokens de color (`bgcolor_token`, `surface_soft`,
+`background`, etc.) se resuelven desde el tema efectivo.
+
+```python
+import flet as ft
+from fletplus import FrontEndConfig
+from fletplus.components import CardGrid, HeroSection, PageShell, Section
+
+
+def main(page: ft.Page) -> None:
+    frontend = FrontEndConfig(page_padding=20, spacing=18, max_content_width=1180)
+    theme = frontend.apply_to_page(page)
+
+    hero = HeroSection(
+        headline="Dashboard adaptable",
+        description="La sección lee tipografía desde FrontEndConfig.",
+        primary_action=ft.FilledButton("Crear informe"),
+        config=frontend,
+        theme=theme,
+        bgcolor_token="surface_soft",
+        padding_by_device={"mobile": 16, "desktop": 32},
+    )
+
+    cards = CardGrid(
+        cards=[ft.Container(content=ft.Text(f"Card {i}"), padding=16) for i in range(4)],
+        config=frontend,
+        theme=theme,
+        columns_by_device={"mobile": 1, "tablet": 2, "desktop": 4},
+    )
+
+    page.add(
+        PageShell(
+            sections=[hero, Section(title="Resumen", content=cards.build(page), config=frontend)],
+            config=frontend,
+            theme=theme,
+            spacing_by_device={"mobile": 14, "desktop": 24},
+        ).build(page)
+    )
+```
+
+Consulta `examples/frontend_layout_examples.py` para un ejemplo completo con
+hero, toolbar, grid de tarjetas y footer.
