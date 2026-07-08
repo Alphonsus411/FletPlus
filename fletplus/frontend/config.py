@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+from urllib.parse import urlparse
 
 import flet as ft
 
@@ -18,6 +20,9 @@ from fletplus.utils.device_profiles import (
 
 TypographyStyle = Mapping[str, int | float | str | None]
 TypographyScale = Mapping[str, TypographyStyle | Mapping[str, TypographyStyle]]
+FontAssets = Mapping[str, str]
+FontWeights = Sequence[str | int]
+FontStyles = Sequence[str]
 
 _ALLOWED_MODES = {"light", "dark"}
 _ALLOWED_DENSITIES = {"compact", "normal", "comfortable", "spacious"}
@@ -43,13 +48,17 @@ def _ensure_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
     if value is None:
         return {}
     if not isinstance(value, Mapping):
-        raise ValueError(f"[tool.fletplus.frontend.{field_name}] debe ser una tabla TOML")
+        raise ValueError(
+            f"[tool.fletplus.frontend.{field_name}] debe ser una tabla TOML"
+        )
     return value
 
 
 def _validate_positive_int(value: Any, field_name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"tool.fletplus.frontend.{field_name} debe ser un entero positivo")
+        raise ValueError(
+            f"tool.fletplus.frontend.{field_name} debe ser un entero positivo"
+        )
     if value < 0:
         raise ValueError(f"tool.fletplus.frontend.{field_name} no puede ser negativo")
     return value
@@ -57,11 +66,85 @@ def _validate_positive_int(value: Any, field_name: str) -> int:
 
 def _validate_string(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"tool.fletplus.frontend.{field_name} debe ser una cadena no vacía")
+        raise ValueError(
+            f"tool.fletplus.frontend.{field_name} debe ser una cadena no vacía"
+        )
     return value.strip()
 
 
-def _validate_string_mapping(value: Mapping[str, Any], field_name: str) -> dict[str, str]:
+def _validate_string_sequence(value: Any, field_name: str) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str) or not isinstance(value, Sequence):
+        raise ValueError(
+            f"tool.fletplus.frontend.{field_name} debe ser una lista de cadenas"
+        )
+    return tuple(_validate_string(item, f"{field_name}[]") for item in value)
+
+
+def _normalize_font_weight(value: str | int) -> str:
+    if isinstance(value, int):
+        return f"w{value}"
+    return str(value)
+
+
+def _validate_font_weights(value: Any, field_name: str) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise ValueError(f"tool.fletplus.frontend.{field_name} debe ser una lista")
+    return tuple(_normalize_font_weight(item) for item in value)
+
+
+@dataclass(slots=True)
+class FontDeclaration:
+    """Declaración común de fuentes para FrontEndConfig.
+
+    ``family`` es la familia principal, ``fallback_families`` son las familias
+    de respaldo para ``Theme.font_family`` y ``assets`` contiene las fuentes
+    locales que se registrarán en ``page.fonts``. ``weights`` y ``styles`` son
+    metadatos descriptivos para documentar qué variantes están disponibles.
+    """
+
+    family: str | None = None
+    fallback_families: Sequence[str] = field(default_factory=tuple)
+    assets: FontAssets = field(default_factory=dict)
+    weights: FontWeights = field(default_factory=tuple)
+    styles: FontStyles = field(default_factory=tuple)
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "FontDeclaration":
+        return cls(
+            family=(
+                _validate_string(data["family"], "font.family")
+                if data.get("family") is not None
+                else None
+            ),
+            fallback_families=_validate_string_sequence(
+                data.get("fallback_families") or data.get("fallbacks"),
+                "font.fallback_families",
+            ),
+            assets=_validate_string_mapping(
+                _ensure_mapping(data.get("assets"), "font.assets"), "font.assets"
+            ),
+            weights=_validate_font_weights(data.get("weights"), "font.weights"),
+            styles=_validate_string_sequence(data.get("styles"), "font.styles"),
+        )
+
+    def theme_font_family(self, legacy_family: str | None = None) -> str | None:
+        family = self.family or legacy_family
+        families = [item for item in (family, *self.fallback_families) if item]
+        return ", ".join(dict.fromkeys(families)) or None
+
+    def merged_assets(
+        self, legacy_assets: Mapping[str, str] | None = None
+    ) -> dict[str, str]:
+        return {**dict(legacy_assets or {}), **dict(self.assets)}
+
+
+def _validate_string_mapping(
+    value: Mapping[str, Any], field_name: str
+) -> dict[str, str]:
     result: dict[str, str] = {}
     for key, item in value.items():
         if not isinstance(key, str) or not key.strip():
@@ -147,7 +230,9 @@ def _merge_typography_tokens(
             continue
         for device, values in role_values.items():
             if isinstance(values, Mapping):
-                target.setdefault(_normalize_device_name(str(device)), {}).update(values)
+                target.setdefault(_normalize_device_name(str(device)), {}).update(
+                    values
+                )
     return merged
 
 
@@ -159,6 +244,8 @@ class FrontEndConfig:
     mode: str = "light"
     font_family: str | None = None
     font_assets: Mapping[str, str] = field(default_factory=dict)
+    font: FontDeclaration = field(default_factory=FontDeclaration)
+    font_assets_base_path: Path | None = None
     page_padding: int = 24
     max_content_width: int = 1200
     min_content_width: int = 320
@@ -174,10 +261,23 @@ class FrontEndConfig:
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
         allowed = {
-            "palette", "mode", "font_family", "font_assets", "fonts", "page_padding",
-            "max_content_width", "min_content_width", "allow_min_width_overflow",
-            "spacing", "layout_density", "theme_tokens", "typography_tokens", "tokens",
-            "follow_platform_theme", "target",
+            "palette",
+            "mode",
+            "font_family",
+            "font_assets",
+            "fonts",
+            "font",
+            "page_padding",
+            "max_content_width",
+            "min_content_width",
+            "allow_min_width_overflow",
+            "spacing",
+            "layout_density",
+            "theme_tokens",
+            "typography_tokens",
+            "tokens",
+            "follow_platform_theme",
+            "target",
         }
         normalized: dict[str, Any] = {}
         for key, value in data.items():
@@ -201,6 +301,10 @@ class FrontEndConfig:
                     **fonts,
                     **dict(normalized.get("font_assets", {})),
                 }
+            elif key == "font":
+                normalized["font"] = FontDeclaration.from_mapping(
+                    _ensure_mapping(value, key)
+                )
             elif key == "tokens":
                 tokens = _ensure_mapping(value, key)
                 normalized["theme_tokens"] = {
@@ -247,20 +351,30 @@ class FrontEndConfig:
             import tomli as tomllib  # type: ignore
         data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
         tool_data = data.get("tool", {}) if isinstance(data, dict) else {}
-        fletplus_data = tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
-        frontend_data = fletplus_data.get("frontend", {}) if isinstance(fletplus_data, dict) else {}
+        fletplus_data = (
+            tool_data.get("fletplus", {}) if isinstance(tool_data, dict) else {}
+        )
+        frontend_data = (
+            fletplus_data.get("frontend", {}) if isinstance(fletplus_data, dict) else {}
+        )
         if not isinstance(frontend_data, Mapping):
             return cls()
-        return cls.from_mapping(frontend_data)
+        config = cls.from_mapping(frontend_data)
+        config.font_assets_base_path = pyproject_path.parent
+        return config
 
     def palette_tokens(self) -> dict[str, object]:
         if has_palette(self.palette):
             return dict(get_palette_tokens(self.palette, self.mode))
         return {}
 
-    def resolved_typography_tokens(self) -> dict[str, dict[str, dict[str, int | float | str | None]]]:
+    def resolved_typography_tokens(
+        self,
+    ) -> dict[str, dict[str, dict[str, int | float | str | None]]]:
         """Devuelve la escala tipográfica base fusionada con overrides."""
-        return _merge_typography_tokens(DEFAULT_TYPOGRAPHY_TOKENS, self.typography_tokens)
+        return _merge_typography_tokens(
+            DEFAULT_TYPOGRAPHY_TOKENS, self.typography_tokens
+        )
 
     def resolve_device_profile(self, width: int) -> DeviceProfile:
         return get_device_profile(width, self.responsive_profiles)
@@ -268,14 +382,21 @@ class FrontEndConfig:
     def columns_for_width(self, width: int) -> int:
         return columns_for_width(width, self.responsive_profiles)
 
-    def resolve_typography(self, role: str, width: int) -> dict[str, int | float | str | None]:
+    def resolve_typography(
+        self, role: str, width: int
+    ) -> dict[str, int | float | str | None]:
         """Resuelve tamaño, peso y altura de línea de un rol para un ancho."""
         tokens = self.resolved_typography_tokens()
         role_tokens = tokens.get(role) or tokens["body"]
         device = _normalize_device_name(self.resolve_device_profile(width).name)
         if width >= 1440 and "large_desktop" in role_tokens:
             device = "large_desktop"
-        selected = role_tokens.get(device) or role_tokens.get("desktop") or role_tokens.get("mobile") or {}
+        selected = (
+            role_tokens.get(device)
+            or role_tokens.get("desktop")
+            or role_tokens.get("mobile")
+            or {}
+        )
         return dict(selected)
 
     def typography_size(self, role: str, width: int) -> int | float | None:
@@ -306,14 +427,17 @@ class FrontEndConfig:
         return content_width
 
     def apply_to_page(self, page: ft.Page) -> ThemeManager:
-        if self.font_assets:
-            page.fonts = {**getattr(page, "fonts", {}), **dict(self.font_assets)}
-        if self.font_family:
+        font_assets = self.font.merged_assets(self.font_assets)
+        if font_assets:
+            self._warn_missing_font_assets(font_assets)
+            page.fonts = {**getattr(page, "fonts", {}), **font_assets}
+        theme_font_family = self.font.theme_font_family(self.font_family)
+        if theme_font_family:
             theme = page.theme or ft.Theme()
             try:
-                theme.font_family = self.font_family
+                theme.font_family = theme_font_family
             except AttributeError:
-                theme = ft.Theme(font_family=self.font_family)
+                theme = ft.Theme(font_family=theme_font_family)
             page.theme = theme
         theme = page.theme or ft.Theme()
         try:
@@ -332,13 +456,38 @@ class FrontEndConfig:
         for group, values in self.theme_tokens.items():
             for key, value in values.items():
                 theme_manager.set_token(f"{group}.{key}", value)
-        theme_manager.tokens.setdefault("typography", {}).update(self.resolved_typography_tokens())
+        theme_manager.tokens.setdefault("typography", {}).update(
+            self.resolved_typography_tokens()
+        )
         theme_manager.apply_theme(
-            device=self.resolve_device_profile(int(getattr(page, "width", 0) or self.max_content_width)).name,
+            device=self.resolve_device_profile(
+                int(getattr(page, "width", 0) or self.max_content_width)
+            ).name,
             orientation=self.orientation_for_page(page),
             width=getattr(page, "width", None),
         )
         return theme_manager
+
+    def _warn_missing_font_assets(self, font_assets: Mapping[str, str]) -> None:
+        """Emite avisos claros si una fuente local declarada no existe."""
+        base_path = self.font_assets_base_path or Path.cwd()
+        for family, asset_path in font_assets.items():
+            if self._is_remote_font_asset(asset_path):
+                continue
+            path = Path(asset_path)
+            candidates = [path] if path.is_absolute() else [base_path / path, path]
+            if not any(candidate.exists() for candidate in candidates):
+                warnings.warn(
+                    "Fuente local no encontrada para "
+                    f"'{family}': '{asset_path}'. Coloca el archivo .ttf/.otf en "
+                    "assets/fonts/ o corrige la ruta declarada en FrontEndConfig.",
+                    stacklevel=2,
+                )
+
+    @staticmethod
+    def _is_remote_font_asset(asset_path: str) -> bool:
+        parsed = urlparse(asset_path)
+        return parsed.scheme in {"http", "https", "data"}
 
     def orientation_for_page(self, page: ft.Page) -> str:
         width = int(getattr(page, "width", 0) or 0)
