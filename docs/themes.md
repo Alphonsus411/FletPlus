@@ -307,3 +307,34 @@ de aplicar los tokens para evitar parpadeos.
 Con estos bloques puedes construir selectores de tema avanzados, sincronizar
 la UI con la configuración del sistema y ofrecer personalización persistente
 sin duplicar lógica.
+
+## Tipografía como tokens del tema
+
+La configuración de frontend publica la escala tipográfica dentro del grupo de
+tokens `typography` al ejecutar `FrontEndConfig.apply_to_page(page)` o al usar
+`ResponsiveTypography` con un `ThemeManager`. Esto permite que un tema comparta
+los mismos roles visuales que la capa responsiva:
+
+```python
+from fletplus import FrontEndConfig
+
+config = FrontEndConfig(
+    typography_tokens={
+        "display": {
+            "mobile": {"size": 40, "weight": "w700", "line_height": 1.1},
+            "desktop": {"size": 56, "weight": "w700", "line_height": 1.05},
+        },
+        "body": {
+            "mobile": {"size": 14, "weight": "w400", "line_height": 1.55},
+            "desktop": {"size": 18, "weight": "w400", "line_height": 1.5},
+        },
+    }
+)
+
+theme = config.apply_to_page(page)
+print(theme.tokens["typography"]["display"]["desktop"])
+```
+
+Las plantillas de la CLI exponen `TYPOGRAPHY_TOKENS` en
+`src/frontend/config.py` y los fusionan en `create_frontend_config()`, de modo
+que puedes ajustar tipografías sin tocar la lógica de arranque.
