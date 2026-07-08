@@ -20,7 +20,12 @@ from typing import Callable, Dict, Iterable
 
 import click
 
-from fletplus.themes import get_preset_definition, get_preset_metadata, list_presets
+from fletplus.themes import (
+    get_preset_definition,
+    get_preset_metadata,
+    list_palettes,
+    list_presets,
+)
 
 from .build import DEFAULT_BUILD_TIMEOUT_SECONDS, PackagingError, run_build
 
@@ -93,16 +98,50 @@ def _available_preset_names() -> tuple[str, ...]:
     return tuple(name for name, _description in list_presets())
 
 
-def _frontend_preset_context(preset_name: str) -> Dict[str, str]:
+def _available_palette_names() -> tuple[str, ...]:
+    return tuple(name for name, _description in list_palettes())
+
+
+TARGET_TEMPLATE_ALIASES = {
+    "app": "app",
+    "web": "web",
+    "desktop": "desktop",
+    "mobile": "mobile",
+}
+TARGET_PYPROJECT_VALUES = {
+    "app": "all",
+    "web": "web",
+    "desktop": "desktop",
+    "mobile": "mobile",
+}
+TARGET_MAX_WIDTH = {"app": "1100", "web": "1180", "desktop": "1280", "mobile": "480"}
+DENSITY_SPACING = {"compact": "12", "comfortable": "16", "spacious": "24"}
+DENSITY_PADDING = {"compact": "16", "comfortable": "24", "spacious": "32"}
+FONT_FALLBACKS = {
+    "Inter": '("Roboto", "Arial", "sans-serif")',
+    "Roboto": '("Arial", "sans-serif")',
+    "System": '("Segoe UI", "Roboto", "Arial", "sans-serif")',
+}
+
+
+def _frontend_preset_context(
+    preset_name: str,
+    *,
+    target: str,
+    palette_name: str | None = None,
+    theme_mode: str | None = None,
+    font_family: str | None = None,
+    layout_density: str | None = None,
+) -> Dict[str, str]:
     definition = get_preset_definition(preset_name)
     metadata = get_preset_metadata(preset_name)
     light_tokens = definition.get("light", {})
-    palette = str(
+    palette = palette_name or str(
         metadata.get("palette")
         or light_tokens.get("meta", {}).get("palette")
         or "material"
     )
-    density = str(
+    density = layout_density or str(
         metadata.get("density")
         or light_tokens.get("meta", {}).get("density")
         or "comfortable"
@@ -111,9 +150,17 @@ def _frontend_preset_context(preset_name: str) -> Dict[str, str]:
     radii_tokens = dict(light_tokens.get("radii", {}))
     shadow_tokens = dict(light_tokens.get("shadows", {}))
     typography_tokens = dict(light_tokens.get("typography", {}))
-    font_family = str(typography_tokens.get("font_family") or "Roboto")
-    spacing = int(spacing_tokens.get("md") or spacing_tokens.get("section") or 16)
-    page_padding = int(spacing_tokens.get("page") or 24)
+    font_family = font_family or str(typography_tokens.get("font_family") or "Roboto")
+    spacing = int(
+        DENSITY_SPACING.get(
+            density,
+            str(spacing_tokens.get("md") or spacing_tokens.get("section") or 16),
+        )
+    )
+    page_padding = int(
+        DENSITY_PADDING.get(density, str(spacing_tokens.get("page") or 24))
+    )
+    target_value = TARGET_PYPROJECT_VALUES[target]
     custom_tokens = {
         "colors": {"brand": "#2563EB", "surface_soft": "#F8FAFC"},
         "spacing": spacing_tokens,
@@ -125,7 +172,14 @@ def _frontend_preset_context(preset_name: str) -> Dict[str, str]:
         "preset_name": preset_name,
         "palette_name": palette,
         "font_family": font_family,
+        "font_fallback_families": FONT_FALLBACKS.get(
+            font_family, FONT_FALLBACKS["System"]
+        ),
+        "theme_mode": theme_mode or "light",
         "layout_density": density,
+        "target_name": target,
+        "target_value": target_value,
+        "max_content_width": TARGET_MAX_WIDTH[target],
         "spacing": str(spacing),
         "page_padding": str(page_padding),
         "custom_tokens_repr": repr(custom_tokens),
@@ -276,9 +330,16 @@ def _validate_project_name(nombre: str) -> None:
     "--template",
     "template_name",
     type=click.Choice(["app", "web", "desktop", "mobile"], case_sensitive=False),
+    default=None,
+    help="Plantilla inicial del proyecto (compatibilidad; --target es preferido).",
+)
+@click.option(
+    "--target",
+    "target_name",
+    type=click.Choice(["web", "desktop", "mobile", "app"], case_sensitive=False),
     default="app",
     show_default=True,
-    help="Plantilla inicial del proyecto.",
+    help="Destino inicial de la app y plantilla por defecto.",
 )
 @click.option(
     "--preset",
@@ -288,8 +349,43 @@ def _validate_project_name(nombre: str) -> None:
     show_default=True,
     help="Preset visual inicial del proyecto.",
 )
+@click.option(
+    "--palette",
+    "palette_name",
+    type=click.Choice(_available_palette_names(), case_sensitive=False),
+    default=None,
+    help="Paleta visual a inyectar; por defecto usa la recomendada por el preset.",
+)
+@click.option(
+    "--theme-mode",
+    type=click.Choice(["light", "dark", "system"], case_sensitive=False),
+    default="light",
+    show_default=True,
+    help="Modo de tema inicial.",
+)
+@click.option(
+    "--font",
+    "font_family",
+    type=click.Choice(["Inter", "Roboto", "System"], case_sensitive=False),
+    default=None,
+    help="Fuente principal generada.",
+)
+@click.option(
+    "--layout-density",
+    type=click.Choice(["compact", "comfortable", "spacious"], case_sensitive=False),
+    default=None,
+    help="Densidad visual inicial del layout.",
+)
 def create(
-    nombre: str, directorio_base: Path | None, template_name: str, preset_name: str
+    nombre: str,
+    directorio_base: Path | None,
+    template_name: str | None,
+    target_name: str,
+    preset_name: str,
+    palette_name: str | None,
+    theme_mode: str,
+    font_family: str | None,
+    layout_density: str | None,
 ) -> None:
     """Genera la estructura base de una aplicación FletPlus."""
 
@@ -312,18 +408,39 @@ def create(
         )
 
     proyecto.mkdir(parents=True, exist_ok=True)
+    normalized_target = target_name.lower()
+    normalized_template = (
+        template_name or TARGET_TEMPLATE_ALIASES[normalized_target]
+    ).lower()
     normalized_preset = preset_name.lower()
     contexto = {"project_name": nombre, "package_name": paquete}
-    contexto.update(_frontend_preset_context(normalized_preset))
+    contexto.update(
+        _frontend_preset_context(
+            normalized_preset,
+            target=normalized_target,
+            palette_name=palette_name.lower() if palette_name else None,
+            theme_mode=theme_mode.lower(),
+            font_family=(
+                {"inter": "Inter", "roboto": "Roboto", "system": "System"}.get(
+                    font_family.lower()
+                )
+                if font_family
+                else None
+            ),
+            layout_density=layout_density.lower() if layout_density else None,
+        )
+    )
 
     plantilla_base = resources.files(TEMPLATE_PACKAGE).joinpath(
-        "templates", template_name.lower()
+        "templates", normalized_template
     )
     _copy_template_tree(plantilla_base, proyecto, contexto)
 
     click.echo(
-        f"Proyecto creado en {proyecto} con plantilla {template_name.lower()} "
-        f"y preset {normalized_preset}"
+        f"Proyecto creado en {proyecto} con plantilla {normalized_template}, "
+        f"target {normalized_target}, preset {normalized_preset}, "
+        f"paleta {contexto['palette_name']}, modo {contexto['theme_mode']}, "
+        f"fuente {contexto['font_family']} y densidad {contexto['layout_density']}"
     )
 
 

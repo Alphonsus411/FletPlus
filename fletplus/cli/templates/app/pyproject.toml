@@ -14,7 +14,7 @@ dependencies = [
 
 [tool.fletplus]
 app = "src/main.py"
-default_target = "all"
+default_target = "{{ target_value }}"
 
 assets_dir = "assets"
 icon = "assets/icon.png"
@@ -22,15 +22,15 @@ build_timeout = 900
 
 [tool.fletplus.frontend]
 palette = "{{ palette_name }}"
-mode = "light"
+mode = "{{ theme_mode }}"
 font_family = "{{ font_family }}"
 page_padding = {{ page_padding }}
-max_content_width = 1100
+max_content_width = {{ max_content_width }}
 min_content_width = 320
 spacing = {{ spacing }}
 layout_density = "{{ layout_density }}"
 preset = "{{ preset_name }}"
-target = "all"
+target = "{{ target_value }}"
 
 # Ejemplos opcionales de personalización:
 # [tool.fletplus.frontend.fonts]

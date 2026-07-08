@@ -6,9 +6,9 @@ import ast
 from pathlib import Path
 
 PALETTE_NAME = "{{ palette_name }}"
-PALETTE_MODE = "light"
+PALETTE_MODE = "{{ theme_mode }}"
 FONT_FAMILY = "{{ font_family }}"
-FONT_FALLBACK_FAMILIES = ("Arial", "sans-serif")
+FONT_FALLBACK_FAMILIES = {{ font_fallback_families }}
 FONT_ASSETS = {
     # Registra fuentes locales incluidas en assets/fonts/.
     # "Inter": "assets/fonts/Inter-Regular.ttf",
@@ -44,9 +44,11 @@ CUSTOM_TOKENS = (
     else ast.literal_eval(_CUSTOM_TOKENS_SOURCE)
 )
 PAGE_PADDING = int("0{{ page_padding }}".replace("0{{ page_padding }}", "24"))
-MAX_CONTENT_WIDTH = 1180
+MAX_CONTENT_WIDTH = {{ max_content_width }}
 MIN_CONTENT_WIDTH = 320
 SPACING = int("0{{ spacing }}".replace("0{{ spacing }}", "16"))
 LAYOUT_DENSITY = "{{ layout_density }}"
+TARGET_NAME = "{{ target_name }}"
+PRESET_NAME = "{{ preset_name }}"
 ASSETS_DIR = Path("assets")
 PLACEHOLDER_README = ASSETS_DIR / "README.md"

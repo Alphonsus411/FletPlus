@@ -16,7 +16,7 @@ pip install fletplus
 
 Genera una estructura base para comenzar un nuevo proyecto. Por defecto el
 directorio se crea dentro de la carpeta actual, aunque puedes indicar una ruta
-distinta con `--directorio`, una plantilla con `--template` y un preset visual con `--preset`.
+distinta con `--directorio`, un destino con `--target`, una plantilla explícita con `--template` (compatibilidad) y opciones visuales como `--preset`, `--palette`, `--theme-mode`, `--font` y `--layout-density`.
 
 Archivos generados:
 
@@ -26,6 +26,24 @@ Archivos generados:
 - Paquete `src/` con un `main.py` listo para ejecutar.
 - Configuración FrontEnd inicial basada en `FrontEndConfig` para paletas, fuentes, pantalla y layout responsive.
 
+
+Opciones de generación más relevantes:
+
+- `--target {web|desktop|mobile|app}`: selecciona el destino inicial y, si no se indica `--template`, también la plantilla base. `app` genera la plantilla multipropósito y escribe `default_target = "all"`.
+- `--template {app|web|desktop|mobile}`: fuerza una plantilla concreta; se mantiene por compatibilidad con versiones anteriores.
+- `--preset {dashboard|landing|admin|mobile_app|saas|...}`: selecciona un preset de tokens para spacing, radios, sombras y tipografía.
+- `--palette {aurora|sunset|lagoon|...}`: sobreescribe la paleta recomendada por el preset. La lista procede del registro interno de paletas de FletPlus.
+- `--theme-mode {light|dark|system}`: escribe el modo en `pyproject.toml` y en `src/frontend/config.py`; `system` activa seguimiento del tema de plataforma en runtime.
+- `--font {Inter|Roboto|System}`: define la familia principal y fallbacks seguros en `src/frontend/config.py`.
+- `--layout-density {compact|comfortable|spacious}`: ajusta densidad, `spacing` y `page_padding` generados.
+
+Flujo de renderizado:
+
+1. La CLI valida nombre de proyecto, paquete, target, preset, paleta, modo, fuente y densidad.
+2. Construye un contexto de plantilla con `project_name`, `package_name`, `target_name`, `target_value`, `preset_name`, `palette_name`, `theme_mode`, `font_family`, `layout_density`, `spacing`, `page_padding`, `max_content_width` y tokens custom serializados.
+3. `_copy_template_tree()` recorre `fletplus/cli/templates/<plantilla>` y reemplaza placeholders `{{ ... }}` en archivos de texto.
+4. `pyproject.toml` recibe `[tool.fletplus.frontend]` como fuente oficial para `FrontEndConfig.from_pyproject()`.
+5. `src/frontend/config.py` recibe los mismos valores como fallback editable para escenarios sin `pyproject.toml`.
 
 Presets visuales disponibles para `--preset`:
 
@@ -187,7 +205,7 @@ section = 32
 Campos principales:
 
 - `palette`: paleta registrada que se aplicará mediante `ThemeManager`.
-- `mode`: variante visual, `"light"` o `"dark"`.
+- `mode`: variante visual, `"light"`, `"dark"` o `"system"`.
 - `font_family`: familia principal asignada al tema de Flet.
 - `page_padding`: padding global aplicado a la página y al shell de contenido.
 - `max_content_width` / `min_content_width`: límites para layouts centrados.
