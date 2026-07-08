@@ -269,3 +269,70 @@ def main(page: ft.Page) -> None:
 
 Consulta `examples/frontend_layout_examples.py` para un ejemplo completo con
 hero, toolbar, grid de tarjetas y footer.
+
+## Estados semánticos
+
+FletPlus incluye componentes de estado listos para pantallas de carga, vacío,
+error, éxito, permisos y mantenimiento. Se exportan desde `fletplus.components`
+y comparten la misma API para evitar duplicar layouts de mensaje en cada vista:
+
+- **LoadingState**: comunica procesos en curso.
+- **EmptyState**: muestra colecciones o búsquedas sin resultados.
+- **ErrorState**: presenta fallos recuperables con una acción de reintento.
+- **SuccessState**: confirma operaciones completadas.
+- **PermissionState**: indica accesos restringidos o permisos insuficientes.
+- **MaintenanceState**: informa indisponibilidad temporal del servicio.
+
+Todos permiten personalizar `icon`, `title`, `description`, `primary_action` y
+`secondary_action`. Además aceptan `theme=ThemeManager(...)` y
+`config=FrontEndConfig(...)` para resolver tokens de color, espaciado y
+tipografía. Por defecto consumen:
+
+- `colors.primary`, `colors.info`, `colors.success`, `colors.warning` y
+  `colors.error` como color semántico del icono.
+- `colors.surface_soft` como fondo suave cuando existe en el tema.
+- `spacing.default` como separación interna entre icono, textos y acciones.
+- `typography.state_icon_size` para ajustar el tamaño del icono del estado.
+- Los estilos `title` y `body` de `FrontEndConfig.text_style()` para título y
+  descripción.
+
+```python
+import flet as ft
+from fletplus.components import EmptyState, ErrorState, LoadingState
+from fletplus.themes import ThemeManager
+
+
+def main(page: ft.Page) -> None:
+    theme = ThemeManager(
+        page,
+        tokens={
+            "colors": {
+                "primary": ft.Colors.BLUE,
+                "info": ft.Colors.INDIGO,
+                "error": ft.Colors.RED,
+                "surface_soft": ft.Colors.with_opacity(0.06, ft.Colors.PRIMARY),
+            },
+            "spacing": {"default": 16},
+            "typography": {"state_icon_size": 52},
+        },
+    )
+
+    page.add(
+        LoadingState(theme=theme).build(page),
+        EmptyState(
+            title="No hay proyectos",
+            description="Crea tu primer proyecto o importa datos existentes.",
+            primary_action=ft.FilledButton("Crear proyecto"),
+            secondary_action=ft.OutlinedButton("Importar"),
+            theme=theme,
+        ).build(page),
+        ErrorState(
+            description="No pudimos sincronizar la información.",
+            primary_action=ft.FilledButton("Reintentar"),
+            theme=theme,
+        ).build(page),
+    )
+```
+
+Consulta `examples/states_examples.py` para ver los seis estados renderizados en
+una grilla responsive con tokens personalizados.
