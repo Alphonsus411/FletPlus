@@ -24,7 +24,7 @@ FontAssets = Mapping[str, str]
 FontWeights = Sequence[str | int]
 FontStyles = Sequence[str]
 
-_ALLOWED_MODES = {"light", "dark"}
+_ALLOWED_MODES = {"light", "dark", "system"}
 _ALLOWED_DENSITIES = {"compact", "normal", "comfortable", "spacious"}
 _ALLOWED_TARGETS = {
     "web",
@@ -325,7 +325,9 @@ class FrontEndConfig:
 
         mode = normalized.get("mode")
         if mode is not None and mode not in _ALLOWED_MODES:
-            raise ValueError("tool.fletplus.frontend.mode debe ser 'light' o 'dark'")
+            raise ValueError(
+                "tool.fletplus.frontend.mode debe ser 'light', 'dark' o 'system'"
+            )
         density = normalized.get("layout_density")
         if density is not None and density not in _ALLOWED_DENSITIES:
             raise ValueError(
@@ -374,7 +376,11 @@ class FrontEndConfig:
 
     def palette_tokens(self) -> dict[str, object]:
         if has_palette(self.palette):
-            return dict(get_palette_tokens(self.palette, self.mode))
+            return dict(
+                get_palette_tokens(
+                    self.palette, "light" if self.mode == "system" else self.mode
+                )
+            )
         return {}
 
     def resolved_typography_tokens(
@@ -459,8 +465,8 @@ class FrontEndConfig:
         theme_manager = ThemeManager(
             page,
             palette=self.palette,
-            palette_mode=self.mode,
-            follow_platform_theme=self.follow_platform_theme,
+            palette_mode="light" if self.mode == "system" else self.mode,
+            follow_platform_theme=self.follow_platform_theme or self.mode == "system",
         )
         for group, values in self.theme_tokens.items():
             for key, value in values.items():

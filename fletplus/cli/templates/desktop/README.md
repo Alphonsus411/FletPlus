@@ -25,6 +25,26 @@ fletplus build --target desktop
 
 Ajusta `configure_window()` en `src/main.py` para cambiar tamaño inicial, mínimos, centrado o comportamiento de redimensionado según el sistema operativo de destino.
 
+## Opciones generadas por la CLI
+
+Este proyecto fue renderizado con estas opciones iniciales:
+
+- Target: `{{ target_name }}` (`target = "{{ target_value }}"` en `pyproject.toml`).
+- Preset visual: `{{ preset_name }}`.
+- Paleta: `{{ palette_name }}`.
+- Modo de tema: `{{ theme_mode }}` (`light`, `dark` o `system`).
+- Fuente principal: `{{ font_family }}`.
+- Densidad de layout: `{{ layout_density }}`.
+- Espaciado base: `{{ spacing }}` px y padding de página: `{{ page_padding }}` px.
+
+Puedes regenerar un proyecto equivalente con una variante de:
+
+```bash
+fletplus create {{ project_name }} --target {{ target_name }} --preset {{ preset_name }} --palette {{ palette_name }} --theme-mode {{ theme_mode }} --font {{ font_family }} --layout-density {{ layout_density }}
+```
+
+La configuración queda duplicada intencionalmente en `pyproject.toml` para el runtime y en `src/frontend/config.py` como fallback editable.
+
 ## Estructura inicial
 
 La plantilla mantiene `src/main.py` como entrypoint específico de plataforma y delega la configuración visual en `src/frontend/`:

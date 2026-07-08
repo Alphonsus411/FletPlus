@@ -429,7 +429,9 @@ def test_create_web_template_generates_configured_pwa_files(
         service_worker = (project / "web" / "service_worker.js").read_text(
             encoding="utf-8"
         )
-        theme_py = (project / "src" / "frontend" / "theme.py").read_text(encoding="utf-8")
+        theme_py = (project / "src" / "frontend" / "theme.py").read_text(
+            encoding="utf-8"
+        )
 
     assert '"name": "Mi Web"' in manifest
     assert '"display": "standalone"' in manifest
@@ -453,16 +455,22 @@ def test_frontend_template_static_structure_is_consistent() -> None:
         src = template_root / template_name / "src"
         frontend_dir = src / "frontend"
         assert frontend_dir.is_dir(), template_name
-        assert {path.name for path in frontend_dir.glob("*.py")} == expected_frontend_files
+        assert {
+            path.name for path in frontend_dir.glob("*.py")
+        } == expected_frontend_files
         for legacy_module in ("theme.py", "layout.py", "assets.py", "routes.py"):
-            assert not (src / legacy_module).exists(), f"{template_name}: {legacy_module}"
+            assert not (
+                src / legacy_module
+            ).exists(), f"{template_name}: {legacy_module}"
 
         main_py = (src / "main.py").read_text(encoding="utf-8")
         assert "from frontend.theme import create_frontend_config" in main_py
         assert "from frontend.layout import responsive_shell, spacing" in main_py
         assert "from frontend.routes import render_initial_route" in main_py
 
-        readme = (template_root / template_name / "README.md").read_text(encoding="utf-8")
+        readme = (template_root / template_name / "README.md").read_text(
+            encoding="utf-8"
+        )
         for expected_doc in (
             "src/frontend/config.py",
             "colores",
@@ -472,3 +480,81 @@ def test_frontend_template_static_structure_is_consistent() -> None:
             "Rutas",
         ):
             assert expected_doc in readme
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_injects_generation_options_into_frontend_files(
+    monkeypatch, watchdog_available: bool
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "Studio",
+                "--target",
+                "web",
+                "--preset",
+                "landing",
+                "--palette",
+                "sunset",
+                "--theme-mode",
+                "dark",
+                "--font",
+                "Inter",
+                "--layout-density",
+                "spacious",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        project = base / "Studio"
+        pyproject = (project / "pyproject.toml").read_text(encoding="utf-8")
+        config = (project / "src" / "frontend" / "config.py").read_text(
+            encoding="utf-8"
+        )
+        readme = (project / "README.md").read_text(encoding="utf-8")
+
+    assert 'default_target = "web"' in pyproject
+    assert 'palette = "sunset"' in pyproject
+    assert 'mode = "dark"' in pyproject
+    assert 'font_family = "Inter"' in pyproject
+    assert 'layout_density = "spacious"' in pyproject
+    assert 'preset = "landing"' in pyproject
+    assert 'target = "web"' in pyproject
+    assert 'PALETTE_NAME = "sunset"' in config
+    assert 'PALETTE_MODE = "dark"' in config
+    assert 'FONT_FAMILY = "Inter"' in config
+    assert 'LAYOUT_DENSITY = "spacious"' in config
+    assert 'TARGET_NAME = "web"' in config
+    assert "--target web --preset landing --palette sunset" in readme
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_create_supports_system_theme_mode(
+    monkeypatch, watchdog_available: bool
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(
+            app, ["create", "MobileSys", "--target", "mobile", "--theme-mode", "system"]
+        )
+
+        assert result.exit_code == 0, result.output
+        pyproject = (base / "MobileSys" / "pyproject.toml").read_text(encoding="utf-8")
+        config = (base / "MobileSys" / "src" / "frontend" / "config.py").read_text(
+            encoding="utf-8"
+        )
+
+    assert 'mode = "system"' in pyproject
+    assert 'target = "mobile"' in pyproject
+    assert 'PALETTE_MODE = "system"' in config

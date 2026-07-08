@@ -65,7 +65,6 @@ def build_home(page: ft.Page) -> ft.Control:
 def main(page: ft.Page) -> None:
     page.title = "{{ project_name }}"
     page.scroll = ft.ScrollMode.AUTO
-    page.theme_mode = ft.ThemeMode.LIGHT
     frontend.apply_to_page(page)
     register_pwa(page, "manifest.json", "service_worker.js")
     page.add(build_home(page))
