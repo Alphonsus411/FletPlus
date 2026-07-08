@@ -56,6 +56,7 @@ LAZY_IMPORTS = {
     # Contrato público oficial por compatibilidad: API legacy.
     # La nueva core desacoplada sigue disponible vía `fletplus.core`.
     "FletPlusApp": "fletplus.core_legacy",
+    "FontDeclaration": "fletplus.frontend",
     "FrontEndConfig": "fletplus.frontend",
     "Grid": "fletplus.components",
     "GridItem": "fletplus.components",
@@ -190,7 +191,7 @@ if TYPE_CHECKING:
         ResponsiveNavigationConfig,
     )
     from fletplus.desktop import SystemTray, WindowManager, show_notification
-    from fletplus.frontend import FrontEndConfig
+    from fletplus.frontend import FontDeclaration, FrontEndConfig
     from fletplus.http import (
         DiskCache,
         HttpClient,
@@ -257,6 +258,7 @@ __all__ = [
     "FletPlusApp",
     "FloatingMenuOptions",
     "ResponsiveNavigationConfig",
+    "FontDeclaration",
     "FrontEndConfig",
     "Layout",
     "State",

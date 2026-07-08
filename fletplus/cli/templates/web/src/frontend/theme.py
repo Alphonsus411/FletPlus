@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fletplus import FrontEndConfig
+from fletplus import FontDeclaration, FrontEndConfig
 
 from .config import (
     CUSTOM_TOKENS,
     FONT_ASSETS,
+    FONT_FALLBACK_FAMILIES,
     FONT_FAMILY,
+    FONT_STYLES,
+    FONT_WEIGHTS,
     LAYOUT_DENSITY,
     MAX_CONTENT_WIDTH,
     MIN_CONTENT_WIDTH,
@@ -37,6 +40,13 @@ def create_frontend_config() -> FrontEndConfig:
             mode=PALETTE_MODE,
             font_family=FONT_FAMILY,
             font_assets=FONT_ASSETS,
+            font=FontDeclaration(
+                family=FONT_FAMILY,
+                fallback_families=FONT_FALLBACK_FAMILIES,
+                assets=FONT_ASSETS,
+                weights=FONT_WEIGHTS,
+                styles=FONT_STYLES,
+            ),
             page_padding=PAGE_PADDING,
             max_content_width=MAX_CONTENT_WIDTH,
             min_content_width=MIN_CONTENT_WIDTH,
@@ -45,6 +55,13 @@ def create_frontend_config() -> FrontEndConfig:
             typography_tokens=TYPOGRAPHY_TOKENS,
         )
     config.font_assets = {**FONT_ASSETS, **dict(config.font_assets)}
+    config.font = FontDeclaration(
+        family=config.font.family or config.font_family or FONT_FAMILY,
+        fallback_families=config.font.fallback_families or FONT_FALLBACK_FAMILIES,
+        assets={**FONT_ASSETS, **dict(config.font.assets)},
+        weights=config.font.weights or FONT_WEIGHTS,
+        styles=config.font.styles or FONT_STYLES,
+    )
     config.theme_tokens = {**CUSTOM_TOKENS, **dict(config.theme_tokens)}
     config.typography_tokens = {**TYPOGRAPHY_TOKENS, **dict(config.typography_tokens)}
     return config

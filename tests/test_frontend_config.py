@@ -247,3 +247,47 @@ follow_platform_theme = true
     config = FrontEndConfig.from_pyproject(pyproject)
 
     assert config.follow_platform_theme is True
+
+
+def test_frontend_config_can_load_common_font_declaration(tmp_path: Path) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    font_file = tmp_path / "assets" / "fonts" / "Inter-Regular.ttf"
+    font_file.parent.mkdir(parents=True)
+    font_file.write_text("placeholder", encoding="utf-8")
+    pyproject.write_text(
+        """[tool.fletplus.frontend.font]
+family = 'Inter'
+fallback_families = ['Roboto', 'Arial', 'sans-serif']
+weights = ['w400', 'w700']
+styles = ['normal', 'italic']
+
+[tool.fletplus.frontend.font.assets]
+Inter = 'assets/fonts/Inter-Regular.ttf'
+""",
+        encoding="utf-8",
+    )
+
+    config = FrontEndConfig.from_pyproject(pyproject)
+    page = DummyPage()
+
+    config.apply_to_page(page)  # type: ignore[arg-type]
+
+    assert config.font.family == "Inter"
+    assert config.font.fallback_families == ("Roboto", "Arial", "sans-serif")
+    assert config.font.weights == ("w400", "w700")
+    assert config.font.styles == ("normal", "italic")
+    assert page.fonts["Inter"] == "assets/fonts/Inter-Regular.ttf"
+    assert page.theme.font_family == "Inter, Roboto, Arial, sans-serif"
+
+
+def test_frontend_config_warns_about_missing_local_font_assets() -> None:
+    page = DummyPage()
+    config = FrontEndConfig(
+        font_family="Inter",
+        font_assets={"Inter": "assets/fonts/Missing.ttf"},
+    )
+
+    with pytest.warns(UserWarning, match="Fuente local no encontrada.*Inter"):
+        config.apply_to_page(page)  # type: ignore[arg-type]
+
+    assert page.fonts["Inter"] == "assets/fonts/Missing.ttf"

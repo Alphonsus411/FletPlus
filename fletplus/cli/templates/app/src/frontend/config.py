@@ -7,9 +7,13 @@ from pathlib import Path
 PALETTE_NAME = "material"
 PALETTE_MODE = "light"
 FONT_FAMILY = "Roboto"
+FONT_FALLBACK_FAMILIES = ("Arial", "sans-serif")
 FONT_ASSETS = {
+    # Registra fuentes locales incluidas en assets/fonts/.
     # "Inter": "assets/fonts/Inter-Regular.ttf",
 }
+FONT_WEIGHTS = ("w400", "w600", "w700")
+FONT_STYLES = ("normal",)
 CUSTOM_TOKENS = {
     "colors": {
         "brand": "#2563EB",

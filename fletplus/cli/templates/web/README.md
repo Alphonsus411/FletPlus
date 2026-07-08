@@ -51,3 +51,18 @@ La plantilla mantiene `src/main.py` como entrypoint específico de plataforma y 
 - **Rutas:** añade nuevas funciones de vista y entradas `Route(path="/...", view=...)` en `src/frontend/routes.py`.
 
 Para cambiar layout y breakpoints, empieza por `PAGE_PADDING`, `MAX_CONTENT_WIDTH`, `MIN_CONTENT_WIDTH`, `SPACING` y `LAYOUT_DENSITY` en `src/frontend/config.py`; después adapta `responsive_shell()`, `max_width_container()` u `orientation()` en `src/frontend/layout.py` si tu producto requiere reglas específicas por dispositivo.
+
+## Ejemplo: usar una fuente local
+
+1. Copia tu archivo `.ttf` u `.otf` a `assets/fonts/`, por ejemplo `assets/fonts/Inter-Regular.ttf`.
+2. Edita `src/frontend/config.py`:
+
+```python
+FONT_FAMILY = "Inter"
+FONT_FALLBACK_FAMILIES = ("Roboto", "Arial", "sans-serif")
+FONT_ASSETS = {"Inter": "assets/fonts/Inter-Regular.ttf"}
+FONT_WEIGHTS = ("w400", "w600", "w700")
+FONT_STYLES = ("normal",)
+```
+
+`create_frontend_config()` registra esos assets mediante `FrontEndConfig.apply_to_page(page)`, que los copia a `page.fonts` y establece la familia en `page.theme`.
