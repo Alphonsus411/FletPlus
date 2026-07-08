@@ -16,7 +16,7 @@ pip install fletplus
 
 Genera una estructura base para comenzar un nuevo proyecto. Por defecto el
 directorio se crea dentro de la carpeta actual, aunque puedes indicar una ruta
-distinta con `--directorio` y una plantilla con `--template`.
+distinta con `--directorio`, una plantilla con `--template` y un preset visual con `--preset`.
 
 Archivos generados:
 
@@ -25,6 +25,32 @@ Archivos generados:
 - `.gitignore` preconfigurado.
 - Paquete `src/` con un `main.py` listo para ejecutar.
 - Configuración FrontEnd inicial basada en `FrontEndConfig` para paletas, fuentes, pantalla y layout responsive.
+
+
+Presets visuales disponibles para `--preset`:
+
+- `dashboard`: usa la paleta `fjord`, densidad `compact`, spacing contenido, radios medios y sombras discretas para KPIs/tablas.
+- `landing`: usa `solstice`, densidad `spacious`, spacing amplio, radios grandes y sombras expresivas para páginas de marketing.
+- `admin`: usa `metropolis`, densidad `compact`, radios sobrios y sombras ligeras para backoffices y CRUDs.
+- `mobile_app`: usa `aurora`, densidad `comfortable`, radios táctiles y sombras suaves para interfaces móviles.
+- `saas`: usa `zenith`, densidad `comfortable`, spacing equilibrado y tipografía Inter para productos SaaS.
+- `ecommerce`: usa `citrus`, densidad `comfortable`, radios de tarjeta y sombras de producto para catálogos y checkout.
+
+Ejemplos de creación con preset:
+
+```bash
+fletplus create Analitica --preset dashboard
+fletplus create Marketing --template web --preset landing
+fletplus create Backoffice --template desktop --preset admin
+fletplus create MiApp --template mobile --preset mobile_app
+fletplus create ProductoSaas --preset saas
+fletplus create Tienda --template web --preset ecommerce
+```
+
+El preset elegido se refleja en `pyproject.toml` y en `src/frontend/config.py`: la
+paleta base alimenta `FrontEndConfig.palette`, la densidad alimenta
+`layout_density`, y los tokens de spacing, radios, sombras y tipografía quedan
+disponibles en `CUSTOM_TOKENS`.
 
 Plantillas disponibles:
 
@@ -135,14 +161,15 @@ valida tipos, modo visual, densidad y destino antes de crear la configuración:
 
 ```toml
 [tool.fletplus.frontend]
-palette = "material"
+palette = "zenith"
 mode = "light"
-font_family = "Roboto"
+font_family = "Inter"
 page_padding = 24
 max_content_width = 1100
 min_content_width = 320
 spacing = 16
 layout_density = "comfortable"
+preset = "saas"
 target = "web"
 
 [tool.fletplus.frontend.fonts]
@@ -166,6 +193,7 @@ Campos principales:
 - `max_content_width` / `min_content_width`: límites para layouts centrados.
 - `spacing`: separación base para componentes y helpers de layout.
 - `layout_density`: `"compact"`, `"normal"`, `"comfortable"` o `"spacious"`.
+- `preset`: nombre del preset visual usado para inicializar la plantilla.
 - `target`: destino esperado de la plantilla o build (`web`, `desktop`,
   `mobile`, `app`, `all`, `android-apk`, `android-aab` o `ios`).
 

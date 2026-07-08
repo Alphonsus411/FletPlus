@@ -21,14 +21,15 @@ icon = "assets/icon.png"
 build_timeout = 900
 
 [tool.fletplus.frontend]
-palette = "material"
+palette = "{{ palette_name }}"
 mode = "light"
-font_family = "Roboto"
-page_padding = 24
+font_family = "{{ font_family }}"
+page_padding = {{ page_padding }}
 max_content_width = 1100
 min_content_width = 320
-spacing = 16
-layout_density = "comfortable"
+spacing = {{ spacing }}
+layout_density = "{{ layout_density }}"
+preset = "{{ preset_name }}"
 target = "all"
 
 # Ejemplos opcionales de personalización:
