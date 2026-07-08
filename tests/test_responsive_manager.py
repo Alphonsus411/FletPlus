@@ -285,3 +285,19 @@ def test_responsive_manager_dispose_with_sequential_managers():
     # no debe ejecutar callbacks adicionales.
     page.resize(700)
     assert calls == ["a", "b-small", "b-large"]
+
+
+def test_responsive_manager_exposes_current_viewport_snapshot():
+    page = DummyPage(500, 800)
+    manager = ResponsiveManager(page)
+
+    assert manager.current_viewport.width == 500
+    assert manager.current_viewport.orientation == "portrait"
+    assert manager.current_viewport.profile.name == "mobile"
+
+    page.resize(width=1200, height=700)
+
+    assert manager.current_viewport.width == 1200
+    assert manager.current_viewport.height == 700
+    assert manager.current_viewport.orientation == "landscape"
+    assert manager.current_viewport.profile.name == "desktop"
