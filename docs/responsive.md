@@ -326,3 +326,62 @@ resolverán tamaño, peso y altura de línea con el ancho actual.
 
 Consulta `examples/responsive_typography_example.py` para ver todos los roles
 adaptándose al redimensionar la ventana.
+
+## Helpers de viewport
+
+El módulo `fletplus.utils.viewport` centraliza las decisiones de viewport que se
+repiten en layouts responsivos y plantillas generadas por la CLI.
+
+### Lectura segura de tamaño
+
+`safe_page_width(page)` y `safe_page_height(page)` leen el tamaño usando la capa
+de compatibilidad de FletPlus y siempre devuelven enteros no negativos. Si Flet
+aún no ha publicado el tamaño del viewport, puedes pasar un fallback explícito.
+
+```python
+from fletplus.utils.viewport import safe_page_height, safe_page_width
+
+width = safe_page_width(page, fallback=390)
+height = safe_page_height(page, fallback=844)
+```
+
+### Orientación, perfil y densidad
+
+`viewport_orientation(page)` devuelve `portrait` cuando el alto es mayor o igual
+que el ancho, y `landscape` en el resto de casos. `active_device_profile(page)`
+resuelve el `DeviceProfile` activo usando el catálogo predeterminado o perfiles
+personalizados. `visual_density_for_page(page)` propone una densidad visual:
+
+- `compact`: móviles o viewports con poca altura.
+- `normal`: tabletas o vistas verticales medianas.
+- `comfortable`: escritorios apaisados con espacio suficiente.
+
+```python
+from fletplus.utils.viewport import (
+    active_device_profile,
+    viewport_orientation,
+    visual_density_for_page,
+)
+
+profile = active_device_profile(page)
+orientation = viewport_orientation(page)
+density = visual_density_for_page(page)
+```
+
+### Padding seguro para mobile
+
+`safe_mobile_padding(page, base=16)` genera un `ft.Padding` equilibrado para
+móviles, orientación vertical y densidades compactas. En tablet/escritorio usa
+valores simétricos derivados de la densidad visual.
+
+```python
+from fletplus.utils.viewport import safe_mobile_padding
+
+content = ft.Container(content=body, padding=safe_mobile_padding(page, base=20))
+```
+
+`ResponsiveManager` usa estos helpers internamente para calcular ancho, alto,
+orientación y perfil activo, evitando duplicar lógica defensiva en cada callback.
+Las plantillas `web`, `desktop` y `mobile` también los importan en
+`src/frontend/layout.py` para mostrar metadata de perfil, orientación, densidad
+y tamaño actual.

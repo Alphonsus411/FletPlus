@@ -11,16 +11,17 @@ from fletplus.styles import Style
 from fletplus.utils.device_profiles import (
     DEFAULT_DEVICE_PROFILES,
     DeviceProfile,
-    get_device_profile,
 )
-from fletplus.utils.flet_compat import (
-    get_page_height,
-    get_page_width,
-    safe_request_page_update,
-)
+from fletplus.utils.flet_compat import safe_request_page_update
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
 from fletplus.utils.responsive_manager_rs import apply_styles as _apply_styles_rs
 from fletplus.utils.responsive_style import ResponsiveStyle
+from fletplus.utils.viewport import (
+    active_device_profile,
+    safe_page_height,
+    safe_page_width,
+    viewport_orientation,
+)
 
 _STYLE_ATTRS = (
     "margin",
@@ -240,8 +241,8 @@ else:
         # ------------------------------------------------------------------
         def _handle_resize(self, _event: ft.ControlEvent | None = None) -> None:
             page = self.page
-            width = int(get_page_width(page))
-            height = int(get_page_height(page))
+            width = safe_page_width(page)
+            height = safe_page_height(page)
 
             bp_w = None
             bp_h = None
@@ -271,7 +272,7 @@ else:
                     bh_callback(height)
 
             # Orientación
-            orientation = "landscape" if width >= height else "portrait"
+            orientation = viewport_orientation(page)
             if orientation != self._current_orientation:
                 self._current_orientation = orientation
                 orientation_callback = self.orientation_callbacks.get(orientation)
@@ -280,7 +281,7 @@ else:
 
             # Tipo de dispositivo (según ancho)
             if self.device_callbacks and self.device_profiles:
-                profile = get_device_profile(width, self.device_profiles)
+                profile = active_device_profile(page, self.device_profiles)
                 if profile.name != self._current_device:
                     self._current_device = profile.name
                     device_callback = self.device_callbacks.get(profile.name)

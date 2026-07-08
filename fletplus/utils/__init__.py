@@ -29,6 +29,13 @@ LAZY_IMPORTS = {
     "DEFAULT_DEVICE_PROFILES": "fletplus.utils.device_profiles",
     "device_name": "fletplus.utils.device_profiles",
     "columns_for_width": "fletplus.utils.device_profiles",
+    "safe_page_width": "fletplus.utils.viewport",
+    "safe_page_height": "fletplus.utils.viewport",
+    "safe_page_size": "fletplus.utils.viewport",
+    "viewport_orientation": "fletplus.utils.viewport",
+    "active_device_profile": "fletplus.utils.viewport",
+    "safe_mobile_padding": "fletplus.utils.viewport",
+    "visual_density_for_page": "fletplus.utils.viewport",
     "AccessibilityPreferences": "fletplus.utils.accessibility",
 }
 
@@ -52,6 +59,15 @@ if TYPE_CHECKING:
     )
     from fletplus.utils.responsive_visibility import ResponsiveVisibility
     from fletplus.utils.shortcut_manager import ShortcutManager
+    from fletplus.utils.viewport import (
+        active_device_profile,
+        safe_mobile_padding,
+        safe_page_height,
+        safe_page_size,
+        safe_page_width,
+        viewport_orientation,
+        visual_density_for_page,
+    )
 
 __all__ = [
     "ResponsiveStyle",
@@ -70,6 +86,13 @@ __all__ = [
     "DEFAULT_DEVICE_PROFILES",
     "device_name",
     "columns_for_width",
+    "safe_page_width",
+    "safe_page_height",
+    "safe_page_size",
+    "viewport_orientation",
+    "active_device_profile",
+    "safe_mobile_padding",
+    "visual_density_for_page",
     "AccessibilityPreferences",
 ]
 

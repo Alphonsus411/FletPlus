@@ -9,9 +9,14 @@ from fletplus.utils.responsive_style import ResponsiveStyle
 from fletplus.utils.device_profiles import (
     DeviceProfile,
     DEFAULT_DEVICE_PROFILES,
-    get_device_profile,
 )
 from fletplus.utils.responsive_breakpoints import BreakpointRegistry
+from fletplus.utils.viewport import (
+    active_device_profile,
+    safe_page_height,
+    safe_page_width,
+    viewport_orientation,
+)
 try:  # backend opcional en Rust
     from fletplus.utils.responsive_manager_rs import apply_styles as _apply_styles_rs
 except Exception:  # pragma: no cover - fallback limpio
@@ -194,8 +199,8 @@ cdef class ResponsiveManager:
     # ------------------------------------------------------------------
     cpdef void _handle_resize(self, object e=None):
         cdef object page = self.page
-        cdef double width = page.width if page.width is not None else 0
-        cdef double height = page.height if page.height is not None else 0
+        cdef double width = safe_page_width(page)
+        cdef double height = safe_page_height(page)
 
         cdef tuple width_keys = self._width_bp_keys
         cdef tuple height_keys = self._height_bp_keys
@@ -228,7 +233,7 @@ cdef class ResponsiveManager:
                 bh_callback(height)
 
         # Orientación
-        orientation = "landscape" if width >= height else "portrait"
+        orientation = viewport_orientation(page)
         if orientation != self._current_orientation:
             self._current_orientation = orientation
             orientation_callback = self.orientation_callbacks.get(orientation)
@@ -237,7 +242,7 @@ cdef class ResponsiveManager:
 
         # Tipo de dispositivo (según ancho)
         if self.device_callbacks and self.device_profiles:
-            profile = get_device_profile(width, self.device_profiles)
+            profile = active_device_profile(page, self.device_profiles)
             if profile.name != self._current_device:
                 self._current_device = profile.name
                 device_callback = self.device_callbacks.get(profile.name)
