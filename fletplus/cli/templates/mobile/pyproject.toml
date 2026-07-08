@@ -15,6 +15,7 @@ dependencies = [
 [tool.fletplus]
 app = "src/main.py"
 default_target = "mobile"
+
 assets_dir = "assets"
 icon = "assets/icon.png"
 build_timeout = 900
@@ -28,6 +29,20 @@ max_content_width = 480
 min_content_width = 320
 spacing = 12
 layout_density = "compact"
+target = "mobile"
+
+# Ejemplos opcionales de personalización:
+# [tool.fletplus.frontend.fonts]
+# Inter = "assets/fonts/Inter.ttf"
+# Roboto = "assets/fonts/Roboto-Regular.ttf"
+#
+# [tool.fletplus.frontend.tokens.colors]
+# primary = "#2563EB"
+# surface = "#FFFFFF"
+#
+# [tool.fletplus.frontend.tokens.spacing]
+# page = 24
+# section = 32
 
 [tool.fletplus.web]
 view = "ft.AppView.FLET_APP"
