@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib
 import sys
 import types
@@ -123,7 +124,7 @@ def test_create_template_uses_main_flet_version_policy(
             [
                 "from fletplus.utils.flet_compat import safe_set_window_attr",
                 "configure_window(page)",
-                "safe_set_window_attr(page, \"min_width\"",
+                'safe_set_window_attr(page, "min_width"',
                 "Panel principal",
             ],
             ["register_pwa", "NavigationBar"],
@@ -134,7 +135,7 @@ def test_create_template_uses_main_flet_version_policy(
                 "make_navigation_bar_destination",
                 "ft.NavigationBar",
                 "SafeArea",
-                "layout_density=\"compact\"",
+                'layout_density="compact"',
             ],
             ["register_pwa", "safe_set_window_attr"],
         ),
@@ -472,9 +473,108 @@ def test_create_web_template_generates_configured_pwa_files(
 
     assert '"name": "Mi Web"' in manifest
     assert '"display": "standalone"' in manifest
-    assert 'mi_web-fletplus-v1' in service_worker
+    assert "mi_web-fletplus-v1" in service_worker
     assert "FrontEndConfig.from_pyproject" in theme_py
     assert "_find_pyproject" in theme_py
+
+
+TEMPLATE_NAMES = ("app", "web", "desktop", "mobile")
+COMMON_TEMPLATE_PATHS = (
+    "src/frontend/config.py",
+    "src/frontend/theme.py",
+    "src/frontend/layout.py",
+    "src/frontend/routes.py",
+    "src/frontend/assets.py",
+    "README.md",
+    "requirements.txt",
+    "pyproject.toml",
+)
+COMMON_LAYOUT_HELPERS = (
+    "active_profile",
+    "orientation",
+    "spacing",
+    "max_width_container",
+    "responsive_shell",
+)
+PLATFORM_LAYOUT_HELPERS = ("density", "safe_padding")
+
+
+def _template_root() -> Path:
+    return Path("fletplus/cli/templates")
+
+
+def _defined_functions(module_path: Path) -> set[str]:
+    tree = ast.parse(module_path.read_text(encoding="utf-8"), filename=str(module_path))
+    return {
+        node.name
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+
+def _assert_minimal_template_contract(
+    project_root: Path, *, template_name: str
+) -> None:
+    for relative_path in COMMON_TEMPLATE_PATHS:
+        assert (project_root / relative_path).is_file(), (
+            f"{template_name}: falta {relative_path}"
+        )
+
+    layout_functions = _defined_functions(
+        project_root / "src" / "frontend" / "layout.py"
+    )
+    expected_helpers = set(COMMON_LAYOUT_HELPERS)
+    # Tras la unificación de plantillas, `app` mantiene la misma interfaz completa
+    # que las plantillas específicas de plataforma para poder alternar target sin
+    # cambiar imports ni helpers consumidos por la app generada.
+    expected_helpers.update(PLATFORM_LAYOUT_HELPERS)
+    assert expected_helpers <= layout_functions, (
+        f"{template_name}: helpers ausentes "
+        f"{sorted(expected_helpers - layout_functions)}"
+    )
+
+
+def test_frontend_template_files_have_common_minimal_contract() -> None:
+    template_root = _template_root()
+
+    for template_name in TEMPLATE_NAMES:
+        _assert_minimal_template_contract(
+            template_root / template_name, template_name=template_name
+        )
+
+
+def test_frontend_template_layout_helpers_have_unified_contract() -> None:
+    template_root = _template_root()
+
+    for template_name in TEMPLATE_NAMES:
+        layout_py = template_root / template_name / "src" / "frontend" / "layout.py"
+        layout_functions = _defined_functions(layout_py)
+        assert set(COMMON_LAYOUT_HELPERS) <= layout_functions, template_name
+        assert set(PLATFORM_LAYOUT_HELPERS) <= layout_functions, (
+            f"{template_name}: la interfaz de layout debe incluir helpers de "
+            "plataforma después de la unificación"
+        )
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+@pytest.mark.parametrize("target_name", TEMPLATE_NAMES)
+def test_create_target_generates_common_template_contract(
+    monkeypatch, watchdog_available: bool, target_name: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(
+            app, ["create", f"demo_{target_name}", "--target", target_name]
+        )
+
+        assert result.exit_code == 0, result.output
+        _assert_minimal_template_contract(
+            base / f"demo_{target_name}", template_name=target_name
+        )
 
 
 def test_frontend_template_static_structure_is_consistent() -> None:
@@ -496,9 +596,9 @@ def test_frontend_template_static_structure_is_consistent() -> None:
             path.name for path in frontend_dir.glob("*.py")
         } == expected_frontend_files
         for legacy_module in ("theme.py", "layout.py", "assets.py", "routes.py"):
-            assert not (
-                src / legacy_module
-            ).exists(), f"{template_name}: {legacy_module}"
+            assert not (src / legacy_module).exists(), (
+                f"{template_name}: {legacy_module}"
+            )
 
         main_py = (src / "main.py").read_text(encoding="utf-8")
         assert "from frontend.theme import create_frontend_config" in main_py
