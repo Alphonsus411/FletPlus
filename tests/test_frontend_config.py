@@ -306,6 +306,56 @@ def test_frontend_config_applies_target_presets_without_mutating_original() -> N
     assert mobile.layout_density == "compact"
 
 
+def test_frontend_config_derives_registered_landing_preset_for_web() -> None:
+    config = FrontEndConfig.from_mapping({"preset": "landing", "target": "web"})
+
+    assert config.preset == "landing"
+    assert config.palette == "solstice"
+    assert config.layout_density == "spacious"
+    assert config.page_padding == 40
+    assert config.spacing == 20
+    assert config.max_content_width == 1280
+    assert config.font_family == "Inter"
+    assert config.theme_tokens["spacing"]["section"] == 64
+    assert config.typography_tokens["heading_weight"] == 800
+
+
+def test_frontend_config_derives_registered_admin_preset_for_desktop() -> None:
+    config = FrontEndConfig.from_mapping({"preset": "admin", "target": "desktop"})
+
+    assert config.preset == "admin"
+    assert config.palette == "metropolis"
+    assert config.layout_density == "compact"
+    assert config.page_padding == 24
+    assert config.spacing == 12
+    assert config.max_content_width == 1180
+    assert config.theme_tokens["radii"]["card"] == 12
+    assert config.typography_tokens["body_size"] == 14
+
+
+def test_frontend_config_explicit_values_override_registered_preset() -> None:
+    config = FrontEndConfig.from_mapping(
+        {
+            "preset": "landing",
+            "target": "web",
+            "palette": "aurora",
+            "layout_density": "compact",
+            "page_padding": 12,
+            "max_content_width": 960,
+            "spacing": 10,
+            "typography_tokens": {"body": {"mobile": {"size": 18}}},
+            "theme_tokens": {"colors": {"brand": "#111111"}},
+        }
+    )
+
+    assert config.palette == "aurora"
+    assert config.layout_density == "compact"
+    assert config.page_padding == 12
+    assert config.max_content_width == 960
+    assert config.spacing == 10
+    assert config.typography_tokens == {"body": {"mobile": {"size": 18}}}
+    assert config.theme_tokens == {"colors": {"brand": "#111111"}}
+
 def test_frontend_config_palette_for_web_merges_base_tokens() -> None:
     config = FrontEndConfig(
         palette="aurora",
