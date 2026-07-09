@@ -58,6 +58,7 @@ LAZY_IMPORTS = {
     "FletPlusApp": "fletplus.core_legacy",
     "FontDeclaration": "fletplus.frontend",
     "FrontEndConfig": "fletplus.frontend",
+    "FrontEndTask": "fletplus.frontend",
     "Grid": "fletplus.components",
     "GridItem": "fletplus.components",
     "HttpClient": "fletplus.http",
@@ -192,7 +193,7 @@ if TYPE_CHECKING:
         ResponsiveNavigationConfig,
     )
     from fletplus.desktop import SystemTray, WindowManager, show_notification
-    from fletplus.frontend import FontDeclaration, FrontEndConfig
+    from fletplus.frontend import FontDeclaration, FrontEndConfig, FrontEndTask
     from fletplus.http import (
         DiskCache,
         HttpClient,
@@ -262,6 +263,7 @@ __all__ = [
     "ResponsiveNavigationConfig",
     "FontDeclaration",
     "FrontEndConfig",
+    "FrontEndTask",
     "Layout",
     "State",
     "AnimationController",
@@ -280,6 +282,7 @@ __all__ = [
     "list_presets",
     "has_preset",
     "get_preset_definition",
+    "get_preset_metadata",
     "PrimaryButton",
     "SecondaryButton",
     "SuccessButton",

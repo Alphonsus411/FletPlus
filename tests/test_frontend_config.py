@@ -291,3 +291,51 @@ def test_frontend_config_warns_about_missing_local_font_assets() -> None:
         config.apply_to_page(page)  # type: ignore[arg-type]
 
     assert page.fonts["Inter"] == "assets/fonts/Missing.ttf"
+
+
+def test_frontend_config_applies_target_presets_without_mutating_original() -> None:
+    config = FrontEndConfig(target="mobile", page_padding=24, max_content_width=1200)
+
+    mobile = config.configured_for_target()
+
+    assert config.page_padding == 24
+    assert config.max_content_width == 1200
+    assert mobile.page_padding == 16
+    assert mobile.max_content_width == 480
+    assert mobile.spacing == 12
+    assert mobile.layout_density == "compact"
+
+
+def test_frontend_config_resolves_platform_palette_and_screen_tokens() -> None:
+    page = DummyPage()
+    page.width = 390
+    page.height = 844
+    config = FrontEndConfig(
+        palette="material",
+        target="mobile",
+        platform_palettes={"mobile": {"primary": "#123456", "accent": "#ABCDEF"}},
+        screen_tokens={"mobile": {"touch_target": 48}, "portrait": {"safe_area": True}},
+    )
+
+    palette = config.palette_for_target()
+    tokens = config.screen_tokens_for_page(page)  # type: ignore[arg-type]
+
+    assert palette["primary"] == "#123456"
+    assert palette["accent"] == "#ABCDEF"
+    assert tokens["device"] == "mobile"
+    assert tokens["orientation"] == "portrait"
+    assert tokens["columns"] == 4
+    assert tokens["touch_target"] == 48
+    assert tokens["safe_area"] is True
+
+
+def test_frontend_config_exposes_structured_implementation_tasks() -> None:
+    config = FrontEndConfig(target="web", font_family="Inter")
+
+    tasks = config.implementation_tasks()
+
+    assert [task.name for task in tasks] == ["paleta", "pantalla", "diseño", "fuentes"]
+    assert tasks[0].target == "web"
+    assert "palette_for_target" in tasks[0].functions
+    assert tasks[1].tokens["max_content_width"] == 1280
+    assert tasks[3].tokens["font_family"] == "Inter"
