@@ -356,6 +356,26 @@ def test_frontend_config_explicit_values_override_registered_preset() -> None:
     assert config.typography_tokens == {"body": {"mobile": {"size": 18}}}
     assert config.theme_tokens == {"colors": {"brand": "#111111"}}
 
+
+def test_frontend_config_from_preset_keeps_explicit_override_precedence() -> None:
+    config = FrontEndConfig.from_preset(
+        "admin",
+        target="desktop",
+        palette="slate",
+        layout_density="comfortable",
+        spacing=18,
+    )
+
+    assert config.preset == "admin"
+    assert config.target == "desktop"
+    assert config.palette == "slate"
+    assert config.layout_density == "comfortable"
+    assert config.spacing == 18
+    assert config.page_padding == 24
+    assert config.max_content_width == 1180
+    assert config.theme_tokens["radii"]["card"] == 12
+
+
 def test_frontend_config_palette_for_web_merges_base_tokens() -> None:
     config = FrontEndConfig(
         palette="aurora",

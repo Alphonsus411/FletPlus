@@ -77,7 +77,7 @@ def build_navigation() -> ft.NavigationBar:
 
 ## Matriz preset + target
 
-`FrontEndConfig.from_mapping()` usa los presets visuales registrados como base inicial y después aplica los valores explícitos declarados por CLI o `pyproject.toml`. Esto evita un sistema paralelo: `--preset` alimenta los mismos campos que se consumen durante la ejecución (`palette`, `layout_density`, `typography_tokens`, `theme_tokens`, `page_padding`, `max_content_width` y `spacing`).
+`FrontEndConfig.from_mapping()` usa los presets visuales registrados como base inicial y después aplica los valores explícitos declarados por CLI o `pyproject.toml`. Si necesitas construir la misma configuración desde código, `FrontEndConfig.from_preset()` es una factory fina sobre `from_mapping()` y conserva la misma precedencia de overrides. Esto evita un sistema paralelo: `--preset` alimenta los mismos campos que se consumen durante la ejecución (`palette`, `layout_density`, `typography_tokens`, `theme_tokens`, `page_padding`, `max_content_width` y `spacing`).
 
 | Preset recomendado | Target habitual | Paleta base | Densidad base | Padding / spacing esperados | Ancho máximo esperado | Uso principal |
 | --- | --- | --- | --- | --- | --- | --- |
