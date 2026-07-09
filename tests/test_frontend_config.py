@@ -417,3 +417,75 @@ def test_frontend_config_exposes_structured_implementation_tasks() -> None:
     assert "palette_for_target" in tasks[0].functions
     assert tasks[1].tokens["max_content_width"] == 1280
     assert tasks[3].tokens["font_family"] == "Inter"
+
+
+def test_frontend_config_resolves_custom_typography_roles_by_device_width() -> None:
+    config = FrontEndConfig(
+        typography_tokens={
+            "badge": {
+                "mobile": {"size": 10, "weight": "w500", "line_height": 1.1},
+                "tablet": {"size": 12, "weight": "w600", "line_height": 1.2},
+                "desktop": {"size": 14, "weight": "w700", "line_height": 1.3},
+                "large_desktop": {"size": 16, "weight": "w800", "line_height": 1.4},
+            }
+        }
+    )
+
+    assert config.resolve_typography("badge", 375) == {
+        "size": 10,
+        "weight": "w500",
+        "line_height": 1.1,
+    }
+    assert config.resolve_typography("badge", 768) == {
+        "size": 12,
+        "weight": "w600",
+        "line_height": 1.2,
+    }
+    assert config.resolve_typography("badge", 1024) == {
+        "size": 14,
+        "weight": "w700",
+        "line_height": 1.3,
+    }
+    assert config.resolve_typography("badge", 1440) == {
+        "size": 16,
+        "weight": "w800",
+        "line_height": 1.4,
+    }
+
+
+def test_frontend_config_loads_custom_typography_roles_from_pyproject(
+    tmp_path: Path,
+) -> None:
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        """[tool.fletplus.frontend.typography_tokens.badge.mobile]
+size = 10
+weight = 'w500'
+line_height = 1.1
+
+[tool.fletplus.frontend.typography_tokens.badge.tablet]
+size = 12
+weight = 'w600'
+line_height = 1.2
+
+[tool.fletplus.frontend.typography_tokens.badge.desktop]
+size = 14
+weight = 'w700'
+line_height = 1.3
+
+[tool.fletplus.frontend.typography_tokens.badge.large_desktop]
+size = 16
+weight = 'w800'
+line_height = 1.4
+""",
+        encoding="utf-8",
+    )
+
+    config = FrontEndConfig.from_pyproject(pyproject)
+    tokens = config.resolved_typography_tokens()
+
+    assert tokens["badge"]["mobile"]["size"] == 10
+    assert config.text_style("badge", 375).size == 10
+    assert config.text_style("badge", 768).size == 12
+    assert config.text_style("badge", 1024).size == 14
+    assert config.text_style("badge", 1440).size == 16
