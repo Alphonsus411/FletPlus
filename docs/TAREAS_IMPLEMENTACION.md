@@ -3,6 +3,8 @@
 ## Objetivo
 Cerrar fisuras detectadas en robustez, calidad continua y mantenimiento de documentación.
 
+> Nota frontend: las tareas específicas de paletas, viewport, layout, tipografía, assets, plantillas CLI, componentes y validación se detallan en el [Roadmap frontend](frontend-roadmap.md). Este backlog conserva el historial general y las iniciativas transversales.
+
 ## Bloque 1 — Robustez de API y compatibilidad
 - [ ] **T1.1** Definir política oficial de uso entre `core` y `core_legacy` en README/docs.
 - [ ] **T1.2** Etiquetar pruebas por dominio (core moderno vs legacy) para evitar regresiones por imports cruzados.

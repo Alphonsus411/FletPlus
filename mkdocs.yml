@@ -15,6 +15,7 @@ nav:
       - Animaciones coordinadas: animation.md
       - Almacenamiento reactivo: storage.md
       - Tareas de implementación: TAREAS_IMPLEMENTACION.md
+      - Roadmap frontend: frontend-roadmap.md
       - Revisión de ingeniería 2025: REVISION_INGENIERIA_2025.md
   - Referencias:
       - Cliente HTTP reactivo: http.md
