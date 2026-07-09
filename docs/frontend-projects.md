@@ -206,9 +206,77 @@ FONT_WEIGHTS = ("w400", "w600", "w700")
 Para usar una fuente propia:
 
 1. Copia los `.ttf`/`.otf` a `assets/fonts/`.
-2. Registra el archivo en `FONT_ASSETS`.
-3. Ajusta `FONT_FAMILY` y los pesos disponibles.
+2. Registra el archivo en `FONT_ASSETS` o en `[tool.fletplus.frontend.font.assets]`.
+3. Ajusta `FONT_FAMILY`, los fallbacks y los pesos disponibles.
 4. Ejecuta la app y revisa que `frontend.apply_to_page(page)` se mantenga en `main()`.
+
+Ejemplo completo en `pyproject.toml` con fuente local, fallbacks y metadatos de pesos/estilos:
+
+```toml
+[tool.fletplus.frontend.font]
+family = "Inter"
+fallback_families = ["Roboto", "Arial", "sans-serif"]
+weights = ["w400", "w600", "w700"]
+styles = ["normal", "italic"]
+
+[tool.fletplus.frontend.font.assets]
+Inter = "assets/fonts/Inter-Regular.ttf"
+InterSemiBold = "assets/fonts/Inter-SemiBold.ttf"
+InterBold = "assets/fonts/Inter-Bold.ttf"
+```
+
+`FrontEndConfig.apply_to_page(page)` registra los assets en `page.fonts`, compone `Theme.font_family` como `Inter, Roboto, Arial, sans-serif` y avisa si un archivo local declarado no existe. Los pesos no cargan archivos por sí solos: documentan qué variantes has incluido para mantener alineados diseño, QA y configuración.
+
+## Tipografía responsive
+
+`FrontEndConfig` incluye roles tipográficos base para `display`, `headline`, `title`, `body`, `label` y `caption`. Los componentes de layout reutilizables aplican esos roles con `text_style()` cuando renderizan texto directamente: `HeroSection` usa `label`, `display` y `body`; `Section` usa `title` y `body`; `ToolbarSection` puede convertir textos simples a controles con rol `label`; y `FooterSection` permite `caption` para metadatos o copyright.
+
+Puedes sobrescribir la escala por dispositivo o declarar roles personalizados en `[tool.fletplus.frontend.typography_tokens]`. Los nombres de dispositivo soportados son `mobile`, `tablet`, `desktop` y `large_desktop`:
+
+```toml
+[tool.fletplus.frontend.typography_tokens.caption.mobile]
+size = 11
+weight = "w400"
+line_height = 1.35
+
+[tool.fletplus.frontend.typography_tokens.caption.desktop]
+size = 13
+weight = "w400"
+line_height = 1.32
+
+[tool.fletplus.frontend.typography_tokens.badge.mobile]
+size = 10
+weight = "w600"
+line_height = 1.2
+
+[tool.fletplus.frontend.typography_tokens.badge.tablet]
+size = 11
+weight = "w600"
+line_height = 1.2
+
+[tool.fletplus.frontend.typography_tokens.badge.desktop]
+size = 12
+weight = "w700"
+line_height = 1.18
+
+[tool.fletplus.frontend.typography_tokens.badge.large_desktop]
+size = 14
+weight = "w700"
+line_height = 1.16
+```
+
+Uso desde componentes o vistas propias:
+
+```python
+frontend = FrontEndConfig.from_pyproject()
+width = int(page.width or frontend.max_content_width)
+
+caption = ft.Text("Actualizado hace 2 min", style=frontend.text_style("caption", width))
+badge = ft.Text("Beta", style=frontend.text_style("badge", width))
+tokens = frontend.resolved_typography_tokens()
+```
+
+Si un rol personalizado no define todos los dispositivos, `resolve_typography()` usa la variante del perfil activo y cae a `desktop`, `mobile` o `{}` según disponibilidad. Para textos de navegación, badges o ayudas contextuales, crea roles semánticos (`nav_item`, `badge`, `helper`) en lugar de reutilizar tamaños hardcodeados.
 
 ## Responsive layout
 

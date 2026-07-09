@@ -17,13 +17,34 @@ if TYPE_CHECKING:
 
 SpacingValue = int | float | ft.Padding | Mapping[str, int | float] | None
 DeviceMap = Mapping[str, int | float | None]
+TextLike = ft.Control | str
+
+
+def _frontend_config(config: FrontEndConfig | None) -> FrontEndConfig:
+    return config or FrontEndConfig()
+
+
+def _text_style(
+    config: FrontEndConfig | None, role: str, page: ft.Page
+) -> ft.TextStyle:
+    return _frontend_config(config).text_style(role, int(get_page_width(page) or 0))
+
+
+def _text_control(
+    value: TextLike, *, config: FrontEndConfig | None, role: str, page: ft.Page
+) -> ft.Control:
+    if isinstance(value, str):
+        return ft.Text(value, style=_text_style(config, role, page))
+    return value
 
 
 def _device_key(name: str) -> str:
     return str(name).strip().lower()
 
 
-def _token(theme: "ThemeManager | None", group: str, name: str, default: object = None) -> object:
+def _token(
+    theme: "ThemeManager | None", group: str, name: str, default: object = None
+) -> object:
     if theme is None:
         return default
     tokens = getattr(theme, "tokens", {})
@@ -39,7 +60,9 @@ def _token(theme: "ThemeManager | None", group: str, name: str, default: object 
     return default
 
 
-def _color(theme: "ThemeManager | None", token: str | None, default: str | None = None) -> str | None:
+def _color(
+    theme: "ThemeManager | None", token: str | None, default: str | None = None
+) -> str | None:
     if not token:
         return default
     if theme is not None:
@@ -120,7 +143,9 @@ def resolve_layout_tokens(
 
     base_padding = frontend.page_padding
     token_padding = screen_tokens.get("padding", screen_tokens.get("page_padding"))
-    resolved_padding_value: SpacingValue = token_padding if token_padding is not None else base_padding
+    resolved_padding_value: SpacingValue = (
+        token_padding if token_padding is not None else base_padding
+    )
     if padding_by_device and name in padding_by_device:
         resolved_padding_value = padding_by_device[name]
     if padding is not None:
@@ -141,7 +166,9 @@ def resolve_layout_tokens(
         resolved_max_width = (
             None
             if device_width is None
-            else int(_number(device_width, resolved_max_width or frontend.max_content_width))
+            else int(
+                _number(device_width, resolved_max_width or frontend.max_content_width)
+            )
         )
     if max_width is not None:
         resolved_max_width = max_width
@@ -157,7 +184,13 @@ def resolve_layout_tokens(
     if columns is not None:
         resolved_columns = columns
 
-    return LayoutTokens(profile, resolved_spacing, resolved_padding, resolved_max_width, resolved_columns)
+    return LayoutTokens(
+        profile,
+        resolved_spacing,
+        resolved_padding,
+        resolved_max_width,
+        resolved_columns,
+    )
 
 
 @dataclass(slots=True)
@@ -196,11 +229,22 @@ class Section:
         if self.title or self.subtitle or self.actions:
             title_controls: list[ft.Control] = []
             if self.title:
-                title_controls.append(ft.Text(self.title, style=(self.config or FrontEndConfig()).text_style("title", get_page_width(page))))
+                title_controls.append(
+                    ft.Text(self.title, style=_text_style(self.config, "title", page))
+                )
             if self.subtitle:
-                title_controls.append(ft.Text(self.subtitle, style=(self.config or FrontEndConfig()).text_style("body", get_page_width(page))))
-            controls.append(ft.Row([ft.Column(title_controls, spacing=4, expand=True), *self.actions], spacing=tokens.spacing))
-        if isinstance(self.content, Sequence) and not isinstance(self.content, ft.Control):
+                title_controls.append(
+                    ft.Text(self.subtitle, style=_text_style(self.config, "body", page))
+                )
+            controls.append(
+                ft.Row(
+                    [ft.Column(title_controls, spacing=4, expand=True), *self.actions],
+                    spacing=tokens.spacing,
+                )
+            )
+        if isinstance(self.content, Sequence) and not isinstance(
+            self.content, ft.Control
+        ):
             controls.extend(self.content)
         else:
             controls.append(self.content)  # type: ignore[arg-type]
@@ -231,13 +275,45 @@ class CardGrid:
     columns_by_device: Mapping[str, int] | None = None
 
     def build(self, page: ft.Page) -> ft.Container:
-        tokens = resolve_layout_tokens(page, config=self.config, theme=self.theme, spacing=self.spacing, padding=self.padding, max_width=self.max_width, columns=self.columns, spacing_by_device=self.spacing_by_device, padding_by_device=self.padding_by_device, max_width_by_device=self.max_width_by_device, columns_by_device=self.columns_by_device)
-        run_width = None if tokens.max_width is None else max(1, int((tokens.max_width - (tokens.spacing * (tokens.columns - 1))) / max(1, tokens.columns)))
+        tokens = resolve_layout_tokens(
+            page,
+            config=self.config,
+            theme=self.theme,
+            spacing=self.spacing,
+            padding=self.padding,
+            max_width=self.max_width,
+            columns=self.columns,
+            spacing_by_device=self.spacing_by_device,
+            padding_by_device=self.padding_by_device,
+            max_width_by_device=self.max_width_by_device,
+            columns_by_device=self.columns_by_device,
+        )
+        run_width = (
+            None
+            if tokens.max_width is None
+            else max(
+                1,
+                int(
+                    (tokens.max_width - (tokens.spacing * (tokens.columns - 1)))
+                    / max(1, tokens.columns)
+                ),
+            )
+        )
         return ft.Container(
             width=tokens.max_width,
             padding=tokens.padding,
             content=ft.ResponsiveRow(
-                controls=[ft.Container(content=card, col={"xs": 12, "sm": max(1, 12 // max(1, min(tokens.columns, 12)))}, width=run_width) for card in self.cards],
+                controls=[
+                    ft.Container(
+                        content=card,
+                        col={
+                            "xs": 12,
+                            "sm": max(1, 12 // max(1, min(tokens.columns, 12))),
+                        },
+                        width=run_width,
+                    )
+                    for card in self.cards
+                ],
                 spacing=tokens.spacing,
                 run_spacing=tokens.spacing,
             ),
@@ -264,10 +340,18 @@ class HeroSection(Section):
         body.append(ft.Text(self.headline, style=cfg.text_style("display", width)))
         if self.description:
             body.append(ft.Text(self.description, style=cfg.text_style("body", width)))
-        actions = [control for control in (self.primary_action, self.secondary_action) if control is not None]
+        actions = [
+            control
+            for control in (self.primary_action, self.secondary_action)
+            if control is not None
+        ]
         if actions:
             body.append(ft.Row(actions, spacing=12, wrap=True))
-        content: ft.Control = ft.Row([ft.Column(body, spacing=12, expand=True), self.media], spacing=24) if self.media else ft.Column(body, spacing=12)
+        content: ft.Control = (
+            ft.Row([ft.Column(body, spacing=12, expand=True), self.media], spacing=24)
+            if self.media
+            else ft.Column(body, spacing=12)
+        )
         self.content = content
         return Section.build(self, page)
 
@@ -276,15 +360,30 @@ class HeroSection(Section):
 class ToolbarSection(Section):
     """Barra de herramientas responsive con acciones alineadas."""
 
-    leading: ft.Control | None = None
-    trailing: Sequence[ft.Control] = field(default_factory=tuple)
+    leading: TextLike | None = None
+    trailing: Sequence[TextLike] = field(default_factory=tuple)
+    text_role: str = "label"
 
     def build(self, page: ft.Page) -> ft.Container:
         row_controls = []
         if self.leading:
-            row_controls.append(ft.Container(content=self.leading, expand=True))
-        row_controls.extend(self.trailing)
-        self.content = ft.Row(row_controls, spacing=self.spacing or (self.config or FrontEndConfig()).spacing, wrap=True)
+            row_controls.append(
+                ft.Container(
+                    content=_text_control(
+                        self.leading, config=self.config, role=self.text_role, page=page
+                    ),
+                    expand=True,
+                )
+            )
+        row_controls.extend(
+            _text_control(control, config=self.config, role=self.text_role, page=page)
+            for control in self.trailing
+        )
+        self.content = ft.Row(
+            row_controls,
+            spacing=self.spacing or (self.config or FrontEndConfig()).spacing,
+            wrap=True,
+        )
         return Section.build(self, page)
 
 
@@ -292,12 +391,37 @@ class ToolbarSection(Section):
 class FooterSection(Section):
     """Pie de página con enlaces o metadatos."""
 
-    links: Sequence[ft.Control] = field(default_factory=tuple)
+    links: Sequence[TextLike] = field(default_factory=tuple)
+    caption: str | None = None
+    caption_role: str = "caption"
+    link_role: str = "label"
 
     def build(self, page: ft.Page) -> ft.Container:
-        controls = [self.content] if isinstance(self.content, ft.Control) else list(self.content)
+        controls = (
+            [self.content]
+            if isinstance(self.content, ft.Control)
+            else list(self.content)
+        )
+        if self.caption:
+            controls.append(
+                ft.Text(
+                    self.caption,
+                    style=_text_style(self.config, self.caption_role, page),
+                )
+            )
         if self.links:
-            controls.append(ft.Row(list(self.links), spacing=self.spacing or (self.config or FrontEndConfig()).spacing, wrap=True))
+            controls.append(
+                ft.Row(
+                    [
+                        _text_control(
+                            link, config=self.config, role=self.link_role, page=page
+                        )
+                        for link in self.links
+                    ],
+                    spacing=self.spacing or (self.config or FrontEndConfig()).spacing,
+                    wrap=True,
+                )
+            )
         self.content = controls
         return Section.build(self, page)
 
@@ -319,8 +443,21 @@ class PageShell:
     bgcolor: str | None = None
 
     def build(self, page: ft.Page) -> ft.Container:
-        tokens = resolve_layout_tokens(page, config=self.config, theme=self.theme, spacing=self.spacing, padding=self.padding, max_width=self.max_width, spacing_by_device=self.spacing_by_device, padding_by_device=self.padding_by_device, max_width_by_device=self.max_width_by_device)
-        built = [section.build(page) if hasattr(section, "build") else section for section in self.sections]
+        tokens = resolve_layout_tokens(
+            page,
+            config=self.config,
+            theme=self.theme,
+            spacing=self.spacing,
+            padding=self.padding,
+            max_width=self.max_width,
+            spacing_by_device=self.spacing_by_device,
+            padding_by_device=self.padding_by_device,
+            max_width_by_device=self.max_width_by_device,
+        )
+        built = [
+            section.build(page) if hasattr(section, "build") else section
+            for section in self.sections
+        ]
         return ft.Container(
             expand=True,
             bgcolor=_color(self.theme, self.bgcolor_token, self.bgcolor),
@@ -328,9 +465,20 @@ class PageShell:
             content=ft.Container(
                 width=tokens.max_width,
                 padding=tokens.padding,
-                content=ft.Column(built, spacing=tokens.spacing, scroll=ft.ScrollMode.AUTO),
+                content=ft.Column(
+                    built, spacing=tokens.spacing, scroll=ft.ScrollMode.AUTO
+                ),
             ),
         )
 
 
-__all__ = ["LayoutTokens", "resolve_layout_tokens", "PageShell", "Section", "CardGrid", "HeroSection", "ToolbarSection", "FooterSection"]
+__all__ = [
+    "LayoutTokens",
+    "resolve_layout_tokens",
+    "PageShell",
+    "Section",
+    "CardGrid",
+    "HeroSection",
+    "ToolbarSection",
+    "FooterSection",
+]
