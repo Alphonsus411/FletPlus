@@ -74,6 +74,22 @@ def build_navigation() -> ft.NavigationBar:
     )
 ```
 
+
+## Matriz preset + target
+
+`FrontEndConfig.from_mapping()` usa los presets visuales registrados como base inicial y después aplica los valores explícitos declarados por CLI o `pyproject.toml`. Esto evita un sistema paralelo: `--preset` alimenta los mismos campos que se consumen durante la ejecución (`palette`, `layout_density`, `typography_tokens`, `theme_tokens`, `page_padding`, `max_content_width` y `spacing`).
+
+| Preset recomendado | Target habitual | Paleta base | Densidad base | Padding / spacing esperados | Ancho máximo esperado | Uso principal |
+| --- | --- | --- | --- | --- | --- | --- |
+| `landing` | `web` | `solstice` | `spacious` | `40 / 20` | `1280` | Marketing, landing pages y hero sections. |
+| `dashboard` | `web` | `fjord` | `compact` | `28 / 12` | `1280` | KPIs, analítica y tarjetas densas. |
+| `admin` | `desktop` | `metropolis` | `compact` | `24 / 12` | `1180` | Backoffices, CRUDs y tablas con navegación lateral. |
+| `saas` | `web` o `desktop` | `zenith` | `comfortable` | `32 / 16` | `1280` en web, `1180` en desktop | Productos SaaS, onboarding y áreas de cuenta. |
+| `ecommerce` | `web` | `citrus` | `comfortable` | `24 / 16` | `1280` | Catálogos, fichas de producto y checkout. |
+| `mobile_app` | `mobile`, `android-apk`, `android-aab` o `ios` | `aurora` | `comfortable` | `16 / 16` | `480` | Apps móviles táctiles y navegación inferior. |
+
+Regla de precedencia: el preset rellena valores por defecto, pero cualquier valor explícito gana. Por ejemplo, `fletplus create Backoffice --target desktop --preset admin --palette slate --layout-density comfortable` conserva la estructura del preset `admin`, pero usa `slate` y densidad `comfortable` en la configuración generada.
+
 ## Estructura recomendada
 
 Una plantilla nueva queda separada por responsabilidades para que la app crezca sin mezclar configuración visual, rutas y vistas:

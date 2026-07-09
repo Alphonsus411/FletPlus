@@ -23,7 +23,6 @@ import click
 from fletplus.frontend.config import FrontEndConfig, FrontEndTask
 from fletplus.themes import (
     get_preset_definition,
-    get_preset_metadata,
     list_palettes,
     list_presets,
 )
@@ -116,8 +115,6 @@ TARGET_PYPROJECT_VALUES = {
     "mobile": "mobile",
 }
 TARGET_MAX_WIDTH = {"app": "1100", "web": "1180", "desktop": "1280", "mobile": "480"}
-DENSITY_SPACING = {"compact": "12", "comfortable": "16", "spacious": "24"}
-DENSITY_PADDING = {"compact": "16", "comfortable": "24", "spacious": "32"}
 FONT_FALLBACKS = {
     "Inter": '("Roboto", "Arial", "sans-serif")',
     "Roboto": '("Arial", "sans-serif")',
@@ -134,32 +131,28 @@ def _frontend_preset_context(
     font_family: str | None = None,
     layout_density: str | None = None,
 ) -> Dict[str, str]:
-    definition = get_preset_definition(preset_name)
-    metadata = get_preset_metadata(preset_name)
-    light_tokens = definition.get("light", {})
-    palette = palette_name or str(
-        metadata.get("palette")
-        or light_tokens.get("meta", {}).get("palette")
-        or "material"
-    )
-    density = layout_density or str(
-        metadata.get("density")
-        or light_tokens.get("meta", {}).get("density")
-        or "comfortable"
+    mapping: dict[str, object] = {"preset": preset_name, "target": target}
+    if palette_name is not None:
+        mapping["palette"] = palette_name
+    if theme_mode is not None:
+        mapping["mode"] = theme_mode
+    if font_family is not None:
+        mapping["font_family"] = font_family
+    if layout_density is not None:
+        mapping["layout_density"] = layout_density
+
+    config = FrontEndConfig.from_mapping(mapping)
+    light_tokens = dict(
+        config.theme_tokens or get_preset_definition(preset_name).get("light", {})
     )
     spacing_tokens = dict(light_tokens.get("spacing", {}))
     radii_tokens = dict(light_tokens.get("radii", {}))
     shadow_tokens = dict(light_tokens.get("shadows", {}))
-    typography_tokens = dict(light_tokens.get("typography", {}))
-    font_family = font_family or str(typography_tokens.get("font_family") or "Roboto")
-    spacing = int(
-        DENSITY_SPACING.get(
-            density,
-            str(spacing_tokens.get("md") or spacing_tokens.get("section") or 16),
-        )
+    typography_tokens = dict(
+        config.typography_tokens or light_tokens.get("typography", {})
     )
-    page_padding = int(
-        DENSITY_PADDING.get(density, str(spacing_tokens.get("page") or 24))
+    font_family = config.font_family or str(
+        typography_tokens.get("font_family") or "Roboto"
     )
     target_value = TARGET_PYPROJECT_VALUES[target]
     custom_tokens = {
@@ -171,18 +164,18 @@ def _frontend_preset_context(
     }
     return {
         "preset_name": preset_name,
-        "palette_name": palette,
+        "palette_name": config.palette,
         "font_family": font_family,
         "font_fallback_families": FONT_FALLBACKS.get(
             font_family, FONT_FALLBACKS["System"]
         ),
-        "theme_mode": theme_mode or "light",
-        "layout_density": density,
+        "theme_mode": config.mode,
+        "layout_density": config.layout_density,
         "target_name": target,
         "target_value": target_value,
-        "max_content_width": TARGET_MAX_WIDTH[target],
-        "spacing": str(spacing),
-        "page_padding": str(page_padding),
+        "max_content_width": str(config.max_content_width),
+        "spacing": str(config.spacing),
+        "page_padding": str(config.page_padding),
         "custom_tokens_repr": repr(custom_tokens),
     }
 

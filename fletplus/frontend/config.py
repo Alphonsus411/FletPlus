@@ -10,7 +10,14 @@ from urllib.parse import urlparse
 
 import flet as ft
 
-from fletplus.themes import ThemeManager, get_palette_tokens, has_palette
+from fletplus.themes import (
+    ThemeManager,
+    get_palette_tokens,
+    get_preset_definition,
+    get_preset_metadata,
+    has_palette,
+    has_preset,
+)
 from fletplus.utils.device_profiles import (
     DEFAULT_DEVICE_PROFILES,
     DeviceProfile,
@@ -83,6 +90,80 @@ _TARGET_LAYOUT_PRESETS: dict[str, dict[str, object]] = {
         "layout_density": "compact",
     },
 }
+
+
+def _int_from_mapping_value(
+    mapping: Mapping[str, object], *keys: str, default: int
+) -> int:
+    for key in keys:
+        value = mapping.get(key)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                continue
+    return default
+
+
+def _frontend_values_from_registered_preset(
+    preset_name: str, *, target: str | None = None, mode: str | None = None
+) -> dict[str, Any]:
+    """Deriva valores de FrontEndConfig desde un preset visual registrado."""
+    normalized_preset = preset_name.lower()
+    if not has_preset(normalized_preset):
+        return {"preset": preset_name}
+
+    definition = get_preset_definition(normalized_preset)
+    metadata = get_preset_metadata(normalized_preset)
+    mode_name = "light" if mode in {None, "system"} else mode
+    tokens = definition.get(str(mode_name), {}) or definition.get("light", {})
+    spacing_tokens = tokens.get("spacing", {})
+    typography_tokens = tokens.get("typography", {})
+    target_preset = _TARGET_LAYOUT_PRESETS.get((target or "").lower(), {})
+    density = str(
+        metadata.get("density")
+        or tokens.get("meta", {}).get("density")
+        or target_preset.get("layout_density")
+        or "comfortable"
+    )
+
+    values: dict[str, Any] = {
+        "preset": normalized_preset,
+        "palette": str(
+            metadata.get("palette")
+            or tokens.get("meta", {}).get("palette")
+            or "material"
+        ),
+        "layout_density": density,
+        "theme_tokens": dict(tokens),
+        "typography_tokens": dict(typography_tokens)
+        if isinstance(typography_tokens, Mapping)
+        else {},
+        "page_padding": _int_from_mapping_value(
+            spacing_tokens if isinstance(spacing_tokens, Mapping) else {},
+            "page",
+            default=int(target_preset.get("page_padding", 24)),
+        ),
+        "max_content_width": int(target_preset.get("max_content_width", 1200)),
+        "spacing": _int_from_mapping_value(
+            spacing_tokens if isinstance(spacing_tokens, Mapping) else {},
+            "md",
+            "section",
+            default=int(target_preset.get("spacing", 16)),
+        ),
+    }
+    font_family = (
+        typography_tokens.get("font_family")
+        if isinstance(typography_tokens, Mapping)
+        else None
+    )
+    if isinstance(font_family, str) and font_family:
+        values["font_family"] = font_family
+    return values
 
 
 @dataclass(frozen=True, slots=True)
@@ -389,6 +470,14 @@ class FrontEndConfig:
                 "screen_tokens",
             }:
                 normalized[key] = _ensure_mapping(value, key)
+
+        if isinstance(normalized.get("preset"), str):
+            preset_defaults = _frontend_values_from_registered_preset(
+                normalized["preset"],
+                target=normalized.get("target"),
+                mode=normalized.get("mode"),
+            )
+            normalized = {**preset_defaults, **normalized}
 
         mode = normalized.get("mode")
         if mode is not None and mode not in _ALLOWED_MODES:
