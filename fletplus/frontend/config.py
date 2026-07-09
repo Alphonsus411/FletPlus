@@ -17,6 +17,7 @@ from fletplus.utils.device_profiles import (
     columns_for_width,
     get_device_profile,
 )
+from fletplus.utils.viewport import visual_density_for_page
 
 TypographyStyle = Mapping[str, int | float | str | None]
 TypographyScale = Mapping[str, TypographyStyle | Mapping[str, TypographyStyle]]
@@ -42,6 +43,61 @@ _NUMERIC_FIELDS = {
     "min_content_width",
     "spacing",
 }
+
+
+_TARGET_LAYOUT_PRESETS: dict[str, dict[str, object]] = {
+    "web": {
+        "page_padding": 32,
+        "max_content_width": 1280,
+        "spacing": 20,
+        "layout_density": "comfortable",
+    },
+    "desktop": {
+        "page_padding": 28,
+        "max_content_width": 1180,
+        "spacing": 18,
+        "layout_density": "comfortable",
+    },
+    "mobile": {
+        "page_padding": 16,
+        "max_content_width": 480,
+        "spacing": 12,
+        "layout_density": "compact",
+    },
+    "android-apk": {
+        "page_padding": 16,
+        "max_content_width": 480,
+        "spacing": 12,
+        "layout_density": "compact",
+    },
+    "android-aab": {
+        "page_padding": 16,
+        "max_content_width": 480,
+        "spacing": 12,
+        "layout_density": "compact",
+    },
+    "ios": {
+        "page_padding": 16,
+        "max_content_width": 480,
+        "spacing": 12,
+        "layout_density": "compact",
+    },
+}
+
+
+@dataclass(frozen=True, slots=True)
+class FrontEndTask:
+    """Tarea declarativa para adaptar una app FletPlus por plataforma.
+
+    No ejecuta acciones por sí misma: documenta pasos separados que una app,
+    plantilla CLI o equipo de frontend puede aplicar de forma ordenada.
+    """
+
+    name: str
+    target: str
+    description: str
+    functions: tuple[str, ...] = ()
+    tokens: Mapping[str, object] = field(default_factory=dict)
 
 
 def _ensure_mapping(value: Any, field_name: str) -> Mapping[str, Any]:
@@ -258,6 +314,10 @@ class FrontEndConfig:
     typography_tokens: TypographyScale = field(default_factory=dict)
     follow_platform_theme: bool = False
     target: str | None = None
+    platform_palettes: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+    screen_tokens: Mapping[str, Mapping[str, int | float | str | bool | None]] = field(
+        default_factory=dict
+    )
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
@@ -280,6 +340,8 @@ class FrontEndConfig:
             "tokens",
             "follow_platform_theme",
             "target",
+            "platform_palettes",
+            "screen_tokens",
         }
         normalized: dict[str, Any] = {}
         for key, value in data.items():
@@ -320,7 +382,12 @@ class FrontEndConfig:
                     **dict(normalized.get("theme_tokens", {})),
                     **dict(tokens),
                 }
-            elif key in {"theme_tokens", "typography_tokens"}:
+            elif key in {
+                "theme_tokens",
+                "typography_tokens",
+                "platform_palettes",
+                "screen_tokens",
+            }:
                 normalized[key] = _ensure_mapping(value, key)
 
         mode = normalized.get("mode")
@@ -373,6 +440,121 @@ class FrontEndConfig:
         config = cls.from_mapping(frontend_data)
         config.font_assets_base_path = pyproject_path.parent
         return config
+
+    def preset_for_target(self, target: str | None = None) -> dict[str, object]:
+        """Devuelve ajustes base para web, escritorio o móvil sin mutar la config."""
+        target_name = (target or self.target or "all").lower()
+        if target_name in {"app", "all"}:
+            return {}
+        return dict(_TARGET_LAYOUT_PRESETS.get(target_name, {}))
+
+    def configured_for_target(self, target: str | None = None) -> "FrontEndConfig":
+        """Crea una copia con estructura visual sugerida para la plataforma."""
+        preset = self.preset_for_target(target)
+        if not preset:
+            return self
+        values = {
+            "palette": self.palette,
+            "mode": self.mode,
+            "font_family": self.font_family,
+            "font_assets": self.font_assets,
+            "font": self.font,
+            "font_assets_base_path": self.font_assets_base_path,
+            "page_padding": preset.get("page_padding", self.page_padding),
+            "max_content_width": preset.get(
+                "max_content_width", self.max_content_width
+            ),
+            "min_content_width": self.min_content_width,
+            "allow_min_width_overflow": self.allow_min_width_overflow,
+            "spacing": preset.get("spacing", self.spacing),
+            "responsive_profiles": self.responsive_profiles,
+            "layout_density": preset.get("layout_density", self.layout_density),
+            "preset": self.preset,
+            "theme_tokens": self.theme_tokens,
+            "typography_tokens": self.typography_tokens,
+            "follow_platform_theme": self.follow_platform_theme,
+            "target": target or self.target,
+            "platform_palettes": self.platform_palettes,
+            "screen_tokens": self.screen_tokens,
+        }
+        return FrontEndConfig(**values)
+
+    def palette_for_target(self, target: str | None = None) -> dict[str, str]:
+        """Fusiona la paleta activa con overrides específicos de plataforma."""
+        palette = {
+            k: str(v) for k, v in self.palette_tokens().items() if isinstance(v, str)
+        }
+        target_name = (target or self.target or "").lower()
+        overrides = self.platform_palettes.get(target_name, {})
+        if isinstance(overrides, Mapping):
+            palette.update({str(k): str(v) for k, v in overrides.items()})
+        return palette
+
+    def screen_tokens_for_page(self, page: ft.Page) -> dict[str, object]:
+        """Resuelve tokens de pantalla según perfil, orientación y densidad visual."""
+        profile = self.resolve_device_profile(
+            int(getattr(page, "width", 0) or self.max_content_width)
+        )
+        device_name = _normalize_device_name(profile.name)
+        tokens: dict[str, object] = {
+            "target": self.target or "all",
+            "device": device_name,
+            "orientation": self.orientation_for_page(page),
+            "columns": profile.columns,
+            "page_padding": self.page_padding,
+            "spacing": self.spacing,
+            "content_width": self.content_width_for_page(page),
+            "density": visual_density_for_page(page, profiles=self.responsive_profiles),
+        }
+        for key in ("all", device_name, tokens["orientation"]):
+            values = self.screen_tokens.get(str(key), {})
+            if isinstance(values, Mapping):
+                tokens.update(values)
+        return tokens
+
+    def implementation_tasks(
+        self, target: str | None = None
+    ) -> tuple[FrontEndTask, ...]:
+        """Lista tareas separadas para adaptar frontend sin reemplazar código existente."""
+        target_name = (target or self.target or "all").lower()
+        return (
+            FrontEndTask(
+                "paleta",
+                target_name,
+                "Resolver paletas base y overrides por plataforma.",
+                ("palette_for_target", "palette_tokens"),
+                {"palette": self.palette},
+            ),
+            FrontEndTask(
+                "pantalla",
+                target_name,
+                "Calcular perfil, orientación, columnas, padding y ancho útil.",
+                (
+                    "screen_tokens_for_page",
+                    "content_width_for_page",
+                    "resolve_device_profile",
+                ),
+                self.preset_for_target(target_name),
+            ),
+            FrontEndTask(
+                "diseño",
+                target_name,
+                "Aplicar densidad, spacing y contenedores adaptativos existentes.",
+                ("configured_for_target", "build_content_shell"),
+                {
+                    "layout_density": self.configured_for_target(
+                        target_name
+                    ).layout_density
+                },
+            ),
+            FrontEndTask(
+                "fuentes",
+                target_name,
+                "Registrar fuentes locales/remotas y escala tipográfica responsive.",
+                ("apply_to_page", "text_style", "resolved_typography_tokens"),
+                {"font_family": self.font.theme_font_family(self.font_family)},
+            ),
+        )
 
     def palette_tokens(self) -> dict[str, object]:
         if has_palette(self.palette):
