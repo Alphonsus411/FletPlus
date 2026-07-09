@@ -34,7 +34,7 @@ def test_frontend_config_applies_page_defaults() -> None:
         font_family="Inter",
         font_assets={"Inter": "assets/fonts/Inter.ttf"},
         page_padding=32,
-        palette="material",
+        palette="aurora",
         mode="light",
     )
 
@@ -101,7 +101,7 @@ def test_frontend_config_preserves_existing_theme_properties() -> None:
         scaffold_bgcolor=ft.Colors.AMBER, visual_density="compact"
     )
     page.theme = existing_theme
-    config = FrontEndConfig(font_family="Inter", palette="material", mode="light")
+    config = FrontEndConfig(font_family="Inter", palette="aurora", mode="light")
 
     config.apply_to_page(page)  # type: ignore[arg-type]
 
@@ -117,7 +117,7 @@ def test_frontend_config_theme_tokens_and_font_share_final_theme() -> None:
     page.theme = existing_theme
     config = FrontEndConfig(
         font_family="Inter",
-        palette="material",
+        palette="aurora",
         mode="light",
         theme_tokens={"spacing": {"default": 12}, "radii": {"default": 6}},
     )
@@ -220,7 +220,7 @@ def test_frontend_config_applies_density_mode_and_responsive_metadata() -> None:
     page.width = 375
     page.height = 812
     config = FrontEndConfig(
-        palette="material",
+        palette="aurora",
         mode="dark",
         layout_density="compact",
         follow_platform_theme=False,
@@ -306,12 +306,90 @@ def test_frontend_config_applies_target_presets_without_mutating_original() -> N
     assert mobile.layout_density == "compact"
 
 
+def test_frontend_config_palette_for_web_merges_base_tokens() -> None:
+    config = FrontEndConfig(
+        palette="aurora",
+        mode="light",
+        platform_palettes={
+            "web": {
+                "primary": "#2563EB",
+                "secondary": "#14B8A6",
+                "background": "#F8FAFC",
+                "surface": "#FFFFFF",
+            }
+        },
+    )
+
+    base_tokens = config.palette_tokens()
+    palette = config.palette_for_target("web")
+
+    assert palette["primary"] == "#2563EB"
+    assert palette["secondary"] == "#14B8A6"
+    assert palette["background"] == "#F8FAFC"
+    assert palette["surface"] == "#FFFFFF"
+    assert palette["on_primary"] == base_tokens["colors"]["on_primary"]
+    assert palette["error"] == base_tokens["colors"]["error"]
+    assert set(base_tokens["colors"]).issubset(palette)
+
+
+def test_frontend_config_palette_for_desktop_merges_base_tokens() -> None:
+    config = FrontEndConfig(
+        palette="aurora",
+        mode="light",
+        platform_palettes={
+            "desktop": {
+                "primary": "#4F46E5",
+                "secondary": "#0EA5E9",
+                "background": "#EEF2FF",
+                "surface": "#FFFFFF",
+            }
+        },
+    )
+
+    base_tokens = config.palette_tokens()
+    palette = config.palette_for_target("desktop")
+
+    assert palette["primary"] == "#4F46E5"
+    assert palette["secondary"] == "#0EA5E9"
+    assert palette["background"] == "#EEF2FF"
+    assert palette["surface"] == "#FFFFFF"
+    assert palette["on_surface"] == base_tokens["colors"]["on_surface"]
+    assert palette["success"] == base_tokens["colors"]["success"]
+    assert set(base_tokens["colors"]).issubset(palette)
+
+
+def test_frontend_config_palette_for_mobile_merges_base_tokens() -> None:
+    config = FrontEndConfig(
+        palette="aurora",
+        mode="light",
+        platform_palettes={
+            "mobile": {
+                "primary": "#7C3AED",
+                "secondary": "#EC4899",
+                "background": "#FAF5FF",
+                "surface": "#FFFFFF",
+            }
+        },
+    )
+
+    base_tokens = config.palette_tokens()
+    palette = config.palette_for_target("mobile")
+
+    assert palette["primary"] == "#7C3AED"
+    assert palette["secondary"] == "#EC4899"
+    assert palette["background"] == "#FAF5FF"
+    assert palette["surface"] == "#FFFFFF"
+    assert palette["focus_ring"] == base_tokens["colors"]["focus_ring"]
+    assert palette["warning"] == base_tokens["colors"]["warning"]
+    assert set(base_tokens["colors"]).issubset(palette)
+
+
 def test_frontend_config_resolves_platform_palette_and_screen_tokens() -> None:
     page = DummyPage()
     page.width = 390
     page.height = 844
     config = FrontEndConfig(
-        palette="material",
+        palette="aurora",
         target="mobile",
         platform_palettes={"mobile": {"primary": "#123456", "accent": "#ABCDEF"}},
         screen_tokens={"mobile": {"touch_target": 48}, "portrait": {"safe_area": True}},
