@@ -1,0 +1,272 @@
+# Guía de proyectos frontend con FletPlus
+
+Esta guía resume cómo iniciar, organizar y personalizar proyectos frontend de FletPlus para web, escritorio y móvil. Los ejemplos son breves y están basados en las plantillas oficiales de `fletplus/cli/templates/{web,desktop,mobile}`.
+
+## Crear un proyecto por destino
+
+Todos los proyectos se crean con `fletplus create`. Usa `--target` para elegir el destino inicial y añade opciones visuales cuando quieras dejar la marca definida desde el primer commit.
+
+### Web
+
+```bash
+fletplus create MiWeb --target web --preset landing --palette blue --theme-mode light --font Inter --layout-density comfortable
+cd MiWeb
+fletplus run
+fletplus build --target web
+```
+
+La plantilla web incluye un punto de entrada preparado para navegador, scroll automático, registro PWA y generación de `manifest.json` y `service_worker.js` antes de iniciar la app:
+
+```python
+frontend: FrontEndConfig = create_frontend_config()
+PWA_DIR = Path("web")
+PWA_ASSETS = ["/", "manifest.json", "service_worker.js"]
+
+
+def main(page: ft.Page) -> None:
+    page.title = "MiWeb"
+    page.scroll = ft.ScrollMode.AUTO
+    frontend.apply_to_page(page)
+    register_pwa(page, "manifest.json", "service_worker.js")
+    page.add(build_home(page))
+```
+
+### Escritorio
+
+```bash
+fletplus create Backoffice --target desktop --preset admin --palette slate --theme-mode dark --font Inter
+cd Backoffice
+fletplus run
+fletplus build --target desktop
+```
+
+La plantilla desktop prioriza ventana redimensionable, ancho mínimo y un layout con sidebar persistente:
+
+```python
+def configure_window(page: ft.Page) -> None:
+    safe_set_window_attr(page, "width", 1280)
+    safe_set_window_attr(page, "height", 820)
+    safe_set_window_attr(page, "min_width", 960)
+    safe_set_window_attr(page, "min_height", 640)
+    safe_set_window_attr(page, "resizable", True)
+```
+
+### Móvil
+
+```bash
+fletplus create MiApp --target mobile --preset mobile_app --palette indigo --theme-mode system --font Inter --layout-density compact
+cd MiApp
+fletplus run
+fletplus build --target mobile
+```
+
+La plantilla móvil usa densidad compacta, `NavigationBar` y un contenedor seguro para pantallas pequeñas:
+
+```python
+def build_navigation() -> ft.NavigationBar:
+    return ft.NavigationBar(
+        destinations=[
+            make_navigation_bar_destination(icon=get_flet_icon("HOME", "home"), label="Inicio"),
+            make_navigation_bar_destination(icon=get_flet_icon("SEARCH", "search"), label="Buscar"),
+            make_navigation_bar_destination(icon=get_flet_icon("PERSON", "person"), label="Perfil"),
+        ],
+        height=64,
+    )
+```
+
+## Estructura recomendada
+
+Una plantilla nueva queda separada por responsabilidades para que la app crezca sin mezclar configuración visual, rutas y vistas:
+
+```text
+MiProyecto/
+├── assets/
+├── pyproject.toml
+├── requirements.txt
+└── src/
+    ├── main.py
+    └── frontend/
+        ├── assets.py
+        ├── config.py
+        ├── layout.py
+        ├── routes.py
+        └── theme.py
+```
+
+Recomendaciones prácticas:
+
+- Mantén `src/main.py` como composición de alto nivel: configurar página, aplicar tema y montar la primera vista.
+- Usa `src/frontend/config.py` para tokens editables de marca, paletas, fuentes, spacing y límites de ancho.
+- Usa `src/frontend/theme.py` para transformar la configuración declarativa en `FrontEndConfig` y aplicarla a Flet.
+- Usa `src/frontend/layout.py` para helpers responsive reutilizables.
+- Usa `src/frontend/routes.py` para rutas y pantallas iniciales; extrae vistas grandes a módulos como `src/frontend/views/`.
+- Centraliza rutas a imágenes, fuentes e iconos locales en `src/frontend/assets.py`.
+
+## Paletas
+
+Define la paleta desde CLI o en `config.py`/`pyproject.toml`. Las plantillas exponen valores claros para cambiar el tema sin tocar todas las vistas:
+
+```python
+PALETTE_NAME = "blue"
+PALETTE_MODE = "light"
+DEFAULT_CUSTOM_TOKENS = {
+    "colors": {"brand": "#2563EB", "surface_soft": "#F8FAFC"},
+    "spacing": {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32},
+    "radii": {"card": 18, "pill": 999},
+}
+```
+
+Usa tokens semánticos (`brand`, `surface_soft`, `card`, `pill`) en lugar de colores sueltos dentro de cada control. Así puedes cambiar la identidad visual desde un solo archivo.
+
+## Fuentes
+
+Las plantillas separan familia principal, fallback y assets locales:
+
+```python
+FONT_FAMILY = "Inter"
+FONT_FALLBACK_FAMILIES = ("Arial", "sans-serif")
+FONT_ASSETS = {
+    # "Inter": "assets/fonts/Inter-Regular.ttf",
+}
+FONT_WEIGHTS = ("w400", "w600", "w700")
+```
+
+Para usar una fuente propia:
+
+1. Copia los `.ttf`/`.otf` a `assets/fonts/`.
+2. Registra el archivo en `FONT_ASSETS`.
+3. Ajusta `FONT_FAMILY` y los pesos disponibles.
+4. Ejecuta la app y revisa que `frontend.apply_to_page(page)` se mantenga en `main()`.
+
+## Responsive layout
+
+Cada plantilla incluye helpers para consultar el perfil activo, orientación, densidad, padding seguro y ancho máximo:
+
+```python
+def responsive_shell(content: ft.Control, page: ft.Page, frontend: FrontEndConfig) -> ft.Container:
+    info = viewport_info(
+        page,
+        profiles=frontend.responsive_profiles,
+        fallback_width=frontend.max_content_width,
+        padding_base=frontend.page_padding,
+    )
+    return max_width_container(content, page, frontend)
+```
+
+Buenas prácticas por destino:
+
+- **Web**: limita el ancho con `build_content_shell`, usa filas con `wrap=True` y prepara cards para diferentes columnas.
+- **Escritorio**: combina sidebar, panel principal y panel secundario; respeta `min_width` para evitar interfaces comprimidas.
+- **Móvil**: usa `SafeArea` cuando esté disponible, densidad compacta y navegación inferior táctil.
+
+## Rutas
+
+La plantilla inicial usa el router declarativo de FletPlus con dos rutas mínimas:
+
+```python
+def create_router() -> Router:
+    return Router(
+        routes=[Route(path="/", view=home_view), Route(path="/about", view=about_view)]
+    )
+```
+
+Para crecer el proyecto:
+
+- Añade una función por pantalla (`dashboard_view`, `settings_view`, `profile_view`).
+- Mantén rutas cortas y predecibles (`/`, `/settings`, `/profile`).
+- Si una vista requiere estado o datos, encapsula la carga en un componente y deja la ruta como punto de composición.
+
+## Assets
+
+Las plantillas crean `assets/README.md` y una referencia centralizada:
+
+```python
+ASSETS_DIR = Path("assets")
+PLACEHOLDER_README = ASSETS_DIR / "README.md"
+```
+
+Organiza los assets por tipo:
+
+```text
+assets/
+├── fonts/
+├── icons/
+├── images/
+└── README.md
+```
+
+Recomendaciones:
+
+- Usa nombres estables (`logo_primary.png`, `hero_dashboard.webp`, `Inter-Regular.ttf`).
+- Evita rutas hardcodeadas repetidas; exporta constantes desde `frontend/assets.py`.
+- Para web/PWA, revisa que los iconos requeridos estén disponibles antes de desplegar.
+
+## Estados de UI
+
+Define estados visuales consistentes para carga, vacío, error y éxito. Un patrón simple es crear helpers pequeños por estado:
+
+```python
+def empty_state(title: str, message: str) -> ft.Control:
+    return ft.Container(
+        padding=24,
+        content=ft.Column(
+            controls=[ft.Text(title, style=ft.TextThemeStyle.TITLE_MEDIUM), ft.Text(message)],
+            spacing=8,
+        ),
+    )
+```
+
+Checklist recomendado:
+
+- **Loading**: usa skeletons o `ProgressRing` en zonas acotadas, no bloquees toda la página si no es necesario.
+- **Empty**: explica qué falta y ofrece una acción primaria.
+- **Error**: muestra el problema en lenguaje claro y una acción de reintento.
+- **Success**: confirma la acción sin interrumpir el flujo; usa banners o snackbars.
+
+## Build y despliegue
+
+Comandos habituales:
+
+```bash
+fletplus build --target web
+fletplus build --target desktop
+fletplus build --target mobile
+```
+
+Flujo sugerido antes de publicar:
+
+1. Ejecuta la app localmente con `fletplus run`.
+2. Verifica rutas principales y breakpoints.
+3. Comprueba assets y fuentes locales.
+4. Ejecuta el build del target final.
+5. Publica el directorio generado según tu plataforma de despliegue.
+
+Notas por destino:
+
+- **Web**: valida `web/manifest.json`, `web/service_worker.js`, rutas públicas y estrategia de hosting estático.
+- **Escritorio**: revisa tamaño inicial, mínimos de ventana, iconos y empaquetado por sistema operativo.
+- **Móvil**: valida navegación táctil, SafeArea, densidad compacta y assets de tienda antes de generar paquetes Android/iOS.
+
+## Personalización rápida
+
+Para cambiar marca, colores y fuente en pocos minutos:
+
+1. **Marca visible**: cambia `page.title` y los textos principales en `src/main.py`.
+2. **Color principal**: cambia `PALETTE_NAME` y `DEFAULT_CUSTOM_TOKENS["colors"]["brand"]` en `src/frontend/config.py`.
+3. **Modo de tema**: ajusta `PALETTE_MODE` a `light`, `dark` o `system`.
+4. **Fuente**: cambia `FONT_FAMILY`, añade fallbacks y registra archivos en `FONT_ASSETS` si son locales.
+5. **Espaciado y densidad**: ajusta `SPACING`, `PAGE_PADDING` y `LAYOUT_DENSITY`.
+6. **Logo e iconos**: copia los archivos a `assets/images/` o `assets/icons/` y expórtalos desde `src/frontend/assets.py`.
+
+Ejemplo mínimo de rebranding:
+
+```python
+PALETTE_NAME = "indigo"
+PALETTE_MODE = "dark"
+FONT_FAMILY = "Inter"
+DEFAULT_CUSTOM_TOKENS = {
+    "colors": {"brand": "#7C3AED", "surface_soft": "#111827"},
+    "spacing": {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32},
+    "radii": {"card": 20, "pill": 999},
+}
+```

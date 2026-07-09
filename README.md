@@ -32,6 +32,7 @@ pip install fletplus
 - [Animaciones coordinadas con AnimationController][doc-animation] ([GitHub][gh-doc-animation]): coordina triggers compartidos y envoltorios como FadeIn o AnimatedContainer.
 - [Catálogo de componentes][doc-components] ([GitHub][gh-doc-components])
 - [Perfiles de dispositivo y breakpoints][doc-responsive] ([GitHub][gh-doc-responsive])
+- [Guía de proyectos frontend][doc-frontend-projects] ([GitHub][gh-doc-frontend-projects])
 
 [doc-cli]: cli.md
 [doc-tooling]: tooling.md
@@ -47,6 +48,7 @@ pip install fletplus
 [doc-animation]: animation.md
 [doc-components]: components.md
 [doc-responsive]: responsive.md
+[doc-frontend-projects]: frontend-projects.md
 
 [gh-doc-cli]: https://github.com/FletPlus/FletPlus/blob/main/docs/cli.md
 [gh-doc-tooling]: https://github.com/FletPlus/FletPlus/blob/main/docs/tooling.md
@@ -62,6 +64,7 @@ pip install fletplus
 [gh-doc-animation]: https://github.com/FletPlus/FletPlus/blob/main/docs/animation.md
 [gh-doc-components]: https://github.com/FletPlus/FletPlus/blob/main/docs/components.md
 [gh-doc-responsive]: https://github.com/FletPlus/FletPlus/blob/main/docs/responsive.md
+[gh-doc-frontend-projects]: https://github.com/FletPlus/FletPlus/blob/main/docs/frontend-projects.md
 
 ## 🧭 Política de versión de Flet
 
