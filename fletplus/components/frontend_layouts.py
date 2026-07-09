@@ -103,27 +103,59 @@ def resolve_layout_tokens(
     active_profiles = tuple(profiles or frontend.responsive_profiles)
     profile = get_device_profile(width, active_profiles)
     name = _device_key(profile.name)
+    screen_tokens = config.screen_tokens_for_page(page) if config is not None else {}
 
     theme_spacing = _token(theme, "spacing", "default", frontend.spacing)
     base_spacing = int(_number(theme_spacing, frontend.spacing))
-    resolved_spacing = int(spacing if spacing is not None else base_spacing)
+    token_spacing = screen_tokens.get("spacing")
+    resolved_spacing = (
+        int(_number(token_spacing, base_spacing))
+        if token_spacing is not None
+        else base_spacing
+    )
     if spacing_by_device and spacing_by_device.get(name) is not None:
         resolved_spacing = int(_number(spacing_by_device[name], resolved_spacing))
+    if spacing is not None:
+        resolved_spacing = int(spacing)
 
     base_padding = frontend.page_padding
-    resolved_padding_value: SpacingValue = padding if padding is not None else base_padding
+    token_padding = screen_tokens.get("padding", screen_tokens.get("page_padding"))
+    resolved_padding_value: SpacingValue = token_padding if token_padding is not None else base_padding
     if padding_by_device and name in padding_by_device:
         resolved_padding_value = padding_by_device[name]
+    if padding is not None:
+        resolved_padding_value = padding
     resolved_padding = _padding(resolved_padding_value, base_padding)
 
-    resolved_max_width = max_width if max_width is not None else frontend.max_content_width
+    if "max_width" in screen_tokens:
+        token_max_width = screen_tokens["max_width"]
+        resolved_max_width = (
+            None
+            if token_max_width is None
+            else int(_number(token_max_width, frontend.max_content_width))
+        )
+    else:
+        resolved_max_width = frontend.max_content_width
     if max_width_by_device and name in max_width_by_device:
         device_width = max_width_by_device[name]
-        resolved_max_width = None if device_width is None else int(_number(device_width, resolved_max_width))
+        resolved_max_width = (
+            None
+            if device_width is None
+            else int(_number(device_width, resolved_max_width or frontend.max_content_width))
+        )
+    if max_width is not None:
+        resolved_max_width = max_width
 
-    resolved_columns = columns if columns is not None else profile.columns
+    token_columns = screen_tokens.get("columns")
+    resolved_columns = (
+        int(_number(token_columns, profile.columns))
+        if token_columns is not None
+        else profile.columns
+    )
     if columns_by_device and name in columns_by_device:
         resolved_columns = int(columns_by_device[name])
+    if columns is not None:
+        resolved_columns = columns
 
     return LayoutTokens(profile, resolved_spacing, resolved_padding, resolved_max_width, resolved_columns)
 
