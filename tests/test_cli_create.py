@@ -189,6 +189,43 @@ def test_create_supports_frontend_templates(
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
+@pytest.mark.parametrize("template_name", ["app", "web", "desktop", "mobile"])
+def test_create_frontend_templates_expose_equivalent_responsive_layout_helpers(
+    monkeypatch, watchdog_available: bool, template_name: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        result = runner.invoke(app, ["create", "demo", "--template", template_name])
+
+        assert result.exit_code == 0, result.output
+        layout_py = (base / "demo" / "src" / "frontend" / "layout.py").read_text(
+            encoding="utf-8"
+        )
+
+    expected_markers = [
+        "from fletplus.utils.viewport import viewport_info",
+        "def active_profile(page: ft.Page, frontend: FrontEndConfig):",
+        ").profile",
+        "def orientation(page: ft.Page, frontend: FrontEndConfig | None = None) -> str:",
+        ").orientation",
+        "def density(page: ft.Page, frontend: FrontEndConfig) -> str:",
+        ").density",
+        "def safe_padding(page: ft.Page, frontend: FrontEndConfig) -> ft.Padding:",
+        ").padding",
+        "container.padding = safe_padding(page, frontend)",
+        "def responsive_shell(",
+        "densidad {info.density}",
+        "{info.width}×{info.height}",
+    ]
+    for marker in expected_markers:
+        assert marker in layout_py
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
 def test_create_prefixes_numeric_package_name(
     monkeypatch, watchdog_available: bool
 ) -> None:

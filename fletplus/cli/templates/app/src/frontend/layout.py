@@ -5,20 +5,35 @@ from __future__ import annotations
 import flet as ft
 
 from fletplus import FrontEndConfig
+from fletplus.utils.viewport import viewport_info
 
 
 def active_profile(page: ft.Page, frontend: FrontEndConfig):
     """Obtiene el perfil responsivo activo a partir del ancho actual."""
-    return frontend.resolve_device_profile(
-        int(page.width or frontend.max_content_width)
-    )
+    return viewport_info(
+        page,
+        profiles=frontend.responsive_profiles,
+        fallback_width=frontend.max_content_width,
+        padding_base=frontend.page_padding,
+    ).profile
 
 
-def orientation(page: ft.Page) -> str:
+def orientation(page: ft.Page, frontend: FrontEndConfig | None = None) -> str:
     """Devuelve `portrait` o `landscape` según las dimensiones de la página."""
-    width = int(page.width or 0)
-    height = int(page.height or 0)
-    return "portrait" if height >= width else "landscape"
+    profiles = frontend.responsive_profiles if frontend is not None else None
+    return viewport_info(page, profiles=profiles).orientation
+
+
+def density(page: ft.Page, frontend: FrontEndConfig) -> str:
+    """Devuelve la densidad visual sugerida para el viewport actual."""
+    return viewport_info(page, profiles=frontend.responsive_profiles).density
+
+
+def safe_padding(page: ft.Page, frontend: FrontEndConfig) -> ft.Padding:
+    """Calcula padding seguro para móviles y ventanas compactas."""
+    return viewport_info(
+        page, profiles=frontend.responsive_profiles, padding_base=frontend.page_padding
+    ).padding
 
 
 def spacing(frontend: FrontEndConfig, multiplier: float = 1.0) -> int:
@@ -30,16 +45,24 @@ def max_width_container(
     content: ft.Control, page: ft.Page, frontend: FrontEndConfig
 ) -> ft.Container:
     """Centra contenido y limita el ancho máximo usando FrontEndConfig."""
-    return frontend.build_content_shell(content, page)
+    container = frontend.build_content_shell(content, page)
+    container.padding = safe_padding(page, frontend)
+    return container
 
 
 def responsive_shell(
     content: ft.Control, page: ft.Page, frontend: FrontEndConfig
 ) -> ft.Container:
     """Envuelve contenido con metadata útil para depurar breakpoints."""
-    profile = active_profile(page, frontend)
+    info = viewport_info(
+        page,
+        profiles=frontend.responsive_profiles,
+        fallback_width=frontend.max_content_width,
+        padding_base=frontend.page_padding,
+    )
     header = ft.Text(
-        f"Perfil: {profile.name} · {profile.columns} columnas · {orientation(page)}",
+        f"Perfil: {info.profile.name} · {info.profile.columns} columnas · "
+        f"{info.orientation} · densidad {info.density} · {info.width}×{info.height}",
         size=12,
     )
     return max_width_container(
