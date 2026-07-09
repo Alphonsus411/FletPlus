@@ -77,6 +77,42 @@ Plantillas disponibles:
 - `desktop`: estructura inicial orientada a escritorio.
 - `mobile`: estructura inicial orientada a móvil.
 
+### `fletplus frontend-tasks`
+
+Lista, sin crear ni modificar archivos, las tareas declarativas que devuelve
+`FrontEndConfig.implementation_tasks()`. El comando construye una configuración
+frontend con las mismas opciones visuales principales de `create` y renderiza
+cada `FrontEndTask` con su nombre, destino, descripción, funciones relacionadas
+y tokens principales.
+
+Opciones principales:
+
+- `--target {web|desktop|mobile|app|all}`: destino usado para resolver presets
+  de pantalla y densidad.
+- `--palette {aurora|sunset|lagoon|...}`: paleta registrada que alimenta la
+  tarea `paleta`.
+- `--font {Inter|Roboto|System}`: familia principal mostrada en la tarea
+  `fuentes`.
+- `--layout-density {compact|comfortable|spacious}`: densidad usada para
+  construir la configuración antes de listar las tareas.
+
+Ejemplo:
+
+```bash
+fletplus frontend-tasks --target web --palette zenith --font Inter --layout-density comfortable
+```
+
+Salida abreviada:
+
+```text
+Tareas FrontEndConfig
+Target: web
+- paleta [web]
+  Descripción: Resolver paletas base y overrides por plataforma.
+  Funciones: palette_for_target, palette_tokens
+  Tokens principales: palette=zenith
+```
+
 ### `fletplus run`
 
 Inicia el servidor de desarrollo con recarga automática y DevTools activado.

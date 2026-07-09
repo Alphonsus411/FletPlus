@@ -595,3 +595,38 @@ def test_create_supports_system_theme_mode(
     assert 'mode = "system"' in pyproject
     assert 'target = "mobile"' in pyproject
     assert 'PALETTE_MODE = "system"' in config
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+@pytest.mark.parametrize("target_name", ["web", "desktop", "mobile", "app", "all"])
+def test_frontend_tasks_lists_base_tasks_for_supported_targets(
+    monkeypatch, watchdog_available: bool, target_name: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "frontend-tasks",
+            "--target",
+            target_name,
+            "--palette",
+            "zenith",
+            "--font",
+            "Inter",
+            "--layout-density",
+            "compact",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert f"Target: {target_name}" in result.output
+    assert "Paleta: zenith" in result.output
+    assert "Fuente: Inter" in result.output
+    assert "Densidad: compact" in result.output
+    for task_name in ("paleta", "pantalla", "diseño", "fuentes"):
+        assert f"- {task_name} [{target_name}]" in result.output
+    assert "Funciones:" in result.output
+    assert "Tokens principales:" in result.output
