@@ -463,11 +463,20 @@ los tokens visuales de `FrontEndConfig`/`ThemeManager`.
 El helper `resolve_layout_tokens(page, ...)` calcula en un único lugar:
 
 - `profile`: `DeviceProfile` activo según el ancho de la página.
-- `spacing`: valor explícito, override por dispositivo, `theme.tokens["spacing"]["default"]`
-  o `FrontEndConfig.spacing`.
-- `padding`: valor explícito, `padding_by_device` o `FrontEndConfig.page_padding`.
-- `max_width`: valor explícito, `max_width_by_device` o `FrontEndConfig.max_content_width`.
-- `columns`: valor explícito, `columns_by_device` o `DeviceProfile.columns`.
+
+La prioridad de resolución es, de mayor a menor: argumentos directos del
+componente/helper, mapas por dispositivo (`*_by_device`), tokens de pantalla
+obtenidos con `FrontEndConfig.screen_tokens_for_page(page)`, valores base de
+`FrontEndConfig`/tema y defaults del perfil activo. En concreto:
+
+- `spacing`: valor explícito, `spacing_by_device`, token de pantalla `spacing`,
+  `theme.tokens["spacing"]["default"]` o `FrontEndConfig.spacing`.
+- `padding`: valor explícito, `padding_by_device`, token de pantalla `padding`
+  o `page_padding`, o `FrontEndConfig.page_padding`.
+- `max_width`: valor explícito, `max_width_by_device`, token de pantalla
+  `max_width` o `FrontEndConfig.max_content_width`.
+- `columns`: valor explícito, `columns_by_device`, token de pantalla `columns`
+  o `DeviceProfile.columns`.
 
 ```python
 from fletplus.components import resolve_layout_tokens
