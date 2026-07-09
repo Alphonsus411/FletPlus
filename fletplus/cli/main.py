@@ -20,6 +20,7 @@ from typing import Callable, Dict, Iterable
 
 import click
 
+from fletplus.frontend.config import FrontEndConfig, FrontEndTask
 from fletplus.themes import (
     get_preset_definition,
     get_preset_metadata,
@@ -315,6 +316,85 @@ def _validate_project_name(nombre: str) -> None:
         raise click.ClickException(
             "El nombre del proyecto debe ser un nombre simple sin rutas."
         )
+
+
+def _format_frontend_task_tokens(tokens: object) -> str:
+    if not isinstance(tokens, dict) or not tokens:
+        return "(sin tokens)"
+    return ", ".join(f"{key}={value}" for key, value in tokens.items())
+
+
+def _render_frontend_task(task: FrontEndTask) -> str:
+    return "\n".join(
+        (
+            f"- {task.name} [{task.target}]",
+            f"  Descripción: {task.description}",
+            f"  Funciones: {', '.join(task.functions) if task.functions else '(sin funciones)'}",
+            f"  Tokens principales: {_format_frontend_task_tokens(dict(task.tokens))}",
+        )
+    )
+
+
+@app.command("frontend-tasks")
+@click.option(
+    "--target",
+    "target_name",
+    type=click.Choice(["web", "desktop", "mobile", "app", "all"], case_sensitive=False),
+    default="all",
+    show_default=True,
+    help="Destino para resolver tareas frontend declarativas.",
+)
+@click.option(
+    "--palette",
+    "palette_name",
+    type=click.Choice(_available_palette_names(), case_sensitive=False),
+    default="zenith",
+    show_default=True,
+    help="Paleta visual usada para construir FrontEndConfig.",
+)
+@click.option(
+    "--font",
+    "font_family",
+    type=click.Choice(["Inter", "Roboto", "System"], case_sensitive=False),
+    default=None,
+    help="Fuente principal usada para construir FrontEndConfig.",
+)
+@click.option(
+    "--layout-density",
+    type=click.Choice(["compact", "comfortable", "spacious"], case_sensitive=False),
+    default=None,
+    help="Densidad visual usada para construir FrontEndConfig.",
+)
+def frontend_tasks(
+    target_name: str,
+    palette_name: str,
+    font_family: str | None,
+    layout_density: str | None,
+) -> None:
+    """Lista tareas declarativas de FrontEndConfig sin modificar archivos."""
+    normalized_target = target_name.lower()
+    config = FrontEndConfig(
+        palette=palette_name.lower(),
+        font_family=(
+            {"inter": "Inter", "roboto": "Roboto", "system": "System"}.get(
+                font_family.lower()
+            )
+            if font_family
+            else None
+        ),
+        layout_density=layout_density.lower() if layout_density else "comfortable",
+        target=normalized_target,
+    )
+
+    click.echo("Tareas FrontEndConfig")
+    click.echo(f"Target: {normalized_target}")
+    click.echo(f"Paleta: {config.palette}")
+    click.echo(
+        f"Fuente: {config.font.theme_font_family(config.font_family) or '(sin fuente)'}"
+    )
+    click.echo(f"Densidad: {config.layout_density}")
+    for task in config.implementation_tasks(normalized_target):
+        click.echo(_render_frontend_task(task))
 
 
 @app.command()
