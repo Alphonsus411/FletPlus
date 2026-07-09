@@ -480,9 +480,11 @@ class FrontEndConfig:
         return FrontEndConfig(**values)
 
     def palette_for_target(self, target: str | None = None) -> dict[str, str]:
-        """Fusiona la paleta activa con overrides específicos de plataforma."""
+        """Fusiona colores base de la paleta activa con overrides de plataforma."""
+        palette_tokens = self.palette_tokens()
+        base_colors = palette_tokens.get("colors", {})
         palette = {
-            k: str(v) for k, v in self.palette_tokens().items() if isinstance(v, str)
+            str(k): str(v) for k, v in base_colors.items() if isinstance(v, str)
         }
         target_name = (target or self.target or "").lower()
         overrides = self.platform_palettes.get(target_name, {})

@@ -118,6 +118,78 @@ DEFAULT_CUSTOM_TOKENS = {
 
 Usa tokens semánticos (`brand`, `surface_soft`, `card`, `pill`) en lugar de colores sueltos dentro de cada control. Así puedes cambiar la identidad visual desde un solo archivo.
 
+
+## Paletas por plataforma
+
+Además de elegir una paleta base con `palette`, puedes declarar overrides por destino con `platform_palettes`. `palette_for_target(<target>)` parte siempre de los tokens base de `palette_tokens()` y después fusiona solo las claves específicas de la plataforma, por lo que tokens como `on_primary`, `on_surface`, `error`, `success` o `focus_ring` siguen disponibles aunque no aparezcan en el override.
+
+Ejemplo mínimo en `pyproject.toml` para cubrir `web`, `desktop`, `mobile`, `android-apk`, `android-aab` e `ios`:
+
+```toml
+[tool.fletplus.frontend]
+palette = "aurora"
+mode = "light"
+target = "web"
+
+[tool.fletplus.frontend.platform_palettes.web]
+primary = "#2563EB"
+secondary = "#14B8A6"
+background = "#F8FAFC"
+surface = "#FFFFFF"
+
+[tool.fletplus.frontend.platform_palettes.desktop]
+primary = "#4F46E5"
+secondary = "#0EA5E9"
+background = "#EEF2FF"
+surface = "#FFFFFF"
+
+[tool.fletplus.frontend.platform_palettes.mobile]
+primary = "#7C3AED"
+secondary = "#EC4899"
+background = "#FAF5FF"
+surface = "#FFFFFF"
+
+[tool.fletplus.frontend.platform_palettes.android-apk]
+primary = "#16A34A"
+secondary = "#84CC16"
+background = "#F0FDF4"
+surface = "#FFFFFF"
+
+[tool.fletplus.frontend.platform_palettes.android-aab]
+primary = "#059669"
+secondary = "#10B981"
+background = "#ECFDF5"
+surface = "#FFFFFF"
+
+[tool.fletplus.frontend.platform_palettes.ios]
+primary = "#0A84FF"
+secondary = "#5E5CE6"
+background = "#F2F2F7"
+surface = "#FFFFFF"
+```
+
+Uso desde código compartido:
+
+```python
+from fletplus.frontend import FrontEndConfig
+
+frontend = FrontEndConfig.from_pyproject()
+web_palette = frontend.palette_for_target("web")
+desktop_palette = frontend.palette_for_target("desktop")
+mobile_palette = frontend.palette_for_target("mobile")
+
+assert web_palette["primary"] == "#2563EB"
+assert "on_primary" in web_palette  # token heredado de palette_tokens()
+```
+
+Para builds nativos puedes resolver directamente el destino que estés empaquetando:
+
+```python
+android_apk_palette = frontend.palette_for_target("android-apk")
+android_aab_palette = frontend.palette_for_target("android-aab")
+ios_palette = frontend.palette_for_target("ios")
+```
+
 ## Fuentes
 
 Las plantillas separan familia principal, fallback y assets locales:

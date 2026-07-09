@@ -65,6 +65,12 @@
     },
     "radii": {
       "card": 20
+    },
+    "colors": {
+      "primary": "#2563EB",
+      "secondary": "#14B8A6",
+      "background": "#F8FAFC",
+      "surface": "#FFFFFF"
     }
   },
   "desktop": {
@@ -74,6 +80,12 @@
     },
     "radii": {
       "card": 16
+    },
+    "colors": {
+      "primary": "#4F46E5",
+      "secondary": "#0EA5E9",
+      "background": "#EEF2FF",
+      "surface": "#FFFFFF"
     }
   },
   "mobile": {
@@ -84,6 +96,36 @@
     "radii": {
       "card": 24,
       "button": 16
+    },
+    "colors": {
+      "primary": "#7C3AED",
+      "secondary": "#EC4899",
+      "background": "#FAF5FF",
+      "surface": "#FFFFFF"
+    }
+  },
+  "android-apk": {
+    "colors": {
+      "primary": "#16A34A",
+      "secondary": "#84CC16",
+      "background": "#F0FDF4",
+      "surface": "#FFFFFF"
+    }
+  },
+  "android-aab": {
+    "colors": {
+      "primary": "#059669",
+      "secondary": "#10B981",
+      "background": "#ECFDF5",
+      "surface": "#FFFFFF"
+    }
+  },
+  "ios": {
+    "colors": {
+      "primary": "#0A84FF",
+      "secondary": "#5E5CE6",
+      "background": "#F2F2F7",
+      "surface": "#FFFFFF"
     }
   }
 }
