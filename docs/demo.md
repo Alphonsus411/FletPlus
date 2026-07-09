@@ -82,3 +82,39 @@ theme.load_theme_from_json("mi_tema.json")
 El JSON puede indicar el preset base (`material3`, `fluent` o `cupertino`) y
 añadir overrides por modo (claro/oscuro), lo que facilita mantener un catálogo
 de estilos consistente entre distintas demos o proyectos.
+
+## Showcases frontend por plataforma
+
+Además de la demo principal, el repositorio incluye tres ejemplos autocontenidos
+en `examples/` para validar experiencias frontend por plataforma. Todos usan una
+paleta personalizada, alternancia light/dark, navegación con
+`AdaptiveNavigationLayout`, tarjetas en `ResponsiveGrid`, estilos con
+`ResponsiveContainer`, estados semánticos y un asset SVG local.
+
+### Web
+
+```bash
+flet run --web examples/frontend_web_showcase.py
+```
+
+También puedes usar el punto de entrada directo del script:
+
+```bash
+python examples/frontend_web_showcase.py
+```
+
+### Escritorio
+
+```bash
+flet run examples/frontend_desktop_showcase.py
+```
+
+### Móvil / vista Flet app
+
+```bash
+flet run --view=flet_app examples/frontend_mobile_showcase.py
+```
+
+Si quieres simular el ancho móvil en escritorio, abre el ejemplo móvil y reduce
+la ventana hasta aproximadamente 390 px. El layout apila las tarjetas y conserva
+la navegación inferior cuando el perfil activo es `mobile`.

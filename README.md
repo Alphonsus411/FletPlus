@@ -33,6 +33,7 @@ pip install fletplus
 - [Catálogo de componentes][doc-components] ([GitHub][gh-doc-components])
 - [Perfiles de dispositivo y breakpoints][doc-responsive] ([GitHub][gh-doc-responsive])
 - [Guía de proyectos frontend][doc-frontend-projects] ([GitHub][gh-doc-frontend-projects])
+- [Showcases frontend por plataforma](#-showcases-frontend-por-plataforma)
 
 [doc-cli]: cli.md
 [doc-tooling]: tooling.md
@@ -65,6 +66,19 @@ pip install fletplus
 [gh-doc-components]: https://github.com/FletPlus/FletPlus/blob/main/docs/components.md
 [gh-doc-responsive]: https://github.com/FletPlus/FletPlus/blob/main/docs/responsive.md
 [gh-doc-frontend-projects]: https://github.com/FletPlus/FletPlus/blob/main/docs/frontend-projects.md
+
+## 🎛️ Showcases frontend por plataforma
+
+Los ejemplos de `examples/` incluyen demos completas para validar una misma
+experiencia frontend en web, escritorio y móvil:
+
+- [`examples/frontend_web_showcase.py`](examples/frontend_web_showcase.py): hero amplio para navegador, grilla fluida, assets SVG y navegación adaptable.
+- [`examples/frontend_desktop_showcase.py`](examples/frontend_desktop_showcase.py): versión de escritorio con densidad cómoda, navegación lateral y métricas.
+- [`examples/frontend_mobile_showcase.py`](examples/frontend_mobile_showcase.py): versión móvil con tarjetas apiladas, estados compactos y navegación inferior.
+
+Cada showcase reutiliza `AdaptiveNavigationLayout`, `ResponsiveGrid`,
+`ResponsiveContainer` y los estados semánticos (`LoadingState`, `EmptyState`,
+`SuccessState`) desde un helper común. Consulta [docs/demo.md](docs/demo.md#showcases-frontend-por-plataforma) para los comandos de ejecución.
 
 ## 🧭 Política de versión de Flet
 
