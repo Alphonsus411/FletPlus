@@ -401,6 +401,28 @@ class FrontEndConfig:
     )
 
     @classmethod
+    def from_preset(
+        cls,
+        preset: str,
+        *,
+        target: str | None = None,
+        mode: str | None = None,
+        **overrides: Any,
+    ) -> "FrontEndConfig":
+        """Crea configuración frontend desde un preset visual registrado.
+
+        Los valores explícitos recibidos en ``overrides`` mantienen la misma
+        precedencia que en ``from_mapping``: se aplican después del preset.
+        """
+        mapping: dict[str, Any] = {"preset": preset}
+        if target is not None:
+            mapping["target"] = target
+        if mode is not None:
+            mapping["mode"] = mode
+        mapping.update(overrides)
+        return cls.from_mapping(mapping)
+
+    @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> "FrontEndConfig":
         allowed = {
             "palette",
