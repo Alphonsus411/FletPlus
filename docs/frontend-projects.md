@@ -2,6 +2,12 @@
 
 Esta guía resume cómo iniciar, organizar y personalizar proyectos frontend de FletPlus para web, escritorio y móvil. Los ejemplos son breves y están basados en las plantillas oficiales de `fletplus/cli/templates/{web,desktop,mobile}`.
 
+## Planificación y backlog frontend
+
+La planificación operativa de tareas frontend vive en el [Roadmap frontend](frontend-roadmap.md). Allí se agrupan los bloques de paletas, pantalla/viewport, layout, fuentes/tipografía, assets, plantillas CLI, componentes y validación, con un criterio de finalización explícito por bloque: tests, documentación y ejemplo funcional.
+
+El backlog histórico y transversal se conserva en [`TAREAS_IMPLEMENTACION.md`](TAREAS_IMPLEMENTACION.md). Cuando una tarea de esta guía detecte deuda de arquitectura, CI/CD, seguridad o release que exceda el alcance frontend, registra la deuda en el backlog general y deja en el roadmap solo la referencia o decisión de producto.
+
 ## Crear un proyecto por destino
 
 Todos los proyectos se crean con `fletplus create`. Usa `--target` para elegir el destino inicial y añade opciones visuales cuando quieras dejar la marca definida desde el primer commit.
