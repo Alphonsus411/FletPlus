@@ -27,6 +27,8 @@ pip install fletplus
 - [Gestor de temas, paletas y overrides][doc-themes] ([GitHub][gh-doc-themes])
 - [Proveedores de almacenamiento reactivo][doc-storage] ([GitHub][gh-doc-storage])
 - [Compilación y empaquetado][doc-building] ([GitHub][gh-doc-building])
+- [Instaladores automatizados][doc-installer] ([GitHub][gh-doc-installer])
+- [Despliegue web con y sin backend][doc-deployment] ([GitHub][gh-doc-deployment])
 - [Recorrido por la demo][doc-demo] ([GitHub][gh-doc-demo])
 - [Router declarativo y layouts persistentes][doc-router] ([GitHub][gh-doc-router])
 - [Animaciones coordinadas con AnimationController][doc-animation] ([GitHub][gh-doc-animation]): coordina triggers compartidos y envoltorios como FadeIn o AnimatedContainer.
@@ -44,6 +46,8 @@ pip install fletplus
 [doc-themes]: themes.md
 [doc-storage]: storage.md
 [doc-building]: building.md
+[doc-installer]: installer.md
+[doc-deployment]: deployment.md
 [doc-demo]: demo.md
 [doc-router]: router.md
 [doc-animation]: animation.md
@@ -60,6 +64,8 @@ pip install fletplus
 [gh-doc-themes]: https://github.com/FletPlus/FletPlus/blob/main/docs/themes.md
 [gh-doc-storage]: https://github.com/FletPlus/FletPlus/blob/main/docs/storage.md
 [gh-doc-building]: https://github.com/FletPlus/FletPlus/blob/main/docs/building.md
+[gh-doc-installer]: https://github.com/FletPlus/FletPlus/blob/main/docs/installer.md
+[gh-doc-deployment]: https://github.com/FletPlus/FletPlus/blob/main/docs/deployment.md
 [gh-doc-demo]: https://github.com/FletPlus/FletPlus/blob/main/docs/demo.md
 [gh-doc-router]: https://github.com/FletPlus/FletPlus/blob/main/docs/router.md
 [gh-doc-animation]: https://github.com/FletPlus/FletPlus/blob/main/docs/animation.md
