@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import re
 import subprocess
 import sys
@@ -506,3 +507,92 @@ include_python_packages = ['shared_pkg']
         assert (staging / "python-packages" / "shared_pkg" / "__init__.py").exists()
         assert prepared["backend"] == staging / "backend"
         assert prepared["python_packages"] == staging / "python-packages"
+
+
+def test_web_deploy_config_reads_tool_fletplus_web_options() -> None:
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        (base / "src").mkdir()
+        (base / "src" / "main.py").write_text("print('main')\n", encoding="utf-8")
+        (base / "pyproject.toml").write_text(
+            """[project]
+name = 'web-config-demo'
+version = '1.0.0'
+
+[tool.fletplus.web]
+base_url = '/app/'
+backend_entrypoint = 'server/main.py'
+static_dir = 'public'
+pwa = true
+env_file = '.env.production'
+deploy_provider = 'nginx'
+""",
+            encoding="utf-8",
+        )
+
+        config = build_module._load_fletplus_config(base)
+
+        assert config.web_deploy.base_url == "/app/"
+        assert config.web_deploy.backend_entrypoint == "server/main.py"
+        assert config.web_deploy.static_dir == "public"
+        assert config.web_deploy.pwa is True
+        assert config.web_deploy.env_file == ".env.production"
+        assert config.web_deploy.deploy_provider == "nginx"
+        assert config.web_deploy.has_backend is True
+
+
+def test_web_build_writes_deploy_manifest_and_templates(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        (base / "src").mkdir()
+        (base / "src" / "main.py").write_text("print('configured')\n", encoding="utf-8")
+        (base / "server").mkdir()
+        (base / "server" / "main.py").write_text("print('backend')\n", encoding="utf-8")
+        (base / ".env.production").write_text("DEBUG=0\n", encoding="utf-8")
+        (base / "pyproject.toml").write_text(
+            """[project]
+name = 'manifest-demo'
+version = '2.1.0'
+
+[tool.fletplus.web]
+base_url = '/portal/'
+backend_entrypoint = 'server/main.py'
+static_dir = 'dist/web'
+pwa = true
+env_file = '.env.production'
+deploy_provider = 'external-proxy'
+""",
+            encoding="utf-8",
+        )
+
+        def fake_run(command, **kwargs):
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", "web"])
+
+        assert result.exit_code == 0, result.output
+        manifest_path = base / "dist" / "web" / "fletplus-deploy.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["schema_version"] == 1
+        assert manifest["project"] == {"name": "manifest-demo", "version": "2.1.0"}
+        assert manifest["web"]["base_url"] == "/portal/"
+        assert manifest["web"]["backend_entrypoint"] == "server/main.py"
+        assert manifest["web"]["pwa"] is True
+        assert manifest["web"]["deploy_provider"] == "external-proxy"
+        assert manifest["deployment"]["mode"] == "backend-python"
+        assert manifest["paths"]["backend_entrypoint"] == str(
+            (base / "server" / "main.py").resolve()
+        )
+        assert (base / "dist" / "web" / "deploy-static.sh").exists()
+        backend_template = (
+            base / "dist" / "web" / "deploy-backend-python.sh"
+        ).read_text(encoding="utf-8")
+        assert "source .env.production" in backend_template
+        assert "python server/main.py" in backend_template
