@@ -381,7 +381,7 @@ Para revertir rápidamente la minor objetivo:
 
 ## Workflow de documentación
 
-El repositorio incluye el workflow [`.github/workflows/docs.yml`](../.github/workflows/docs.yml), que valida la documentación en `pull_request` (ramas `main` y `develop`) y la publica en GitHub Pages cuando hay `push` a `main`. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y ejecuta `mkdocs build --strict --site-dir site` antes de subir el resultado como artefacto de Pages:
+El repositorio incluye el workflow [`.github/workflows/docs.yml`](https://github.com/FletPlus/FletPlus/blob/main/.github/workflows/docs.yml), que valida la documentación en `pull_request` (ramas `main` y `develop`) y la publica en GitHub Pages cuando hay `push` a `main`. El job `build` instala Python 3.11, las dependencias de `requirements-docs.txt` y ejecuta `mkdocs build --strict --site-dir site` antes de subir el resultado como artefacto de Pages:
 
 ```yaml
 jobs:
