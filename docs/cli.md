@@ -179,6 +179,14 @@ Durante la ejecución se imprime un estado por objetivo en el formato `✅ web:
 artefactos generados en dist/web/` o `❌ android-aab: ...`, lo que facilita
 identificar rápidamente el resultado de cada empaquetador.
 
+Además del modo tradicional, el comando entiende una configuración full-stack en
+`[tool.fletplus]` con `backend_app`, `frontend_app`, `docs_dir`, `config_dir`,
+`deployment_dir` e `include_python_packages`. Antes de cada target, esas rutas se
+preparan en `build/<target>/` para que hooks o pipelines puedan consumir backend,
+frontend, documentación, configuración y paquetes Python compartidos. Consulta el
+[flujo full-stack opcional](./building.md#flujo-full-stack-opcional) para ver un
+ejemplo completo.
+
 Ejemplos prácticos:
 
 ```bash

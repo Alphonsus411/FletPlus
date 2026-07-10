@@ -68,6 +68,51 @@ fletplus build --target desktop --app path/to/app.py
 
 Permite especificar un archivo distinto al predeterminado `src/main.py`.
 
+## Flujo full-stack opcional
+
+`fletplus build` conserva el modo clásico basado en un único punto de entrada,
+por ejemplo `fletplus build --app src/main.py`, pero también puede preparar una
+carpeta de staging con componentes de una aplicación full-stack antes de invocar
+`flet build`.
+
+La configuración vive en `[tool.fletplus]`:
+
+```toml
+[tool.fletplus]
+app = "src/main.py"
+backend_app = "backend/api.py"
+frontend_app = "frontend/app.py"
+docs_dir = "docs"
+config_dir = "config"
+deployment_dir = "deploy"
+include_python_packages = ["shared", "packages/domain"]
+```
+
+Claves soportadas:
+
+- `backend_app`: archivo o carpeta con el punto de entrada del backend Python.
+- `frontend_app`: archivo o carpeta con el componente frontend que debe viajar
+  con el build.
+- `docs_dir`: carpeta de documentación que se copia al staging.
+- `config_dir`: carpeta de configuración o ejemplos de entorno, como
+  `.env.example`.
+- `deployment_dir`: carpeta con manifiestos de despliegue, Dockerfiles o
+  recetas de infraestructura.
+- `include_python_packages`: lista de paquetes Python compartidos que se copian
+  sin ejecutar instalación ni compilación.
+
+Antes de lanzar cada adaptador, FletPlus prepara `build/<target>/` con:
+
+- `metadata.json`, iconos y assets como en el flujo existente.
+- `backend/`, `frontend/`, `docs/`, `config/` y `deployment/` cuando sus rutas
+  existen.
+- `python-packages/` con los paquetes declarados en `include_python_packages`.
+- `fullstack.json` como manifiesto mínimo de los paquetes Python copiados.
+
+Esta fase es deliberadamente estática: copia archivos y carpetas para que hooks,
+scripts externos o pipelines de CI puedan consumirlos, pero no sustituye el
+empaquetador de Flet ni ejecuta builds reales de backend/documentación.
+
 ## Variables de entorno auxiliares
 
 Durante la fase móvil se exponen dos variables de entorno útiles para recetas
