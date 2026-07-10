@@ -10,8 +10,8 @@ import pytest
 from click.testing import CliRunner
 
 TEMPLATE_ROOT = Path("fletplus/cli/templates")
-TEMPLATES = ("app", "web", "desktop", "mobile")
-PLATFORM_TEMPLATES = ("web", "desktop", "mobile")
+TEMPLATES = ("app", "web", "desktop", "mobile", "fullstack")
+PLATFORM_TEMPLATES = ("web", "desktop", "mobile", "fullstack")
 REQUIRED_TEMPLATE_FILES = (
     "src/frontend/config.py",
     "src/frontend/theme.py",
@@ -21,6 +21,15 @@ REQUIRED_TEMPLATE_FILES = (
     "README.md",
     "requirements.txt",
     "pyproject.toml",
+)
+FULLSTACK_TEMPLATE_FILES = (
+    "src/backend/__init__.py",
+    "src/backend/services.py",
+    "src/shared/__init__.py",
+    "src/shared/config.py",
+    "src/shared/models.py",
+    "docs/README.md",
+    "deploy/README.md",
 )
 COMMON_LAYOUT_HELPERS = (
     "active_profile",
@@ -102,6 +111,27 @@ def test_app_template_keeps_unified_full_layout_interface() -> None:
     assert set(COMMON_LAYOUT_HELPERS + PLATFORM_LAYOUT_HELPERS).issubset(functions)
 
 
+def test_fullstack_template_includes_backend_shared_docs_and_deploy() -> None:
+    template_dir = TEMPLATE_ROOT / "fullstack"
+
+    missing_files = [
+        relative_path
+        for relative_path in FULLSTACK_TEMPLATE_FILES
+        if not (template_dir / relative_path).is_file()
+    ]
+
+    assert not missing_files, f"fullstack no incluye: {missing_files}"
+
+    pyproject = (template_dir / "pyproject.toml").read_text(encoding="utf-8")
+    for marker in (
+        'backend_dir = "src/backend"',
+        'frontend_dir = "src/frontend"',
+        'docs_dir = "docs"',
+        'deploy_dir = "deploy"',
+    ):
+        assert marker in pyproject
+
+
 @pytest.mark.parametrize("watchdog_available", [True, False])
 @pytest.mark.parametrize("target_name", TEMPLATES)
 def test_create_target_generates_frontend_template_contract(
@@ -117,7 +147,10 @@ def test_create_target_generates_frontend_template_contract(
 
         assert result.exit_code == 0, result.output
         project_dir = base / "demo"
-        for relative_path in REQUIRED_TEMPLATE_FILES:
+        expected_files = list(REQUIRED_TEMPLATE_FILES)
+        if target_name == "fullstack":
+            expected_files.extend(FULLSTACK_TEMPLATE_FILES)
+        for relative_path in expected_files:
             assert (project_dir / relative_path).is_file()
 
         functions = _defined_functions(project_dir / "src" / "frontend" / "layout.py")

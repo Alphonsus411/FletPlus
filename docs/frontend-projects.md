@@ -8,6 +8,10 @@ La planificación operativa de tareas frontend vive en el [Roadmap frontend](fro
 
 El backlog histórico y transversal se conserva en [`TAREAS_IMPLEMENTACION.md`](TAREAS_IMPLEMENTACION.md). Cuando una tarea de esta guía detecte deuda de arquitectura, CI/CD, seguridad o release que exceda el alcance frontend, registra la deuda en el backlog general y deja en el roadmap solo la referencia o decisión de producto.
 
+## Plantilla fullstack
+
+Si tu proyecto necesita separar interfaz, lógica Python local, modelos compartidos, documentación y despliegue desde el inicio, usa la guía específica de [proyectos fullstack](fullstack-projects.md). La plantilla se genera con `fletplus create MiProducto --target fullstack` o `fletplus create MiProducto --template fullstack`.
+
 ## Crear un proyecto por destino
 
 Todos los proyectos se crean con `fletplus create`. Usa `--target` para elegir el destino inicial y añade opciones visuales cuando quieras dejar la marca definida desde el primer commit.
