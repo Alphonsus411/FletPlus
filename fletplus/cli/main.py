@@ -108,14 +108,22 @@ TARGET_TEMPLATE_ALIASES = {
     "web": "web",
     "desktop": "desktop",
     "mobile": "mobile",
+    "fullstack": "fullstack",
 }
 TARGET_PYPROJECT_VALUES = {
     "app": "all",
     "web": "web",
     "desktop": "desktop",
     "mobile": "mobile",
+    "fullstack": "all",
 }
-TARGET_MAX_WIDTH = {"app": "1100", "web": "1180", "desktop": "1280", "mobile": "480"}
+TARGET_MAX_WIDTH = {
+    "app": "1100",
+    "web": "1180",
+    "desktop": "1280",
+    "mobile": "480",
+    "fullstack": "1280",
+}
 FONT_FALLBACKS = {
     "Inter": '("Roboto", "Arial", "sans-serif")',
     "Roboto": '("Arial", "sans-serif")',
@@ -132,7 +140,8 @@ def _frontend_preset_context(
     font_family: str | None = None,
     layout_density: str | None = None,
 ) -> Dict[str, str]:
-    mapping: dict[str, object] = {"preset": preset_name, "target": target}
+    frontend_target = TARGET_PYPROJECT_VALUES.get(target, target)
+    mapping: dict[str, object] = {"preset": preset_name, "target": frontend_target}
     if palette_name is not None:
         mapping["palette"] = palette_name
     if theme_mode is not None:
@@ -403,14 +412,18 @@ def frontend_tasks(
 @click.option(
     "--template",
     "template_name",
-    type=click.Choice(["app", "web", "desktop", "mobile"], case_sensitive=False),
+    type=click.Choice(
+        ["app", "web", "desktop", "mobile", "fullstack"], case_sensitive=False
+    ),
     default=None,
     help="Plantilla inicial del proyecto (compatibilidad; --target es preferido).",
 )
 @click.option(
     "--target",
     "target_name",
-    type=click.Choice(["web", "desktop", "mobile", "app"], case_sensitive=False),
+    type=click.Choice(
+        ["web", "desktop", "mobile", "app", "fullstack"], case_sensitive=False
+    ),
     default="app",
     show_default=True,
     help="Destino inicial de la app y plantilla por defecto.",

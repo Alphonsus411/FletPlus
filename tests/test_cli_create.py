@@ -139,6 +139,16 @@ def test_create_template_uses_main_flet_version_policy(
             ],
             ["register_pwa", "safe_set_window_attr"],
         ),
+        (
+            "fullstack",
+            [
+                "from backend.services import get_project_status",
+                "get_project_status()",
+                "Backend local:",
+                "Plantilla responsive activa",
+            ],
+            ["register_pwa", "safe_set_window_attr", "NavigationBar"],
+        ),
     ],
 )
 def test_create_supports_frontend_templates(
@@ -180,6 +190,16 @@ def test_create_supports_frontend_templates(
         ]
         if template_name == "web":
             generated_paths.extend(["web/manifest.json", "web/service_worker.js"])
+        if template_name == "fullstack":
+            generated_paths.extend([
+                "src/backend/__init__.py",
+                "src/backend/services.py",
+                "src/shared/__init__.py",
+                "src/shared/config.py",
+                "src/shared/models.py",
+                "docs/README.md",
+                "deploy/README.md",
+            ])
         for generated_path in generated_paths:
             assert (base / "demo" / generated_path).exists()
         assert (base / "demo" / "requirements.txt").exists()
@@ -187,10 +207,17 @@ def test_create_supports_frontend_templates(
         assert 'requires-python = ">=3.10"' in pyproject
         assert "[tool.fletplus]" in pyproject
         assert "[tool.fletplus.frontend]" in pyproject
+        if template_name == "fullstack":
+            assert 'backend_dir = "src/backend"' in pyproject
+            assert 'frontend_dir = "src/frontend"' in pyproject
+            assert 'docs_dir = "docs"' in pyproject
+            assert 'deploy_dir = "deploy"' in pyproject
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
-@pytest.mark.parametrize("template_name", ["app", "web", "desktop", "mobile"])
+@pytest.mark.parametrize(
+    "template_name", ["app", "web", "desktop", "mobile", "fullstack"]
+)
 def test_create_frontend_templates_expose_equivalent_responsive_layout_helpers(
     monkeypatch, watchdog_available: bool, template_name: str
 ) -> None:
