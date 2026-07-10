@@ -5,6 +5,8 @@ preparar una aplicación FletPlus sin ejecutar acciones durante la generación. 
 archivos resultantes están pensados para revisarse, versionarse o adjuntarse a un
 paquete de entrega.
 
+La automatización se adapta al sistema operativo elegido: PowerShell para Windows, scripts POSIX ejecutables para macOS y Linux, y un helper web para preparar artefactos estáticos.
+
 ## Generación rápida
 
 ```bash

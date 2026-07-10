@@ -243,3 +243,95 @@ Caddy o el servidor equivalente y proxyfica las rutas dinámicas hacia el backen
 Python. El manifiesto conserva `base_url`, `static_dir`, `backend_entrypoint` y
 `deploy_provider` para que el pipeline de infraestructura pueda validar que el
 proxy coincide con el build generado.
+
+## Build full-stack
+
+Usa este flujo cuando el proyecto fue creado con `fletplus create --template fullstack` o cuando `[tool.fletplus]` declara backend, frontend y carpetas auxiliares. El build no inicia servicios: prepara una carpeta de staging por objetivo, copia los recursos declarados y después delega el empaquetado de UI a Flet.
+
+```bash
+fletplus create my-saas --template fullstack
+cd my-saas
+fletplus build --target web
+```
+
+Para construir la experiencia completa de distribución local puedes combinar el build web con el target de escritorio de la plataforma actual:
+
+```bash
+fletplus build --target web
+fletplus build --target desktop
+```
+
+Recomendaciones:
+
+- Declara `backend_app`, `frontend_app`, `deployment_dir`, `config_dir` e `include_python_packages` en `pyproject.toml` para que el staging sea reproducible.
+- Versiona ejemplos de entorno, como `.env.example`, pero no secretos reales.
+- Usa `deployment_dir` para Dockerfiles, manifiestos de orquestación, scripts de reverse proxy o recetas CI/CD.
+
+## Build Windows
+
+El target Windows genera artefactos de escritorio en `dist/windows/` y está pensado para ejecutarse desde Windows cuando se necesite un binario nativo revisable en esa plataforma.
+
+```bash
+fletplus build --target windows
+```
+
+Notas operativas:
+
+- Ejecuta el comando en Windows para evitar depender de cross-compilation no soportada por el toolchain nativo.
+- Si vas a distribuir a usuarios finales, genera después un instalador con `fletplus installer --target windows --include-bat`.
+- Valida el resultado en una máquina limpia o en una VM con la versión mínima de Windows que soporte tu producto.
+
+## Build macOS
+
+El target macOS escribe el resultado en `dist/macos/` y debe ejecutarse en macOS para producir artefactos compatibles con el ecosistema de firma, notarización y empaquetado de Apple.
+
+```bash
+fletplus build --target macos
+```
+
+Notas operativas:
+
+- Usa un runner macOS en CI si necesitas automatizar builds firmados.
+- Mantén certificados, perfiles y credenciales de notarización fuera del repositorio.
+- Genera el script de instalación con `fletplus installer --target macos` cuando necesites una receta automatizada para testers.
+
+## Build Linux
+
+El target Linux genera artefactos en `dist/linux/` desde un entorno Linux compatible con la distribución objetivo o con una imagen base equivalente.
+
+```bash
+fletplus build --target linux
+```
+
+Notas operativas:
+
+- Compila en la misma familia de distribución que usarán tus usuarios cuando dependas de bibliotecas del sistema.
+- Usa contenedores o runners dedicados para estabilizar versiones de Python, Flet y dependencias nativas.
+- Genera instaladores con `fletplus installer --target linux` para automatizar virtualenv, dependencias y arranque.
+
+## Build web
+
+El target web genera una aplicación publicable en `dist/web/` y añade manifiestos de despliegue FletPlus cuando existe configuración `[tool.fletplus.web]`.
+
+```bash
+fletplus build --target web
+```
+
+Flujos habituales:
+
+- Web estática: publica `dist/web/` en un hosting estático, CDN, bucket o servidor Nginx.
+- Web con backend: publica `dist/web/` como frontend y arranca el backend declarado en `backend_entrypoint` detrás del mismo dominio o de un proxy externo.
+- PWA: declara `pwa = true` para que tus pipelines traten el artefacto como aplicación web instalable cuando tu configuración de Flet lo permita.
+
+Consulta también [Despliegue de aplicaciones FletPlus](deployment.md) para ejemplos separados con y sin backend.
+
+## Limitaciones de cross-compilation
+
+FletPlus expone aliases prácticos como `desktop`, `desktop-all` y `all`, pero no convierte automáticamente un sistema operativo en otro toolchain nativo. La compatibilidad real depende de Flet, Flutter, Python, dependencias nativas y requisitos de firma de cada plataforma.
+
+Reglas recomendadas:
+
+- Compila Windows en Windows, macOS en macOS y Linux en Linux cuando el artefacto vaya a producción.
+- Usa `desktop-all` solo como matriz de objetivos cuando el entorno disponga de las herramientas necesarias para cada plataforma.
+- No asumas que wheels con extensiones nativas, librerías del sistema o certificados de firma funcionarán fuera de su plataforma origen.
+- Para CI, define jobs separados por sistema operativo y sube cada carpeta `dist/<target>/` como artefacto independiente.
