@@ -11,6 +11,15 @@ La fuente única de verdad de QA está centralizada en `tools/qa.sh`. El workflo
 
 Ambos wrappers delegan en el reusable para evitar duplicación. El reusable se divide en dos jobs contractuales: `tests-matrix` (matriz `3.9`, `3.10`, `3.11`) y `static-security` (solo `3.11`). Cada job delega en `tools/qa.sh` con `--scope` para no repetir auditorías de seguridad en toda la matriz.
 
+Además, el reusable mantiene una validación rápida multiplataforma en `cross-platform-lightweight`, con matriz de sistema operativo `ubuntu-latest`, `windows-latest` y `macos-latest` sobre Python `3.11`. Esta matriz no ejecuta empaquetado completo real: se limita a comprobar contratos que deben ser portables y baratos en CI:
+
+- `python -m pytest tests/test_cli_create.py tests/test_cli_template_contracts.py`: valida `fletplus create`, generación de plantillas y contratos estructurales comunes.
+- `python -m pytest tests/test_rendering_strategies.py`: valida parseo/selección de targets de `fletplus build` y preparación de estrategias sin invocar un empaquetado externo completo.
+- `python -m pytest tests/test_cli_installer.py`: valida generación de instaladores/scripts sin construir artefactos nativos reales.
+- `python tools/check_canonical_repo_links.py`, `python tools/check_optional_dependency_refs.py` y `mkdocs build --strict --site-dir site`: validan enlaces, referencias de dependencias opcionales y documentación.
+
+Los builds reales con `flet build` quedan separados en `real-flet-builds`. Ese job es manual/opcional: se habilita desde `.github/workflows/qa.yml` con `workflow_dispatch` y el input `run-real-flet-build`. Al activarlo, GitHub Actions ejecuta la misma matriz `ubuntu-latest`, `windows-latest` y `macos-latest`, crea un proyecto de humo con `fletplus create ci-smoke --template app` y lanza `flet build web` dentro del proyecto generado. Mantenerlo fuera de PR/push evita que los runners normales queden bloqueados por descargas, toolchains o requisitos gráficos/plataforma específicos de Flet.
+
 Como política de mínimo privilegio, `qa.yml`, `quality.yml` y `reusable-quality.yml` deben declarar permisos explícitos de solo lectura (`permissions: { contents: read }`) a nivel workflow o job. Ninguno de estos pipelines necesita permisos de escritura adicionales para ejecutar `actions/checkout`, `actions/setup-python` y los comandos de QA.
 
 El preflight soporta selección explícita por suite con `--suite`:

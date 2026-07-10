@@ -2,6 +2,12 @@ name: Reusable Quality
 
 on:
   workflow_call:
+    inputs:
+      run-real-flet-build:
+        description: "Run optional real flet build jobs that invoke flet build"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -63,6 +69,79 @@ jobs:
 
       - name: Run static/security checks
         run: bash tools/qa.sh --scope static-security
+
+  cross-platform-lightweight:
+    name: Lightweight CLI/docs (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install lightweight QA dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt -r requirements-docs.txt
+          python -m pip install -e .
+
+      - name: Validate fletplus create templates
+        run: python -m pytest tests/test_cli_create.py tests/test_cli_template_contracts.py
+
+      - name: Validate fletplus build parsing and strategy contracts
+        run: python -m pytest tests/test_rendering_strategies.py
+
+      - name: Validate installer generation without packaging
+        run: python -m pytest tests/test_cli_installer.py
+
+      - name: Validate documentation checks
+        run: |
+          python tools/check_canonical_repo_links.py
+          python tools/check_optional_dependency_refs.py
+          mkdocs build --strict --site-dir site
+
+  real-flet-builds:
+    name: Manual real flet build (${{ matrix.os }})
+    if: ${{ inputs.run-real-flet-build }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip install -e .
+
+      - name: Create smoke project
+        run: fletplus create ci-smoke --template app
+
+      - name: Run real flet build
+        working-directory: ci-smoke
+        run: flet build web
 
   flet-version-matrix:
     runs-on: ubuntu-latest

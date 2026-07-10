@@ -3,6 +3,13 @@ name: QA
 on:
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      run-real-flet-build:
+        description: "Run optional real flet build jobs"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -10,3 +17,5 @@ permissions:
 jobs:
   qa:
     uses: ./.github/workflows/reusable-quality.yml
+    with:
+      run-real-flet-build: ${{ github.event_name == 'workflow_dispatch' && inputs.run-real-flet-build }}

@@ -10,3 +10,5 @@ permissions:
 jobs:
   quality:
     uses: ./.github/workflows/reusable-quality.yml
+    with:
+      run-real-flet-build: false
