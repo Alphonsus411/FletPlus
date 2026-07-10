@@ -6,6 +6,7 @@ from typing import Any
 
 import flet as ft
 
+from fletplus.rendering import RenderStrategy
 from fletplus.utils.flet_compat import safe_request_page_update
 
 from .layout import Layout, LayoutBuilder, LayoutComposition
@@ -32,11 +33,17 @@ class FletPlusApp:
         on_shutdown: LifecycleHook | None = None,
         *,
         title: str | None = None,
+        render_strategy: RenderStrategy | None = None,
     ) -> None:
         """Inicializa la aplicación con layout, estado y callbacks de ciclo de vida."""
-        self.layout = layout if isinstance(layout, LayoutComposition) else Layout.from_callable(layout)
+        self.layout = (
+            layout
+            if isinstance(layout, LayoutComposition)
+            else Layout.from_callable(layout)
+        )
         self.state = state or State()
         self.title = title
+        self.render_strategy = render_strategy
         self._on_start = on_start
         self._on_update = on_update
         self._on_shutdown = on_shutdown
@@ -70,8 +77,10 @@ class FletPlusApp:
         previous_page = self._page
         previous_unsubscribe = self._unsubscribe
         local_page = page
+
         def local_refresher() -> None:
             self._safe_page_update(local_page)
+
         local_unsubscribe: Callable[[], None] | None = None
         ui_mounted = False
 
@@ -79,6 +88,8 @@ class FletPlusApp:
             self._page = local_page
             if self.title is not None:
                 local_page.title = self.title
+            if self.render_strategy is not None:
+                self.render_strategy.configure_page(local_page)
 
             self.state.bind_refresher(local_refresher)
             local_unsubscribe = self.state.subscribe(self._handle_state_update)
@@ -93,7 +104,9 @@ class FletPlusApp:
                 try:
                     local_unsubscribe()
                 except Exception:
-                    logging.getLogger(__name__).warning("Fallo al desuscribir durante start()", exc_info=True)
+                    logging.getLogger(__name__).warning(
+                        "Fallo al desuscribir durante start()", exc_info=True
+                    )
 
             self.state.bind_refresher(None)
             self._page = previous_page
@@ -104,7 +117,9 @@ class FletPlusApp:
                     local_page.controls.clear()
                     self._safe_page_update(local_page)
                 except Exception:
-                    logging.getLogger(__name__).warning("Fallo al limpiar UI tras error en start()", exc_info=True)
+                    logging.getLogger(__name__).warning(
+                        "Fallo al limpiar UI tras error en start()", exc_info=True
+                    )
 
             raise
 
@@ -120,8 +135,13 @@ class FletPlusApp:
                 state.refresh_ui()
                 return
             self._controls = updated_controls
+        rendered_controls = self._controls
+        if self.render_strategy is not None:
+            rendered_controls = self.render_strategy.wrap_controls(
+                self._controls, self._page
+            )
         self._page.controls.clear()
-        self._page.add(*self._controls)
+        self._page.add(*rendered_controls)
 
     def _handle_state_update(self, state: StateProtocol) -> None:
         """Responde a cambios de estado actualizando el layout."""

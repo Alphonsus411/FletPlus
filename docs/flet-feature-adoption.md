@@ -164,3 +164,22 @@ Fuentes primarias revisadas:
 - Mejoras puntuales de video/audio de 0.85.x: no aplican hasta que FletPlus
   defina explícitamente componentes multimedia propios; envolverlas ahora
   duplicaría la API nativa de Flet sin valor adicional.
+
+## Estrategias de renderizado FletPlus
+
+FletPlus adopta el build multiplataforma de Flet mediante una capa propia en
+`fletplus/rendering/` para no acoplar la API pública a detalles internos del
+runtime ni del empaquetado de Flet.
+
+| API/flujo Flet original | Estado en FletPlus | Envoltorio/adopción |
+| --- | --- | --- |
+| `flet.app()` y montaje de `ft.Page` | Adoptado | `fletplus.core.app.FletPlusApp` acepta una `RenderStrategy` opcional que configura la página antes de construir el layout. |
+| Layouts responsive con controles `ft.Container`, `ft.Column` y tokens de pantalla | Envuelto | `WebRenderStrategy`, `DesktopRenderStrategy` y `MobileRenderStrategy` normalizan padding, ancho máximo, spacing y densidad visual para reutilizar los layouts de `fletplus/components/`. |
+| `flet build web` | Adoptado con manifiesto FletPlus | `BuildManager` selecciona `WebRenderStrategy` para `BuildTarget.WEB` y el adaptador escribe `render_strategy.json` en staging. |
+| `flet build linux/windows/macos` | Adoptado con manifiesto FletPlus | `BuildManager` selecciona `DesktopRenderStrategy` para `BuildTarget.DESKTOP` antes de delegar a Flet. |
+| `flet build apk`, `aab` e `ipa` | Adoptado con manifiesto FletPlus | `BuildManager` selecciona `MobileRenderStrategy` para Android/iOS y mantiene las variables `FLETPLUS_METADATA`, `FLETPLUS_ICON` y `FLETPLUS_PACKAGE`. |
+| Proyectos full-stack preparados por FletPlus | Extensión propia | `FullStackRenderStrategy` documenta el target `all`/full-stack y convive con la copia de backend, frontend, docs, config, deployment y paquetes compartidos. |
+
+La API pública queda expuesta desde `fletplus.rendering.__init__` con
+`RenderStrategy`, `WebRenderStrategy`, `DesktopRenderStrategy`,
+`MobileRenderStrategy`, `FullStackRenderStrategy` y `strategy_for_target`.
