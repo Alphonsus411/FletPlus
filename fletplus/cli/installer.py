@@ -100,10 +100,17 @@ def _ps_single_quote(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
+def _package_spec_with_extra(package_spec: object, extra: str) -> str:
+    spec = str(package_spec)
+    if "[" in spec or spec.endswith(".whl"):
+        return spec
+    return f"{spec}[{extra}]"
+
+
 def _windows_ps1(project_dir: Path, options: Mapping[str, object]) -> str:
     app = options["app"]
     assets = options["assets_dir"]
-    package_spec = options["package_spec"]
+    package_spec = _package_spec_with_extra(options["package_spec"], "desktop-build")
     return f"""{_common_header(project_dir)}$ErrorActionPreference = "Stop"
 $ProjectDir = {_ps_single_quote(str(project_dir))}
 Set-Location $ProjectDir
@@ -141,7 +148,7 @@ endlocal
 def _posix_script(project_dir: Path, options: Mapping[str, object], target: str) -> str:
     app = options["app"]
     assets = options["assets_dir"]
-    package_spec = options["package_spec"]
+    package_spec = _package_spec_with_extra(options["package_spec"], "desktop-build")
     distro = ""
     if target == "linux":
         distro = '\nif [ -r /etc/os-release ]; then . /etc/os-release; echo "Distribución detectada: ${PRETTY_NAME:-$ID}"; fi\n'
@@ -174,7 +181,7 @@ fi
 
 
 def _web_script(project_dir: Path, options: Mapping[str, object]) -> str:
-    package_spec = options["package_spec"]
+    package_spec = _package_spec_with_extra(options["package_spec"], "web-deploy")
     return f"""#!/usr/bin/env sh
 {_common_header(project_dir)}set -eu
 PROJECT_DIR={_sh_single_quote(str(project_dir))}
