@@ -42,9 +42,13 @@ def test_generate_all_installers_without_executing(tmp_path: Path) -> None:
     assert "Distribución detectada" in (output / "linux" / "install.sh").read_text(
         encoding="utf-8"
     )
-    assert "flet build web" in (output / "web" / "deploy_static.sh").read_text(
-        encoding="utf-8"
-    )
+    web_script = (output / "web" / "deploy_static.sh").read_text(encoding="utf-8")
+    linux_script = (output / "linux" / "install.sh").read_text(encoding="utf-8")
+    windows_script = (output / "windows" / "install.ps1").read_text(encoding="utf-8")
+    assert "flet build web" in web_script
+    assert ".[web-deploy]" in web_script
+    assert ".[desktop-build]" in linux_script
+    assert ".[desktop-build]" in windows_script
     assert "Remove-Item" not in (output / "windows" / "install.ps1").read_text(
         encoding="utf-8"
     )

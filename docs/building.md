@@ -41,6 +41,23 @@ update-build-config`) y ejecuta `make build` para encadenar `update-build-config
 
 Antes de ejecutar ese flujo en local, instala el extra opcional de build con `pip install .[build]` (incluye `build` y `cython`).
 
+## Extras opcionales por perfil
+
+FletPlus declara extras explícitos para que cada entorno instale solo las herramientas necesarias. Úsalos desde el repositorio con `pip install .[web-deploy]` o desde PyPI con `pip install "fletplus[web-deploy]"`.
+
+| Extra | Cuándo usarlo | Incluye principalmente |
+| --- | --- | --- |
+| `build` | Mantenimiento del paquete FletPlus: generar sdist/wheel y regenerar artefactos Cython versionados. | `build`, `cython` |
+| `rust` | Compilar extensiones nativas declaradas en `[tool.pyrust-native]`. | `pyrust-native`, `maturin` |
+| `speedups` | Regenerar o experimentar con módulos Cython sin ejecutar todo el empaquetado. | `cython` |
+| `cli` | Desarrollo de la CLI con recarga/observación de archivos. | `watchdog` |
+| `fullstack` | Proyectos con frontend, backend Python, documentación y carpetas de despliegue copiadas al staging de `fletplus build`. | `watchdog`, `uvicorn` |
+| `installer` | Generar y revisar instaladores auxiliares con `fletplus installer`. | `pyinstaller` |
+| `web-deploy` | Preparar despliegues web o backends Python detrás de `dist/web/`. | `uvicorn` |
+| `desktop-build` | Construir o instalar objetivos de escritorio (`windows`, `macos`, `linux`) con toolchains de empaquetado local. | `pyinstaller`, `briefcase` |
+
+Los instaladores generados aplican estos perfiles automáticamente: los scripts de escritorio instalan `.[desktop-build]` antes de arrancar la aplicación y el script web instala `.[web-deploy]` antes de ejecutar `flet build web`. Si pasas un wheel precompilado mediante `package_spec`, el instalador respeta ese artefacto sin añadir extras porque sus dependencias ya deben estar resueltas al construir la rueda.
+
 ## Ejemplos de uso
 
 ### Compilación completa
