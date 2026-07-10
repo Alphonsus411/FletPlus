@@ -812,12 +812,24 @@ def profile(
 @click.option(
     "--target",
     type=click.Choice(
-        ["web", "desktop", "mobile", "android-apk", "android-aab", "ios", "all"],
+        [
+            "web",
+            "desktop",
+            "windows",
+            "macos",
+            "linux",
+            "desktop-all",
+            "mobile",
+            "android-apk",
+            "android-aab",
+            "ios",
+            "all",
+        ],
         case_sensitive=False,
     ),
     default="all",
     show_default=True,
-    help="Objetivo de compilación (web, desktop, android-apk, android-aab, ios, mobile alias de android-apk o all).",
+    help="Objetivo de compilación (web, desktop, windows, macos, linux, desktop-all, android-apk, android-aab, ios, mobile alias de android-apk o all).",
 )
 @click.option(
     "--app",

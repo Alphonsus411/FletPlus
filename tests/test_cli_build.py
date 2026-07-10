@@ -103,6 +103,88 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         assert "✅ android-apk" in result.output
 
 
+@pytest.mark.parametrize(
+    ("option", "expected"),
+    [
+        ("windows", [build_module.BuildTarget.WINDOWS]),
+        ("macos", [build_module.BuildTarget.MACOS]),
+        ("linux", [build_module.BuildTarget.LINUX]),
+        (
+            "desktop-all",
+            [
+                build_module.BuildTarget.WINDOWS,
+                build_module.BuildTarget.MACOS,
+                build_module.BuildTarget.LINUX,
+            ],
+        ),
+    ],
+)
+def test_build_target_parse_option_desktop_platforms(
+    option: str, expected: list[build_module.BuildTarget]
+) -> None:
+    assert build_module.BuildTarget.parse_option(option) == expected
+
+
+@pytest.mark.parametrize("target", ["windows", "macos", "linux"])
+def test_build_desktop_platform_targets_generate_flet_commands(
+    monkeypatch, target: str
+) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        _setup_minimal_project(base)
+
+        calls: list[tuple[list[str], dict]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(([str(part) for part in command], kwargs))
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", target])
+
+        assert result.exit_code == 0, result.output
+        assert len(calls) == 1
+        command, kwargs = calls[0]
+        assert command[:5] == [sys.executable, "-m", "flet", "build", target]
+        assert command[command.index("--output") + 1] == str(
+            (base / "dist" / target).resolve()
+        )
+        assert (
+            tuple(kwargs.get("env_whitelist", ()))
+            == build_module.BUILD_ENV_PROFILES["flet_build"]
+        )
+        assert f"✅ {target}" in result.output
+
+
+def test_build_desktop_all_generates_each_desktop_platform(monkeypatch) -> None:
+    _configure_watchdog(monkeypatch, available=True)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        _setup_minimal_project(base)
+
+        calls: list[list[str]] = []
+
+        def fake_run(command, **kwargs):
+            calls.append([str(part) for part in command])
+            return subprocess.CompletedProcess(command, 0)
+
+        with patch("fletplus.utils.safe_subprocess.safe_run", side_effect=fake_run):
+            result = runner.invoke(app, ["build", "--target", "desktop-all"])
+
+        assert result.exit_code == 0, result.output
+        assert [command[4] for command in calls] == ["windows", "macos", "linux"]
+        assert "✅ windows" in result.output
+        assert "✅ macos" in result.output
+        assert "✅ linux" in result.output
+
+
 @pytest.mark.parametrize("watchdog_available", [True, False])
 def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> None:
     _configure_watchdog(monkeypatch, available=watchdog_available)
@@ -341,7 +423,9 @@ def test_full_stack_config_is_loaded_into_context_without_building() -> None:
         (base / "config" / ".env.example").write_text("DEBUG=0\n", encoding="utf-8")
         (base / "deploy" / "Dockerfile").write_text("FROM python\n", encoding="utf-8")
         (base / "shared_pkg").mkdir()
-        (base / "shared_pkg" / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
+        (base / "shared_pkg" / "__init__.py").write_text(
+            "VALUE = 1\n", encoding="utf-8"
+        )
         (base / "pyproject.toml").write_text(
             """[project]
 name = 'full-stack-demo'
@@ -388,7 +472,9 @@ def test_full_stack_prepare_copies_contract_files_without_real_build() -> None:
         (base / "deploy").mkdir()
         (base / "deploy" / "Dockerfile").write_text("FROM python\n", encoding="utf-8")
         (base / "shared_pkg").mkdir()
-        (base / "shared_pkg" / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
+        (base / "shared_pkg" / "__init__.py").write_text(
+            "VALUE = 1\n", encoding="utf-8"
+        )
         (base / "pyproject.toml").write_text(
             """[project]
 name = 'full-stack-demo'

@@ -162,14 +162,14 @@ responsivas, mostrando las 10 filas más relevantes.
 ### `fletplus build`
 
 Compila la aplicación para los distintos objetivos soportados (`web`,
-`desktop`, `android-apk`, `android-aab`, `ios` y el alias `mobile`) reutilizando
+`desktop`, `windows`, `macos`, `linux`, `desktop-all`, `android-apk`, `android-aab`, `ios` y el alias `mobile`) reutilizando
 el flujo descrito en `docs/building.md`. El comando delega en `flet build` y
 muestra un reporte individual por destino.
 
 Opciones principales:
 
-- `--target {web|desktop|mobile|android-apk|android-aab|ios|all}`: define qué
-  objetivo(s) compilar. La opción `mobile` es alias de `android-apk`; `all`
+- `--target {web|desktop|windows|macos|linux|desktop-all|mobile|android-apk|android-aab|ios|all}`: define qué
+  objetivo(s) compilar. La opción `mobile` es alias de `android-apk`; `desktop` resuelve la plataforma actual; `desktop-all` ejecuta `windows`, `macos` y `linux`; `all`
   ejecuta `web`, `desktop` y `android-apk`.
 - `--app PATH`: permite indicar un punto de entrada diferente al valor
   predeterminado `src/main.py`, útil si tu proyecto organiza la aplicación en
@@ -200,8 +200,16 @@ paso "Objetivo web" descrito en la guía de compilación.
 fletplus build --target desktop --app src/app.py
 ```
 
-Empaqueta la aplicación de escritorio con `flet build` tomando `src/app.py` como
-entrada y dejando los artefactos en `dist/desktop/`.
+Empaqueta la aplicación de escritorio para la plataforma actual con `flet build` tomando `src/app.py` como entrada.
+
+```bash
+fletplus build --target windows
+fletplus build --target macos
+fletplus build --target linux
+fletplus build --target desktop-all
+```
+
+Genera builds de escritorio explícitos con `python -m flet build windows`, `python -m flet build macos` o `python -m flet build linux`; `desktop-all` ejecuta los tres y deja los artefactos en `dist/windows/`, `dist/macos/` y `dist/linux/`.
 
 ```bash
 fletplus build --target mobile

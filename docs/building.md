@@ -4,7 +4,7 @@ El comando `fletplus build` empaqueta una aplicación según distintos objetivos
 aprovechando el empaquetado nativo de Flet.
 
 ```bash
-fletplus build --target <web|desktop|mobile|android-apk|android-aab|ios|all>
+fletplus build --target <web|desktop|windows|macos|linux|desktop-all|mobile|android-apk|android-aab|ios|all>
 ```
 
 ## Flujo general
@@ -14,7 +14,7 @@ fletplus build --target <web|desktop|mobile|android-apk|android-aab|ios|all>
 2. Se recopilan iconos y recursos estáticos ubicados en `assets/` o `static/`.
 3. Se delega la compilación a `flet build` según el objetivo:
    - `flet build web` genera la versión web en `dist/web/`.
-   - `flet build windows/macos/linux` construye artefactos de escritorio en `dist/desktop/`.
+   - `flet build windows`, `flet build macos` o `flet build linux` construyen artefactos de escritorio en `dist/windows/`, `dist/macos/` o `dist/linux/`.
    - `flet build apk` produce APKs en `dist/android-apk/`.
    - `flet build aab` produce Android App Bundles en `dist/android-aab/`.
    - `flet build ipa` produce artefactos iOS en `dist/ios/`.
@@ -49,7 +49,7 @@ Antes de ejecutar ese flujo en local, instala el extra opcional de build con `pi
 fletplus build
 ```
 
-Genera artefactos para `web`, `desktop` y `android-apk`.
+Genera artefactos para `web`, el alias `desktop` (la plataforma actual) y `android-apk`.
 
 ### Objetivo web
 
@@ -59,6 +59,17 @@ fletplus build --target web
 
 Ejecuta internamente `python -m flet build web --output dist/web src/main.py` y
 coloca los archivos listos para desplegar en un servidor estático.
+
+### Objetivos de escritorio por plataforma
+
+```bash
+fletplus build --target windows
+fletplus build --target macos
+fletplus build --target linux
+fletplus build --target desktop-all
+```
+
+`desktop` se mantiene como alias de la plataforma actual, mientras que `desktop-all` resuelve la matriz soportada (`windows`, `macos` y `linux`). Cada opción invoca internamente `python -m flet build <plataforma>` y escribe en `dist/<plataforma>/`.
 
 ### Seleccionar el punto de entrada
 
