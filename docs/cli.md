@@ -271,3 +271,49 @@ Las subsecciones son opcionales. `[tool.fletplus.frontend.fonts]` se traduce a
 `font_assets`, y cualquier grupo bajo `[tool.fletplus.frontend.tokens.*]` se
 fusiona en `theme_tokens` para que `FrontEndConfig.apply_to_page()` lo publique
 en el `ThemeManager` activo.
+
+### `fletplus installer`
+
+Genera scripts de instalación por plataforma sin ejecutarlos. El objetivo es
+entregar archivos auditables que creen un entorno virtual, instalen dependencias,
+instalen el paquete local o el wheel más reciente de `dist/`, copien assets y
+arranquen la aplicación. Para web, genera un script de build estático con
+instrucciones para servir los artefactos.
+
+Opciones principales:
+
+- `--target {windows|macos|linux|web|all}`: plataforma para la que se generarán
+  scripts. `all` crea scripts para todos los destinos soportados.
+- `--project-dir PATH`: raíz del proyecto FletPlus. Por defecto es el directorio
+  actual.
+- `--output-dir PATH`: carpeta donde se escribirán los instaladores. Por defecto
+  es `installers/`.
+- `--app PATH`: ruta relativa al punto de entrada de la aplicación. Por defecto
+  es `src/main.py`.
+- `--assets-dir PATH`: ruta relativa de assets que el script copiará a
+  `build/runtime_assets/` cuando exista. Por defecto es `assets`.
+- `--package-spec PATH`: paquete local o ruta relativa a instalar si no se
+  encuentra un wheel en `dist/`. Por defecto es `.`.
+- `--include-bat`: genera un wrapper `install.bat` además de `install.ps1` para
+  Windows.
+
+Ejemplos:
+
+```bash
+fletplus installer --target all
+fletplus installer --target windows --include-bat
+fletplus installer --target web --output-dir deploy/installers
+```
+
+Archivos generados por plataforma:
+
+- Windows: `installers/windows/install.ps1` y opcionalmente
+  `installers/windows/install.bat`.
+- macOS: `installers/macos/install.command`.
+- Linux: `installers/linux/install.sh`, con lectura de `/etc/os-release` cuando
+  esté disponible.
+- Web: `installers/web/deploy_static.sh`.
+
+El generador valida rutas relativas para evitar interpolación insegura, rechaza
+segmentos `..` y no incluye operaciones destructivas como borrado de directorios
+del proyecto. Consulta la guía completa en [`docs/installer.md`](./installer.md).

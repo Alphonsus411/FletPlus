@@ -28,6 +28,7 @@ from fletplus.themes import (
 )
 
 from .build import DEFAULT_BUILD_TIMEOUT_SECONDS, PackagingError, run_build
+from .installer import InstallerError, generate_installer
 
 
 def _watchdog_available() -> bool:
@@ -757,6 +758,86 @@ def run(app_path: Path, port: int, devtools: bool, watch_path: Path | None) -> N
         observer.stop()
         observer.join()
         _stop_process(proceso)
+
+
+@app.command("installer")
+@click.option(
+    "--target",
+    type=click.Choice(
+        ["windows", "macos", "linux", "web", "all"], case_sensitive=False
+    ),
+    default="all",
+    show_default=True,
+    help="Plataforma para la que se generarán scripts de instalación.",
+)
+@click.option(
+    "--project-dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=Path("."),
+    show_default=True,
+    help="Directorio raíz del proyecto FletPlus.",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=Path("installers"),
+    show_default=True,
+    help="Directorio donde se escribirán los scripts generados.",
+)
+@click.option(
+    "--app",
+    "app_path",
+    default="src/main.py",
+    show_default=True,
+    help="Ruta relativa al punto de entrada de la aplicación.",
+)
+@click.option(
+    "--assets-dir",
+    default="assets",
+    show_default=True,
+    help="Ruta relativa de assets a copiar durante la instalación.",
+)
+@click.option(
+    "--package-spec",
+    default=".",
+    show_default=True,
+    help="Paquete local o ruta relativa a instalar si no hay wheel en dist/.",
+)
+@click.option(
+    "--include-bat/--no-include-bat",
+    default=False,
+    show_default=True,
+    help="Genera un wrapper install.bat junto a install.ps1 para Windows.",
+)
+def installer(
+    target: str,
+    project_dir: Path,
+    output_dir: Path,
+    app_path: str,
+    assets_dir: str,
+    package_spec: str,
+    include_bat: bool,
+) -> None:
+    """Genera scripts de instalación por plataforma sin ejecutarlos."""
+
+    try:
+        generated = generate_installer(
+            project_dir,
+            target.lower(),
+            output_dir,
+            {
+                "app": app_path,
+                "assets_dir": assets_dir,
+                "package_spec": package_spec,
+                "include_bat": include_bat,
+            },
+        )
+    except InstallerError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"Scripts generados en {output_dir.resolve()}:")
+    for item in generated:
+        click.echo(f"- {item.target_os}: {item.path}")
 
 
 @app.command()
