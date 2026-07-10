@@ -145,3 +145,101 @@ fletplus build --target ios
 ```
 
 `mobile` se conserva como alias retrocompatible de `android-apk`.
+
+## Manifiesto de despliegue web
+
+Cuando el objetivo es `web`, FletPlus ejecuta el build nativo de Flet y añade
+artefactos propios en `dist/web/` para que el resultado pueda publicarse de
+forma estática o combinarse con un backend Python:
+
+- `fletplus-deploy.json`: manifiesto estable con metadatos del proyecto,
+  configuración web, rutas resueltas, modo de despliegue y comandos sugeridos.
+- `deploy-static.sh`: plantilla mínima para servir `dist/web/` con
+  `python -m http.server` durante pruebas locales o smoke tests de CI.
+- `deploy-backend-python.sh`: plantilla para arrancar un backend Python asociado
+  al build, cargando `env_file` si se configuró.
+
+La configuración vive en `[tool.fletplus.web]`:
+
+```toml
+[tool.fletplus.web]
+base_url = "/app/"
+backend_entrypoint = "server/main.py"
+static_dir = "dist/web"
+pwa = true
+env_file = ".env.production"
+deploy_provider = "external-proxy"
+```
+
+Claves soportadas:
+
+- `base_url`: prefijo público donde se servirá la aplicación. También se pasa a
+  `flet build web --base-url` cuando está definido.
+- `backend_entrypoint`: archivo Python que arranca el backend asociado al build.
+  Si se omite, el manifiesto queda en modo `static` salvo que el proyecto use
+  otros hooks externos.
+- `static_dir`: carpeta que debe publicar el proveedor estático; por defecto es
+  `dist/web`.
+- `pwa`: marca declarativa para pipelines que tratan el build como PWA. FletPlus
+  no fuerza el registro del service worker desde el build, pero deja la decisión
+  registrada en el manifiesto.
+- `env_file`: archivo de variables de entorno para la plantilla de backend.
+- `deploy_provider`: etiqueta libre para CI/CD (`static`, `nginx`, `vercel`,
+  `external-proxy`, etc.).
+
+### Ejemplo: web estática
+
+```toml
+[tool.fletplus.web]
+base_url = "/"
+static_dir = "dist/web"
+deploy_provider = "static"
+```
+
+```bash
+fletplus build --target web
+cd dist/web
+./deploy-static.sh
+```
+
+El manifiesto resultante usa `deployment.mode = "static"` y apunta a `dist/web`
+como directorio publicable.
+
+### Ejemplo: web con backend Python local
+
+```toml
+[tool.fletplus]
+backend_app = "backend/app.py"
+
+[tool.fletplus.web]
+base_url = "/"
+backend_entrypoint = "backend/app.py"
+env_file = ".env.local"
+deploy_provider = "python-local"
+```
+
+```bash
+fletplus build --target web
+./dist/web/deploy-backend-python.sh
+```
+
+El manifiesto usa `deployment.mode = "backend-python"`, resuelve la ruta absoluta
+del backend y deja un comando sugerido `python backend/app.py` para herramientas
+externas.
+
+### Ejemplo: web detrás de proxy o servidor externo
+
+```toml
+[tool.fletplus.web]
+base_url = "/portal/"
+static_dir = "dist/web"
+backend_entrypoint = "server/asgi.py"
+env_file = ".env.production"
+deploy_provider = "external-proxy"
+```
+
+En este modo, publica `dist/web/` bajo el prefijo `/portal/` en Nginx, Apache,
+Caddy o el servidor equivalente y proxyfica las rutas dinámicas hacia el backend
+Python. El manifiesto conserva `base_url`, `static_dir`, `backend_entrypoint` y
+`deploy_provider` para que el pipeline de infraestructura pueda validar que el
+proxy coincide con el build generado.

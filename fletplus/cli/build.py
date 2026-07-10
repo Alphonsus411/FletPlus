@@ -8,7 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable, List
@@ -120,6 +120,50 @@ class BuildTarget(str, Enum):
 
 
 @dataclass(slots=True)
+class WebDeployConfig:
+    """Configuración declarativa para despliegues web FletPlus."""
+
+    base_url: str = "/"
+    backend_entrypoint: str | None = None
+    static_dir: str = "dist/web"
+    pwa: bool = False
+    env_file: str | None = None
+    deploy_provider: str = "static"
+
+    @classmethod
+    def from_mapping(cls, data: dict[str, Any]) -> "WebDeployConfig":
+        def optional_str(name: str) -> str | None:
+            value = data.get(name)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            return None
+
+        def str_with_default(name: str, default: str) -> str:
+            value = optional_str(name)
+            return value if value is not None else default
+
+        pwa_value = data.get("pwa", False)
+        if not isinstance(pwa_value, bool):
+            raise PackagingError("[tool.fletplus.web].pwa debe ser booleano.")
+
+        return cls(
+            base_url=str_with_default("base_url", "/"),
+            backend_entrypoint=optional_str("backend_entrypoint"),
+            static_dir=str_with_default("static_dir", "dist/web"),
+            pwa=pwa_value,
+            env_file=optional_str("env_file"),
+            deploy_provider=str_with_default("deploy_provider", "static"),
+        )
+
+    @property
+    def has_backend(self) -> bool:
+        return self.backend_entrypoint is not None
+
+    def to_manifest(self) -> dict[str, Any]:
+        return asdict(self) | {"has_backend": self.has_backend}
+
+
+@dataclass(slots=True)
 class FletPlusProjectConfig:
     """Configuración leída de ``[tool.fletplus]`` en proyectos generados."""
 
@@ -136,6 +180,7 @@ class FletPlusProjectConfig:
     build_timeout: float | None = None
     frontend: dict[str, Any] = field(default_factory=dict)
     web: dict[str, Any] = field(default_factory=dict)
+    web_deploy: WebDeployConfig = field(default_factory=WebDeployConfig)
     desktop: dict[str, Any] = field(default_factory=dict)
     mobile: dict[str, Any] = field(default_factory=dict)
 
@@ -304,6 +349,7 @@ def _load_fletplus_config(project_dir: Path) -> FletPlusProjectConfig:
         build_timeout=build_timeout,
         frontend=optional_dict("frontend"),
         web=optional_dict("web"),
+        web_deploy=WebDeployConfig.from_mapping(optional_dict("web")),
         desktop=optional_dict("desktop"),
         mobile=optional_dict("mobile"),
     )
@@ -600,6 +646,85 @@ class WebAdapter(_BaseAdapter):
             timeout=self.context.build_timeout,
             env_profile="flet_build",
         )
+        _write_web_deploy_artifacts(self.context, self.output_dir)
+
+
+def _write_web_deploy_artifacts(context: BuildContext, output_dir: Path) -> Path:
+    """Escribe manifiesto y plantillas de despliegue para builds web."""
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    config = context.project_config.web_deploy
+    static_dir = _resolve_project_path(context.project_dir, Path(config.static_dir))
+    backend_entrypoint = (
+        _resolve_project_path(context.project_dir, Path(config.backend_entrypoint))
+        if config.backend_entrypoint
+        else _resolve_project_path(
+            context.project_dir, context.project_config.backend_app
+        )
+    )
+    env_file = (
+        _resolve_project_path(context.project_dir, Path(config.env_file))
+        if config.env_file
+        else None
+    )
+
+    has_backend = backend_entrypoint is not None
+    if config.backend_entrypoint:
+        backend_command = config.backend_entrypoint
+    elif context.project_config.backend_app is not None:
+        backend_command = str(context.project_config.backend_app)
+    else:
+        backend_command = "backend/app.py"
+
+    manifest = {
+        "schema_version": 1,
+        "project": context.metadata.to_dict(),
+        "web": config.to_manifest() | {"has_backend": has_backend},
+        "paths": {
+            "app_entrypoint": str(context.app_path),
+            "output_dir": str(output_dir),
+            "static_dir": str(static_dir) if static_dir else str(output_dir),
+            "backend_entrypoint": str(backend_entrypoint) if backend_entrypoint else None,
+            "env_file": str(env_file) if env_file else None,
+        },
+        "commands": {
+            "static": "python -m http.server 8000 --directory dist/web",
+            "backend": f"python {backend_command}",
+        },
+        "deployment": {
+            "provider": config.deploy_provider,
+            "mode": "backend-python" if has_backend else "static",
+            "pwa": config.pwa,
+            "base_url": config.base_url,
+        },
+    }
+    manifest_path = output_dir / "fletplus-deploy.json"
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
+    )
+
+    static_script = output_dir / "deploy-static.sh"
+    static_script.write_text(
+        '#!/usr/bin/env bash\n'
+        'set -euo pipefail\n'
+        'cd "$(dirname "$0")"\n'
+        'python -m http.server "${PORT:-8000}" --directory .\n',
+        encoding="utf-8",
+    )
+    static_script.chmod(0o755)
+    env_prefix = (
+        f"set -a; source {config.env_file}; set +a; " if config.env_file else ""
+    )
+    backend_script = output_dir / "deploy-backend-python.sh"
+    backend_script.write_text(
+        '#!/usr/bin/env bash\n'
+        'set -euo pipefail\n'
+        'cd "$(dirname "$0")/../.."\n'
+        f"{env_prefix}python {backend_command}\n",
+        encoding="utf-8",
+    )
+    backend_script.chmod(0o755)
+    return manifest_path
 
 
 def _desktop_platform_target() -> str:

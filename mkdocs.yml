@@ -5,6 +5,7 @@ nav:
   - Guías:
       - CLI de FletPlus: cli.md
       - Compilación y empaquetado: building.md
+      - Despliegue web: web.md
       - Herramientas de desarrollo y publicación: tooling.md
       - Estilo de enlaces y referencias: link-style.md
       - Arquitectura de FletPlusApp: app.md
