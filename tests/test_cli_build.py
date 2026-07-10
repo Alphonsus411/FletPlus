@@ -324,3 +324,99 @@ def test_build_uses_tool_fletplus_mobile_package(monkeypatch) -> None:
         command, kwargs = calls[0]
         assert "--project" not in command
         assert kwargs["env"]["FLETPLUS_PACKAGE"] == "com.example.demo"
+
+
+def test_full_stack_config_is_loaded_into_context_without_building() -> None:
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        (base / "src").mkdir()
+        (base / "src" / "main.py").write_text("print('main')\n", encoding="utf-8")
+        for directory in ("backend", "frontend", "docs", "config", "deploy"):
+            (base / directory).mkdir()
+        (base / "backend" / "api.py").write_text("app = object()\n", encoding="utf-8")
+        (base / "frontend" / "app.py").write_text("view = object()\n", encoding="utf-8")
+        (base / "docs" / "index.md").write_text("# Docs\n", encoding="utf-8")
+        (base / "config" / ".env.example").write_text("DEBUG=0\n", encoding="utf-8")
+        (base / "deploy" / "Dockerfile").write_text("FROM python\n", encoding="utf-8")
+        (base / "shared_pkg").mkdir()
+        (base / "shared_pkg" / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
+        (base / "pyproject.toml").write_text(
+            """[project]
+name = 'full-stack-demo'
+version = '1.0.0'
+
+[tool.fletplus]
+backend_app = 'backend/api.py'
+frontend_app = 'frontend/app.py'
+docs_dir = 'docs'
+config_dir = 'config'
+deployment_dir = 'deploy'
+include_python_packages = ['shared_pkg']
+""",
+            encoding="utf-8",
+        )
+
+        context = build_module.FullStackBuildContext.from_project(
+            base, Path("src/main.py")
+        )
+
+        assert context.backend_app == (base / "backend" / "api.py").resolve()
+        assert context.frontend_app == (base / "frontend" / "app.py").resolve()
+        assert context.docs_dir == (base / "docs").resolve()
+        assert context.config_dir == (base / "config").resolve()
+        assert context.deployment_dir == (base / "deploy").resolve()
+        assert context.include_python_packages == [(base / "shared_pkg").resolve()]
+
+
+def test_full_stack_prepare_copies_contract_files_without_real_build() -> None:
+    runner = CliRunner()
+
+    with runner.isolated_filesystem() as temp_dir:
+        base = Path(temp_dir)
+        (base / "src").mkdir()
+        (base / "src" / "main.py").write_text("print('main')\n", encoding="utf-8")
+        (base / "backend").mkdir()
+        (base / "backend" / "api.py").write_text("app = object()\n", encoding="utf-8")
+        (base / "frontend").mkdir()
+        (base / "frontend" / "app.py").write_text("view = object()\n", encoding="utf-8")
+        (base / "docs").mkdir()
+        (base / "docs" / "index.md").write_text("# Docs\n", encoding="utf-8")
+        (base / "config").mkdir()
+        (base / "config" / ".env.example").write_text("DEBUG=0\n", encoding="utf-8")
+        (base / "deploy").mkdir()
+        (base / "deploy" / "Dockerfile").write_text("FROM python\n", encoding="utf-8")
+        (base / "shared_pkg").mkdir()
+        (base / "shared_pkg" / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
+        (base / "pyproject.toml").write_text(
+            """[project]
+name = 'full-stack-demo'
+version = '1.0.0'
+
+[tool.fletplus]
+backend_app = 'backend/api.py'
+frontend_app = 'frontend/app.py'
+docs_dir = 'docs'
+config_dir = 'config'
+deployment_dir = 'deploy'
+include_python_packages = ['shared_pkg']
+""",
+            encoding="utf-8",
+        )
+
+        context = build_module.FullStackBuildContext.from_project(
+            base, Path("src/main.py")
+        )
+        adapter = build_module.WebAdapter(context)
+        prepared = adapter.prepare()
+
+        staging = base / "build" / "web"
+        assert (staging / "backend" / "api.py").exists()
+        assert (staging / "frontend" / "app.py").exists()
+        assert (staging / "docs" / "index.md").exists()
+        assert (staging / "config" / ".env.example").exists()
+        assert (staging / "deployment" / "Dockerfile").exists()
+        assert (staging / "python-packages" / "shared_pkg" / "__init__.py").exists()
+        assert prepared["backend"] == staging / "backend"
+        assert prepared["python_packages"] == staging / "python-packages"

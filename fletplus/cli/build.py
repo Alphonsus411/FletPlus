@@ -118,6 +118,12 @@ class FletPlusProjectConfig:
     default_target: str | None = None
     assets_dir: Path | None = None
     icon_path: Path | None = None
+    backend_app: Path | None = None
+    frontend_app: Path | None = None
+    docs_dir: Path | None = None
+    config_dir: Path | None = None
+    deployment_dir: Path | None = None
+    include_python_packages: list[Path] = field(default_factory=list)
     build_timeout: float | None = None
     frontend: dict[str, Any] = field(default_factory=dict)
     web: dict[str, Any] = field(default_factory=dict)
@@ -169,6 +175,27 @@ class BuildContext:
         app_path: Path,
         build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS,
     ) -> "BuildContext":
+        return FullStackBuildContext.from_project(project_dir, app_path, build_timeout)
+
+
+@dataclass(slots=True)
+class FullStackBuildContext(BuildContext):
+    """Contexto ampliado para preparar proyectos full-stack antes del build."""
+
+    backend_app: Path | None = None
+    frontend_app: Path | None = None
+    docs_dir: Path | None = None
+    config_dir: Path | None = None
+    deployment_dir: Path | None = None
+    include_python_packages: list[Path] = field(default_factory=list)
+
+    @classmethod
+    def from_project(
+        cls,
+        project_dir: Path,
+        app_path: Path,
+        build_timeout: float = DEFAULT_BUILD_TIMEOUT_SECONDS,
+    ) -> "FullStackBuildContext":
         project_dir = project_dir.resolve()
         if not project_dir.exists():
             raise PackagingError(f"No se encontró el proyecto en {project_dir}.")
@@ -205,6 +232,16 @@ class BuildContext:
             icon_path=icon_path,
             build_timeout=effective_timeout,
             project_config=project_config,
+            backend_app=_resolve_project_path(project_dir, project_config.backend_app),
+            frontend_app=_resolve_project_path(project_dir, project_config.frontend_app),
+            docs_dir=_resolve_project_path(project_dir, project_config.docs_dir),
+            config_dir=_resolve_project_path(project_dir, project_config.config_dir),
+            deployment_dir=_resolve_project_path(project_dir, project_config.deployment_dir),
+            include_python_packages=[
+                resolved
+                for package in project_config.include_python_packages
+                if (resolved := _resolve_project_path(project_dir, package)) is not None
+            ],
         )
 
 
@@ -245,12 +282,31 @@ def _load_fletplus_config(project_dir: Path) -> FletPlusProjectConfig:
         default_target=default_target if isinstance(default_target, str) else None,
         assets_dir=optional_path("assets_dir"),
         icon_path=optional_path("icon"),
+        backend_app=optional_path("backend_app"),
+        frontend_app=optional_path("frontend_app"),
+        docs_dir=optional_path("docs_dir"),
+        config_dir=optional_path("config_dir"),
+        deployment_dir=optional_path("deployment_dir"),
+        include_python_packages=_parse_python_packages(raw_config),
         build_timeout=build_timeout,
         frontend=optional_dict("frontend"),
         web=optional_dict("web"),
         desktop=optional_dict("desktop"),
         mobile=optional_dict("mobile"),
     )
+
+
+def _parse_python_packages(raw_config: dict[str, Any]) -> list[Path]:
+    value = raw_config.get("include_python_packages", [])
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(
+        isinstance(item, str) and item.strip() for item in value
+    ):
+        raise PackagingError(
+            "[tool.fletplus].include_python_packages debe ser una lista de rutas."
+        )
+    return [Path(item) for item in value]
 
 
 def _load_metadata(project_dir: Path) -> BuildMetadata:
@@ -350,6 +406,53 @@ def _copy_assets(source: Path | None, destination: Path) -> None:
             shutil.copy2(source_file, target_root / filename)
 
 
+def _copy_path(source: Path | None, destination: Path, label: str) -> Path | None:
+    if source is None or not source.exists():
+        return None
+    destination.mkdir(parents=True, exist_ok=True)
+    target = destination / label
+    if target.exists():
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
+    if source.is_dir():
+        shutil.copytree(source, target, symlinks=False)
+    else:
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target / source.name)
+    return target
+
+
+def _prepare_full_stack_components(
+    context: BuildContext, destination: Path
+) -> dict[str, Path | None]:
+    if not isinstance(context, FullStackBuildContext):
+        return {}
+    prepared: dict[str, Path | None] = {
+        "backend": _copy_path(context.backend_app, destination, "backend"),
+        "frontend": _copy_path(context.frontend_app, destination, "frontend"),
+        "docs": _copy_path(context.docs_dir, destination, "docs"),
+        "config": _copy_path(context.config_dir, destination, "config"),
+        "deployment": _copy_path(context.deployment_dir, destination, "deployment"),
+    }
+    packages_dir = destination / "python-packages"
+    copied_packages: list[str] = []
+    for package in context.include_python_packages:
+        copied = _copy_path(package, packages_dir, package.name)
+        if copied is not None:
+            copied_packages.append(str(copied))
+    if copied_packages:
+        prepared["python_packages"] = packages_dir
+        manifest = destination / "fullstack.json"
+        manifest.write_text(
+            json.dumps({"python_packages": copied_packages}, indent=2),
+            encoding="utf-8",
+        )
+        prepared["manifest"] = manifest
+    return prepared
+
+
 def _copy_icon(icon_path: Path | None, destination: Path) -> Path | None:
     if not icon_path or not icon_path.exists():
         return None
@@ -432,8 +535,9 @@ class _BaseAdapter:
     def prepare(self) -> dict[str, Path | None]:
         metadata_path = _write_metadata(self.context.metadata, self.staging_dir)
         _copy_assets(self.context.assets_dir, self.staging_dir)
+        full_stack = _prepare_full_stack_components(self.context, self.staging_dir)
         icon_target = _copy_icon(self.context.icon_path, self.staging_dir)
-        return {"metadata": metadata_path, "icon": icon_target}
+        return {"metadata": metadata_path, "icon": icon_target, **full_stack}
 
     def build(self, prepared: dict[str, Path | None]) -> None:
         raise NotImplementedError
