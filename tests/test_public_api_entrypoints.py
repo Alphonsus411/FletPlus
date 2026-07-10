@@ -8,8 +8,7 @@ import flet as ft
 
 from fletplus import (
     FletPlusApp,
-    FloatingMenuOptions,
-    ResponsiveNavigationConfig,
+    RenderStrategy,
     enable_compat_patches,
 )
 from fletplus.core_legacy import FletPlusApp as LegacyFletPlusApp
@@ -88,3 +87,9 @@ def test_demo_entrypoint_main_remains_compatible(monkeypatch):
     demo_main()
 
     assert called["run"] is True
+
+
+def test_public_rendering_entrypoints_are_importable():
+    from fletplus.rendering import WebRenderStrategy
+
+    assert issubclass(WebRenderStrategy, RenderStrategy)

@@ -15,6 +15,8 @@ from typing import Any, Iterable, List
 
 import click
 
+from fletplus.rendering import RenderStrategy, strategy_for_target
+
 try:  # Python 3.11+
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - compatibilidad
@@ -167,6 +169,7 @@ class BuildContext:
     icon_path: Path | None
     build_timeout: float
     project_config: FletPlusProjectConfig
+    render_strategy: RenderStrategy | None = None
 
     @classmethod
     def from_project(
@@ -208,8 +211,7 @@ class FullStackBuildContext(BuildContext):
             raise PackagingError(f"No se encontró la aplicación principal: {app_path}.")
         if not app_path.is_file():
             raise PackagingError(
-                "La ruta de la aplicación principal debe ser un archivo: "
-                f"{app_path}."
+                f"La ruta de la aplicación principal debe ser un archivo: {app_path}."
             )
 
         dist_dir = project_dir / "dist"
@@ -233,10 +235,14 @@ class FullStackBuildContext(BuildContext):
             build_timeout=effective_timeout,
             project_config=project_config,
             backend_app=_resolve_project_path(project_dir, project_config.backend_app),
-            frontend_app=_resolve_project_path(project_dir, project_config.frontend_app),
+            frontend_app=_resolve_project_path(
+                project_dir, project_config.frontend_app
+            ),
             docs_dir=_resolve_project_path(project_dir, project_config.docs_dir),
             config_dir=_resolve_project_path(project_dir, project_config.config_dir),
-            deployment_dir=_resolve_project_path(project_dir, project_config.deployment_dir),
+            deployment_dir=_resolve_project_path(
+                project_dir, project_config.deployment_dir
+            ),
             include_python_packages=[
                 resolved
                 for package in project_config.include_python_packages
@@ -532,14 +538,25 @@ class _BaseAdapter:
         self.staging_dir = context.build_dir / self.target.value
         self.staging_dir.mkdir(parents=True, exist_ok=True)
 
-    def prepare(self) -> dict[str, Path | None]:
+    def prepare(self) -> dict[str, Path | str | None]:
         metadata_path = _write_metadata(self.context.metadata, self.staging_dir)
         _copy_assets(self.context.assets_dir, self.staging_dir)
         full_stack = _prepare_full_stack_components(self.context, self.staging_dir)
         icon_target = _copy_icon(self.context.icon_path, self.staging_dir)
-        return {"metadata": metadata_path, "icon": icon_target, **full_stack}
+        strategy = strategy_for_target(self.target.value)
+        self.context.render_strategy = strategy
+        strategy_path = self.staging_dir / "render_strategy.json"
+        strategy_path.write_text(
+            json.dumps(strategy.build_metadata(), indent=2), encoding="utf-8"
+        )
+        return {
+            "metadata": metadata_path,
+            "icon": icon_target,
+            "render_strategy": strategy_path,
+            **full_stack,
+        }
 
-    def build(self, prepared: dict[str, Path | None]) -> None:
+    def build(self, prepared: dict[str, Path | str | None]) -> None:
         raise NotImplementedError
 
     def run(self) -> Path:
@@ -552,7 +569,7 @@ class WebAdapter(_BaseAdapter):
     target = BuildTarget.WEB
 
     def build(
-        self, prepared: dict[str, Path | None]
+        self, prepared: dict[str, Path | str | None]
     ) -> None:  # pragma: no cover - invocado por run()
         command = [
             sys.executable,
@@ -586,7 +603,7 @@ def _desktop_platform_target() -> str:
 class DesktopAdapter(_BaseAdapter):
     target = BuildTarget.DESKTOP
 
-    def build(self, prepared: dict[str, Path | None]) -> None:
+    def build(self, prepared: dict[str, Path | str | None]) -> None:
         command = [
             sys.executable,
             "-m",
@@ -611,7 +628,7 @@ class DesktopAdapter(_BaseAdapter):
 class FletMobileAdapter(_BaseAdapter):
     flet_target: str = "apk"
 
-    def build(self, prepared: dict[str, Path | None]) -> None:
+    def build(self, prepared: dict[str, Path | str | None]) -> None:
         icon_path = prepared.get("icon")
         metadata_path = prepared.get("metadata")
 
@@ -688,9 +705,16 @@ class BuildManager:
     def __init__(self, context: BuildContext) -> None:
         self.context = context
 
+    def select_render_strategy(self, target: BuildTarget) -> RenderStrategy:
+        """Selecciona y registra la estrategia de renderizado para un BuildTarget."""
+        strategy = strategy_for_target(target.value)
+        self.context.render_strategy = strategy
+        return strategy
+
     def build(self, targets: Iterable[BuildTarget]) -> List[BuildReport]:
         reports: List[BuildReport] = []
         for target in targets:
+            self.select_render_strategy(target)
             adapter = create_adapter(target, self.context)
             try:
                 output_dir = adapter.run()

@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import flet as ft
 
+from fletplus.rendering import RenderStrategy, strategy_for_target
 from fletplus.themes import (
     ThemeManager,
     get_palette_tokens,
@@ -552,9 +553,13 @@ class FrontEndConfig:
         config.font_assets_base_path = pyproject_path.parent
         return config
 
+    def render_strategy(self, target: str | None = None) -> RenderStrategy:
+        """Devuelve la estrategia de renderizado pública asociada al target."""
+        return strategy_for_target(target or self.target or "all")
+
     def preset_for_target(self, target: str | None = None) -> dict[str, object]:
         """Devuelve ajustes base para web, escritorio o móvil sin mutar la config."""
-        target_name = (target or self.target or "all").lower()
+        target_name = self.render_strategy(target).target.lower()
         if target_name in {"app", "all"}:
             return {}
         return dict(_TARGET_LAYOUT_PRESETS.get(target_name, {}))
@@ -594,9 +599,7 @@ class FrontEndConfig:
         """Fusiona colores base de la paleta activa con overrides de plataforma."""
         palette_tokens = self.palette_tokens()
         base_colors = palette_tokens.get("colors", {})
-        palette = {
-            str(k): str(v) for k, v in base_colors.items() if isinstance(v, str)
-        }
+        palette = {str(k): str(v) for k, v in base_colors.items() if isinstance(v, str)}
         target_name = (target or self.target or "").lower()
         overrides = self.platform_palettes.get(target_name, {})
         if isinstance(overrides, Mapping):
