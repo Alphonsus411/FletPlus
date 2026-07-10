@@ -90,6 +90,9 @@ class BuildTarget(str, Enum):
 
     WEB = "web"
     DESKTOP = "desktop"
+    WINDOWS = "windows"
+    MACOS = "macos"
+    LINUX = "linux"
     ANDROID_APK = "android-apk"
     ANDROID_AAB = "android-aab"
     IOS = "ios"
@@ -104,6 +107,10 @@ class BuildTarget(str, Enum):
         }
         if normalized == "all":
             return [cls.WEB, cls.DESKTOP, cls.ANDROID_APK]
+        if normalized == "desktop-all":
+            return [cls.WINDOWS, cls.MACOS, cls.LINUX]
+        if normalized == "desktop":
+            return [cls(_desktop_platform_target())]
         if normalized in aliases:
             return [aliases[normalized]]
         try:
@@ -543,7 +550,10 @@ class _BaseAdapter:
         _copy_assets(self.context.assets_dir, self.staging_dir)
         full_stack = _prepare_full_stack_components(self.context, self.staging_dir)
         icon_target = _copy_icon(self.context.icon_path, self.staging_dir)
-        strategy = strategy_for_target(self.target.value)
+        strategy_target = (
+            "desktop" if self.target in DESKTOP_PLATFORM_TARGETS else self.target.value
+        )
+        strategy = strategy_for_target(strategy_target)
         self.context.render_strategy = strategy
         strategy_path = self.staging_dir / "render_strategy.json"
         strategy_path.write_text(
@@ -600,8 +610,18 @@ def _desktop_platform_target() -> str:
     return "linux"
 
 
+DESKTOP_PLATFORM_TARGETS = {BuildTarget.WINDOWS, BuildTarget.MACOS, BuildTarget.LINUX}
+
+
 class DesktopAdapter(_BaseAdapter):
-    target = BuildTarget.DESKTOP
+    target = BuildTarget.LINUX
+
+    def __init__(
+        self, context: BuildContext, platform_target: BuildTarget | None = None
+    ) -> None:
+        if platform_target is not None:
+            self.target = platform_target
+        super().__init__(context)
 
     def build(self, prepared: dict[str, Path | str | None]) -> None:
         command = [
@@ -609,7 +629,7 @@ class DesktopAdapter(_BaseAdapter):
             "-m",
             "flet",
             "build",
-            _desktop_platform_target(),
+            self.target.value,
             str(self.context.app_path),
             "--output",
             str(self.output_dir),
@@ -681,7 +701,9 @@ def create_adapter(target: BuildTarget, context: BuildContext) -> _BaseAdapter:
     if target is BuildTarget.WEB:
         return WebAdapter(context)
     if target is BuildTarget.DESKTOP:
-        return DesktopAdapter(context)
+        return DesktopAdapter(context, BuildTarget(_desktop_platform_target()))
+    if target in DESKTOP_PLATFORM_TARGETS:
+        return DesktopAdapter(context, target)
     if target is BuildTarget.ANDROID_APK:
         return AndroidApkAdapter(context)
     if target is BuildTarget.ANDROID_AAB:
@@ -707,7 +729,10 @@ class BuildManager:
 
     def select_render_strategy(self, target: BuildTarget) -> RenderStrategy:
         """Selecciona y registra la estrategia de renderizado para un BuildTarget."""
-        strategy = strategy_for_target(target.value)
+        strategy_target = (
+            "desktop" if target in DESKTOP_PLATFORM_TARGETS else target.value
+        )
+        strategy = strategy_for_target(strategy_target)
         self.context.render_strategy = strategy
         return strategy
 
