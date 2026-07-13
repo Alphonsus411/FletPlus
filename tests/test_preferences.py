@@ -52,7 +52,9 @@ def test_preference_storage_uses_client_backend_with_falsey_storage():
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="symlink no soportado")
-def test_file_backend_rejects_when_target_file_is_symlink(tmp_path, monkeypatch, caplog):
+def test_file_backend_rejects_when_target_file_is_symlink(
+    tmp_path, monkeypatch, caplog
+):
     real_target = tmp_path / "real-preferences.json"
     real_target.write_text("{}", encoding="utf-8")
     symlink_target = tmp_path / "preferences.json"
@@ -108,12 +110,14 @@ def test_file_backend_writes_preferences_normally(tmp_path, monkeypatch):
 
 def _save_preferences_entry(path: str, key: str, value: str) -> None:
     os.environ["FLETPLUS_PREFS_FILE"] = path
+    os.environ["FLETPLUS_PREFS_TRUSTED_ROOT"] = str(os.path.dirname(path))
     prefs = PreferenceStorage(DummyPage(None), key=key)
     prefs.save({"value": value})
 
 
 def _save_preferences_partial(path: str, field: str, value: str) -> None:
     os.environ["FLETPLUS_PREFS_FILE"] = path
+    os.environ["FLETPLUS_PREFS_TRUSTED_ROOT"] = str(os.path.dirname(path))
     prefs = PreferenceStorage(DummyPage(None))
     prefs.save({field: value})
 

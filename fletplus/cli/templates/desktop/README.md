@@ -1,12 +1,12 @@
 # {{ project_name }}
 
-Aplicación desktop generada con la CLI de FletPlus. La plantilla incluye configuración de ventana mediante `fletplus.utils.flet_compat.safe_set_window_attr` y un layout amplio con barra lateral y área de trabajo.
+Aplicación desktop generada con la CLI de FletPlus. La plantilla incluye configuración de ventana mediante `fletplus.utils.flet_compat.safe_set_window_attr`, un layout amplio con barra lateral y área de trabajo, navegación funcional y un botón **Comandos** para abrir la paleta y consultar la CLI desde la interfaz.
 
 ## Requisitos
 
 - Python 3.10 o superior
 - Flet `>=0.80,<0.86` (misma política de versión que `fletplus`)
-- Dependencias listadas en `requirements.txt`
+- Dependencias listadas en `requirements.txt`; la plantilla usa `fletplus>=0.4,<0.5` para quedar alineada con la serie publicada compatible.
 
 ## Ejecución desktop en desarrollo
 
@@ -23,7 +23,7 @@ fletplus run
 fletplus build --target desktop
 ```
 
-Ajusta `configure_window()` en `src/main.py` para cambiar tamaño inicial, mínimos, centrado o comportamiento de redimensionado según el sistema operativo de destino.
+Ajusta `configure_window()` en `src/main.py` para cambiar tamaño inicial, mínimos, centrado o comportamiento de redimensionado según el sistema operativo de destino. En ejecución, usa el botón **Comandos** de la barra lateral para abrir acciones internas y ver comandos como `fletplus create`, `fletplus run`, `fletplus frontend-tasks`, `fletplus profile` y `fletplus build`.
 
 ## Opciones generadas por la CLI
 
@@ -54,7 +54,7 @@ La plantilla mantiene `src/main.py` como entrypoint específico de plataforma y 
 - `src/frontend/layout.py`: centraliza el shell responsivo, el ancho máximo, helpers de `spacing()` y detección de orientación. Ajusta aquí reglas de layout por dispositivo cuando no baste con modificar `config.py`.
 - `src/frontend/assets.py` y `assets/README.md`: centralizan rutas de assets seguros. Declara aquí directorios, imágenes, iconos o fuentes reutilizables antes de referenciarlos desde las vistas.
 - `src/frontend/routes.py`: contiene un ejemplo mínimo con `fletplus.router.Route` y `Router`; añade nuevas rutas, cambia textos o sustituye `render_initial_route()` por navegación persistente cuando la app crezca.
-- `src/main.py`: conserva el arranque propio de la plataforma y compone tema, layout y rutas importando desde `frontend.*`.
+- `src/main.py`: conserva el arranque propio de la plataforma, compone tema, layout y rutas importando desde `frontend.*`, y conecta `CommandPalette` con navegación local y catálogo CLI.
 
 ### Personalización rápida
 

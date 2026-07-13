@@ -9,7 +9,7 @@ description = "Aplicación FletPlus generada desde la plantilla desktop."
 requires-python = ">=3.10"
 dependencies = [
   "flet>=0.80,<0.86",
-  "fletplus",
+  "fletplus>=0.4,<0.5",
 ]
 
 [tool.fletplus]

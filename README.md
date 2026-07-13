@@ -12,9 +12,9 @@ pip install fletplus
 ```
 - Tras la instalación tendrás disponible el comando `fletplus` para crear, ejecutar y perfilar proyectos desde la terminal.
 - Incluye sistema de estilos, botones personalizados y utilidades de diseño responsivo.
-- **Requiere Python 3.9+, flet>=0.80 (mínimo de paquete) y httpx>=0.28**
+- **Requiere Python 3.10+, flet>=0.80 (mínimo de paquete) y httpx>=0.28**
 
-> ℹ️ FletPlus adopta oficialmente Python 3.9 como versión mínima, publica `flet>=0.80` en `pyproject.toml` como requisito de paquete y usa `httpx` (>=0.28) como cliente HTTP base.
+> ℹ️ FletPlus adopta oficialmente Python 3.10 como versión mínima, publica `flet>=0.80` en `pyproject.toml` como requisito de paquete y usa `httpx` (>=0.28) como cliente HTTP base.
 
 ## 📚 Documentación
 
@@ -105,7 +105,7 @@ Para reducir regresiones y hacer predecible cada salto de compatibilidad, FletPl
 
 ### ✅ Requisitos y cómo instalar dependencias de QA
 
-- **Python 3.9+** con `pip` actualizado.
+- **Python 3.10+** con `pip` actualizado.
 - La fuente de verdad para auditorías de dependencias es `requirements.txt`
   junto con `requirements-dev.txt` (mientras que `pyproject.toml` se usa para
   empaquetado).

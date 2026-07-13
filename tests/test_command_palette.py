@@ -7,7 +7,12 @@ from fletplus.context import locale_context, user_context
 
 def test_command_palette_filters_and_executes():
     called = []
-    palette = CommandPalette({"Saludar": lambda: called.append("hola"), "Adios": lambda: called.append("bye")})
+    palette = CommandPalette(
+        {
+            "Saludar": lambda: called.append("hola"),
+            "Adios": lambda: called.append("bye"),
+        }
+    )
 
     palette.search.value = "sal"
     palette._on_search(None)
@@ -108,3 +113,38 @@ def test_command_palette_context_manager_calls_dispose():
 
         assert palette._subscriptions == []
         assert palette._disposed is True
+
+
+def test_command_palette_open_prefers_safe_dialog_api() -> None:
+    calls: list[tuple[str, object | None]] = []
+
+    class Page:
+        def open(self, control: object) -> None:
+            calls.append(("open", control))
+
+        def update(self) -> None:
+            calls.append(("update", None))
+
+    palette = CommandPalette({})
+    page = Page()
+
+    palette.open(page)  # type: ignore[arg-type]
+
+    assert calls == [("open", palette.dialog), ("update", None)]
+    assert not hasattr(page, "dialog")
+
+
+def test_command_palette_open_falls_back_to_page_dialog() -> None:
+    calls: list[str] = []
+
+    class Page:
+        def update(self) -> None:
+            calls.append("update")
+
+    palette = CommandPalette({})
+    page = Page()
+
+    palette.open(page)  # type: ignore[arg-type]
+
+    assert page.dialog is palette.dialog
+    assert calls == ["update"]
