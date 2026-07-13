@@ -123,9 +123,14 @@ def test_create_template_uses_main_flet_version_policy(
             "desktop",
             [
                 "from fletplus.utils.flet_compat import safe_set_window_attr",
+                "from fletplus.components import CommandPalette",
+                "from fletplus.cli.catalog import get_cli_command_catalog",
                 "configure_window(page)",
                 'safe_set_window_attr(page, "min_width"',
                 "Panel principal",
+                "Mostrar CLI de FletPlus",
+                "ft.ListTile",
+                "on_click=lambda _event, key=route_key: show_route(key)",
             ],
             ["register_pwa", "NavigationBar"],
         ),
@@ -191,20 +196,25 @@ def test_create_supports_frontend_templates(
         if template_name == "web":
             generated_paths.extend(["web/manifest.json", "web/service_worker.js"])
         if template_name == "fullstack":
-            generated_paths.extend([
-                "src/backend/__init__.py",
-                "src/backend/services.py",
-                "src/shared/__init__.py",
-                "src/shared/config.py",
-                "src/shared/models.py",
-                "docs/README.md",
-                "deploy/README.md",
-            ])
+            generated_paths.extend(
+                [
+                    "src/backend/__init__.py",
+                    "src/backend/services.py",
+                    "src/shared/__init__.py",
+                    "src/shared/config.py",
+                    "src/shared/models.py",
+                    "docs/README.md",
+                    "deploy/README.md",
+                ]
+            )
         for generated_path in generated_paths:
             assert (base / "demo" / generated_path).exists()
         assert (base / "demo" / "requirements.txt").exists()
         pyproject = (base / "demo" / "pyproject.toml").read_text(encoding="utf-8")
+        requirements = (base / "demo" / "requirements.txt").read_text(encoding="utf-8")
         assert 'requires-python = ">=3.10"' in pyproject
+        assert '"fletplus>=0.4,<0.5"' in pyproject
+        assert "fletplus>=0.4,<0.5" in requirements
         assert "[tool.fletplus]" in pyproject
         assert "[tool.fletplus.frontend]" in pyproject
         if template_name == "fullstack":
@@ -251,6 +261,43 @@ def test_create_frontend_templates_expose_equivalent_responsive_layout_helpers(
     ]
     for marker in expected_markers:
         assert marker in layout_py
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_frontend_tasks_supports_markdown_format(
+    monkeypatch, watchdog_available: bool
+) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app, ["frontend-tasks", "--target", "desktop", "--format", "markdown"]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Tareas FrontEndConfig" in result.output
+    assert "task-stub{title=" in result.output
+    assert "Pasos:" in result.output
+
+
+@pytest.mark.parametrize("watchdog_available", [True, False])
+def test_cli_catalog_lists_core_commands(monkeypatch, watchdog_available: bool) -> None:
+    _configure_watchdog(monkeypatch, available=watchdog_available)
+    app = _load_cli_app()
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["cli-catalog", "--format", "markdown"])
+
+    assert result.exit_code == 0, result.output
+    for marker in (
+        "fletplus create <nombre>",
+        "fletplus run",
+        "fletplus frontend-tasks --format markdown",
+        "fletplus profile --limit 40",
+        "fletplus build --target desktop",
+    ):
+        assert marker in result.output
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
@@ -543,9 +590,9 @@ def _assert_minimal_template_contract(
     project_root: Path, *, template_name: str
 ) -> None:
     for relative_path in COMMON_TEMPLATE_PATHS:
-        assert (project_root / relative_path).is_file(), (
-            f"{template_name}: falta {relative_path}"
-        )
+        assert (
+            project_root / relative_path
+        ).is_file(), f"{template_name}: falta {relative_path}"
 
     layout_functions = _defined_functions(
         project_root / "src" / "frontend" / "layout.py"
@@ -623,9 +670,9 @@ def test_frontend_template_static_structure_is_consistent() -> None:
             path.name for path in frontend_dir.glob("*.py")
         } == expected_frontend_files
         for legacy_module in ("theme.py", "layout.py", "assets.py", "routes.py"):
-            assert not (src / legacy_module).exists(), (
-                f"{template_name}: {legacy_module}"
-            )
+            assert not (
+                src / legacy_module
+            ).exists(), f"{template_name}: {legacy_module}"
 
         main_py = (src / "main.py").read_text(encoding="utf-8")
         assert "from frontend.theme import create_frontend_config" in main_py

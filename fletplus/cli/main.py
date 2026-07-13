@@ -28,6 +28,7 @@ from fletplus.themes import (
 )
 
 from .build import DEFAULT_BUILD_TIMEOUT_SECONDS, PackagingError, run_build
+from .catalog import get_cli_command_catalog
 from .installer import InstallerError, generate_installer
 
 
@@ -338,6 +339,22 @@ def _render_frontend_task(task: FrontEndTask) -> str:
     )
 
 
+def _render_frontend_task_markdown(task: FrontEndTask) -> str:
+    functions = ", ".join(task.functions) if task.functions else "(sin funciones)"
+    tokens = _format_frontend_task_tokens(dict(task.tokens))
+    return "\n".join(
+        (
+            f'task-stub{{title="{task.name} [{task.target}]"}}',
+            f"Descripción: {task.description}",
+            "",
+            "Pasos:",
+            f"1. Revisar funciones afectadas: {functions}.",
+            f"2. Aplicar tokens principales: {tokens}.",
+            "3. Validar que la interfaz mantiene compatibilidad con FletPlus y Flet soportado.",
+        )
+    )
+
+
 @app.command("frontend-tasks")
 @click.option(
     "--target",
@@ -368,11 +385,20 @@ def _render_frontend_task(task: FrontEndTask) -> str:
     default=None,
     help="Densidad visual usada para construir FrontEndConfig.",
 )
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "markdown"], case_sensitive=False),
+    default="text",
+    show_default=True,
+    help="Formato de salida de las tareas declarativas.",
+)
 def frontend_tasks(
     target_name: str,
     palette_name: str,
     font_family: str | None,
     layout_density: str | None,
+    output_format: str,
 ) -> None:
     """Lista tareas declarativas de FrontEndConfig sin modificar archivos."""
     normalized_target = target_name.lower()
@@ -396,8 +422,48 @@ def frontend_tasks(
         f"Fuente: {config.font.theme_font_family(config.font_family) or '(sin fuente)'}"
     )
     click.echo(f"Densidad: {config.layout_density}")
+    renderer = (
+        _render_frontend_task_markdown
+        if output_format.lower() == "markdown"
+        else _render_frontend_task
+    )
     for task in config.implementation_tasks(normalized_target):
-        click.echo(_render_frontend_task(task))
+        click.echo(renderer(task))
+
+
+@app.command("cli-catalog")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "markdown"], case_sensitive=False),
+    default="text",
+    show_default=True,
+    help="Formato del catálogo de comandos.",
+)
+def cli_catalog(output_format: str) -> None:
+    """Lista comandos CLI oficiales reutilizables desde una interfaz gráfica."""
+
+    commands = get_cli_command_catalog()
+    if output_format.lower() == "markdown":
+        click.echo("# Catálogo CLI de FletPlus")
+        for command in commands:
+            click.echo(
+                "\n".join(
+                    (
+                        f"\n## {command.name}",
+                        f"- Categoría: {command.category}",
+                        f"- Comando: `{command.command}`",
+                        f"- Descripción: {command.description}",
+                    )
+                )
+            )
+        return
+
+    click.echo("Catálogo CLI de FletPlus")
+    for command in commands:
+        click.echo(f"- {command.name} [{command.category}]")
+        click.echo(f"  Comando: {command.command}")
+        click.echo(f"  Descripción: {command.description}")
 
 
 @app.command()

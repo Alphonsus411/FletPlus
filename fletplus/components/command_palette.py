@@ -5,8 +5,10 @@ from typing import Callable, Dict, List, Tuple
 import flet as ft
 
 from fletplus.context import locale_context, user_context
+from fletplus.utils.flet_compat import safe_close_dialog, safe_show_dialog
 
 _rs_filter: Callable[[List[str], str], List[int]] | None = None
+
 
 def filter_commands(names: List[str], query: str) -> List[int]:
     global _rs_filter
@@ -78,7 +80,9 @@ class CommandPalette:
 
         for index in indices:
             if not isinstance(index, int):
-                logging.warning("filter_commands devolvió un índice no entero: %r", index)
+                logging.warning(
+                    "filter_commands devolvió un índice no entero: %r", index
+                )
                 continue
             if index < 0 or index >= len(items):
                 logging.warning(
@@ -115,25 +119,40 @@ class CommandPalette:
             logging.exception("Error al ejecutar el comando")
         finally:
             self.dialog.open = False
+            page = None
+            try:
+                page = getattr(self.dialog, "page", None)
+            except RuntimeError:
+                page = None
+            if page is not None:
+                safe_close_dialog(page, self.dialog)
             if self._is_attached_to_page(self.dialog):
                 self.dialog.update()
 
     def open(self, page: ft.Page):
         self.refresh()
-        page.dialog = self.dialog
         self.dialog.open = True
+        if not safe_show_dialog(page, self.dialog):
+            # Fallback legacy para dobles/mocks de Page que sólo exponen el
+            # atributo ``dialog``. La API pública moderna se intenta primero
+            # mediante ``safe_show_dialog``.
+            page.dialog = self.dialog
         page.update()
 
     # ------------------------------------------------------------------
     def _setup_context_bindings(self) -> None:
         try:
-            unsubscribe_locale = locale_context.subscribe(self._on_locale_change, immediate=True)
+            unsubscribe_locale = locale_context.subscribe(
+                self._on_locale_change, immediate=True
+            )
             self._subscriptions.append(unsubscribe_locale)
         except LookupError:
             self._on_locale_change(locale_context.get(default="es"))
 
         try:
-            unsubscribe_user = user_context.subscribe(self._on_user_change, immediate=True)
+            unsubscribe_user = user_context.subscribe(
+                self._on_user_change, immediate=True
+            )
             self._subscriptions.append(unsubscribe_user)
         except LookupError:
             self._on_user_change(user_context.get(default=None))
@@ -203,7 +222,10 @@ class CommandPalette:
                     try:
                         unsubscribe()
                     except Exception:
-                        logging.debug("Error al cancelar una subscripción en __del__", exc_info=True)
+                        logging.debug(
+                            "Error al cancelar una subscripción en __del__",
+                            exc_info=True,
+                        )
                 subscriptions.clear()
             setattr(self, "_disposed", True)
         except Exception:

@@ -21,7 +21,7 @@ distinta con `--directorio`, un destino con `--target`, una plantilla explícita
 Archivos generados:
 
 - `README.md` con instrucciones básicas.
-- `requirements.txt` con dependencias mínimas.
+- `requirements.txt` con dependencias mínimas y `fletplus>=0.4,<0.5` para mantener compatibilidad dentro de la serie publicada actual.
 - `.gitignore` preconfigurado.
 - Paquete `src/` con un `main.py` listo para ejecutar.
 - Configuración FrontEnd inicial basada en `FrontEndConfig` para paletas, fuentes, pantalla y layout responsive.
@@ -36,6 +36,7 @@ Opciones de generación más relevantes:
 - `--theme-mode {light|dark|system}`: escribe el modo en `pyproject.toml` y en `src/frontend/config.py`; `system` activa seguimiento del tema de plataforma en runtime.
 - `--font {Inter|Roboto|System}`: define la familia principal y fallbacks seguros en `src/frontend/config.py`.
 - `--layout-density {compact|comfortable|spacious}`: ajusta densidad, `spacing` y `page_padding` generados.
+- En plantillas desktop, la UI incluye una paleta **Comandos** que muestra acciones internas y el catálogo CLI sin ejecutar procesos destructivos desde la interfaz.
 
 Flujo de renderizado:
 
@@ -100,6 +101,7 @@ Ejemplo:
 
 ```bash
 fletplus frontend-tasks --target web --palette zenith --font Inter --layout-density comfortable
+fletplus frontend-tasks --target desktop --format markdown
 ```
 
 Salida abreviada:
@@ -111,6 +113,17 @@ Target: web
   Descripción: Resolver paletas base y overrides por plataforma.
   Funciones: palette_for_target, palette_tokens
   Tokens principales: palette=zenith
+```
+
+Con `--format markdown`, el comando emite bloques `task-stub{...}` pensados para planificar trabajos separados de actualización frontend.
+
+### `fletplus cli-catalog`
+
+Lista el catálogo declarativo de comandos oficiales reutilizable desde la UI desktop o desde documentación interna. No ejecuta comandos; solo muestra nombre, categoría, comando sugerido y descripción.
+
+```bash
+fletplus cli-catalog
+fletplus cli-catalog --format markdown
 ```
 
 ### `fletplus run`
