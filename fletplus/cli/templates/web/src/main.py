@@ -34,6 +34,14 @@ def prepare_pwa_assets() -> None:
     generate_service_worker(PWA_ASSETS, PWA_DIR, cache_version="v1")
 
 
+def register_pwa_if_supported(page: ft.Page) -> None:
+    """Registra la PWA solo cuando la versión de Flet expone los hooks web."""
+
+    required_hooks = ("add_head_html", "add_script")
+    if all(callable(getattr(page, hook, None)) for hook in required_hooks):
+        register_pwa(page, "manifest.json", "service_worker.js")
+
+
 def build_home(page: ft.Page) -> ft.Control:
     """Construye una landing inicial orientada a navegador."""
 
@@ -73,7 +81,7 @@ def main(page: ft.Page) -> None:
     page.scroll = ft.ScrollMode.AUTO
     page.theme_mode = ft.ThemeMode.LIGHT
     frontend.apply_to_page(page)
-    register_pwa(page, "manifest.json", "service_worker.js")
+    register_pwa_if_supported(page)
     page.add(build_home(page))
 
 
