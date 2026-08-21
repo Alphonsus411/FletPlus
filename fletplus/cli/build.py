@@ -369,8 +369,6 @@ class WebAdapter(_BaseAdapter):
         self, prepared: dict[str, Path | None]
     ) -> None:  # pragma: no cover - invocado por run()
         command = [
-            sys.executable,
-            "-m",
             "flet",
             "build",
             "web",
@@ -399,8 +397,6 @@ class DesktopAdapter(_BaseAdapter):
 
     def build(self, prepared: dict[str, Path | None]) -> None:
         command = [
-            sys.executable,
-            "-m",
             "flet",
             "build",
             _desktop_platform_target(),
@@ -430,8 +426,6 @@ class FletMobileAdapter(_BaseAdapter):
             env["FLETPLUS_ICON"] = str(icon_path)
 
         command = [
-            sys.executable,
-            "-m",
             "flet",
             "build",
             self.flet_target,
