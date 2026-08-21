@@ -111,7 +111,9 @@ def test_create_template_uses_main_flet_version_policy(
             "web",
             [
                 "from fletplus.web.pwa import",
-                "register_pwa(page",
+                "register_pwa_if_supported(page)",
+                'required_hooks = ("add_head_html", "add_script")',
+                "callable(getattr(page, hook, None))",
                 "prepare_pwa_assets",
                 "view=ft.AppView.WEB_BROWSER",
                 "assets_dir=str(PWA_DIR)",
