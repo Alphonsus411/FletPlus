@@ -288,7 +288,7 @@ class PageShell:
 
     def build(self, page: ft.Page) -> ft.Container:
         tokens = resolve_layout_tokens(page, config=self.config, theme=self.theme, spacing=self.spacing, padding=self.padding, max_width=self.max_width, spacing_by_device=self.spacing_by_device, padding_by_device=self.padding_by_device, max_width_by_device=self.max_width_by_device)
-        built = [section.build(page) if hasattr(section, "build") else section for section in self.sections]
+        built = [section.build(page) if isinstance(section, Section) else section for section in self.sections]
         return ft.Container(
             expand=True,
             bgcolor=_color(self.theme, self.bgcolor_token, self.bgcolor),
