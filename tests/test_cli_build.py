@@ -75,17 +75,14 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         expected_app_path = str((base / "src" / "main.py").resolve())
         expected_web_output = str((base / "dist" / "web").resolve())
 
-        assert web_command[:5] == [sys.executable, "-m", "flet", "build", "web"]
-        assert web_command[:6] == [
-            sys.executable,
-            "-m",
+        assert web_command[:3] == ["flet", "build", "web"]
+        assert web_command[:4] == [
             "flet",
             "build",
             "web",
             expected_app_path,
         ]
-        assert web_command.count(sys.executable) == 1
-        assert web_command[1:].count(sys.executable) == 0
+        assert sys.executable not in web_command
         assert web_command.count("web") == 1
         assert web_command.count("--output") == 1
         output_index = web_command.index("--output")
@@ -93,9 +90,9 @@ def test_build_all_targets_success(monkeypatch, watchdog_available: bool) -> Non
         assert web_command.count(expected_web_output) == 1
         assert expected_app_path in web_command
         assert web_command.count(expected_app_path) == 1
-        assert desktop_command[:4] == [sys.executable, "-m", "flet", "build"]
-        assert desktop_command[4] in {"linux", "macos", "windows"}
-        assert mobile_command[:5] == [sys.executable, "-m", "flet", "build", "apk"]
+        assert desktop_command[:2] == ["flet", "build"]
+        assert desktop_command[2] in {"linux", "macos", "windows"}
+        assert mobile_command[:3] == ["flet", "build", "apk"]
         assert "FLETPLUS_METADATA" in mobile_kwargs.get("env", {})
         assert "FLETPLUS_ICON" in mobile_kwargs.get("env", {})
         assert "✅ web" in result.output
@@ -131,9 +128,8 @@ def test_build_failure_reports_error(monkeypatch, watchdog_available: bool) -> N
         assert "comando='" in result.output
         assert "cwd=" in result.output
         mobile_command = next(command for command in calls if "aab" in command)
-        assert mobile_command[:5] == [sys.executable, "-m", "flet", "build", "aab"]
-        assert mobile_command.count(sys.executable) == 1
-        assert mobile_command[1:].count(sys.executable) == 0
+        assert mobile_command[:3] == ["flet", "build", "aab"]
+        assert sys.executable not in mobile_command
 
 
 @pytest.mark.parametrize("watchdog_available", [True, False])
