@@ -17,7 +17,7 @@ class ShowcaseProfile:
     description: str
     width: int
     platform_label: str
-    asset_fit: ft.ImageFit = ft.ImageFit.COVER
+    asset_fit: ft.BoxFit = ft.BoxFit.COVER
 
 PALETTE = {"primary": "#2563EB", "secondary": "#7C3AED", "tertiary": "#14B8A6", "surface": "#F8FAFC", "surface_variant": "#E2E8F0", "background": "#EEF2FF", "error": "#DC2626"}
 
