@@ -53,3 +53,12 @@ def test_page_shell_builds_semantic_sections():
 
     assert shell.content is not None
     assert shell.content.width == 900
+
+
+def test_page_shell_preserves_raw_flet_controls():
+    page = DummyPage()
+    text = ft.Text("Contenido")
+
+    shell = PageShell(sections=[text]).build(page)
+
+    assert shell.content.content.controls == [text]
