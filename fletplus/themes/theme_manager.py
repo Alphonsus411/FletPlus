@@ -64,8 +64,9 @@ def _load_palette_flatten_backend():
     try:
         module = importlib.import_module("fletplus.themes.palette_flatten_rs")
     except (ImportError, OSError, RuntimeError):
+        # Modos de fallo esperados al cargar la extensión compilada.
         return None
-    except Exception:
+    except Exception:  # pragma: no cover - fallback limpio ante fallo inesperado
         return None
     if getattr(module, "flatten_palette", None) is None:
         return None
@@ -82,8 +83,9 @@ def _load_theme_merge_backend():
     try:
         module = importlib.import_module("fletplus.themes.theme_merge_rs")
     except (ImportError, OSError, RuntimeError):
+        # Modos de fallo esperados al cargar la extensión compilada.
         return None
-    except Exception:
+    except Exception:  # pragma: no cover - fallback limpio ante fallo inesperado
         return None
     if getattr(module, "merge_token_groups", None) is None:
         return None

@@ -8,7 +8,9 @@ def _try_load_native():
         from .router_pr_rs import _native as mod
 
         return mod
-    except Exception:
+    except ImportError:  # pragma: no cover - extensión no compilada
+        # La extensión Rust del router es opcional: si no está construida se
+        # continúa con el fallback Python puro.
         pass
     # Fallback para `maturin develop` que instala un módulo toplevel `_native`
     try:
@@ -24,7 +26,7 @@ def _try_load_native():
         ]
         if all(hasattr(mod, name) for name in required):
             return mod
-    except Exception:
+    except ImportError:  # pragma: no cover - módulo toplevel ausente
         return None
     return None
 

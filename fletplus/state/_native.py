@@ -15,8 +15,10 @@ def _load_extension(module_name: str):
     try:
         return importlib.import_module(module_name)
     except (ImportError, OSError, RuntimeError):
+        # Modos de fallo esperados al cargar la extensión compilada: ausente,
+        # incompatible con la plataforma o error de carga del binario.
         return None
-    except Exception:
+    except Exception:  # pragma: no cover - fallback limpio ante fallo inesperado
         return None
 
 

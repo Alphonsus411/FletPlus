@@ -1,9 +1,12 @@
 import logging
 
 import flet as ft
+import pytest
 
 from fletplus.core_legacy import FletPlusApp
 from tests.test_fletplus_app import DummyPage
+
+pytestmark = pytest.mark.domain_legacy
 
 
 def test_load_route_invalid_index_logs_error(caplog):

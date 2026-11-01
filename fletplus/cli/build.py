@@ -6,7 +6,7 @@ import json
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404 - solo tipos de excepción; la ejecución pasa por safe_run
 import sys
 from dataclasses import asdict, dataclass, field
 from enum import Enum

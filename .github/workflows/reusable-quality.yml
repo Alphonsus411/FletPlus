@@ -8,12 +8,47 @@ on:
         required: false
         type: boolean
         default: false
+      test-scope:
+        description: "Alcance de la fase de tests: 'smoke' (rápida, para PR) o 'full' (suite completa)"
+        required: false
+        type: string
+        default: full
 
 permissions:
   contents: read
 
 jobs:
+  smoke-tests:
+    name: Smoke tests (contratos rápidos)
+    if: ${{ inputs.test-scope == 'smoke' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Validate CI/docs contract
+        run: python tools/check_ci_workflow_contract.py
+
+      - name: Validate Flet baseline/target drift
+        run: python tools/check_flet_target_drift.py
+
+      - name: Run smoke tests
+        run: bash tools/qa.sh --scope smoke
+
   tests-matrix:
+    if: ${{ inputs.test-scope != 'smoke' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:

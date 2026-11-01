@@ -9,6 +9,7 @@ se distribuye la librería y mejora la experiencia para los usuarios finales.
 from __future__ import annotations
 
 import importlib
+import warnings
 from typing import TYPE_CHECKING, Any
 
 SUBMODULE_IMPORTS = {
@@ -146,6 +147,17 @@ LAZY_IMPORTS = {
     "user_context": "fletplus.context",
     "watch": "fletplus.state",
     "WarningButton": "fletplus.components",
+}
+
+# APIs históricas expuestas por la fachada. Se conservan como compatibilidad
+# mínima, pero emiten ``DeprecationWarning`` señalando el import explícito
+# recomendado. Nota: ``FletPlusApp`` no se incluye porque es el contrato
+# público oficial (``from fletplus import FletPlusApp``, ver ``docs/index.md``).
+DEPRECATED_ALIASES = {
+    "FloatingMenuOptions": "from fletplus.core_legacy import FloatingMenuOptions",
+    "ResponsiveNavigationConfig": (
+        "from fletplus.core_legacy import ResponsiveNavigationConfig"
+    ),
 }
 
 if TYPE_CHECKING:
@@ -376,6 +388,13 @@ def __getattr__(name: str) -> Any:
         module = importlib.import_module(LAZY_IMPORTS[name])
         value = getattr(module, name)
         globals()[name] = value
+        if name in DEPRECATED_ALIASES:
+            warnings.warn(
+                f"El alias histórico `fletplus.{name}` está deprecado; "
+                f"usa `{DEPRECATED_ALIASES[name]}`.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return value
     if name in SUBMODULE_IMPORTS:
         module = importlib.import_module(f"{__name__}.{name}")

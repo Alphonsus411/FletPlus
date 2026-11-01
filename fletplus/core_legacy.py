@@ -911,6 +911,8 @@ class FletPlusApp:
             try:
                 self._subtitle_text.color = ft.Colors.with_opacity(0.85, muted)
             except Exception:
+                # Fallback de color: si `with_opacity` no está disponible en la
+                # versión de Flet activa, se usa el color sin opacidad.
                 self._subtitle_text.color = muted
 
         icon_color = on_primary

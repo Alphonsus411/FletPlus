@@ -140,10 +140,12 @@ def icon(
     except TypeError:
         # Compatibilidad con versiones antiguas que esperan 'name='
         inst = ft.Icon(name=resolved_name, **icon_kwargs)
-    # Normaliza atributo 'name' para compatibilidad con tests y APIs previas
+    # Normaliza atributo 'name' para compatibilidad con tests y APIs previas.
+    # Es best-effort: si la versión de Flet no permite sobrescribirlo, el icono
+    # sigue siendo válido porque el nombre ya se resolvió en el constructor.
     try:
         setattr(inst, "name", resolved_name)
-    except Exception:
+    except (AttributeError, TypeError):  # pragma: no cover - depende de la versión de Flet
         pass
     return inst
 
@@ -171,9 +173,10 @@ class Icon:
             inst = ft.Icon(resolved_name, **(self.kwargs or {}))
         except TypeError:
             inst = ft.Icon(name=resolved_name, **(self.kwargs or {}))
+        # Igual que en `resolve_icon`: normalización best-effort del atributo.
         try:
             setattr(inst, "name", resolved_name)
-        except Exception:
+        except (AttributeError, TypeError):  # pragma: no cover - depende de la versión de Flet
             pass
         return inst
 

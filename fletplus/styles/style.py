@@ -357,9 +357,12 @@ class Style:
             container.max_height = self.max_height
 
         if "shadow" not in self._declared_fields and getattr(container, "shadow", None) is None:
+            # Best-effort: inicializa `shadow` cuando el contenedor no lo declara.
+            # Si la versión de Flet no permite asignarlo, se conserva el valor
+            # por defecto del control sin comprometer el resto del estilo.
             try:
                 container.shadow = []
-            except Exception:
+            except (AttributeError, TypeError):  # pragma: no cover - depende de la versión de Flet
                 pass
 
         return container

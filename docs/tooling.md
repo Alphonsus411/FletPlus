@@ -11,6 +11,26 @@ La fuente única de verdad de QA está centralizada en `tools/qa.sh`. El workflo
 
 Ambos wrappers delegan en el reusable para evitar duplicación. El reusable se divide en dos jobs contractuales: `tests-matrix` (matriz `3.9`, `3.10`, `3.11`) y `static-security` (solo `3.11`). Cada job delega en `tools/qa.sh` con `--scope` para no repetir auditorías de seguridad en toda la matriz.
 
+La fase de tests se elige con el input `test-scope` del reusable:
+
+- `smoke` (PR): ejecuta el job `smoke-tests` (Python `3.11`) y omite `tests-matrix`. Cubre la red mínima de contratos con `bash tools/qa.sh --scope smoke`: validación YAML de workflows, importabilidad agregada (`tests/test_all.py`), aislamiento de dominios (`tests/test_domain_isolation_contract.py`), fachada pública (`tests/test_public_api_entrypoints.py`) y contrato de validación de workflows.
+- `full` (push a `main`/`develop`): ejecuta `tests-matrix` con la suite completa (`bash tools/qa.sh --scope tests-matrix`) y omite `smoke-tests`.
+
+`.github/workflows/qa.yml` fija `test-scope: smoke` y `.github/workflows/quality.yml` fija `test-scope: full`. Los benchmarks siguen reservados a `.github/workflows/perf.yml`.
+
+### Checks obligatorios por tipo de rama
+
+| Tipo de rama / evento | Workflow | Checks obligatorios | Equivalente local |
+| --- | --- | --- | --- |
+| `push` a `main` | `quality.yml` + `docs.yml` | `tests-matrix` (3.9/3.10/3.11), `static-security` (3.11), `cross-platform-lightweight` (ubuntu/windows/macos), `flet-version-matrix` (0.80 y 0.85) y `mkdocs build --strict` con despliegue a GitHub Pages | `bash tools/qa.sh` |
+| `push` a `develop` | `quality.yml` | Igual que `main` salvo el despliegue de Pages: la documentación solo se publica desde `main` | `bash tools/qa.sh` |
+| `pull_request` a `main` o `develop` | `qa.yml` + `docs.yml` | `smoke-tests` (3.11), `static-security` (3.11), `cross-platform-lightweight`, `flet-version-matrix` y `mkdocs build --strict` sin despliegue | `bash tools/qa.sh --scope smoke` |
+| Ramas de trabajo (`feature/*`, `fix/*`, etc.) | a través del PR | Heredan los checks de `pull_request`; no hay checks adicionales definidos por nombre de rama | — |
+| `workflow_dispatch` sobre `qa.yml` | `qa.yml` | `smoke-tests` y, si se activa el input `run-real-flet-build`, `real-flet-builds` (`fletplus create ci-smoke --template app` + `flet build web`) | `bash tools/qa.sh --scope smoke` |
+| `schedule` (03:00 diario) o manual | `perf.yml` | Benchmarks con marker `perf` | `python -m pytest -m perf -o addopts=` |
+
+Estos checks se derivan de los workflows versionados en `.github/workflows/`. Cualquier cambio en ellos debe mantener alineados workflow, `tools/qa.sh` y esta tabla: `python tools/check_ci_workflow_contract.py` falla si detecta desincronización.
+
 Además, el reusable mantiene una validación rápida multiplataforma en `cross-platform-lightweight`, con matriz de sistema operativo `ubuntu-latest`, `windows-latest` y `macos-latest` sobre Python `3.11`. Esta matriz no ejecuta empaquetado completo real: se limita a comprobar contratos que deben ser portables y baratos en CI:
 
 - `python -m pytest tests/test_cli_create.py tests/test_cli_template_contracts.py`: valida `fletplus create`, generación de plantillas y contratos estructurales comunes.
@@ -25,6 +45,7 @@ Como política de mínimo privilegio, `qa.yml`, `quality.yml` y `reusable-qualit
 El preflight soporta selección explícita por suite con `--suite`:
 
 - `--suite default`: validación mínima (sin dependencias opcionales).
+- `--suite unit`: valida `yaml` (requerido por los checks de contrato de workflows que corren en el mismo gate que los tests).
 - `--suite cli`: valida dependencias de CLI (incluye `watchdog`).
 - `--suite websocket`: valida dependencias de WebSocket (incluye `websockets`).
 - `--suite perf`: validación específica para benchmarks de rendimiento.
@@ -37,18 +58,38 @@ Orden real de QA (idéntico en shell, reusable workflow y nox):
 2. `python tools/check_package_data_files.py`
 3. `python tools/check_canonical_repo_links.py`
 4. `python tools/check_github_workflows.py`
-5. `python -m pytest`
-6. `python -m ruff check .`
-7. `python -m black --check .`
-8. `python -m mypy fletplus`
-9. `python tools/check_bandit_command_sync.py`
-10. `python -m bandit -c pyproject.toml -r fletplus`
-11. `python -m pip_audit -r requirements.txt -r requirements-dev.txt`
-12. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
+5. `python tools/check_flet_target_drift.py`
+6. `python -m pytest`
+7. `python -m ruff check .`
+8. `python -m black --check .`
+9. `python -m mypy fletplus`
+10. `python tools/check_bandit_command_sync.py`
+11. `python -m bandit -c pyproject.toml -r fletplus`
+12. `python -m pip_audit -r requirements.txt -r requirements-dev.txt`
+13. `python -m safety check -r requirements.txt -r requirements-dev.txt --policy-file safety-policy.yml`
 
 Si se necesita exceptuar una vulnerabilidad de forma temporal, debe documentarse en los archivos de política correspondientes (`pip-audit.policy.json` y `safety-policy.yml`) con justificación y fecha de expiración.
 
-> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía. En CI, el reusable usa `bash tools/qa.sh --scope tests-matrix` y `bash tools/qa.sh --scope static-security`; localmente puedes ejecutar `bash tools/qa.sh` (scope `all`) para correr todo. Además, `tools/check_bandit_command_sync.py` valida que `tools/qa.sh` mantenga el comando canónico de Bandit y que el reusable siga delegando en `tools/qa.sh`.
+> ⚠️ **Mantenimiento CI**: cualquier cambio de pasos de QA debe hacerse primero en `tools/qa.sh`. El workflow reusable y `nox -s qa` deben limitarse a invocar ese script para preservar la sincronía. En CI, el reusable usa `bash tools/qa.sh --scope tests-matrix`, `bash tools/qa.sh --scope static-security` y, para la fase rápida de PR, `bash tools/qa.sh --scope smoke`; localmente puedes ejecutar `bash tools/qa.sh` (scope `all`) para correr todo. Además, `tools/check_bandit_command_sync.py` valida que `tools/qa.sh` mantenga el comando canónico de Bandit y que el reusable siga delegando en `tools/qa.sh`.
+
+### Política de excepciones Bandit (`# nosec`)
+
+Bandit se ejecuta con la configuración de `[tool.bandit]` en `pyproject.toml` (`python -m bandit -c pyproject.toml -r fletplus`). La política es:
+
+- **Umbral:** cero hallazgos `Medium` o `High`. Cualquier hallazgo de esas severidades bloquea la release y debe resolverse, no silenciarse.
+- **`Low` accionable:** se corrige el patrón (por ejemplo, sustituir una llamada directa a `subprocess` por `fletplus.utils.safe_subprocess`).
+- **`Low` no accionable:** se anota con `# nosec <código>-<motivo>` en la misma línea del hallazgo, siempre con el identificador del test y una justificación verificable. Nunca se usa `# nosec` desnudo.
+- **Alcance:** los directorios de extensiones compiladas (`*_rs`, `*_pr_rs`) se excluyen en `exclude_dirs` por ser artefactos generados.
+
+Anotaciones auditadas vigentes (todas `Low` no accionables):
+
+| Archivo:línea | Código | Motivo |
+| --- | --- | --- |
+| `fletplus/utils/safe_subprocess.py:5` | `B404` | Es el wrapper seguro; el módulo centraliza el uso de `subprocess`. |
+| `fletplus/utils/safe_subprocess.py:76` / `:98` | `B603` | Argumentos normalizados (ejecutable resuelto con `which`/ruta absoluta), sin `shell=True` y con `env` filtrado por whitelist. |
+| `fletplus/cli/build.py:9` | `B404` | Solo tipos de excepción; la ejecución real pasa por `safe_run`. |
+| `fletplus/cli/main.py:11` | `B404` | Solo anotaciones de tipo y excepciones; la ejecución real pasa por `safe_popen`. |
+| `fletplus/desktop/notifications.py:7` | `B404` | Solo `TimeoutExpired`; la ejecución real pasa por `safe_run`. |
 
 ### Política formal de actualización de baseline/target de Flet
 
@@ -113,11 +154,36 @@ PY
 4. Reejecuta QA según necesidad:
 
    ```bash
+   bash tools/qa.sh --scope smoke
    bash tools/qa.sh --scope tests-matrix
    bash tools/qa.sh --scope static-security
    # o todo junto:
    bash tools/qa.sh
    ```
+
+### Resolución rápida de dependencias faltantes en CI local
+
+Cuando un check falla en local por una dependencia ausente (no por un fallo real del código), el patrón es siempre el mismo: instalar el manifiesto que contiene esa dependencia y volver a ejecutar el check aislado. Diagnóstico:
+
+| Síntoma | Dependencia ausente | Instalación |
+| --- | --- | --- |
+| `ModuleNotFoundError: No module named 'yaml'` en `tools/check_github_workflows.py` o `tools/check_ci_workflow_contract.py` | `PyYAML` | `pip install -r requirements-dev.txt` |
+| `ModuleNotFoundError: No module named 'tomli'` en `tools/check_ci_workflow_contract.py` con Python < 3.11 | `tomli` (sustituye a `tomllib`, que es stdlib desde 3.11) | `pip install tomli` |
+| `ERROR: faltan dependencias críticas para tests (suite(s): cli): watchdog` | `watchdog` | `pip install -r requirements-dev.txt` |
+| `ERROR: faltan dependencias críticas para tests (suite(s): websocket): websockets` | `websockets` | `pip install -r requirements-dev.txt` |
+| `Config value 'plugins': The "include-markdown" plugin is not installed` al ejecutar `mkdocs build --strict` | `mkdocs-include-markdown-plugin` | `pip install -r requirements-docs.txt` |
+| `La versión de Flet detectada no está en la lista permitida para ejecución local` en `tests/test_flet_version_matrix.py`, o `ModuleNotFoundError: No module named 'flet'` | `flet` (rango declarado en `requirements-dev.txt`) | `pip install -r requirements-dev.txt` |
+
+Preparación completa del entorno local y verificación:
+
+```bash
+python -m pip install -r requirements-dev.txt -r requirements-docs.txt
+python -m pip install -e .
+python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
+python tools/check_ci_workflow_contract.py
+```
+
+`tools/check_test_dependencies.py` es el preflight oficial: informa de la suite afectada y de la línea de instalación concreta. Si el check que falla no es de tests sino de workflows, lint o seguridad, se resuelve igualmente con `requirements-dev.txt` (ver la tabla anterior) y se repite solo ese check antes de relanzar el scope completo.
 
 ## Estrategia de tests: suite rápida vs benchmarks
 
@@ -150,6 +216,36 @@ Archivos de referencia en esta política:
 - `tests/test_unit_stub_fixtures.py`: ejemplos de uso explícito de stubs.
 - `tests/test_optional_backend_import_fallbacks.py`: integración de imports reales + fallback controlado.
 - `tests/test_public_api_entrypoints.py`: contrato de entrypoints públicos con módulos reales.
+
+## Política de manejo de excepciones defensivas
+
+Esta sección fija cuándo una excepción se **silencia**, cuándo se **registra y se degrada** y cuándo se **repropaga con `raise`**. La regla general es: *captura amplia solo cuando existe una acción de recuperación concreta y el fallo no compromete el estado*.
+
+### Criterio de decisión
+
+1. **¿El fallo impide que la operación principal sea correcta?** Si sí, hay que revertir el estado parcial y **repropagar** (`raise`). No se convierte en log silencioso.
+2. **¿Existe una alternativa funcional equivalente?** Si sí, se aplica el fallback y se documenta la razón en el propio `except`.
+3. **¿El fallo afecta a una frontera observable (notificación, refresco de UI, estilo)?** Se **registra con `exc_info=True`** y se continúa, para no abortar el resto de la iteración.
+4. **¿El fallo proviene de una capacidad opcional (extensión nativa, atributo de compatibilidad)?** Se silencia con `# pragma: no cover` y comentario explicativo.
+
+### Clasificación por tipo de captura
+
+| Categoría | Contrato | Sitios de referencia |
+| --- | --- | --- |
+| Fallback de extensión nativa opcional | Silencio justificado (`_native = None`) con comentario `# pragma: no cover - fallback limpio`. No se propaga porque la ruta Python pura es equivalente. | `fletplus/state/state.py:31`, `fletplus/state/_native.py:19`, `fletplus/state/signal_pr_rs/__init__.py:10`, `fletplus/router/router_rs/__init__.py:12`, `fletplus/router/router_pr_rs/__init__.py:12`, `fletplus/animation/controller.py:15` |
+| Frontera de UI (notificación, refresco, estilos, listeners) | Se registra (`logger.exception` o `logger.warning(..., exc_info=True)`) y **se continúa**: un fallo no debe cancelar el resto de suscriptores ni de actualizaciones. | `fletplus/core/state.py:132`, `fletplus/core/state.py:147`, `fletplus/core/app.py:106`, `fletplus/core/app.py:119`, `fletplus/styles/style.py:237`, `fletplus/animation/controller.py:141` |
+| Operación transaccional del router | Se restaura el estado previo (`_index`, `_active_match`, `_history`) y se **repropaga** con `raise`: la navegación no puede quedar a medias. | `fletplus/router/router.py:154`, `fletplus/router/router.py:179`, `fletplus/router/router.py:235` |
+| Arranque de la app (`start`) | Se limpia la UI montada, se revierte `_page`/`_unsubscribe` y se **repropaga**: el fallo de arranque es visible para el anfitrión. Los errores de limpieza sí se degradan con `warning`. | `fletplus/core/app.py:102` |
+| Normalización de atributos de compatibilidad | `pass` justificado sobre `setattr` de atributos auxiliares (nombre, `shadow`): el objeto sigue siendo válido sin ellos. | `fletplus/icons/__init__.py:146`, `fletplus/icons/__init__.py:176`, `fletplus/styles/style.py:362` |
+| Comparación tolerante a objetos patológicos | Se degrada de `==` a `is` cuando el operador de igualdad lanza excepción. | `fletplus/context/__init__.py:91` |
+
+### Reglas prácticas de revisión
+
+- **Nunca** usar `except Exception: pass` sin comentario que explique por qué el fallo es irrelevante y qué se degrada.
+- Todo `except` que capture una excepción y **no** repropague debe dejar rastro observable (log) o un `# pragma: no cover` con justificación, para que la decisión sea auditable.
+- Las capturas amplias solo se aceptan en **fronteras** (imports opcionales, callbacks de usuario, actualización de UI). En lógica de dominio o de negocio la excepción se propaga.
+- Al añadir una captura nueva, elige la categoría de la tabla y respeta su contrato; si no encaja en ninguna, probablemente el `raise` es la respuesta correcta.
+- Los tests de contrato asociados son `tests/test_optional_backend_import_fallbacks.py` (fallbacks de import) y `tests/test_core_logging.py` (registro de errores en el núcleo).
 
 ## DevTools integrados
 
@@ -387,6 +483,39 @@ Para revertir rápidamente la minor objetivo:
 3. Revertir ajustes de `flet_compat` introducidos exclusivamente para la minor fallida.
 4. Ejecutar de nuevo `tests/contracts`, `tests/cli` y `tests/demo` para confirmar estabilización.
 5. Registrar rollback en `CHANGELOG.md` con causa raíz y plan de reintento.
+
+## Checklist de release de FletPlus
+
+Checklist obligatorio antes de promover una versión. Cubre los tres pilares solicitados: **pruebas mínimas**, **build de documentación** y **seguridad**. El objetivo es que cada punto sea ejecutable y verificable localmente, replicando lo que valida CI.
+
+### 1. Pruebas mínimas
+
+- [ ] Red de contratos rápida: `bash tools/qa.sh --scope smoke` (workflows + importabilidad agregada + aislamiento de dominios + fachada pública).
+- [ ] Suite completa: `bash tools/qa.sh --scope tests-matrix` (dependencias, package data, enlaces canónicos, workflows y `pytest`).
+- [ ] Matriz de Flet en verde para baseline (`flet>=0.80,<0.81`) y target (`flet==0.85.3`), con `FLET_MATRIX_EXPECTED_MINOR` fijado por CI.
+- [ ] Benchmarks sin regresión cuando el release toque rutas de rendimiento: `python -m pytest -m perf -o addopts=`.
+- [ ] `informe_tests.md` actualizado con una entrada fechada de la iteración (comandos y resultados).
+
+### 2. Build de documentación
+
+- [ ] Instalar dependencias de docs: `python -m pip install -r requirements-docs.txt`.
+- [ ] Compilar sin warnings: `python -m mkdocs build --strict --site-dir site`.
+- [ ] Verificar que las páginas nuevas o renombradas estén en `nav` (`mkdocs.yml`) y sin anchors rotos.
+
+### 3. Seguridad y estática
+
+- [ ] `bash tools/qa.sh --scope static-security`: ejecuta `ruff`, `black --check`, `mypy`, `bandit` (con `pyproject.toml`), `pip-audit` y `safety check` (con `safety-policy.yml`).
+- [ ] Sin hallazgos nuevos de `bandit` sin justificar; todo `# nosec` debe incluir el motivo (ver la sección de excepciones defensivas).
+- [ ] Sin vulnerabilidades conocidas sin mitigar en `requirements.txt` y `requirements-dev.txt` (o excepción registrada en `safety-policy.yml`).
+
+### 4. Consistencia y cierre
+
+- [ ] Verificar contrato CI/docs: `python tools/check_ci_workflow_contract.py` y `python tools/check_github_workflows.py`.
+- [ ] `CHANGELOG.md` con la versión, la decisión (upgrade/rollback si aplica) y el motivo.
+- [ ] Versión actualizada en `pyproject.toml`.
+- [ ] Si se publican extensiones compiladas, ejecutar el [perfilado previo a releases](#perfilado-previo-a-releases) antes de cortar la build.
+
+> Referencia cruzada: la tabla “Checks obligatorios por tipo de rama” lista el conjunto exacto que CI exige en `push` a `main` (`tests-matrix`, `static-security`, `cross-platform-lightweight`, `flet-version-matrix` y `mkdocs build --strict`). Este checklist es el equivalente manual y debe mantenerse alineado con ella.
 
 ## Workflow de documentación
 

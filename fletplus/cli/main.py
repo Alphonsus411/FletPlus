@@ -8,7 +8,7 @@ import os
 import pstats
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404 - solo anotaciones de tipo y excepciones; la ejecución pasa por safe_popen
 import sys
 import tempfile
 import threading

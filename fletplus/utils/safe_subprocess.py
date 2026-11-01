@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - módulo central del wrapper seguro de ejecución
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -73,7 +73,7 @@ def safe_run(
     norm = _inject_powershell_flags(norm)
     effective_cwd = _ensure_cwd(cwd)
     effective_env = _filter_env(env if env is not None else os.environ, env_whitelist)
-    return subprocess.run(
+    return subprocess.run(  # nosec B603 - args normalizados (ejecutable resuelto), sin shell=True y con env filtrado
         norm,
         cwd=effective_cwd,
         env=effective_env,
@@ -95,7 +95,7 @@ def safe_popen(
     norm = _inject_powershell_flags(norm)
     effective_cwd = _ensure_cwd(cwd)
     effective_env = _filter_env(env if env is not None else os.environ, env_whitelist)
-    return subprocess.Popen(
+    return subprocess.Popen(  # nosec B603 - args normalizados (ejecutable resuelto), sin shell=True y con env filtrado
         norm,
         cwd=effective_cwd,
         env=effective_env,

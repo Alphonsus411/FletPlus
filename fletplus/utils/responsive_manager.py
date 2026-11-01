@@ -53,8 +53,9 @@ else:
     try:
         _native = importlib.import_module("fletplus.utils._native")
     except (ImportError, OSError, RuntimeError):
+        # Modos de fallo esperados al cargar la extensión compilada.
         _native = None
-    except Exception:
+    except Exception:  # pragma: no cover - fallback limpio ante fallo inesperado
         _native = None
 
 _native_responsive = getattr(_native, "ResponsiveManager", None) if _native else None

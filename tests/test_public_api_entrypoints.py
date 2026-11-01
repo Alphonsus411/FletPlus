@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import importlib
 import sys
+import warnings
 from pathlib import Path
 
 import flet as ft
+import pytest
 
+import fletplus
 from fletplus import (
     FletPlusApp,
     RenderStrategy,
@@ -18,6 +21,8 @@ from fletplus.core_legacy import (
 )
 from fletplus_demo import main as demo_main
 from fletplus_demo.app import create_app
+
+pytestmark = pytest.mark.domain_legacy
 
 
 class DummyPage:
@@ -93,3 +98,58 @@ def test_public_rendering_entrypoints_are_importable():
     from fletplus.rendering import WebRenderStrategy
 
     assert issubclass(WebRenderStrategy, RenderStrategy)
+
+
+def _deprecation_messages(captured) -> list[str]:
+    return [
+        str(item.message)
+        for item in captured
+        if issubclass(item.category, DeprecationWarning)
+    ]
+
+
+@pytest.mark.parametrize(
+    "alias", ["FloatingMenuOptions", "ResponsiveNavigationConfig"]
+)
+def test_legacy_facade_alias_emits_deprecation_warning(monkeypatch, alias):
+    facade = sys.modules["fletplus"]
+    legacy_module = importlib.import_module("fletplus.core_legacy")
+    # La fachada cachea el alias en ``globals()``; se invalida para forzar la
+    # resolución diferida y poder observar el aviso.
+    monkeypatch.delitem(facade.__dict__, alias, raising=False)
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always", DeprecationWarning)
+        value = getattr(facade, alias)
+
+    assert value is getattr(legacy_module, alias)
+
+    messages = _deprecation_messages(captured)
+    assert len(messages) == 1, messages
+    assert f"fletplus.{alias}" in messages[0]
+    assert f"from fletplus.core_legacy import {alias}" in messages[0]
+
+
+def test_official_fletplus_app_alias_does_not_warn(monkeypatch):
+    facade = sys.modules["fletplus"]
+    monkeypatch.delitem(facade.__dict__, "FletPlusApp", raising=False)
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always", DeprecationWarning)
+        value = facade.FletPlusApp
+
+    assert value is LegacyFletPlusApp
+    assert _deprecation_messages(captured) == []
+
+
+def test_recommended_legacy_imports_do_not_warn():
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always", DeprecationWarning)
+        from fletplus.core_legacy import (
+            FloatingMenuOptions,
+            ResponsiveNavigationConfig,
+        )
+
+    assert FloatingMenuOptions is LegacyFloatingMenuOptions
+    assert ResponsiveNavigationConfig is LegacyResponsiveNavigationConfig
+    assert _deprecation_messages(captured) == []

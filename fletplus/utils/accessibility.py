@@ -70,9 +70,11 @@ class AccessibilityPreferences:
                 error=ft.Colors.RED_400,
                 on_error=ft.Colors.WHITE,
             )
+            # Best-effort: `on_background` no existe en todas las versiones de
+            # Flet; si no se puede asignar, el esquema conserva sus valores.
             try:
                 setattr(scheme, "on_background", ft.Colors.WHITE)
-            except Exception:
+            except (AttributeError, TypeError):  # pragma: no cover - depende de Flet
                 pass
             theme_obj.color_scheme = scheme
             theme_obj.scaffold_bgcolor = ft.Colors.BLACK

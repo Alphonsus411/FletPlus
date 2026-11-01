@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import flet as ft
+import pytest
 
 from fletplus.cli.build import (
     BuildManager,
@@ -20,6 +21,8 @@ from fletplus.rendering import (
     WebRenderStrategy,
     strategy_for_target,
 )
+
+pytestmark = pytest.mark.domain_core
 
 
 class DummyPage:

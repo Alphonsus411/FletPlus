@@ -195,7 +195,7 @@ def _load_disk_cache() -> type[_PyDiskCache]:
         module = importlib.import_module("fletplus.http.disk_cache")
     except ImportError:
         return _PyDiskCache
-    except Exception:
+    except Exception:  # pragma: no cover - fallback limpio ante fallo inesperado
         return _PyDiskCache
     cache_cls = getattr(module, "DiskCache", None)
     if cache_cls is None:
@@ -292,6 +292,8 @@ def _build_websocket_response(request: httpx.Request, websocket: Any) -> httpx.R
             iterable = items() if callable(items) else response_headers
             headers = {_as_text(key): _as_text(value) for key, value in iterable}
         except Exception:
+            # Cabeceras no normalizables (p. ej. objetos hostiles): se degrada a
+            # una respuesta sin cabeceras para no romper el flujo del test/WS.
             headers = {}
 
     resolved_status = status_code if status_code is not None else 101

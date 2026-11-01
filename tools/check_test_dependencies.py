@@ -9,7 +9,10 @@ from argparse import ArgumentParser
 
 SUITE_DEPENDENCIES: dict[str, tuple[str, ...]] = {
     "default": (),
-    "unit": (),
+    # ``yaml`` lo consumen los checks de contrato de workflows que se ejecutan
+    # en el mismo gate que los tests (ver ``tools/qa.sh``), por lo que se valida
+    # aquí para fallar de forma temprana con instrucciones de instalación.
+    "unit": ("yaml",),
     "cli": ("watchdog",),
     "websocket": ("websockets",),
     "perf": (),

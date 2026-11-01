@@ -7,7 +7,7 @@ while (($# > 0)); do
   case "$1" in
     --scope)
       if (($# < 2)); then
-        echo "ERROR: --scope requiere un valor (all|tests-matrix|static-security)." >&2
+        echo "ERROR: --scope requiere un valor (all|smoke|tests-matrix|static-security)." >&2
         exit 1
       fi
       QA_SCOPE="$2"
@@ -20,11 +20,21 @@ while (($# > 0)); do
   esac
 done
 
+run_smoke_scope() {
+  python tools/check_github_workflows.py
+  python -m pytest -q \
+    tests/test_all.py \
+    tests/test_domain_isolation_contract.py \
+    tests/test_public_api_entrypoints.py \
+    tests/test_workflow_validation_contract.py
+}
+
 run_tests_matrix_scope() {
   python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket
   python tools/check_package_data_files.py
   python tools/check_canonical_repo_links.py
   python tools/check_github_workflows.py
+  python tools/check_flet_target_drift.py
   python -m pytest
 }
 
@@ -43,6 +53,9 @@ case "$QA_SCOPE" in
     run_tests_matrix_scope
     run_static_security_scope
     ;;
+  smoke)
+    run_smoke_scope
+    ;;
   tests-matrix)
     run_tests_matrix_scope
     ;;
@@ -50,7 +63,7 @@ case "$QA_SCOPE" in
     run_static_security_scope
     ;;
   *)
-    echo "ERROR: scope inválido '$QA_SCOPE'. Usa all|tests-matrix|static-security." >&2
+    echo "ERROR: scope inválido '$QA_SCOPE'. Usa all|smoke|tests-matrix|static-security." >&2
     exit 1
     ;;
 esac

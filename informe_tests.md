@@ -1,5 +1,7 @@
 # Informe de tests y revisión técnica
 
+> Bitácora viva: cada iteración añade una entrada fechada al final, sin reescribir las anteriores. El histórico inicial se conserva tal cual se documentó en su momento.
+
 ## Paso a paso ejecutado
 1. Ejecuté la suite completa inicial:
    - `python -m pytest -q`
@@ -47,3 +49,72 @@
 ## Estado
 - El repositorio queda con tests estables bajo el estado actual del código.
 - CI/CD y docs quedan revisados y validados con checks ejecutables.
+
+---
+
+## Iteración 2026-11-01 — Cierre de pendientes (T1.2, T1.3, T2.3, T3.3)
+
+### Cambios aplicados
+1. **T1.2 — Etiquetado por dominio**: markers `domain_core`/`domain_legacy` en `pytest.ini` y contrato estático por AST en `tests/test_domain_isolation_contract.py`.
+2. **T1.3 — Deprecación de APIs históricas**: `DEPRECATED_ALIASES` y `warnings.warn(DeprecationWarning, ...)` en `fletplus/__init__.py` para `FloatingMenuOptions` y `ResponsiveNavigationConfig`. `FletPlusApp` queda sin aviso por ser el contrato público oficial. Tests añadidos en `tests/test_public_api_entrypoints.py`.
+3. **T2.3 — Fase smoke para PRs**: scope `smoke` en `tools/qa.sh`, job `smoke-tests` con input `test-scope` en `reusable-quality.yml`; `qa.yml` fija `smoke` y `quality.yml` fija `full`.
+4. **T3.3 — Checks por tipo de rama**: tabla “Checks obligatorios por tipo de rama” en `docs/tooling.md`, derivada de los workflows versionados.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `python -m pytest tests/test_public_api_entrypoints.py tests/test_domain_isolation_contract.py -q` | 12 passed, 1 failed (ambiental) |
+| `python -m pytest -q tests/test_all.py tests/test_domain_isolation_contract.py tests/test_public_api_entrypoints.py tests/test_workflow_validation_contract.py` (selección del scope `smoke`) | 27 passed, 1 failed (ambiental) |
+| `python tools/check_github_workflows.py` | OK: 5 workflows validados |
+| `python tools/check_bandit_command_sync.py` | OK: Bandit alineado y reusable delega en `tools/qa.sh` |
+| `python tools/check_ci_workflow_contract.py` | OK: contrato CI/docs validado |
+
+### Deuda ambiental detectada (preexistente, no atribuible a esta iteración)
+- El intérprete local tiene `flet==0.28.3` mientras el baseline contractual del proyecto es `>=0.80`. Esto provoca `AttributeError: type object 'BorderRadius' has no attribute 'all'` en `fletplus/core_legacy.py:326` y fallos equivalentes en `tests/test_padding_migration_contract.py`.
+- `mkdocs build --strict` no es ejecutable en local por falta del plugin `include-markdown`; la validación de documentación queda cubierta por CI (`cross-platform-lightweight` y `docs.yml`).
+
+---
+
+## Iteración 2026-11-01 (continuación) — Cierre de Bloque 5 (T5.2, T5.3)
+
+### Cambios aplicados
+1. **T5.2 — Política de excepciones defensivas**: sección “Política de manejo de excepciones defensivas” en `docs/tooling.md`, con criterio de decisión, tabla de categorías (fallback de extensión nativa, frontera de UI, transacción del router, arranque de la app, normalización de atributos, comparación tolerante) e inventario verificado de sitios reales en `fletplus/`.
+2. **T5.3 — Checklist de release**: sección “Checklist de release de FletPlus” en `docs/tooling.md` (pruebas mínimas, build de documentación, seguridad/estática y consistencia/cierre), con comandos reales de `tools/qa.sh`, `mkdocs build --strict` y el scope `static-security`.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `python tools/check_ci_workflow_contract.py` | OK: contrato CI/docs validado (workflow reusable por jobs, tools/qa.sh, nox y docs sincronizados) |
+| `python tools/check_github_workflows.py` | OK: 5 workflows validados (YAML + reglas GitHub Actions) |
+
+### Notas
+- Ambas secciones documentan contratos ya existentes en el código (no introducen cambios de runtime); su validación funcional corresponde a CI.
+- `mkdocs build --strict` sigue sin poder ejecutarse en local por la deuda ambiental del plugin `include-markdown`; los enlaces internos nuevos usan anchors de la misma página, cubiertos por CI.
+
+---
+
+## Iteración 2026-11-01 (continuación) — Cierre de Bloque B (B2), Bloque C (C2) y Bloque D (D1)
+
+### Cambios aplicados
+1. **B2 — Endurecimiento de errores silenciosos**: clasificados y endurecidos ~25 sitios según la política de `docs/tooling.md`. `except Exception` → `except ImportError` en cargas de extensiones nativas opcionales (`router/router_pr.py`, `storage/session.py`, `storage/local.py`); `except Exception` → `except (AttributeError, TypeError)` en normalización de atributos dependiente de la versión de Flet (`icons/__init__.py` ×2, `styles/style.py`, `utils/accessibility.py`); comentarios justificativos con `# pragma: no cover` en los sitios que conservan captura amplia (shims `*_rs`, `smart_table.py`, `responsive_grid.py`, `command_palette.py`, `http/client.py`, `http/disk_cache*.py`, `devtools/server.py`, `core_legacy.py`, `themes/theme_manager.py`, `utils/responsive_manager.py`, `state/state.py`, `state/_native.py`).
+2. **C2 — Política Bandit**: anotaciones justificadas `# nosec B404` (`utils/safe_subprocess.py:5`, `cli/build.py:9`, `cli/main.py:11`, `desktop/notifications.py:7`) y `# nosec B603` (`utils/safe_subprocess.py:76`/`:98`), todas con motivo verificable. Documentada la política en `docs/tooling.md` §“Política de excepciones Bandit (`# nosec`)” con umbral cero Medium/High y tabla de anotaciones vigentes.
+3. **D1 — Pipeline mínimo de auditoría local**: cableado `python tools/check_flet_target_drift.py` en el scope `tests-matrix` de `tools/qa.sh` (+ orden documentado en `docs/tooling.md` y lista de comandos estándar de `README.md`). `bandit` y `pip-audit` ya formaban parte del scope `static-security`; los tests de contrato Flet corren vía `pytest`.
+4. **F85-C3 — Dependencias locales de validación**: la suite `unit` del preflight `tools/check_test_dependencies.py` (primer paso del gate `tests-matrix`) ahora valida `yaml`, de modo que un entorno sin `requirements-dev.txt` falla de forma temprana con la instrucción de instalación antes de alcanzar los checks que importan `yaml`. Documentado en `docs/tooling.md` (lista de suites) y `README.md`.
+5. **F85-D3 — Contrato CI completo**: `python tools/check_ci_workflow_contract.py` ejecutado con `PyYAML` disponible (vía `requirements-dev.txt`) → OK.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `python -m bandit -c pyproject.toml -r fletplus` | No issues identified (0 hallazgos; antes 6 `Low` no accionables) |
+| `python tools/check_bandit_command_sync.py` | OK: Bandit alineado y reusable delega en `tools/qa.sh` |
+| `python tools/check_flet_target_drift.py` | OK: workflow/config/docs ya están sincronizados |
+| `python tools/check_github_workflows.py` | OK: 5 workflows validados (YAML + reglas GitHub Actions) |
+| `python tools/check_ci_workflow_contract.py` | OK: contrato CI/docs validado (workflow reusable por jobs, tools/qa.sh, nox y docs sincronizados) |
+| `python -m pytest -q tests/test_optional_backend_import_fallbacks.py tests/test_icons.py tests/test_style.py tests/test_state.py` | 32 passed, 1 failed (ambiental) |
+| `python -m pytest -q tests/test_command_palette.py tests/test_command_palette_rs_backend.py tests/test_responsive_manager.py tests/test_responsive_grid.py tests/test_smart_table.py tests/test_router.py tests/test_router_pr_rs_import.py tests/test_public_api_entrypoints.py` | 50 passed, 6 skipped, 8 failed (ambiental) |
+| `python tools/check_test_dependencies.py --suite unit --suite cli --suite websocket` | OK: dependencias críticas disponibles (yaml, watchdog, websockets) |
+| `python -m pytest -q tests/test_workflow_validation_contract.py tests/test_check_ci_workflow_contract.py tests/test_check_bandit_command_sync.py` | 54 passed |
+
+### Notas
+- `pip-audit` no es ejecutable en el entorno local por falta de acceso a red para consultar la base de vulnerabilidades; queda cubierto por CI (scope `static-security`).
+- Todos los fallos observados son ambientales (`ft.Border.all`, `ft.Padding.all/symmetric`, `ft.BorderRadius.all` no existen en el `flet` 0.28.3 instalado; baseline exige ≥0.80) y no están relacionados con los cambios aplicados. El test de T1.3 pasa y emite los `DeprecationWarning` esperados.

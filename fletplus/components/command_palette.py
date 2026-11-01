@@ -15,13 +15,14 @@ def filter_commands(names: List[str], query: str) -> List[int]:
     if _rs_filter is None:
         try:
             spec = importlib.util.find_spec("fletplus.components.command_palette_rs")
-        except Exception:
+        except Exception:  # pragma: no cover - backend opcional
+            # La extensión opcional no es localizable: se usa la ruta Python.
             spec = None
         if spec is not None:
             try:
                 mod = importlib.import_module("fletplus.components.command_palette_rs")
                 impl = getattr(mod, "filter_commands", None)
-            except Exception:
+            except Exception:  # pragma: no cover - backend opcional
                 impl = None
             _rs_filter = impl
     if _rs_filter is not None:

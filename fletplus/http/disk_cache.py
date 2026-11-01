@@ -30,6 +30,8 @@ def _load_native_module() -> ModuleType | None:
         try:
             loader.exec_module(module)
         except Exception:
+            # La candidata no es compatible: se restaura `sys.modules` y se
+            # prueba la siguiente ruta de extensión disponible.
             if original is not None:
                 sys.modules[__name__] = original
             else:

@@ -19,7 +19,7 @@ def _load_native() -> Optional[object]:
     if spec is not None:
         try:
             return importlib.import_module("fletplus.components.command_palette_rs._native")
-        except Exception:
+        except Exception:  # pragma: no cover - extensión no compilada
             return None
     # Fallback para entornos de `maturin develop` que instalan un módulo toplevel `_native`
     try:
@@ -27,7 +27,7 @@ def _load_native() -> Optional[object]:
         # Validar que exponga la función esperada
         if hasattr(top, "filter_commands"):
             return top
-    except Exception:
+    except Exception:  # pragma: no cover - módulo toplevel ausente
         return None
     return None
 

@@ -1,6 +1,9 @@
 import flet as ft
+import pytest
 
 from fletplus.core_legacy import FletPlusApp
+
+pytestmark = pytest.mark.domain_legacy
 
 
 class DummyPage:

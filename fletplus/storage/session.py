@@ -6,10 +6,13 @@ from typing import Any
 
 try:
     from flet.core.session_storage import SessionStorage  # type: ignore[attr-defined]
-except Exception:
+except ImportError:
+    # Ruta alternativa según la versión de Flet instalada.
     try:
         from flet.session_storage import SessionStorage  # type: ignore[attr-defined]
-    except Exception:
+    except ImportError:
+        # Último recurso: el tipo se usa solo como anotación en entornos sin
+        # backend de sesión disponible.
         from typing import Any as SessionStorage
 
 from . import Deserializer, Serializer, StorageProvider

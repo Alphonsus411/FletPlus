@@ -927,7 +927,8 @@ class ResponsiveGrid:
                 native_result = _plan_grid_items_native_from_objects(
                     width, columns, device, self._items
                 )
-            except Exception:
+            except Exception:  # pragma: no cover - backend opcional
+                # El planificador nativo falló: se continúa con la ruta Python.
                 native_result = None
 
             if native_result is not None:
@@ -960,7 +961,8 @@ class ResponsiveGrid:
                 native_result = _plan_grid_items_native(
                     width, columns, device, payload
                 )
-            except Exception:
+            except Exception:  # pragma: no cover - backend opcional
+                # El planificador nativo falló: se continúa con la ruta Python.
                 native_result = None
 
             if native_result is not None:

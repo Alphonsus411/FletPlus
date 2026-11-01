@@ -282,8 +282,9 @@ def _load_rust_backend():
     try:
         module = importlib.import_module("fletplus.components.smart_table_rs")
     except (ImportError, OSError, RuntimeError):
+        # Modos de fallo esperados al cargar la extensión compilada.
         return None
-    except Exception:
+    except Exception:  # pragma: no cover - fallback limpio ante fallo inesperado
         return None
     if (
         getattr(module, "apply_query", None) is None
@@ -738,7 +739,8 @@ class SmartTable:
                     ordered_ids = _SMART_TABLE_RS.apply_query(
                         payload, rust_filters, rust_sorts
                     )
-            except Exception:
+            except Exception:  # pragma: no cover - backend opcional
+                # El acelerador nativo falló: se aplica el orden/consulta en Python.
                 ordered_ids = None
             else:
                 if ordered_ids is not None:

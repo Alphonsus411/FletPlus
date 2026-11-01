@@ -152,6 +152,8 @@ class DiskCache:
             headers_data = data["headers"]
             content = base64.b64decode(data["content"])
         except Exception:
+            # Entrada de caché ilegible o corrupta: se elimina y se trata
+            # como miss, dejando que la petición real repoble el valor.
             path.unlink(missing_ok=True)
             return None
 
@@ -263,6 +265,8 @@ class DiskCache:
                     data = json.loads(path.read_text("utf-8"))
                     timestamp = float(data["timestamp"])
                 except Exception:
+                    # Entrada ilegible durante la limpieza: se descarta y se
+                    # continúa con el resto de archivos.
                     with contextlib.suppress(OSError):
                         path.unlink()
                     continue

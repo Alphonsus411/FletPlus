@@ -143,7 +143,7 @@ python tools/check_test_dependencies.py --suite unit --suite cli --suite websock
 python -m pytest
 ```
 
-El script `tools/check_test_dependencies.py` permite seleccionar suites con `--suite` y falla de forma temprana si faltan dependencias opcionales de la suite elegida (por ejemplo, `watchdog` para `cli` o `websockets` para `websocket`).
+El script `tools/check_test_dependencies.py` permite seleccionar suites con `--suite` y falla de forma temprana si faltan dependencias opcionales de la suite elegida (por ejemplo, `watchdog` para `cli`, `websockets` para `websocket` o `yaml` para `unit`, requerida por los checks de contrato de workflows).
 
 ### ⚡ Suite rápida por defecto y benchmarks `perf`
 
@@ -180,6 +180,7 @@ python tools/check_test_dependencies.py --suite unit --suite cli --suite websock
 python tools/check_package_data_files.py
 python tools/check_canonical_repo_links.py
 python tools/check_github_workflows.py
+python tools/check_flet_target_drift.py
 python -m pytest
 python -m ruff check .
 python -m black --check .

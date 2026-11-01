@@ -213,6 +213,7 @@ class DevToolsServer:
                     token.encode("utf-8"), self._auth_token.encode("utf-8")
                 )
             except Exception:
+                # Token no codificable (p. ej. surrogates): se trata como inválido.
                 match = False
             if not match:
                 _LOGGER.warning("Token inválido o ausente al conectar DevTools")

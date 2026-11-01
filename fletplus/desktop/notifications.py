@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - solo TimeoutExpired; la ejecución pasa por safe_run
 import sys
 from typing import Callable
 

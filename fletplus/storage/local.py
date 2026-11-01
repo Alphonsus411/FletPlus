@@ -6,10 +6,13 @@ from typing import Any
 
 try:
     from flet.core.client_storage import ClientStorage  # type: ignore[attr-defined]
-except Exception:
+except ImportError:
+    # Ruta alternativa según la versión de Flet instalada.
     try:
         from flet.client_storage import ClientStorage  # type: ignore[attr-defined]
-    except Exception:
+    except ImportError:
+        # Último recurso: el tipo se usa solo como anotación en entornos sin
+        # backend de almacenamiento local disponible.
         from typing import Any as ClientStorage
 
 from . import Deserializer, Serializer, StorageProvider

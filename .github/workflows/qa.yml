@@ -19,3 +19,4 @@ jobs:
     uses: ./.github/workflows/reusable-quality.yml
     with:
       run-real-flet-build: ${{ github.event_name == 'workflow_dispatch' && inputs.run-real-flet-build }}
+      test-scope: smoke
