@@ -51,12 +51,14 @@ Cada bloque se considera listo cuando cumple las tres evidencias mínimas:
 
 **Objetivo:** asegurar que web, escritorio y móvil respondan de forma predecible ante tamaños, orientación y APIs cambiantes de Flet.
 
-- [ ] Reforzar fallback entre `Page.width/height`, `Page.window.width/height` y valores de configuración.
-- [ ] Cubrir orientación y perfiles (`mobile`, `tablet`, `desktop`, `large_desktop`) en pruebas de regresión.
-- [ ] Documentar patrones para SafeArea, padding seguro y ancho máximo por target.
-- [ ] Añadir guía de revisión manual para breakpoints críticos antes de publicar.
+- [x] Reforzar fallback entre `Page.width/height`, `Page.window.width/height` y valores de configuración.
+- [x] Cubrir orientación y perfiles (`mobile`, `tablet`, `desktop`, `large_desktop`) en pruebas de regresión.
+- [x] Documentar patrones para SafeArea, padding seguro y ancho máximo por target.
+- [x] Añadir guía de revisión manual para breakpoints críticos antes de publicar.
 
-**Módulos implicados:** `fletplus/utils/viewport.py`, `fletplus/frontend/config.py`, `fletplus/components/frontend_layouts.py`.
+**Evidencia:** `fletplus/frontend/config.py` (lectura de dimensiones vía `safe_page_width/height` con fallback a `max_content_width`) y `tests/test_frontend_config.py` (`WindowedPage`: prioridad `page.window` sobre `page.width`, fallback a configuración); `tests/test_viewport.py` (orientación `portrait`/`landscape` y los cuatro perfiles, incluido `large_desktop` con `EXTENDED_DEVICE_PROFILES`); secciones "Patrones por target: SafeArea, padding seguro y ancho máximo" y "Revisión manual de breakpoints críticos" en `docs/responsive.md`; ejemplo funcional redimensionable en `examples/responsive_demo/viewport_density_demo.py` (recorre `mobile`→`large_desktop`).
+
+**Módulos implicados:** `fletplus/utils/viewport.py`, `fletplus/frontend/config.py`, `fletplus/utils/device_profiles.py`, `fletplus/components/frontend_layouts.py`.
 
 **Criterio de finalización del bloque:** tests de viewport, docs responsive actualizadas y ejemplo funcional redimensionable en al menos web o escritorio.
 

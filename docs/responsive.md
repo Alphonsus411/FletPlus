@@ -454,6 +454,83 @@ Las plantillas `web`, `desktop` y `mobile` también los importan en
 `src/frontend/layout.py` para mostrar metadata de perfil, orientación, densidad
 y tamaño actual.
 
+## Patrones por target: SafeArea, padding seguro y ancho máximo
+
+Estos tres patrones cubren las decisiones de pantalla que más se repiten al
+pasar de móvil a web. Se apoyan en los helpers de viewport y en
+`FrontEndConfig`, de modo que la app no hardcodea tamaños por pantalla.
+
+### SafeArea en móvil
+
+`ft.SafeArea` evita que el contenido quede bajo los recortes del sistema
+(notch, barra gestual). No está disponible en todas las versiones de Flet, así
+que detéctalo por capacidades y degrada a un `Container` con padding seguro.
+Este es el patrón que usan las plantillas móviles generadas por la CLI:
+
+```python
+import flet as ft
+
+from fletplus.utils.viewport import safe_mobile_padding
+
+
+def build_scaffold(page: ft.Page, body: ft.Control) -> ft.Control:
+    shell = ft.Container(content=body, padding=safe_mobile_padding(page, base=16))
+
+    safe_area = getattr(ft, "SafeArea", None)
+    if safe_area is not None:
+        return safe_area(content=shell)
+    return ft.Container(content=shell, padding=12)
+```
+
+Cuando `ft.SafeArea` no existe, el fallback con `safe_mobile_padding` mantiene
+márgenes respirables en `portrait` y `landscape` derivados del perfil activo.
+
+### Padding seguro
+
+`safe_mobile_padding(page, base=...)` devuelve un `ft.Padding` que ajusta el eje
+vertical en móvil según orientación y densidad (compacta/normal/comfortable). En
+tablet y escritorio la simetría proviene de la densidad visual. Para layouts
+complejos puedes tomar el padding ya calculado del snapshot:
+
+```python
+from fletplus.utils.viewport import viewport_info
+
+info = viewport_info(page, padding_base=frontend.page_padding)
+content = ft.Container(content=body, padding=info.padding)
+```
+
+Evita mezclar `FrontEndConfig.page_padding` con paddings ad hoc: usa
+`page_padding` como base global y deja que `safe_mobile_padding` o
+`viewport_info` lo adapten por perfil.
+
+### Ancho máximo por target
+
+`FrontEndConfig` define presets de layout por destino. Al construir la
+configuración con `target=...`, `max_content_width`, `page_padding`, `spacing` y
+`layout_density` toman estos valores:
+
+| Target | `page_padding` | `max_content_width` | `spacing` | `layout_density` |
+| ------ | -------------- | ------------------- | --------- | ---------------- |
+| `web` | `32` | `1280` | `20` | `comfortable` |
+| `desktop` | `28` | `1180` | `18` | `comfortable` |
+| `mobile` | `16` | `480` | `12` | `compact` |
+| `android-apk` | `16` | `480` | `12` | `compact` |
+| `android-aab` | `16` | `480` | `12` | `compact` |
+| `ios` | `16` | `480` | `12` | `compact` |
+
+`content_width_for_page(page)` calcula el ancho útil centrado combinando el
+ancho real de la página con `max_content_width` y el padding lateral:
+
+```python
+width = frontend.content_width_for_page(page)
+shell = ft.Container(width=width, padding=frontend.page_padding, content=body)
+```
+
+`PageShell` aplica este mismo límite de forma declarativa (`max_width`, o
+`max_width_by_device`) y centra el contenido con `alignment=top_center`. Para
+contenido que nunca debe comprimirse por debajo de un mínimo, activa
+`allow_min_width_overflow` en `FrontEndConfig`.
+
 ## Layouts frontend por perfil de dispositivo
 
 Además de `ResponsiveGrid`, el módulo `fletplus.components.frontend_layouts`
@@ -497,3 +574,47 @@ Los componentes `PageShell`, `Section`, `CardGrid`, `HeroSection`,
 `ToolbarSection` y `FooterSection` llaman internamente a este helper. Esto
 permite que una app cambie de layout entre móvil, tablet y escritorio sin
 centralizar la lógica responsive en cada pantalla.
+
+## Revisión manual de breakpoints críticos
+
+Antes de publicar (web, escritorio o móvil), recorre manualmente las fronteras de
+perfil. Los tests cubren la resolución de perfiles, pero solo una revisión
+visual detecta saltos de layout, overflow o recortes en el dispositivo real.
+
+Fronteras que debes atravesar redimensionando la ventana o rotando el
+dispositivo:
+
+| Frontera | Transición | Qué revisar |
+| -------- | ---------- | ----------- |
+| `599 → 600 px` | `mobile` → `tablet` | Columnas `4`→`8`, densidad `compact`→`normal`, cabecera y navegación |
+| `1023 → 1024 px` | `tablet` → `desktop` | Columnas `8`→`12`, densidad → `comfortable`, shell centrado |
+| `1439 → 1440 px` | `desktop` → `large_desktop` | Solo con `EXTENDED_DEVICE_PROFILES`; columnas `16` |
+| `altura < 520 px` | densidad `compact` | Contenido comprimido pero sin solapamientos |
+| Cuadrado (`~600×600`) | `portrait` ↔ `landscape` | `height >= width` se trata como `portrait` |
+
+Checklist de aceptación manual:
+
+1. Redimensiona la ventana cruzando `599/600`, `1023/1024` y, si tu app usa
+   perfiles extendidos, `1439/1440`. No debe aparecer scroll horizontal ni
+   saltos bruscos de layout.
+2. Rota el dispositivo en móvil y tablet (`portrait` ↔ `landscape`) y verifica
+   cabeceras, navegación inferior y que no se recorte contenido.
+3. Confirma `ft.SafeArea` (o su fallback con `safe_mobile_padding`) en móvil con
+   notch y barra gestual.
+4. Comprueba que en web/escritorio el contenido queda centrado y no supera
+   `max_content_width` al ensanchar la ventana.
+5. Reduce la altura por debajo de `520 px` y confirma densidad compacta y scroll
+   funcional.
+6. Revisa padding y spacing por perfil con `viewport_info(page)`.
+7. Ejecuta los tests de regresión:
+
+   ```bash
+   python -m pytest tests/test_viewport.py tests/test_frontend_config.py
+   ```
+
+8. Abre `examples/responsive_demo/viewport_density_demo.py` y recorre todas las
+   fronteras observando orientación, perfil, densidad y padding en vivo.
+
+Si alguna frontera falla, revisa primero el perfil resuelto (`active_device_profile`),
+después la densidad (`visual_density_for_page`) y por último el padding seguro;
+ese orden aísla la causa sin tocar la vista.

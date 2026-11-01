@@ -25,7 +25,11 @@ from fletplus.utils.device_profiles import (
     columns_for_width,
     get_device_profile,
 )
-from fletplus.utils.viewport import visual_density_for_page
+from fletplus.utils.viewport import (
+    safe_page_height,
+    safe_page_width,
+    visual_density_for_page,
+)
 
 TypographyStyle = Mapping[str, int | float | str | None]
 TypographyScale = Mapping[str, TypographyStyle | Mapping[str, TypographyStyle]]
@@ -609,7 +613,7 @@ class FrontEndConfig:
     def screen_tokens_for_page(self, page: ft.Page) -> dict[str, object]:
         """Resuelve tokens de pantalla según perfil, orientación y densidad visual."""
         profile = self.resolve_device_profile(
-            int(getattr(page, "width", 0) or self.max_content_width)
+            safe_page_width(page, fallback=self.max_content_width)
         )
         device_name = _normalize_device_name(profile.name)
         tokens: dict[str, object] = {
@@ -732,7 +736,7 @@ class FrontEndConfig:
         )
 
     def content_width_for_page(self, page: ft.Page) -> int:
-        width = int(page.width or self.max_content_width)
+        width = safe_page_width(page, fallback=self.max_content_width)
         available_width = max(0, width - (self.page_padding * 2))
         content_width = min(available_width, self.max_content_width)
         if self.allow_min_width_overflow:
@@ -774,10 +778,10 @@ class FrontEndConfig:
         )
         theme_manager.apply_theme(
             device=self.resolve_device_profile(
-                int(getattr(page, "width", 0) or self.max_content_width)
+                safe_page_width(page, fallback=self.max_content_width)
             ).name,
             orientation=self.orientation_for_page(page),
-            width=getattr(page, "width", None),
+            width=safe_page_width(page) or None,
         )
         return theme_manager
 
@@ -803,8 +807,8 @@ class FrontEndConfig:
         return parsed.scheme in {"http", "https", "data"}
 
     def orientation_for_page(self, page: ft.Page) -> str:
-        width = int(getattr(page, "width", 0) or 0)
-        height = int(getattr(page, "height", 0) or 0)
+        width = safe_page_width(page)
+        height = safe_page_height(page)
         return "portrait" if height >= width else "landscape"
 
     def build_content_shell(self, control: ft.Control, page: ft.Page) -> ft.Container:

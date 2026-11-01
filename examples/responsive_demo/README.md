@@ -26,5 +26,5 @@ python viewport_density_demo.py
 ```
 
 Redimensiona la ventana o rota el dispositivo para ver cómo cambian
-`portrait`/`landscape`, el perfil (`mobile`, `tablet`, `desktop`) y la densidad
-`compact`, `normal` o `comfortable`.
+`portrait`/`landscape`, el perfil (`mobile`, `tablet`, `desktop`, `large_desktop`)
+y la densidad `compact`, `normal` o `comfortable`.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import flet as ft
 
+from fletplus.utils.device_profiles import EXTENDED_DEVICE_PROFILES
 from fletplus.utils.responsive_manager import ResponsiveManager
 from fletplus.utils.viewport import viewport_info
 
@@ -30,7 +31,12 @@ def main(page: ft.Page) -> None:
     panel = ft.Container(border_radius=18, content=metrics)
 
     def sync(_: object | None = None) -> None:
-        info = viewport_info(page, fallback_width=390, fallback_height=844)
+        info = viewport_info(
+            page,
+            profiles=EXTENDED_DEVICE_PROFILES,
+            fallback_width=390,
+            fallback_height=844,
+        )
         panel.padding = info.padding
         status.value = "Redimensiona la ventana o rota el dispositivo para actualizar los valores."
         metrics.controls = [
@@ -44,8 +50,14 @@ def main(page: ft.Page) -> None:
 
     ResponsiveManager(
         page,
+        device_profiles=EXTENDED_DEVICE_PROFILES,
         orientation_callbacks={"portrait": sync, "landscape": sync},
-        device_callbacks={"mobile": sync, "tablet": sync, "desktop": sync},
+        device_callbacks={
+            "mobile": sync,
+            "tablet": sync,
+            "desktop": sync,
+            "large_desktop": sync,
+        },
     )
     page.add(
         ft.Text("Viewport helpers", size=28, weight=ft.FontWeight.W_700),

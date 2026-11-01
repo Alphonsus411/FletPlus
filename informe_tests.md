@@ -138,3 +138,25 @@
 ### Notas
 - Auditoría de contraste: 21 pares por debajo del umbral AA en 14 paletas; el mínimo es `on_primary`/`primary` = 2.74 (`sunset`/light). Patrón dominante: `outline` sobre `surface` (1.84–2.70) y `on_primary` sobre `primary` en paletas claras. Registrado como deuda en el roadmap, sin modificar paletas.
 - Persisten 4 fallos ambientales en `tests/test_frontend_config.py` (`module 'flet' has no attribute 'Gradient'`), atribuibles a `flet` 0.28.3 instalado vs baseline ≥0.80; no relacionados con los cambios de este bloque.
+
+## Iteración 2026-11-01 (continuación) — Cierre de Bloque 2 del roadmap frontend (T2.1–T2.4)
+
+**Entorno canónico:** `.\.venv\Scripts\python.exe` (`flet` 0.80.5, dentro del contrato `>=0.80,<0.86`). El intérprete global tenía `flet` 0.28.3 (fuera de contrato) y provocaba los fallos ambientales anteriores; se revirtió el global y se adoptó `.venv` para todos los checks.
+
+### Cambios aplicados
+1. **T2.1 — Fallback de dimensiones**: `fletplus/frontend/config.py` lee ahora ancho/alto vía `safe_page_width`/`safe_page_height` (que priorizan `page.window.width/height` → `page.window_width` → `page.width`), con `max_content_width` como fallback. Afecta a `screen_tokens_for_page`, `content_width_for_page`, `orientation_for_page` y `apply_to_page`. Tests en `tests/test_frontend_config.py` (`WindowStub`/`WindowedPage`): prioridad `page.window` sobre `page.width`, fallback legacy `window_width/height`, fallback a configuración y precedencia de `page.width`.
+2. **T2.2 — Regresión de orientación y perfiles**: `tests/test_viewport.py` amplía con tests parametrizados de orientación (`portrait`/`landscape`, incluido el cuadrado `600×600`) y de los cuatro perfiles (`mobile`/`tablet`/`desktop` en `DEFAULT_DEVICE_PROFILES`; `large_desktop` con `EXTENDED_DEVICE_PROFILES`), verificando `columns` (4/8/12/16) y el snapshot completo (`viewport_info`: perfil, orientación, densidad).
+3. **T2.3 — Patrones por target**: nueva sección "Patrones por target: SafeArea, padding seguro y ancho máximo" en `docs/responsive.md` (detección por capacidades de `ft.SafeArea` con fallback a `safe_mobile_padding`, padding desde `viewport_info`, tabla de presets `page_padding`/`max_content_width`/`spacing`/`layout_density` por destino y uso de `content_width_for_page`/`PageShell`).
+4. **T2.4 — Guía de revisión manual**: nueva sección "Revisión manual de breakpoints críticos" en `docs/responsive.md` con tabla de fronteras (`599/600`, `1023/1024`, `1439/1440`, altura `<520`, cuadrado) y checklist de aceptación previo a publicar.
+5. **Ejemplo funcional**: `examples/responsive_demo/viewport_density_demo.py` usa ahora `EXTENDED_DEVICE_PROFILES` y observa los cuatro perfiles (`mobile`→`large_desktop`); `examples/responsive_demo/README.md` actualizado.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_viewport.py -q` | 24 passed |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_viewport.py tests/test_frontend_config.py tests/test_flet_compat.py -q` | 100 passed, 1 warning |
+| `.\.venv\Scripts\python.exe -m ruff check tests/test_viewport.py` | All checks passed |
+
+### Notas
+- El único warning es informativo (`Fuente local no encontrada para 'Inter'`) y proviene de un fixture de `test_frontend_config.py`, no de los cambios de este bloque.
+- El bloque queda cerrado: tests de viewport, docs responsive actualizadas y ejemplo funcional redimensionable para web/escritorio.

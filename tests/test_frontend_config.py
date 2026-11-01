@@ -603,3 +603,64 @@ line_height = 1.4
     assert config.text_style("badge", 768).size == 12
     assert config.text_style("badge", 1024).size == 14
     assert config.text_style("badge", 1440).size == 16
+
+
+class WindowStub:
+    def __init__(self, width: int | None = None, height: int | None = None) -> None:
+        self.width = width
+        self.height = height
+
+
+class WindowedPage(DummyPage):
+    """Página de prueba que expone ``window`` con dimensiones opcionales."""
+
+    def __init__(
+        self,
+        *,
+        width: int | None = None,
+        height: int | None = None,
+        window_width: int | None = None,
+        window_height: int | None = None,
+    ) -> None:
+        super().__init__()
+        self.width = width
+        self.height = height
+        self.window = WindowStub(window_width, window_height)
+
+
+def test_frontend_config_reads_dimensions_from_page_window_first() -> None:
+    page = WindowedPage(width=None, height=None, window_width=1280, window_height=800)
+    config = FrontEndConfig(palette="aurora", page_padding=24)
+
+    # ``page.window`` manda sobre ``page.width``/``page.height`` ausentes.
+    assert config.orientation_for_page(page) == "landscape"
+    assert config.screen_tokens_for_page(page)["device"] == "desktop"
+    assert config.screen_tokens_for_page(page)["orientation"] == "landscape"
+    assert config.content_width_for_page(page) == 1200
+
+
+def test_frontend_config_falls_back_to_legacy_window_dimensions() -> None:
+    page = WindowedPage(width=None, height=None, window_width=390, window_height=844)
+    config = FrontEndConfig(palette="aurora", page_padding=16, max_content_width=1200)
+
+    assert config.orientation_for_page(page) == "portrait"
+    assert config.screen_tokens_for_page(page)["device"] == "mobile"
+    assert config.content_width_for_page(page) == 358
+
+
+def test_frontend_config_uses_config_fallback_when_page_has_no_dimensions() -> None:
+    page = WindowedPage(width=None, height=None)
+    config = FrontEndConfig(palette="aurora", max_content_width=1180, page_padding=20)
+
+    assert config.content_width_for_page(page) == 1140
+    assert config.screen_tokens_for_page(page)["device"] == "desktop"
+
+
+def test_frontend_config_page_width_takes_precedence_when_window_missing() -> None:
+    page = DummyPage()
+    page.width = 500
+    page.height = 900
+    config = FrontEndConfig(palette="aurora")
+
+    assert config.orientation_for_page(page) == "portrait"
+    assert config.screen_tokens_for_page(page)["device"] == "mobile"
