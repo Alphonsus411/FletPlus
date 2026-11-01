@@ -3,9 +3,11 @@ import flet as ft
 from fletplus import FrontEndConfig
 from fletplus.components import (
     CardGrid,
+    FooterSection,
     HeroSection,
     PageShell,
     Section,
+    ToolbarSection,
     resolve_layout_tokens,
 )
 
@@ -150,3 +152,74 @@ def test_layout_resolution_priority_keeps_explicit_and_device_overrides_first():
     assert tokens.padding.left == 31
     assert tokens.max_width == 700
     assert tokens.columns == 4
+
+
+def test_section_resolve_tokens_exposes_resolved_profile_values():
+    page = DummyPage()
+    config = FrontEndConfig(spacing=10, page_padding=12, max_content_width=900)
+
+    section = Section(
+        content=ft.Text("Compacta"),
+        config=config,
+        spacing_by_device={"mobile": 9},
+        padding_by_device={"mobile": 7},
+    )
+
+    tokens = section.resolve_tokens(page)
+
+    assert tokens.profile.name == "mobile"
+    assert tokens.spacing == 9
+    assert tokens.padding.left == 7
+
+
+def test_hero_section_aligns_inner_spacing_with_tokens():
+    page = DummyPage()
+    config = FrontEndConfig(spacing=10, page_padding=12, max_content_width=900)
+    hero = HeroSection(
+        headline="Hola",
+        description="Layout",
+        primary_action=ft.FilledButton("Empezar"),
+        secondary_action=ft.OutlinedButton("Más"),
+        media=ft.Container(width=120),
+        config=config,
+        spacing_by_device={"mobile": 8},
+    )
+
+    row = hero.build(page).content.controls[0]
+
+    assert row.spacing == 16
+    body_column = row.controls[0]
+    assert body_column.spacing == 8
+    assert body_column.controls[-1].spacing == 8
+
+
+def test_toolbar_section_aligns_spacing_with_tokens():
+    page = DummyPage()
+    config = FrontEndConfig(spacing=10, page_padding=12, max_content_width=900)
+    toolbar = ToolbarSection(
+        leading="Panel",
+        trailing=[ft.TextButton("Exportar")],
+        config=config,
+        spacing_by_device={"mobile": 6},
+    )
+
+    row = toolbar.build(page).content.controls[0]
+
+    assert row.spacing == 6
+
+
+def test_footer_section_aligns_spacing_and_padding_with_tokens():
+    page = DummyPage()
+    config = FrontEndConfig(spacing=10, page_padding=12, max_content_width=900)
+    footer = FooterSection(
+        content=ft.Text("© 2026 FletPlus"),
+        links=[ft.TextButton("Privacidad"), ft.TextButton("Soporte")],
+        config=config,
+        spacing_by_device={"mobile": 6},
+        padding_by_device={"mobile": 4},
+    )
+
+    container = footer.build(page)
+
+    assert container.padding.left == 4
+    assert container.content.controls[-1].spacing == 6

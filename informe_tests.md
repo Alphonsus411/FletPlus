@@ -160,3 +160,26 @@
 ### Notas
 - El único warning es informativo (`Fuente local no encontrada para 'Inter'`) y proviene de un fixture de `test_frontend_config.py`, no de los cambios de este bloque.
 - El bloque queda cerrado: tests de viewport, docs responsive actualizadas y ejemplo funcional redimensionable para web/escritorio.
+
+## Iteración 2026-11-01 (continuación) — Cierre de Bloque 3 del roadmap frontend (T3.1–T3.4)
+
+### Cambios aplicados
+1. **T3.3 — Alineación de spacing/padding con `FrontEndConfig`**: nuevo método `Section.resolve_tokens(page)` en `fletplus/components/frontend_layouts.py`; `Section.build` lo reutiliza y `HeroSection`, `ToolbarSection` y `FooterSection` resuelven su spacing desde `resolve_layout_tokens` (tokens de pantalla, `*_by_device` o `FrontEndConfig`) en lugar de valores hardcodeados (`12`/`24` y `self.spacing or config.spacing`). Padding y ancho máximo ya se resolvían por tokens.
+2. **T3.1 — Auditoría de helpers**: tabla helper→responsabilidad→módulo en `docs/frontend-projects.md` §"Auditoría de helpers de layout", cubriendo `resolve_layout_tokens`/`LayoutTokens`, `PageShell`, `Section`, `CardGrid`, `HeroSection`, `ToolbarSection`, `FooterSection`, `content_width_for_page`, `build_content_shell` y `UniversalAdaptiveScaffold`; se documenta la separación contenido (`frontend_layouts.py`) vs navegación (`universal_scaffold.py`).
+3. **T3.2 — Patrones oficiales por target**: §"Patrones oficiales por target" en `docs/frontend-projects.md` con los tres patrones y código real (sidebar escritorio con `UniversalAdaptiveScaffold`, nav inferior móvil con `NavigationBar` + `make_navigation_bar_destination`, contenido centrado web con `build_content_shell`/`PageShell`).
+4. **T3.4 — Ejemplos de composición**: `examples/frontend_layout_examples.py` añade un estado vacío (`HeroSection` con acción primaria) al `PageShell` junto a hero, toolbar, `CardGrid` y footer.
+5. **Tests**: `tests/test_frontend_layouts.py` incorpora 4 pruebas de regresión (spacing interno del hero, spacing de toolbar, spacing+padding de footer y `Section.resolve_tokens`). Total del archivo: 10 tests.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_frontend_layouts.py tests/test_layouts.py tests/test_adaptive_layout.py -q` | 24 passed |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_frontend_layouts.py -q` | 10 passed |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_frontend_layouts.py tests/test_frontend_config.py tests/test_viewport.py tests/test_theme_contrast.py tests/test_cli_template_contracts.py -q` | 104 passed, 2 warnings |
+| `.\.venv\Scripts\python.exe -m ruff check tests/test_frontend_layouts.py fletplus/components/frontend_layouts.py examples/frontend_layout_examples.py` | All checks passed |
+| `.\.venv\Scripts\python.exe -m py_compile examples/frontend_layout_examples.py` | OK |
+
+### Notas
+- Cambio de comportamiento **intencional**: el spacing interno de `HeroSection` por defecto pasa de `12`/`24` fijos a derivarse de `LayoutTokens.spacing` (`spacing` y `spacing × 2`); las apps que fijaban `spacing` explícito mantienen el control mediante `spacing=` o `spacing_by_device=`.
+- Los 2 warnings son informativos (fuente `Inter` en un fixture y auditoría de contraste WCAG), sin relación con los cambios.
+- El bloque queda cerrado: tests de helpers de layout, docs con patrones por target y layout completo renderizable (plantilla web + `examples/frontend_layout_examples.py`).

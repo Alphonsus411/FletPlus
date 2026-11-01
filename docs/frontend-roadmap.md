@@ -66,10 +66,12 @@ Cada bloque se considera listo cuando cumple las tres evidencias mínimas:
 
 **Objetivo:** ofrecer estructuras reutilizables que eviten duplicación entre landing, dashboard, admin y móvil.
 
-- [ ] Auditar helpers existentes para shell, content width, secciones, hero y footer.
-- [ ] Definir patrones oficiales para sidebar desktop, navegación inferior móvil y contenido centrado web.
-- [ ] Alinear spacing, padding y densidad con `FrontEndConfig` en todos los helpers.
-- [ ] Añadir ejemplos de composición con tarjetas, acciones primarias y estados vacíos.
+- [x] Auditar helpers existentes para shell, content width, secciones, hero y footer.
+- [x] Definir patrones oficiales para sidebar desktop, navegación inferior móvil y contenido centrado web.
+- [x] Alinear spacing, padding y densidad con `FrontEndConfig` en todos los helpers.
+- [x] Añadir ejemplos de composición con tarjetas, acciones primarias y estados vacíos.
+
+**Evidencia:** `docs/frontend-projects.md` §"Auditoría de helpers de layout" (tabla helper→responsabilidad→módulo para `resolve_layout_tokens`, `PageShell`, `Section`, `CardGrid`, `HeroSection`, `ToolbarSection`, `FooterSection`, `content_width_for_page`, `build_content_shell` y `UniversalAdaptiveScaffold`) y §"Patrones oficiales por target" (sidebar escritorio, nav inferior móvil y contenido centrado web con código); `fletplus/components/frontend_layouts.py` (nuevo `Section.resolve_tokens()`; `HeroSection`, `ToolbarSection` y `FooterSection` resuelven su spacing desde `resolve_layout_tokens` en lugar de valores hardcodeados) cubierto por `tests/test_frontend_layouts.py` (alineación de spacing/padding por tokens); ejemplo con tarjetas, acciones primarias y estado vacío en `examples/frontend_layout_examples.py`.
 
 **Módulos implicados:** `fletplus/components/frontend_layouts.py`, `fletplus/frontend/config.py`, `fletplus/cli/templates/*`.
 

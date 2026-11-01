@@ -92,9 +92,21 @@ def main(page: ft.Page) -> None:
         padding_by_device={"mobile": 12, "desktop": 20},
     )
 
+    empty_state = HeroSection(
+        eyebrow="Estado vacío",
+        headline="Aún no hay informes",
+        description="Cuando generes tu primer informe aparecerá aquí con sus métricas clave.",
+        primary_action=ft.FilledButton("Crear informe"),
+        config=frontend,
+        theme=theme,
+        bgcolor_token="surface_soft",
+        border_radius=18,
+        padding_by_device={"mobile": 14, "desktop": 24},
+    )
+
     page.add(
         PageShell(
-            sections=[hero, toolbar, grid, footer],
+            sections=[hero, toolbar, grid, empty_state, footer],
             config=frontend,
             theme=theme,
             spacing_by_device={"mobile": 14, "tablet": 18, "desktop": 24},

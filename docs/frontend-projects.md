@@ -349,10 +349,90 @@ def responsive_shell(content: ft.Control, page: ft.Page, frontend: FrontEndConfi
     return max_width_container(content, page, frontend)
 ```
 
-Buenas prácticas por destino:
+### Auditoría de helpers de layout
 
-- **Web**: limita el ancho con `build_content_shell`, usa filas con `wrap=True` y prepara cards para diferentes columnas.
-- **Escritorio**: combina sidebar, panel principal y panel secundario; respeta `min_width` para evitar interfaces comprimidas.
+Estos son los helpers oficiales para componer pantallas; todos resuelven sus
+valores por perfil activo y evitan tamaños hardcodeados en las vistas.
+
+| Helper | Responsabilidad | Módulo |
+| ------ | --------------- | ------ |
+| `resolve_layout_tokens()` / `LayoutTokens` | Resuelve `spacing`, `padding`, `max_width` y `columns` del perfil activo. Prioridad: valor explícito → `*_by_device` → token de pantalla → `FrontEndConfig` → perfil | `fletplus/components/frontend_layouts.py` |
+| `PageShell` | Shell de página: centra el contenido, aplica `max_width` y separa las secciones | ídem |
+| `Section` | Sección vertical con cabecera opcional (`title`, `subtitle`, `actions`) | ídem |
+| `CardGrid` | Grid de tarjetas con columnas derivadas del perfil | ídem |
+| `HeroSection` | Portada o estado vacío: `eyebrow`, `headline`, `description`, acciones y `media` | ídem |
+| `ToolbarSection` | Barra de herramientas con `leading` y `trailing` | ídem |
+| `FooterSection` | Pie de página con `caption` y enlaces | ídem |
+| `FrontEndConfig.content_width_for_page()` | Ancho útil centrado: `min(ancho − 2·page_padding, max_content_width)` | `fletplus/frontend/config.py` |
+| `FrontEndConfig.build_content_shell()` | Envuelve un control en un contenedor centrado con el ancho útil y el padding de página | ídem |
+| `UniversalAdaptiveScaffold` | Navegación adaptativa: `NavigationRail` (tablet/escritorio), `NavigationBar` inferior (móvil) y panel secundario | `fletplus/components/universal_scaffold.py` |
+
+`frontend_layouts.py` cubre la **composición de contenido** (shell, secciones,
+hero, footer); la **navegación** (sidebar y nav inferior) vive en
+`UniversalAdaptiveScaffold`. Ambos comparten el mismo sistema de perfiles, y los
+helpers de contenido delegan siempre en `resolve_layout_tokens`, por lo que
+spacing, padding y ancho máximo quedan alineados con `FrontEndConfig`.
+
+### Patrones oficiales por target
+
+**Sidebar en escritorio.** `UniversalAdaptiveScaffold` despliega un
+`NavigationRail` (extendido en `desktop`/`large_desktop`) y centra el contenido
+con `desktop_max_content_width`:
+
+```python
+from fletplus.components import (
+    AdaptiveNavigationItem,
+    UniversalAdaptiveScaffold,
+)
+
+scaffold = UniversalAdaptiveScaffold(
+    navigation_items=[
+        AdaptiveNavigationItem("inicio", "Inicio", ft.Icons.HOME),
+        AdaptiveNavigationItem("ajustes", "Ajustes", ft.Icons.SETTINGS),
+    ],
+    content_builder=lambda item, index: render_view(item.id),
+    theme=theme,
+    page_title="Mi app",
+    desktop_max_content_width=frontend.max_content_width,
+)
+page.add(scaffold.build(page))
+```
+
+**Navegación inferior en móvil.** En `mobile` el mismo scaffold coloca un
+`NavigationBar` fijo abajo; si no usas el scaffold, replica el patrón de la
+plantilla móvil:
+
+```python
+def build_navigation() -> ft.NavigationBar:
+    return ft.NavigationBar(
+        destinations=[
+            make_navigation_bar_destination(
+                icon=get_flet_icon("HOME", "home"), label="Inicio"
+            ),
+            make_navigation_bar_destination(
+                icon=get_flet_icon("PERSON", "person"), label="Perfil"
+            ),
+        ],
+    )
+
+
+page.navigation_bar = build_navigation()
+```
+
+**Contenido centrado en web.** Limita el ancho con `build_content_shell` o, para
+páginas con varias secciones, con `PageShell`:
+
+```python
+shell = frontend.build_content_shell(content, page)
+
+# o, con secciones semánticas:
+page.add(PageShell(sections=[hero, grid, footer], config=frontend, theme=theme).build(page))
+```
+
+### Buenas prácticas por destino
+
+- **Web**: limita el ancho con `build_content_shell` o `PageShell`, usa filas con `wrap=True` y prepara cards para diferentes columnas.
+- **Escritorio**: combina sidebar (`UniversalAdaptiveScaffold`) con panel principal y panel secundario; respeta `min_width` para evitar interfaces comprimidas.
 - **Móvil**: usa `SafeArea` cuando esté disponible, densidad compacta y navegación inferior táctil.
 
 ## Rutas

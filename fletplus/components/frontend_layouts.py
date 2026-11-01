@@ -213,8 +213,10 @@ class Section:
     bgcolor: str | None = None
     border_radius: int | float | ft.BorderRadius | None = None
 
-    def build(self, page: ft.Page) -> ft.Container:
-        tokens = resolve_layout_tokens(
+    def resolve_tokens(self, page: ft.Page) -> LayoutTokens:
+        """Resuelve spacing, padding y ancho máximo del perfil activo."""
+
+        return resolve_layout_tokens(
             page,
             config=self.config,
             theme=self.theme,
@@ -225,6 +227,9 @@ class Section:
             padding_by_device=self.padding_by_device,
             max_width_by_device=self.max_width_by_device,
         )
+
+    def build(self, page: ft.Page) -> ft.Container:
+        tokens = self.resolve_tokens(page)
         controls: list[ft.Control] = []
         if self.title or self.subtitle or self.actions:
             title_controls: list[ft.Control] = []
@@ -333,6 +338,8 @@ class HeroSection(Section):
 
     def build(self, page: ft.Page) -> ft.Container:
         cfg = self.config or FrontEndConfig()
+        tokens = self.resolve_tokens(page)
+        spacing = tokens.spacing
         width = get_page_width(page)
         body: list[ft.Control] = []
         if self.eyebrow:
@@ -346,11 +353,14 @@ class HeroSection(Section):
             if control is not None
         ]
         if actions:
-            body.append(ft.Row(actions, spacing=12, wrap=True))
+            body.append(ft.Row(actions, spacing=spacing, wrap=True))
         content: ft.Control = (
-            ft.Row([ft.Column(body, spacing=12, expand=True), self.media], spacing=24)
+            ft.Row(
+                [ft.Column(body, spacing=spacing, expand=True), self.media],
+                spacing=spacing * 2,
+            )
             if self.media
-            else ft.Column(body, spacing=12)
+            else ft.Column(body, spacing=spacing)
         )
         self.content = content
         return Section.build(self, page)
@@ -365,6 +375,7 @@ class ToolbarSection(Section):
     text_role: str = "label"
 
     def build(self, page: ft.Page) -> ft.Container:
+        tokens = self.resolve_tokens(page)
         row_controls = []
         if self.leading:
             row_controls.append(
@@ -379,11 +390,7 @@ class ToolbarSection(Section):
             _text_control(control, config=self.config, role=self.text_role, page=page)
             for control in self.trailing
         )
-        self.content = ft.Row(
-            row_controls,
-            spacing=self.spacing or (self.config or FrontEndConfig()).spacing,
-            wrap=True,
-        )
+        self.content = ft.Row(row_controls, spacing=tokens.spacing, wrap=True)
         return Section.build(self, page)
 
 
@@ -397,6 +404,7 @@ class FooterSection(Section):
     link_role: str = "label"
 
     def build(self, page: ft.Page) -> ft.Container:
+        tokens = self.resolve_tokens(page)
         controls = (
             [self.content]
             if isinstance(self.content, ft.Control)
@@ -418,7 +426,7 @@ class FooterSection(Section):
                         )
                         for link in self.links
                     ],
-                    spacing=self.spacing or (self.config or FrontEndConfig()).spacing,
+                    spacing=tokens.spacing,
                     wrap=True,
                 )
             )
