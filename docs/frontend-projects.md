@@ -283,6 +283,15 @@ InterBold = "assets/fonts/Inter-Bold.ttf"
 
 `FrontEndConfig.apply_to_page(page)` registra los assets en `page.fonts`, compone `Theme.font_family` como `Inter, Roboto, Arial, sans-serif` y avisa si un archivo local declarado no existe. Los pesos no cargan archivos por sí solos: documentan qué variantes has incluido para mantener alineados diseño, QA y configuración.
 
+### Carga local, fallbacks y metadatos
+
+- `apply_to_page(page)` registra `font.assets` (y el alias heredado `font_assets`) en `page.fonts` usando la clave como familia; la ruta se resuelve relativa a `font_assets_base_path`, que `from_pyproject()` fija al directorio del `pyproject.toml`.
+- `fallback_families` se compone en `Theme.font_family` como `Familia, Fallback1, Fallback2, …`. Si no declaras `font`, se usa `font_family`.
+- Los assets aceptan URLs `http(s)://` y `data:`; en ese caso no se valida su presencia local.
+- `weights` y `styles` son **metadatos descriptivos**: no cargan variantes por sí solos, solo documentan qué has incluido.
+- El alias `[tool.fletplus.frontend.fonts]` se traduce a `font_assets` y sirve para proyectos que aún no usan el bloque `[tool.fletplus.frontend.font]`.
+- Si un asset local declarado no existe, `apply_to_page()` emite un `UserWarning` con la ruta esperada en lugar de fallar.
+
 ## Tipografía responsive
 
 `FrontEndConfig` incluye roles tipográficos base para `display`, `headline`, `title`, `body`, `label` y `caption`. Los componentes de layout reutilizables aplican esos roles con `text_style()` cuando renderizan texto directamente: `HeroSection` usa `label`, `display` y `body`; `Section` usa `title` y `body`; `ToolbarSection` puede convertir textos simples a controles con rol `label`; y `FooterSection` permite `caption` para metadatos o copyright.
@@ -332,7 +341,22 @@ badge = ft.Text("Beta", style=frontend.text_style("badge", width))
 tokens = frontend.resolved_typography_tokens()
 ```
 
-Si un rol personalizado no define todos los dispositivos, `resolve_typography()` usa la variante del perfil activo y cae a `desktop`, `mobile` o `{}` según disponibilidad. Para textos de navegación, badges o ayudas contextuales, crea roles semánticos (`nav_item`, `badge`, `helper`) en lugar de reutilizar tamaños hardcodeados.
+### Roles y degradación
+
+| Rol | Uso típico |
+| --- | ---------- |
+| `display` | Portada o hero principal |
+| `headline` | Título de sección destacada |
+| `title` | Título de tarjeta, diálogo o panel |
+| `body` | Párrafo y texto base |
+| `label` | Acciones, metadatos y navegación |
+| `caption` | Ayuda contextual y copyright |
+
+Puedes declarar roles personalizados (por ejemplo `badge`, `nav_item`, `helper`) en `[tool.fletplus.frontend.typography_tokens]`; si un rol no existe, `resolve_typography()` usa `body`.
+
+`resolve_typography()` degrada el rol por dispositivo cuando falta el perfil activo siguiendo el orden `large_desktop → desktop → tablet → mobile`; si el rol no define ninguna variante, recurre al rol `body`. Un rol declarado con valores planos (`size`/`weight`/`line_height`) se interpreta como variante `mobile`.
+
+Para textos de navegación, badges o ayudas contextuales, crea roles semánticos (`nav_item`, `badge`, `helper`) en lugar de reutilizar tamaños hardcodeados.
 
 ## Responsive layout
 
@@ -454,28 +478,86 @@ Para crecer el proyecto:
 
 ## Assets
 
-Las plantillas crean `assets/README.md` y una referencia centralizada:
-
-```python
-ASSETS_DIR = Path("assets")
-PLACEHOLDER_README = ASSETS_DIR / "README.md"
-```
-
-Organiza los assets por tipo:
+Las plantillas crean una estructura normalizada con un marcador de texto seguro en cada subdirectorio:
 
 ```text
 assets/
 ├── fonts/
+│   └── README.md
 ├── icons/
+│   └── README.md
 ├── images/
+│   └── README.md
 └── README.md
 ```
+
+Las rutas base están centralizadas en `src/frontend/assets.py`, el punto único para constantes de recursos:
+
+```python
+ASSETS_DIR = Path("assets")  # también declarado en src/frontend/config.py
+FONTS_DIR = ASSETS_DIR / "fonts"
+ICONS_DIR = ASSETS_DIR / "icons"
+IMAGES_DIR = ASSETS_DIR / "images"
+```
+
+`page.assets_dir` de Flet se resuelve relativo a `ASSETS_DIR`, así que la `src` de un control es la ruta **relativa** al directorio de assets:
+
+```python
+from frontend.assets import ASSETS_DIR, IMAGES_DIR
+
+page.assets_dir = str(ASSETS_DIR)
+logo_src = (IMAGES_DIR / "logo_primary.png").relative_to(ASSETS_DIR).as_posix()  # "images/logo_primary.png"
+ft.Image(src=logo_src)
+```
+
+Las fuentes siguen otra convención: `FONT_ASSETS` declara rutas **relativas a la raíz del proyecto** (`assets/fonts/Inter-Regular.ttf`) que `FrontEndConfig` resuelve contra el directorio del `pyproject.toml`.
 
 Recomendaciones:
 
 - Usa nombres estables (`logo_primary.png`, `hero_dashboard.webp`, `Inter-Regular.ttf`).
 - Evita rutas hardcodeadas repetidas; exporta constantes desde `frontend/assets.py`.
-- Para web/PWA, revisa que los iconos requeridos estén disponibles antes de desplegar.
+- Antes de `fletplus build`, este avisa (sin bloquear) si `[tool.fletplus].icon` o `[tool.fletplus].assets_dir` apuntan a rutas inexistentes.
+
+### Requisitos PWA (web)
+
+`fletplus.web.pwa` genera `manifest.json` y `service_worker.js`, y `register_pwa(page)` los registra en la página:
+
+```python
+from fletplus.web.pwa import register_pwa
+
+register_pwa(page, manifest_url="manifest.json", service_worker_url="service_worker.js")
+```
+
+Iconos requeridos en `assets/icons/`:
+
+- PNG `192x192` y `512x512`: obligatorios para que el navegador considere la app instalable.
+- Una variante `512x512` con `"purpose": "maskable"` para Android, con ~10 % de margen de seguridad.
+- `start_url` y `display: "standalone"` los fija `generate_manifest(name, icons, start_url, output_dir)`.
+
+### Iconos de escritorio
+
+`fletplus build` resuelve el icono en este orden: `[tool.fletplus].icon` → `assets/icon.png` → `assets/icons/app.png` → `icon.png` → `app.png`. Declara el archivo definitivo para evitar ambigüedad:
+
+```toml
+[tool.fletplus]
+icon = "assets/icons/app.png"
+```
+
+- Windows: incluye un `.ico` con tamaños 16/32/48/256.
+- macOS: incluye un `.icns`.
+- Flet convierte el PNG declarado a los formatos nativos durante `flet build`.
+
+### Assets móviles
+
+- Android: icono adaptativo (foreground + background), sin texto pegado a los bordes; el build deriva los `mipmap-*` desde el PNG declarado.
+- iOS: el `AppIcon` necesita PNG sin transparencia y un `1024x1024` para el App Store.
+- Mantén `package` y `orientation` alineados con `[tool.fletplus.mobile]`:
+
+```toml
+[tool.fletplus.mobile]
+package = "com.example.miapp"
+orientation = "portrait"
+```
 
 ## Estados de UI
 

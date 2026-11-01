@@ -1,7 +1,7 @@
 import flet as ft
 import pytest
 
-from fletplus.components.adaptive_app_header import AdaptiveAppHeader
+from fletplus.components.adaptive_app_header import AdaptiveAppHeader, MetadataBadge
 from fletplus.themes.theme_manager import ThemeManager
 
 
@@ -65,3 +65,19 @@ def test_adaptive_app_header_orientation_switch(orientation: str) -> None:
         assert isinstance(header._content_column.controls[0], ft.Row)
     else:
         assert isinstance(header._content_column.controls[0], ft.Column)
+
+
+def test_metadata_badge_tooltip_uses_native_property() -> None:
+    """El tooltip de una insignia se asigna como propiedad nativa (flet 0.80+)."""
+
+    control = ft.Text("Beta")
+
+    header = AdaptiveAppHeader(
+        title="Panel",
+        metadata=[MetadataBadge(control=control, tooltip="Versión preliminar")],
+    )
+
+    assert control.tooltip == "Versión preliminar"
+
+    wrapped = header._wrap_badge(MetadataBadge(control=ft.Text("x"), tooltip="info"))
+    assert wrapped.tooltip == "info"

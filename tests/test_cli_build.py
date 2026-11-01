@@ -6,6 +6,7 @@ import re
 import subprocess
 import sys
 import types
+import warnings
 from pathlib import Path
 from unittest.mock import patch
 
@@ -383,6 +384,30 @@ base_url = '/demo'
         assert (base / "build" / "web" / "static" / "custom.png").exists()
 
 
+def test_project_config_app_overrides_default_entrypoint(tmp_path: Path) -> None:
+    """`[tool.fletplus].app` debe aplicarse cuando `--app` va en su valor por defecto.
+
+    Regresión (Windows): el guardián del default comparaba
+    ``str(app_path) == "src/main.py"``; en Windows ``str(Path("src/main.py"))`` es
+    ``'src\\main.py'``, así que el default nativo no se reconocía, se ignoraba la
+    configuración del proyecto y se buscaba un inexistente ``src/main.py``.
+    """
+
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "main.py").write_text("print('configured')\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        "[project]\nname = 'configured-app'\nversion = '2.0.0'\n\n"
+        "[tool.fletplus]\napp = 'app/main.py'\n",
+        encoding="utf-8",
+    )
+
+    context = build_module.FullStackBuildContext.from_project(
+        tmp_path, Path("src/main.py")
+    )
+
+    assert context.app_path == (tmp_path / "app" / "main.py").resolve()
+
+
 def test_build_uses_tool_fletplus_mobile_package(monkeypatch) -> None:
     _configure_watchdog(monkeypatch, available=True)
     app = _load_cli_app()
@@ -596,3 +621,52 @@ deploy_provider = 'external-proxy'
         ).read_text(encoding="utf-8")
         assert "source .env.production" in backend_template
         assert "python server/main.py" in backend_template
+
+
+def _write_assets_project(
+    tmp_path: Path, *, tool_fletplus: str, create_icon: bool = False
+) -> None:
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "main.py").write_text("print('x')\n", encoding="utf-8")
+    if create_icon:
+        (tmp_path / "assets").mkdir()
+        (tmp_path / "assets" / "icon.png").write_bytes(b"fake")
+    (tmp_path / "pyproject.toml").write_text(
+        f"[project]\nname = 'assets-demo'\nversion = '1.0.0'\n\n"
+        f"[tool.fletplus]\napp = 'app/main.py'\n{tool_fletplus}",
+        encoding="utf-8",
+    )
+
+
+def test_build_warns_about_declared_but_missing_icon(tmp_path: Path) -> None:
+    """La validación liviana avisa si `[tool.fletplus].icon` no existe."""
+    _write_assets_project(tmp_path, tool_fletplus="icon = 'assets/icon.png'\n")
+
+    with pytest.warns(UserWarning, match="Icono declarado no encontrado"):
+        build_module.FullStackBuildContext.from_project(tmp_path, Path("src/main.py"))
+
+
+def test_build_warns_about_declared_but_missing_assets_dir(tmp_path: Path) -> None:
+    """La validación liviana avisa si `[tool.fletplus].assets_dir` no existe."""
+    _write_assets_project(tmp_path, tool_fletplus="assets_dir = 'static'\n")
+
+    with pytest.warns(UserWarning, match="Directorio de assets declarado no encontrado"):
+        build_module.FullStackBuildContext.from_project(tmp_path, Path("src/main.py"))
+
+
+def test_build_does_not_warn_when_declared_assets_exist(tmp_path: Path) -> None:
+    """Sin assets críticos ausentes, la construcción del contexto es silenciosa."""
+    _write_assets_project(
+        tmp_path,
+        tool_fletplus="assets_dir = 'assets'\nicon = 'assets/icon.png'\n",
+        create_icon=True,
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        context = build_module.FullStackBuildContext.from_project(
+            tmp_path, Path("src/main.py")
+        )
+
+    assert context.assets_dir == tmp_path / "assets"
+    assert context.icon_path == tmp_path / "assets" / "icon.png"

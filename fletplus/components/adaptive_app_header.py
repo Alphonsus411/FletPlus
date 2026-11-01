@@ -278,7 +278,10 @@ class AdaptiveAppHeader:
     def _wrap_badge(self, badge: MetadataBadge) -> ft.Control:
         control = badge.control
         if badge.tooltip:
-            return ft.Tooltip(content=control, message=badge.tooltip)
+            # En flet 0.80+ la ayuda contextual es una propiedad nativa del
+            # control; ``ft.Tooltip`` es un objeto de configuración que se
+            # asigna a ``control.tooltip``, no un contenedor con ``content``.
+            control.tooltip = badge.tooltip
         return control
 
     # ------------------------------------------------------------------

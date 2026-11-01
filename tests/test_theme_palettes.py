@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from fletplus.themes.palettes import get_palette_definition, has_palette
 from fletplus.themes.theme_manager import load_palette_from_file
 
 
@@ -45,3 +46,15 @@ def test_load_palette_from_file_multiple_nested_groups(tmp_path):
     loaded = load_palette_from_file(str(file_path), "dark")
     assert loaded["success_300"] == "#abc"
     assert loaded["error_800"] == "#def"
+
+
+def test_material_palette_is_registered_with_light_and_dark_variants() -> None:
+    """La paleta por defecto de `FrontEndConfig` debe estar registrada."""
+
+    assert has_palette("material")
+
+    definition = get_palette_definition("material") or {}
+    for mode in ("light", "dark"):
+        colors = definition.get(mode, {}).get("colors", {})
+        assert colors.get("primary") == "#2196F3"
+        assert colors.get("surface") == "#FFFFFF"

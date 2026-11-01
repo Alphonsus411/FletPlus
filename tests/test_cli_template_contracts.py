@@ -46,6 +46,8 @@ SEMANTIC_COLOR_TOKENS = (
     "success",
     "error",
 )
+NORMALIZED_ASSET_DIRS = ("assets/fonts", "assets/icons", "assets/images")
+ASSET_DIR_CONSTANTS = ("FONTS_DIR", "ICONS_DIR", "IMAGES_DIR")
 
 
 def _configure_watchdog(monkeypatch: pytest.MonkeyPatch, *, available: bool) -> None:
@@ -74,6 +76,20 @@ def _load_cli_app():
 def _defined_functions(path: Path) -> set[str]:
     module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     return {node.name for node in module.body if isinstance(node, ast.FunctionDef)}
+
+
+def _module_constants(path: Path) -> set[str]:
+    """Extrae los nombres de constantes asignadas a nivel de módulo."""
+    module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    names: set[str] = set()
+    for node in module.body:
+        if isinstance(node, ast.Assign):
+            names.update(
+                target.id for target in node.targets if isinstance(target, ast.Name)
+            )
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+    return names
 
 
 def _default_custom_tokens(path: Path) -> dict[str, object]:
@@ -193,3 +209,27 @@ def test_frontend_templates_expose_semantic_color_tokens(template_name: str) -> 
 
     assert isinstance(colors, dict)
     assert set(SEMANTIC_COLOR_TOKENS).issubset(colors)
+
+
+@pytest.mark.parametrize("template_name", TEMPLATES)
+def test_frontend_templates_normalize_asset_directories(template_name: str) -> None:
+    """Las plantillas CLI incluyen la estructura normalizada de assets."""
+    template_dir = TEMPLATE_ROOT / template_name
+
+    missing_markers = [
+        f"{relative_path}/README.md"
+        for relative_path in NORMALIZED_ASSET_DIRS
+        if not (template_dir / relative_path / "README.md").is_file()
+    ]
+
+    assert not missing_markers, f"{template_name} no incluye: {missing_markers}"
+
+
+@pytest.mark.parametrize("template_name", TEMPLATES)
+def test_frontend_templates_expose_asset_directory_constants(template_name: str) -> None:
+    """``src/frontend/assets.py`` expone las constantes de cada subdirectorio."""
+    assets_path = TEMPLATE_ROOT / template_name / "src" / "frontend" / "assets.py"
+
+    constants = _module_constants(assets_path)
+
+    assert set(ASSET_DIR_CONSTANTS).issubset(constants)

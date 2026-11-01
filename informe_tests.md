@@ -183,3 +183,138 @@
 - Cambio de comportamiento **intencional**: el spacing interno de `HeroSection` por defecto pasa de `12`/`24` fijos a derivarse de `LayoutTokens.spacing` (`spacing` y `spacing × 2`); las apps que fijaban `spacing` explícito mantienen el control mediante `spacing=` o `spacing_by_device=`.
 - Los 2 warnings son informativos (fuente `Inter` en un fixture y auditoría de contraste WCAG), sin relación con los cambios.
 - El bloque queda cerrado: tests de helpers de layout, docs con patrones por target y layout completo renderizable (plantilla web + `examples/frontend_layout_examples.py`).
+
+## Iteración 2026-11-01 (continuación) — Cierre de Bloque 4 del roadmap frontend (T4.1–T4.4) y corrección de incompatibilidad de `Tooltip`
+
+### Cambios aplicados
+1. **T4.1 — Roles tipográficos**: nueva sección "Roles y degradación" en `docs/frontend-projects.md` (tabla rol→uso típico para `display`/`headline`/`title`/`body`/`label`/`caption`, soporte de roles personalizados y orden de degradación).
+2. **T4.2 — Carga de fuentes locales**: nueva sección "Carga local, fallbacks y metadatos" en `docs/frontend-projects.md` (registro en `page.fonts`, resolución relativa a `font_assets_base_path`, composición de `fallback_families`, URLs `http(s)`/`data:`, `weights`/`styles` como metadatos, alias `[tool.fletplus.frontend.fonts]` y `UserWarning` si falta un asset).
+3. **T4.3 — Degradación de `text_style()`**: `fletplus/frontend/config.py` añade `_TYPOGRAPHY_DEVICE_FALLBACKS` y `_select_typography_variant()`; `resolve_typography()` degrada a la variante de dispositivo más cercana (`large_desktop → desktop → tablet → mobile`) y, en último término, al rol `body`. 3 tests nuevos en `tests/test_frontend_config.py`.
+4. **T4.4 — Ejemplo con roles semánticos**: `examples/responsive_typography_example.py` demuestra navegación (`nav_item`), badges (`badge`) y ayudas contextuales (`helper`, rol plano) con una `FontDeclaration` personalizada (`Inter` + fallbacks) y `NavigationBar`.
+5. **Corrección de incompatibilidad (crítica)**: `ft.Tooltip(content=..., message=...)` **no es válido en `flet 0.80.5`** — `Tooltip.__init__` solo acepta `message`/`decoration` y `Tooltip` es un objeto de configuración que se asigna a `control.tooltip`, no un contenedor con `content`. Se sustituyó el patrón roto en `fletplus/components/adaptive_app_header.py` (`_wrap_badge`, línea 281) y `fletplus/components/responsive_grid.py` (`_create_tag_control`, línea 1374) por la asignación nativa `control.tooltip = ...`. 3 tests de regresión añadidos (`tests/test_adaptive_app_header.py`, `tests/test_responsive_grid.py`).
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_frontend_config.py -q` | 38 passed, 1 warning |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_adaptive_app_header.py tests/test_responsive_grid.py -q` | 15 passed |
+| `.\.venv\Scripts\python.exe -m ruff check tests/test_adaptive_app_header.py tests/test_responsive_grid.py fletplus/components/adaptive_app_header.py fletplus/components/responsive_grid.py examples/responsive_typography_example.py` | All checks passed |
+| smoke `main(page)` de `examples/responsive_typography_example.py` | OK (perfiles `mobile` y `large_desktop`) |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_theme_palettes.py tests/test_frontend_config.py tests/test_theme_contrast.py tests/test_theme_manager.py tests/test_theme_tokens.py tests/test_theme_manager_signals.py -q` | 67 passed, 2 warnings |
+| `.\.venv\Scripts\python.exe -m ruff check fletplus/themes/palettes.py tests/test_theme_palettes.py tests/test_frontend_config.py` | All checks passed |
+
+### Notas
+- El warning es informativo (fuente local `Inter` en un fixture).
+- **Hallazgo secundario (preexistente) — CORREGIDO:** `FrontEndConfig.palette` por defecto es `"material"`, que **no** estaba en `_PRESET_PALETTES` (19 paletas, ninguna llamada `material`); `apply_to_page()` registraba `ERROR … Failed to apply palette 'material': Palette 'material' is not registered` y no aplicaba ninguna paleta. Afectaba a cualquier configuración que no declare `palette=` (incluidos los ejemplos de Bloques 2–3). No era fatal (degradaba a los tokens por defecto de `ThemeManager`). **Resuelto** registrando la paleta `material` en `fletplus/themes/palettes.py` con equivalentes hexadecimales de los tokens base de `ThemeManager` (misma apariencia; se usa hex y no nombres Material porque `parse_hex_color` de la auditoría WCAG exige hex). 2 tests de regresión añadidos (`tests/test_theme_palettes.py`, `tests/test_frontend_config.py`). La auditoría de contraste añade 2 líneas informativas nuevas (`material/light` y `material/dark`: `success` sobre `surface` = 2.78 < 3) que **no** bloquean el CI.
+- El bloque queda cerrado: tests de resolución tipográfica, docs de roles/fuentes y ejemplo funcional con familia personalizada.
+
+## Iteración 2026-11-01 (continuación) — Verificación de la suite completa y diagnóstico del "cuelgue" de pytest
+
+**Entorno canónico:** `.\.venv\Scripts\python.exe` (`flet` 0.80.5, dentro del contrato `[0.80, 0.86)`).
+
+### Diagnóstico: por qué la suite completa parecía colgarse
+- Síntoma: `pytest` (suite completa o el subconjunto `tests/devtools tests/examples`) se detenía en `tests/examples/test_minimal_app_smoke.py::test_minimal_app_smoke` sin avanzar; con `-k "not test_minimal_app_smoke"` volvía a estancarse más adelante.
+- Causa raíz (confirmada): `DummyPage` de ese test no define `client_storage`, así que `PreferenceStorage` recurre a `_FileBackend` y escribe en `C:\Users\Adolfo\.fletplus\preferences.json`, **fuera del workspace**. El sandbox de ejecución deniega esa escritura; `tempfile.mkstemp()` (`tempfile.py:257`, `except FileExistsError: continue`) recorre entonces sus ~10000 nombres candidatos, cada intento se registra como acceso restringido y el test queda aparentemente colgado durante minutos (el proceso terminó reportando `TRAE Sandbox Error: hit restricted`).
+- El mismo test, ejecutado de forma aislada y sin esa ruta denegada, se completa en ~0,75 s → **no es un defecto de FletPlus ni del test**.
+- Confirmación de la hipótesis: redirigiendo el backend de fichero dentro del workspace (`FLETPLUS_PREFS_TRUSTED_ROOT` + `FLETPLUS_PREFS_FILE`, ambos bajo el workspace), el subconjunto que se colgaba pasa en 2,50 s.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m pytest tests/devtools tests/examples -q` (prefs redirigidas bajo el workspace) | 28 passed in 2.50s |
+| `.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --tb=short -rf` (suite completa, prefs redirigidas bajo el workspace) | **798 passed, 4 failed, 17 skipped, 4 deselected** in 27.50s |
+
+### Fallos observados (ninguno atribuible a los cambios de esta iteración)
+1. `tests/test_dragdrop.py::test_file_drop_zone_rejects_traversal_and_symlinks` — ambiental: `Path.symlink_to` no puede crear symlinks en este entorno (`WinError 87` / `WinError 2`).
+2. `tests/test_preferences.py::test_file_backend_rejects_when_target_file_is_symlink` — ambiental (mismo motivo).
+3. `tests/test_preferences.py::test_file_backend_rejects_when_parent_is_symlink` — ambiental (mismo motivo).
+4. `tests/test_cli_build.py::test_build_uses_tool_fletplus_defaults_and_paths` — **preexistente y reproducible** incluso con `TEMP`/`TMP` redirigidos dentro del workspace: el CLI busca `src/main.py` en lugar de `app/main.py` pese a `[tool.fletplus] app = 'app/main.py'`. `git status` confirma que no hay ningún archivo de `fletplus/cli/` ni de `tests/test_cli_build.py` modificado en esta iteración.
+
+### Notas
+- Los 3 fallos de symlink y el de `test_cli_build` son ajenos a los cambios de los Bloques 1–4; el de `test_cli_build` queda registrado como deuda preexistente para análisis fuera de estos bloques.
+- La suite completa termina en ~27,5 s cuando el backend de preferencias es escribible; el "cuelgue" era exclusivamente el bucle de `tempfile.mkstemp` contra una ruta denegada por el entorno de ejecución.
+- No se modificó `fletplus/utils/preferences.py` ni los tests de preferencias: el comportamiento observado en `test_minimal_app_smoke` es del entorno, no del producto. (El fallo de `test_cli_build` sí era real y se corrigió después; ver la sección siguiente.)
+
+## Iteración 2026-11-01 (continuación) — Corrección del fallo real `test_cli_build`
+
+**Entorno canónico:** `.\.venv\Scripts\python.exe` (`flet` 0.80.5, dentro del contrato `[0.80, 0.86)`).
+
+### Causa raíz
+`FullStackBuildContext.from_project` ([fletplus/cli/build.py](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/fletplus/cli/build.py)) aplicaba `[tool.fletplus].app` **solo si** `--app` seguía en su valor por defecto, mediante una comparación textual:
+
+```python
+if str(app_path) == "src/main.py" and project_config.app_path is not None:
+```
+
+En Windows, `str(Path("src/main.py"))` es `'src\\main.py'` (separador nativo), por lo que la comparación contra el literal POSIX `"src/main.py"` daba `False`. El guardián no reconocía el default, se ignoraba la configuración del proyecto y el CLI buscaba `src/main.py` en vez de la ruta declarada (`app/main.py`). Verificado empíricamente:
+
+```
+project_config.app_path = WindowsPath('app/main.py')
+str(Path('src/main.py')) = 'src\\main.py'
+condición previa (str == 'src/main.py')      -> False
+comparación con Path('src/main.py')          -> True
+```
+
+### Corrección
+Se sustituye la comparación textual por una comparación con semántica de `Path` (normaliza el separador en ambas plataformas):
+
+```python
+project_config = _load_fletplus_config(project_dir)
+# Comparación con semántica de `Path`: `str(Path("src/main.py"))` usa el
+# separador nativo (en Windows, ``src\\main.py``), por lo que una comparación
+# textual contra ``"src/main.py"`` no reconocía el default y se ignoraba
+# `[tool.fletplus].app`.
+if app_path == Path("src/main.py") and project_config.app_path is not None:
+    app_path = project_config.app_path
+```
+
+### Test de regresión
+Añadido `test_project_config_app_overrides_default_entrypoint` en [tests/test_cli_build.py](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/tests/test_cli_build.py): con `[tool.fletplus] app = 'app/main.py'` y `--app` en su valor por defecto, `FullStackBuildContext.from_project` debe resolver `app/main.py`. Cubre específicamente el caso de separador de Windows.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_cli_build.py -q` | 29 passed in 2.15s |
+| `.\.venv\Scripts\python.exe -m ruff check fletplus/cli/build.py tests/test_cli_build.py` | All checks passed |
+| `.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --tb=short -rf` (suite completa, prefs redirigidas bajo el workspace) | **800 passed, 3 failed, 17 skipped, 4 deselected** in 18.61s |
+
+### Notas
+- Los 3 fallos restantes son los ambientales de symlink (no creables en este entorno); ver la lista de la sección anterior. El cuarto fallo anterior (`test_cli_build`) queda resuelto.
+- El test preexistente `test_build_uses_tool_fletplus_defaults_and_paths` pasa tras la corrección.
+- Los Bloques 1–4 del `frontend-roadmap.md` quedan verificados en verde.
+
+## Iteración 2026-11-01 (continuación) — Bloque 5: Assets e iconografía
+
+**Entorno canónico:** `.\.venv\Scripts\python.exe` (`flet` 0.80.5, contrato `[0.80, 0.86)`).
+
+### Alcance ejecutado (T5.1–T5.6)
+
+| Tarea | Entregable |
+| --- | --- |
+| T5.1 | Estructura normalizada `assets/{fonts,icons,images}/README.md` en las 5 plantillas CLI (15 marcadores). |
+| T5.2 | Constantes `FONTS_DIR`/`ICONS_DIR`/`IMAGES_DIR` en `src/frontend/assets.py` de cada plantilla. |
+| T5.3 | Validación liviana pre-build `_warn_missing_critical_assets` en [fletplus/cli/build.py](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/fletplus/cli/build.py). |
+| T5.4 | §Assets de [docs/frontend-projects.md](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/docs/frontend-projects.md) (estructura, PWA, escritorio, móvil). |
+| T5.5 | Ejemplo funcional [examples/assets_example.py](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/examples/assets_example.py) + [docs/demo.md](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/docs/demo.md). |
+| T5.6 | Tests de contrato de plantillas + tests de la validación de assets. |
+
+### Desviación aprobada respecto al plan
+El plan inicial proponía `.gitkeep` como marcador de subdirectorio. Verificado empíricamente que `glob('**')` (usado por `[tool.setuptools.package-data] "templates/**"`) **excluye archivos ocultos**, por lo que `.gitkeep` no se empaquetaría. Se usa `README.md` como marcador (documenta además la estructura normalizada).
+
+### Validación liviana de assets (T5.3)
+`_warn_missing_critical_assets` se invoca dentro de `FullStackBuildContext.from_project` y emite `UserWarning` **no bloqueante** únicamente cuando el proyecto declara explícitamente la ruta en `[tool.fletplus]` (`icon`, `assets_dir`) y el recurso no existe. Un proyecto que no las declare nunca recibe ruido.
+
+### Tests añadidos (T5.6)
+- [tests/test_cli_template_contracts.py](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/tests/test_cli_template_contracts.py): helper `_module_constants` (constantes de módulo vía AST) + `test_frontend_templates_normalize_asset_directories` y `test_frontend_templates_expose_asset_directory_constants` (parametrizados sobre las 5 plantillas).
+- [tests/test_cli_build.py](file:///c:/Users/Adolfo/PycharmProjects/FletPlus/tests/test_cli_build.py): `test_build_warns_about_declared_but_missing_icon`, `test_build_warns_about_declared_but_missing_assets_dir`, `test_build_does_not_warn_when_declared_assets_exist` (+ helper `_write_assets_project`).
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `.\.venv\Scripts\python.exe -m ruff check tests/test_cli_template_contracts.py tests/test_cli_build.py fletplus/cli/build.py` | All checks passed |
+| `.\.venv\Scripts\python.exe -m pytest tests/test_cli_template_contracts.py tests/test_cli_build.py -q` | 73 passed in 2.83s |
+| `.\.venv\Scripts\python.exe -m pytest -q` (suite completa, prefs redirigidas bajo el workspace) | **813 passed, 3 failed, 17 skipped, 4 deselected** in 17.88s |
+
+### Notas
+- Los 3 fallos restantes son los ambientales de symlink (`tests/test_dragdrop.py`, `tests/test_preferences.py`), no creables en este entorno Windows sin privilegios; permanecen idénticos y ajenos a los cambios del Bloque 5.
+- Delta respecto a la iteración anterior: +13 tests (10 de contrato de assets + 3 de validación), coherente con los tests añadidos.

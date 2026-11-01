@@ -118,3 +118,14 @@ flet run --view=flet_app examples/frontend_mobile_showcase.py
 Si quieres simular el ancho móvil en escritorio, abre el ejemplo móvil y reduce
 la ventana hasta aproximadamente 390 px. El layout apila las tarjetas y conserva
 la navegación inferior cuando el perfil activo es `mobile`.
+
+### Assets
+
+```bash
+flet run examples/assets_example.py
+```
+
+Ejemplo mínimo de la convención de recursos: centraliza las rutas en constantes,
+apunta `page.assets_dir` al directorio de assets y carga un logo con una `src`
+relativa. Ver la sección "Assets" de [frontend-projects.md](frontend-projects.md)
+para PWA, iconos de escritorio y assets móviles.

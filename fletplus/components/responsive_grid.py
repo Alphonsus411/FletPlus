@@ -1371,7 +1371,9 @@ class ResponsiveGrid:
                 container = styled
 
         if tooltip:
-            container = ft.Tooltip(content=container, message=str(tooltip))
+            # En flet 0.80+ la ayuda es una propiedad nativa del control, no un
+            # contenedor envolvente (``ft.Tooltip(content=...)`` es inválido).
+            container.tooltip = str(tooltip)
 
         return container
 

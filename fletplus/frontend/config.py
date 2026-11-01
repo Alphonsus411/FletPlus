@@ -350,6 +350,14 @@ _DEVICE_ALIASES = {
     "large_desktop": "large_desktop",
 }
 
+# Cadena de degradación cuando un rol no define tokens para el perfil activo.
+_TYPOGRAPHY_DEVICE_FALLBACKS: dict[str, tuple[str, ...]] = {
+    "mobile": ("mobile",),
+    "tablet": ("tablet", "mobile"),
+    "desktop": ("desktop", "tablet", "mobile"),
+    "large_desktop": ("large_desktop", "desktop", "tablet", "mobile"),
+}
+
 
 def _normalize_device_name(name: str) -> str:
     return _DEVICE_ALIASES.get(name, name)
@@ -376,6 +384,23 @@ def _merge_typography_tokens(
                     values
                 )
     return merged
+
+
+def _select_typography_variant(
+    role_tokens: Mapping[str, Mapping[str, int | float | str | None]],
+    device: str,
+) -> Mapping[str, int | float | str | None] | None:
+    """Variante de un rol más cercana al dispositivo activo, o ``None``."""
+
+    for candidate in _TYPOGRAPHY_DEVICE_FALLBACKS.get(device, (device,)):
+        values = role_tokens.get(candidate)
+        if values:
+            return values
+    for candidate in _TYPOGRAPHY_DEVICE_FALLBACKS["large_desktop"]:
+        values = role_tokens.get(candidate)
+        if values:
+            return values
+    return None
 
 
 @dataclass(slots=True)
@@ -702,19 +727,20 @@ class FrontEndConfig:
     def resolve_typography(
         self, role: str, width: int
     ) -> dict[str, int | float | str | None]:
-        """Resuelve tamaño, peso y altura de línea de un rol para un ancho."""
+        """Resuelve tamaño, peso y altura de línea de un rol para un ancho.
+
+        Si el rol (o el perfil activo) no define tokens, degrada a la variante
+        de dispositivo más cercana y, en último término, al rol ``body``.
+        """
         tokens = self.resolved_typography_tokens()
         role_tokens = tokens.get(role) or tokens["body"]
         device = _normalize_device_name(self.resolve_device_profile(width).name)
         if width >= 1440 and "large_desktop" in role_tokens:
             device = "large_desktop"
-        selected = (
-            role_tokens.get(device)
-            or role_tokens.get("desktop")
-            or role_tokens.get("mobile")
-            or {}
-        )
-        return dict(selected)
+        selected = _select_typography_variant(role_tokens, device)
+        if selected is None:
+            selected = _select_typography_variant(tokens["body"], device)
+        return dict(selected or {})
 
     def typography_size(self, role: str, width: int) -> int | float | None:
         return self.resolve_typography(role, width).get("size")  # type: ignore[return-value]

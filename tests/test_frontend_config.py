@@ -56,6 +56,22 @@ def test_frontend_config_applies_page_defaults() -> None:
     assert manager.page is page
 
 
+def test_frontend_config_default_palette_is_registered_and_applied(caplog) -> None:
+    """El palette por defecto no debe fallar ni dejar el tema sin paleta."""
+
+    page = DummyPage()
+    config = FrontEndConfig()
+
+    assert has_palette(config.palette)
+
+    with caplog.at_level("ERROR", logger="fletplus.themes.theme_manager"):
+        manager = config.apply_to_page(page)  # type: ignore[arg-type]
+
+    assert "is not registered" not in caplog.text
+    assert manager._palette_name == "material"
+    assert manager.get_color("primary") == "#2196F3"
+
+
 def test_frontend_config_builds_content_shell_width() -> None:
     page = DummyPage()
     config = FrontEndConfig(page_padding=20, max_content_width=700)
@@ -565,6 +581,48 @@ def test_frontend_config_resolves_custom_typography_roles_by_device_width() -> N
         "weight": "w800",
         "line_height": 1.4,
     }
+
+
+def test_resolve_typography_degrades_to_nearest_device_variant() -> None:
+    config = FrontEndConfig(
+        typography_tokens={
+            "helper": {
+                "mobile": {"size": 12, "weight": "w400", "line_height": 1.4},
+                "tablet": {"size": 13, "weight": "w400", "line_height": 1.4},
+            }
+        }
+    )
+
+    # El rol no define `desktop`: degrada a `tablet` (variante más cercana).
+    assert config.resolve_typography("helper", 1280) == {
+        "size": 13,
+        "weight": "w400",
+        "line_height": 1.4,
+    }
+    # `large_desktop` degrada a `desktop` → `tablet`.
+    assert config.text_style("helper", 1600).size == 13
+    # `mobile` conserva su propia variante.
+    assert config.text_style("helper", 390).size == 12
+
+
+def test_resolve_typography_falls_back_to_body_when_role_has_no_tokens() -> None:
+    config = FrontEndConfig(typography_tokens={"vacio": {}})
+
+    assert config.resolve_typography("vacio", 390) == config.resolve_typography(
+        "body", 390
+    )
+    assert config.resolve_typography("desconocido", 1280) == config.resolve_typography(
+        "body", 1280
+    )
+    assert config.text_style("vacio", 390).size == config.typography_size("body", 390)
+
+
+def test_resolve_typography_flat_role_applies_to_mobile_and_degrades() -> None:
+    config = FrontEndConfig(typography_tokens={"chip": {"size": 11, "weight": "w500"}})
+
+    assert config.resolve_typography("chip", 390) == {"size": 11, "weight": "w500"}
+    # Sin variantes por dispositivo declaradas, degrada a `mobile`.
+    assert config.text_style("chip", 1280).size == 11
 
 
 def test_frontend_config_loads_custom_typography_roles_from_pyproject(

@@ -81,12 +81,14 @@ Cada bloque se considera listo cuando cumple las tres evidencias mínimas:
 
 **Objetivo:** mantener una escala tipográfica responsive y configurable sin tamaños hardcodeados en vistas.
 
-- [ ] Revisar roles tipográficos (`display`, `headline`, `title`, `body`, `label`, `caption`) y roles personalizados.
-- [ ] Documentar carga de fuentes locales, fallbacks, pesos y estilos en `pyproject.toml`.
-- [ ] Asegurar que `text_style()` degrade correctamente cuando falten tokens por perfil.
-- [ ] Añadir ejemplos de navegación, badges y ayudas contextuales con roles semánticos.
+- [x] Revisar roles tipográficos (`display`, `headline`, `title`, `body`, `label`, `caption`) y roles personalizados.
+- [x] Documentar carga de fuentes locales, fallbacks, pesos y estilos en `pyproject.toml`.
+- [x] Asegurar que `text_style()` degrade correctamente cuando falten tokens por perfil.
+- [x] Añadir ejemplos de navegación, badges y ayudas contextuales con roles semánticos.
 
-**Módulos implicados:** `fletplus/frontend/config.py`, `fletplus/components/frontend_layouts.py`, `fletplus/cli/templates/*`.
+**Evidencia:** `docs/frontend-projects.md` §"Roles y degradación" (tabla rol→uso típico y orden de degradación) y §"Carga local, fallbacks y metadatos" (registro en `page.fonts`, resolución relativa a `font_assets_base_path`, composición de `fallback_families`, alias `[tool.fletplus.frontend.fonts]` y aviso si falta un asset); `fletplus/frontend/config.py` (`_select_typography_variant` + `_TYPOGRAPHY_DEVICE_FALLBACKS`; `resolve_typography` degrada `large_desktop → desktop → tablet → mobile` y, en último término, al rol `body`) cubierto por `tests/test_frontend_config.py`; ejemplo con navegación, badges y ayudas contextuales en `examples/responsive_typography_example.py`.
+
+**Módulos implicados:** `fletplus/frontend/config.py`, `fletplus/utils/responsive_typography.py`, `fletplus/cli/templates/*`.
 
 **Criterio de finalización del bloque:** tests de resolución tipográfica, docs con fuente local y ejemplo funcional que aplique una familia personalizada.
 

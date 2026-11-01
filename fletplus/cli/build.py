@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess  # nosec B404 - solo tipos de excepción; la ejecución pasa por safe_run
 import sys
+import warnings
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -256,7 +257,11 @@ class FullStackBuildContext(BuildContext):
             raise PackagingError(f"No se encontró el proyecto en {project_dir}.")
 
         project_config = _load_fletplus_config(project_dir)
-        if str(app_path) == "src/main.py" and project_config.app_path is not None:
+        # Comparación con semántica de `Path`: `str(Path("src/main.py"))` usa el
+        # separador nativo (en Windows, ``src\\main.py``), por lo que una comparación
+        # textual contra ``"src/main.py"`` no reconocía el default y se ignoraba
+        # `[tool.fletplus].app`.
+        if app_path == Path("src/main.py") and project_config.app_path is not None:
             app_path = project_config.app_path
         app_path = app_path if app_path.is_absolute() else project_dir / app_path
         if not app_path.exists():
@@ -274,6 +279,7 @@ class FullStackBuildContext(BuildContext):
         metadata = _load_metadata(project_dir)
         assets_dir = _detect_assets(project_dir, project_config)
         icon_path = _detect_icon(project_dir, assets_dir, project_config)
+        _warn_missing_critical_assets(project_dir, project_config)
         effective_timeout = project_config.build_timeout or build_timeout
 
         return cls(
@@ -434,6 +440,33 @@ def _detect_icon(
         if candidate.is_file():
             return candidate
     return None
+
+
+def _warn_missing_critical_assets(
+    project_dir: Path, config: FletPlusProjectConfig
+) -> None:
+    """Avisa (sin bloquear) si un asset crítico declarado no existe.
+
+    Validación liviana previa al empaquetado: solo se comprueban las rutas que
+    el proyecto declara explícitamente en ``[tool.fletplus]``, de modo que un
+    proyecto que no las declare nunca recibe ruido.
+    """
+    if config.icon_path is not None:
+        declared_icon = _resolve_project_path(project_dir, config.icon_path)
+        if declared_icon is not None and not declared_icon.is_file():
+            warnings.warn(
+                f"Icono declarado no encontrado: {declared_icon}. Colócalo en "
+                "assets/ o ajusta [tool.fletplus].icon antes de compilar.",
+                stacklevel=2,
+            )
+    if config.assets_dir is not None:
+        declared_assets = _resolve_project_path(project_dir, config.assets_dir)
+        if declared_assets is not None and not declared_assets.is_dir():
+            warnings.warn(
+                f"Directorio de assets declarado no encontrado: {declared_assets}. "
+                "Créalo o ajusta [tool.fletplus].assets_dir antes de compilar.",
+                stacklevel=2,
+            )
 
 
 def _copy_assets(source: Path | None, destination: Path) -> None:

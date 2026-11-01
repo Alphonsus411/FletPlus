@@ -356,3 +356,26 @@ def test_responsive_grid_section_margin_and_header_adaptations(page_factory):
     assert header_container.gradient is None
     assert header_container.bgcolor == "#123456"
     assert grid._section_actions_row.alignment == ft.MainAxisAlignment.CENTER
+
+
+def test_create_tag_control_sets_native_tooltip() -> None:
+    """El tooltip de una etiqueta se asigna como propiedad nativa (flet 0.80+)."""
+
+    grid = ResponsiveGrid()
+
+    control = grid._create_tag_control(
+        {"label": "Estable", "tooltip": "Estado actual"},
+        None,
+    )
+
+    assert isinstance(control, ft.Control)
+    assert control.tooltip == "Estado actual"
+
+
+def test_create_tag_control_without_tooltip_leaves_property_unset() -> None:
+    grid = ResponsiveGrid()
+
+    control = grid._create_tag_control({"label": "Estable"}, None)
+
+    assert isinstance(control, ft.Control)
+    assert control.tooltip is None

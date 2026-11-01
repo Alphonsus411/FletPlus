@@ -982,6 +982,50 @@ _PRESET_PALETTES: Dict[str, Dict[str, object]] = {
             },
         },
     },
+    "material": {
+        "description": (
+            "Esquema Material por defecto de FletPlus: reproduce los tokens base "
+            "de ThemeManager (primario azul Material, superficies claras)."
+        ),
+        # Los valores replican los tokens base de ``ThemeManager`` usando
+        # equivalentes hexadecimales de los colores Material de Flet, de modo
+        # que aplicar esta paleta no altere el aspecto por defecto y la
+        # auditoría de contraste WCAG (que exige hex) siga funcionando.
+        "light": {
+            "colors": {
+                "primary": "#2196F3",
+                "background": "#FFFFFF",
+                "surface": "#FFFFFF",
+                "on_surface": "#111827",
+                "success": "#4CAF50",
+                "warning": "#FFC107",
+                "error": "#F44336",
+                "info": "#2196F3",
+                "surface_soft": "#F7F7F7",
+                "surface_elevated": "#FFFFFF",
+                "focus_ring": "#2196F3",
+                "disabled": "#E0E0E0",
+                "on_disabled": "#757575",
+            },
+        },
+        "dark": {
+            "colors": {
+                "primary": "#2196F3",
+                "background": "#FFFFFF",
+                "surface": "#FFFFFF",
+                "on_surface": "#111827",
+                "success": "#4CAF50",
+                "warning": "#FFC107",
+                "error": "#F44336",
+                "info": "#2196F3",
+                "surface_soft": "#F7F7F7",
+                "surface_elevated": "#FFFFFF",
+                "focus_ring": "#2196F3",
+                "disabled": "#E0E0E0",
+                "on_disabled": "#757575",
+            },
+        },
+    },
 }
 
 
