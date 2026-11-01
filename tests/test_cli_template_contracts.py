@@ -39,6 +39,13 @@ COMMON_LAYOUT_HELPERS = (
     "responsive_shell",
 )
 PLATFORM_LAYOUT_HELPERS = ("density", "safe_padding")
+SEMANTIC_COLOR_TOKENS = (
+    "brand",
+    "surface_soft",
+    "focus_ring",
+    "success",
+    "error",
+)
 
 
 def _configure_watchdog(monkeypatch: pytest.MonkeyPatch, *, available: bool) -> None:
@@ -67,6 +74,22 @@ def _load_cli_app():
 def _defined_functions(path: Path) -> set[str]:
     module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     return {node.name for node in module.body if isinstance(node, ast.FunctionDef)}
+
+
+def _default_custom_tokens(path: Path) -> dict[str, object]:
+    """Extrae ``DEFAULT_CUSTOM_TOKENS`` de la configuración editable de la plantilla."""
+    module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in module.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(
+            isinstance(target, ast.Name) and target.id == "DEFAULT_CUSTOM_TOKENS"
+            for target in node.targets
+        ):
+            value = ast.literal_eval(node.value)
+            assert isinstance(value, dict)
+            return value
+    raise AssertionError("DEFAULT_CUSTOM_TOKENS no está declarado")
 
 
 @pytest.mark.parametrize("template_name", TEMPLATES)
@@ -158,3 +181,15 @@ def test_create_target_generates_frontend_template_contract(
     assert set(COMMON_LAYOUT_HELPERS).issubset(functions)
     if target_name in PLATFORM_TEMPLATES or target_name == "app":
         assert set(PLATFORM_LAYOUT_HELPERS).issubset(functions)
+
+
+@pytest.mark.parametrize("template_name", TEMPLATES)
+def test_frontend_templates_expose_semantic_color_tokens(template_name: str) -> None:
+    """Las plantillas CLI declaran los tokens semánticos editables de color."""
+    config_path = TEMPLATE_ROOT / template_name / "src" / "frontend" / "config.py"
+
+    tokens = _default_custom_tokens(config_path)
+    colors = tokens.get("colors")
+
+    assert isinstance(colors, dict)
+    assert set(SEMANTIC_COLOR_TOKENS).issubset(colors)

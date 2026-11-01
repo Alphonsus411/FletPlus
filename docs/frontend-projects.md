@@ -136,14 +136,44 @@ Define la paleta desde CLI o en `config.py`/`pyproject.toml`. Las plantillas exp
 PALETTE_NAME = "blue"
 PALETTE_MODE = "light"
 DEFAULT_CUSTOM_TOKENS = {
-    "colors": {"brand": "#2563EB", "surface_soft": "#F8FAFC"},
+    "colors": {
+        "brand": "#2563EB",
+        "surface_soft": "#F8FAFC",
+        "focus_ring": "#2563EB",
+        "success": "#2E7D32",
+        "error": "#B3261E",
+    },
     "spacing": {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32},
     "radii": {"card": 18, "pill": 999},
 }
 ```
 
-Usa tokens semánticos (`brand`, `surface_soft`, `card`, `pill`) en lugar de colores sueltos dentro de cada control. Así puedes cambiar la identidad visual desde un solo archivo.
+Las plantillas CLI ya declaran los tokens semánticos `brand`, `surface_soft`, `focus_ring`, `success` y `error` como ejemplo editable. Consúmelos mediante nombres (`bgcolor_token="surface_soft"`, `color="error"`) en lugar de colores sueltos dentro de cada control: así cambias la identidad visual desde un solo archivo.
 
+## Paletas recomendadas por tipo de producto
+
+`FrontEndConfig.from_preset(<preset>)` combina una paleta base, una densidad y escalas de spacing, radios y tipografía pensadas para cada tipo de producto. La tabla siguiente es la recomendación oficial; los presets y sus paletas asociadas se validan por contrato en `tests/test_frontend_config.py`.
+
+| Tipo de producto | Preset | Paleta base | Densidad | Cuándo usarlo |
+| --- | --- | --- | --- | --- |
+| Landing / marketing | `landing` | `solstice` | `spacious` | Hero sections, páginas de conversión y bloques amplios. |
+| Dashboard analítico | `dashboard` | `fjord` | `compact` | KPIs, tarjetas densas y vistas de datos. |
+| Admin / backoffice | `admin` | `metropolis` | `compact` | CRUDs, tablas y navegación lateral. |
+| SaaS | `saas` | `zenith` | `comfortable` | Onboarding, áreas de cuenta y flujos recurrentes. |
+| Ecommerce | `ecommerce` | `citrus` | `comfortable` | Catálogos, fichas de producto y checkout. |
+| App móvil | `mobile_app` | `aurora` | `comfortable` | Aplicaciones táctiles con controles amplios. |
+
+Ejemplo:
+
+```python
+from fletplus.frontend import FrontEndConfig
+
+frontend = FrontEndConfig.from_preset("landing", target="web", mode="light")
+assert frontend.palette == "solstice"
+assert frontend.layout_density == "spacious"
+```
+
+El preset no es excluyente con los overrides por plataforma: parte de esta recomendación y ajusta solo `primary` por destino con `platform_palettes` cuando necesites diferenciar web, escritorio y móvil sin perder el resto de tokens.
 
 ## Paletas por plataforma
 

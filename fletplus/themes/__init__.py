@@ -18,10 +18,18 @@ LAZY_IMPORTS = {
     "has_preset": "fletplus.themes.presets",
     "get_preset_definition": "fletplus.themes.presets",
     "get_preset_metadata": "fletplus.themes.presets",
+    "contrast_ratio": "fletplus.themes.contrast",
+    "relative_luminance": "fletplus.themes.contrast",
+    "parse_hex_color": "fletplus.themes.contrast",
 }
 
 if TYPE_CHECKING:
     from fletplus.themes.adaptive_theme import AdaptiveThemeController
+    from fletplus.themes.contrast import (
+        contrast_ratio,
+        parse_hex_color,
+        relative_luminance,
+    )
     from fletplus.themes.palettes import (
         get_palette_definition,
         get_palette_tokens,
@@ -53,6 +61,9 @@ __all__ = [
     "has_preset",
     "get_preset_definition",
     "get_preset_metadata",
+    "contrast_ratio",
+    "relative_luminance",
+    "parse_hex_color",
 ]
 
 

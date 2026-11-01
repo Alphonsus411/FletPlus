@@ -167,7 +167,13 @@ def _frontend_preset_context(
     )
     target_value = TARGET_PYPROJECT_VALUES[target]
     custom_tokens = {
-        "colors": {"brand": "#2563EB", "surface_soft": "#F8FAFC"},
+        "colors": {
+            "brand": "#2563EB",
+            "surface_soft": "#F8FAFC",
+            "focus_ring": "#2563EB",
+            "success": "#2E7D32",
+            "error": "#B3261E",
+        },
         "spacing": spacing_tokens,
         "radii": radii_tokens,
         "shadows": shadow_tokens,

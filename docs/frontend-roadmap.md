@@ -23,12 +23,27 @@ Cada bloque se considera listo cuando cumple las tres evidencias mínimas:
 
 **Objetivo:** consolidar un sistema de color editable, consistente por target y fácil de auditar.
 
-- [ ] Revisar que `FrontEndConfig.palette_for_target()` conserve tokens base cuando existan overrides por plataforma.
-- [ ] Documentar paletas recomendadas por tipo de producto: landing, dashboard, admin, SaaS, ecommerce y mobile app.
-- [ ] Añadir ejemplos de tokens semánticos (`brand`, `surface_soft`, `focus_ring`, `success`, `error`) en plantillas CLI.
-- [ ] Validar contraste mínimo en componentes principales y estados interactivos.
+- [x] Revisar que `FrontEndConfig.palette_for_target()` conserve tokens base cuando existan overrides por plataforma.
+- [x] Documentar paletas recomendadas por tipo de producto: landing, dashboard, admin, SaaS, ecommerce y mobile app.
+- [x] Añadir ejemplos de tokens semánticos (`brand`, `surface_soft`, `focus_ring`, `success`, `error`) en plantillas CLI.
+- [x] Validar contraste mínimo en componentes principales y estados interactivos.
 
-**Módulos implicados:** `fletplus/frontend/config.py`, `fletplus/cli/templates/*`.
+**Evidencia:** `tests/test_frontend_config.py` (resolución de paletas por target y matriz producto→preset), `tests/test_cli_template_contracts.py` (tokens semánticos en las 5 plantillas), `fletplus/themes/contrast.py` + `tests/test_theme_contrast.py` (auditoría WCAG informativa) y las secciones "Paletas recomendadas por tipo de producto" y "Auditoría de contraste (WCAG)" en `docs/frontend-projects.md` y `docs/themes.md`.
+
+**Deuda de contraste AA (informativa, no bloquea CI):** la auditoría reporta pares por debajo del umbral. Registrados como deuda:
+
+| Paleta / modo | Par | Ratio | Umbral |
+| --- | --- | --- | --- |
+| `sunset`/light | `on_primary` sobre `primary` | 2.74 | 4.5 |
+| `solstice`/light | `on_primary` sobre `primary` | 2.80 | 4.5 |
+| `oasis`/light | `on_primary` sobre `primary` | 2.95 | 4.5 |
+| `terracotta`/light | `on_primary` sobre `primary` | 3.86 | 4.5 |
+| `sakura`/light | `on_primary` sobre `primary` | 4.35 | 4.5 |
+| `lumen`/light | `on_surface_variant` sobre `surface_variant` | 3.80 | 4.5 |
+| `oasis`/light | `on_surface_variant` sobre `surface_variant` | 4.09 | 4.5 |
+| `lagoon`, `selva`, `marina`, `sakura`, `botanical`, `terracotta`, `citrus`, `fjord`, `metropolis`, `oasis`, `lumen`, `noir` (light y dark en `noir`), `aurora_neon`/light | `outline` sobre `surface` | 1.84 – 2.70 | 3.0 |
+
+**Módulos implicados:** `fletplus/frontend/config.py`, `fletplus/cli/templates/*`, `fletplus/themes/contrast.py`.
 
 **Criterio de finalización del bloque:** tests de resolución de paletas, docs con matriz de uso y ejemplo funcional que cambie paleta desde CLI o `pyproject.toml`.
 

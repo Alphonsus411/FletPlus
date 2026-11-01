@@ -118,3 +118,23 @@
 ### Notas
 - `pip-audit` no es ejecutable en el entorno local por falta de acceso a red para consultar la base de vulnerabilidades; queda cubierto por CI (scope `static-security`).
 - Todos los fallos observados son ambientales (`ft.Border.all`, `ft.Padding.all/symmetric`, `ft.BorderRadius.all` no existen en el `flet` 0.28.3 instalado; baseline exige ≥0.80) y no están relacionados con los cambios aplicados. El test de T1.3 pasa y emite los `DeprecationWarning` esperados.
+
+## Iteración 2026-11-01 (continuación) — Cierre de Bloque 1 del roadmap frontend (T1.1–T1.4)
+
+### Cambios aplicados
+1. **T1.1 — Conservación de tokens base en `palette_for_target()`**: contrato verificado y cubierto con `test_frontend_config_palette_for_target_without_overrides_keeps_base_palette` (un target sin overrides devuelve la paleta base y los overrides no se filtran entre targets). El código de `FrontEndConfig.palette_for_target()` ya cumplía el contrato; no se modificó.
+2. **T1.2 — Paletas recomendadas por tipo de producto**: matriz producto→preset→paleta→densidad (`landing→solstice/spacious`, `dashboard→fjord/compact`, `admin→metropolis/compact`, `saas→zenith/comfortable`, `ecommerce→citrus/comfortable`, `mobile_app→aurora/comfortable`) documentada en `docs/frontend-projects.md` §“Paletas recomendadas por tipo de producto” y cubierta con `test_frontend_config_product_preset_recommendations_are_registered`.
+3. **T1.3 — Tokens semánticos en plantillas CLI**: las 5 plantillas (`app`, `web`, `desktop`, `mobile`, `fullstack`) declaran `brand`, `surface_soft`, `focus_ring`, `success` y `error` en `DEFAULT_CUSTOM_TOKENS["colors"]`; `_frontend_preset_context` de `fletplus/cli/main.py` inyecta los mismos valores vía `custom_tokens_repr`. Añadido `test_frontend_templates_expose_semantic_color_tokens` (contrato por plantilla). Ejemplo de `docs/frontend-projects.md` actualizado.
+4. **T1.4 — Auditoría de contraste WCAG**: nuevo módulo `fletplus/themes/contrast.py` (`parse_hex_color`, `relative_luminance`, `contrast_ratio` + umbrales `WCAG_AA_TEXT`/`WCAG_AA_UI`), exportado desde `fletplus.themes`. `tests/test_theme_contrast.py` audita las 19 paletas en ambos modos; es **informativa** (reporta vía `UserWarning`, no bloquea CI). Deuda registrada en `docs/frontend-roadmap.md`; sección “Auditoría de contraste (WCAG)” añadida a `docs/themes.md`.
+
+### Comandos y resultados
+| Comando | Resultado |
+| --- | --- |
+| `python -m pytest tests/test_cli_template_contracts.py -q -k "semantic or structure or layout_helpers"` | 19 passed |
+| `python -m pytest tests/test_frontend_config.py::test_frontend_config_palette_for_target_without_overrides_keeps_base_palette tests/test_frontend_config.py::test_frontend_config_product_preset_recommendations_are_registered tests/test_cli_template_contracts.py::test_frontend_templates_expose_semantic_color_tokens tests/test_theme_contrast.py -q` | 11 passed, 1 warning |
+| `python -m pytest tests/test_theme_manager.py tests/test_theme_tokens.py tests/test_all.py -q` | 22 passed |
+| `python -c "import fletplus.themes as t; ..."` | exports lazy resueltos (`contrast_ratio`, `relative_luminance`, `parse_hex_color`) |
+
+### Notas
+- Auditoría de contraste: 21 pares por debajo del umbral AA en 14 paletas; el mínimo es `on_primary`/`primary` = 2.74 (`sunset`/light). Patrón dominante: `outline` sobre `surface` (1.84–2.70) y `on_primary` sobre `primary` en paletas claras. Registrado como deuda en el roadmap, sin modificar paletas.
+- Persisten 4 fallos ambientales en `tests/test_frontend_config.py` (`module 'flet' has no attribute 'Gradient'`), atribuibles a `flet` 0.28.3 instalado vs baseline ≥0.80; no relacionados con los cambios de este bloque.

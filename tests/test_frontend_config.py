@@ -6,6 +6,17 @@ import flet as ft
 import pytest
 
 from fletplus.frontend import FrontEndConfig
+from fletplus.themes.palettes import has_palette
+from fletplus.themes.presets import has_preset
+
+PRODUCT_PRESET_RECOMMENDATIONS = {
+    "landing": ("solstice", "spacious"),
+    "dashboard": ("fjord", "compact"),
+    "admin": ("metropolis", "compact"),
+    "saas": ("zenith", "comfortable"),
+    "ecommerce": ("citrus", "comfortable"),
+    "mobile_app": ("aurora", "comfortable"),
+}
 
 
 class DummyPage:
@@ -333,6 +344,15 @@ def test_frontend_config_derives_registered_admin_preset_for_desktop() -> None:
     assert config.typography_tokens["body_size"] == 14
 
 
+def test_frontend_config_product_preset_recommendations_are_registered() -> None:
+    for preset, (palette, density) in PRODUCT_PRESET_RECOMMENDATIONS.items():
+        assert has_preset(preset), preset
+        assert has_palette(palette), palette
+        config = FrontEndConfig.from_preset(preset, target="web", mode="light")
+        assert config.palette == palette
+        assert config.layout_density == density
+
+
 def test_frontend_config_explicit_values_override_registered_preset() -> None:
     config = FrontEndConfig.from_mapping(
         {
@@ -475,6 +495,30 @@ def test_frontend_config_resolves_platform_palette_and_screen_tokens() -> None:
     assert tokens["columns"] == 4
     assert tokens["touch_target"] == 48
     assert tokens["safe_area"] is True
+
+
+def test_frontend_config_palette_for_target_without_overrides_keeps_base_palette() -> None:
+    config = FrontEndConfig(
+        palette="aurora",
+        mode="light",
+        platform_palettes={"desktop": {"primary": "#4F46E5"}},
+    )
+
+    base_colors = config.palette_tokens()["colors"]
+    web_palette = config.palette_for_target("web")
+    desktop_palette = config.palette_for_target("desktop")
+
+    # Un target sin overrides devuelve exactamente la paleta base.
+    assert web_palette == {
+        str(key): str(value)
+        for key, value in base_colors.items()
+        if isinstance(value, str)
+    }
+    # Los overrides de un target no se filtran a los demás.
+    assert web_palette["primary"] == base_colors["primary"]
+    # El target con overrides conserva el resto de tokens base.
+    assert desktop_palette["primary"] == "#4F46E5"
+    assert set(base_colors).issubset(desktop_palette)
 
 
 def test_frontend_config_exposes_structured_implementation_tasks() -> None:

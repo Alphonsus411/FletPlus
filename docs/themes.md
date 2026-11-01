@@ -160,6 +160,32 @@ palette = load_palette_from_file("paletas/digital_ocean.json", mode="dark")
 Puedes pasar el resultado a `ThemeManager.apply_palette()` o fusionarlo en
 los tokens manualmente.
 
+## Auditoría de contraste (WCAG)
+
+FletPlus expone utilidades puras de contraste WCAG 2.1 para auditar tus
+paletas sin tocar el runtime:
+
+```python
+from fletplus.themes import contrast_ratio, relative_luminance
+
+contrast_ratio("#0B57D0", "#FFFFFF")  # relación entre 1.0 y 21.0
+relative_luminance("#FFFFFF")  # 0.0 (negro) a 1.0 (blanco)
+```
+
+- `contrast_ratio(a, b)` calcula la relación de contraste WCAG entre dos
+  colores hex (`#RRGGBB` o `#RRGGBBAA`, el alfa se ignora).
+- `relative_luminance(color)` devuelve la luminancia relativa WCAG.
+- `parse_hex_color(color)` convierte el hex en la tupla `(r, g, b)`.
+
+Umbrales de referencia AA: `WCAG_AA_TEXT` (4.5) para texto normal y
+`WCAG_AA_UI` (3.0) para componentes de UI y estados interactivos.
+
+La suite incluye `tests/test_theme_contrast.py`, que audita los pares
+fondo/primer plano de todas las paletas incluidas. Es una prueba
+**informativa**: los pares por debajo del umbral se reportan como deuda
+conocida mediante `UserWarning` y no bloquean CI. Consulta el mapa de deuda
+en [`frontend-roadmap.md`](frontend-roadmap.md).
+
 ## Estructura recomendada de paletas personalizadas
 
 Para nuevas paletas, usa un objeto JSON con cuatro capas declarativas:
